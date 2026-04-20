@@ -2560,10 +2560,13 @@ function renderLivePriceWidget(){
     const w = FOB_PRICES.prices.white_fob;
     const j = FOB_PRICES.prices.jasmine_fob;
     rows.push(`
-      <div class="live-price-row">
-        <div class="live-price-label"><strong style="color:#60a5fa">🚢 ราคาส่งออกหน้าท่าเรือ (F.O.B.)</strong><br>
+      <div class="live-price-row" style="margin-bottom:6px; padding-bottom:6px; border-bottom:1px dashed rgba(255,255,255,0.1);">
+        <div class="live-price-label"><strong style="color:#60a5fa; font-size:12px;">🚢 ราคาส่งออกหน้าท่าเรือ (F.O.B.)</strong><br>
           <span style="font-size:9px;color:var(--muted)">TREA · ${FOB_PRICES.date}</span><br>
-          <span style="font-size:9px;color:var(--muted)">ข้าวขาว 5%: $${w} | หอมมะลิ: $${j}</span>
+          <div style="margin-top:4px; font-size:11px; color:#e2e8f0;">
+            ข้าวขาว 5%: <strong style="color:#93c5fd; font-size:13px;">$${w}</strong> <span style="font-size:9px;opacity:0.6">/MT</span> &nbsp;|&nbsp; 
+            หอมมะลิ: <strong style="color:#93c5fd; font-size:13px;">$${j}</strong> <span style="font-size:9px;opacity:0.6">/MT</span>
+          </div>
         </div>
         <div class="live-price-val" style="display:none"></div>
       </div>`);
