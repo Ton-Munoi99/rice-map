@@ -1,0 +1,2429 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>แผนที่ข้าวขาวและหอมมะลิรายจังหวัด | Thailand Rice Intelligence</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext y='50' font-size='44'%3E%F0%9F%8C%BE%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+--bg:#071015;
+--bg2:#0d171d;
+--bg3:#111f27;
+--card:#15232c;
+--card-soft:rgba(21,35,44,.72);
+--line:rgba(255,255,255,.08);
+--line-strong:rgba(255,255,255,.14);
+--text:#f1e7d6;
+--text-soft:#c6b9a2;
+--muted:#8b96a0;
+--muted-2:#61717d;
+--ocean-1:#08161f;
+--ocean-2:#0d2330;
+--ocean-3:#173848;
+--white-lo:#244b36;
+--white-mid:#9a8349;
+--white-hi:#f5c065;
+--white-acc:#ff8f4d;
+--jasmine-lo:#2a274d;
+--jasmine-mid:#8c5db2;
+--jasmine-hi:#ecbad9;
+--jasmine-acc:#d9a0ff;
+--pos:#58d489;
+--neg:#ff7c73;
+--warn:#f5d56a;
+--shadow:0 24px 70px rgba(0,0,0,.34);
+}
+html,body{height:100%}
+body{
+font-family:'Sarabun',sans-serif;
+color:var(--text);
+background:
+radial-gradient(circle at 14% 16%,rgba(39,83,68,.22),transparent 26%),
+radial-gradient(circle at 83% 21%,rgba(37,68,93,.34),transparent 24%),
+radial-gradient(circle at 60% 88%,rgba(150,105,54,.16),transparent 24%),
+linear-gradient(180deg,#081116 0%,#09141a 36%,#060c11 100%);
+overflow-y:auto;
+}
+body.jm{
+background:
+radial-gradient(circle at 14% 16%,rgba(73,57,117,.25),transparent 26%),
+radial-gradient(circle at 83% 21%,rgba(60,85,123,.3),transparent 24%),
+radial-gradient(circle at 60% 88%,rgba(116,76,143,.18),transparent 24%),
+linear-gradient(180deg,#081116 0%,#0b1019 36%,#070910 100%);
+}
+.shell{
+position:fixed;
+inset:0;
+pointer-events:none;
+background-image:
+linear-gradient(rgba(255,255,255,.022) 1px,transparent 1px),
+linear-gradient(90deg,rgba(255,255,255,.022) 1px,transparent 1px);
+background-size:72px 72px;
+mask-image:radial-gradient(circle at center,black 50%,transparent 90%);
+opacity:.45;
+}
+.grain{
+position:fixed;
+inset:0;
+pointer-events:none;
+opacity:.05;
+mix-blend-mode:soft-light;
+background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.78' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.app{
+height:100vh;
+min-height:680px;
+display:flex;
+flex-direction:column;
+padding:12px;
+gap:10px;
+}
+.top-bar{
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap:12px;
+padding:9px 16px;
+border:1px solid var(--line);
+border-radius:16px;
+background:rgba(10,18,24,.7);
+backdrop-filter:blur(14px);
+box-shadow:var(--shadow);
+flex-shrink:0;
+}
+.brand{
+display:flex;
+align-items:center;
+gap:12px;
+}
+.brand-copy h1{
+font-family:'Cormorant Garamond',serif;
+font-size:24px;
+font-weight:700;
+line-height:1;
+letter-spacing:.03em;
+}
+.brand-copy p{
+display:none;
+}
+.brand-copy strong{color:var(--text-soft);font-weight:500}
+.top-actions{
+display:flex;
+align-items:center;
+gap:8px;
+flex-wrap:nowrap;
+justify-content:flex-end;
+}
+.rice-tog{
+display:inline-flex;
+padding:3px;
+gap:3px;
+border-radius:999px;
+background:rgba(5,10,14,.7);
+border:1px solid var(--line);
+}
+.rice-btn{
+border:none;
+border-radius:999px;
+padding:7px 13px;
+font-family:'Sarabun',sans-serif;
+font-size:12px;
+font-weight:700;
+letter-spacing:.01em;
+cursor:pointer;
+color:var(--muted);
+background:transparent;
+transition:.25s ease;
+}
+.rice-btn.aw{
+color:#f8ddae;
+background:linear-gradient(135deg,rgba(38,75,54,.95),rgba(110,89,50,.9));
+box-shadow:inset 0 0 0 1px rgba(255,255,255,.06),0 10px 26px rgba(245,192,101,.18);
+}
+.rice-btn.aj{
+color:#f7d7f6;
+background:linear-gradient(135deg,rgba(42,39,77,.96),rgba(124,82,164,.9));
+box-shadow:inset 0 0 0 1px rgba(255,255,255,.05),0 10px 26px rgba(217,160,255,.18);
+}
+.action-btn,
+.import-btn{
+display:inline-flex;
+align-items:center;
+gap:6px;
+padding:7px 11px;
+border-radius:10px;
+border:1px solid var(--line);
+background:rgba(17,31,39,.7);
+color:var(--text-soft);
+font-family:'IBM Plex Mono',monospace;
+font-size:10px;
+cursor:pointer;
+transition:.2s ease;
+text-transform:uppercase;
+letter-spacing:.07em;
+}
+.action-btn:hover,
+.import-btn:hover{
+border-color:var(--line-strong);
+transform:translateY(-1px);
+}
+.import-btn input{display:none}
+.main{
+flex:1;
+min-height:0;
+display:grid;
+grid-template-columns:minmax(0,1fr) 340px;
+gap:10px;
+}
+.map-panel,
+.side-panel{
+min-height:0;
+border:1px solid var(--line);
+border-radius:26px;
+background:rgba(10,18,24,.68);
+backdrop-filter:blur(14px);
+box-shadow:var(--shadow);
+}
+.map-panel{
+display:flex;
+flex-direction:column;
+padding:8px;
+gap:6px;
+overflow:hidden;
+}
+.map-head{
+display:grid;
+grid-template-columns:minmax(0,1fr) repeat(3,minmax(120px,1fr));
+gap:10px;
+align-items:stretch;
+}
+.headline{
+padding:14px 16px;
+border-radius:18px;
+background:linear-gradient(145deg,rgba(15,29,35,.95),rgba(12,24,30,.76));
+border:1px solid var(--line);
+}
+.headline .eyebrow{
+font-family:'IBM Plex Mono',monospace;
+font-size:10px;
+letter-spacing:.18em;
+text-transform:uppercase;
+color:var(--muted);
+margin-bottom:8px;
+}
+.headline h2{
+font-family:'Cormorant Garamond',serif;
+font-size:28px;
+line-height:1;
+margin-bottom:8px;
+}
+.headline p{
+font-size:13px;
+line-height:1.5;
+color:var(--text-soft);
+max-width:54ch;
+}
+.stat-chip{
+display:flex;
+flex-direction:column;
+justify-content:space-between;
+padding:14px 16px;
+border-radius:18px;
+border:1px solid var(--line);
+background:linear-gradient(145deg,rgba(17,31,39,.88),rgba(13,23,29,.74));
+}
+.stat-chip .k{
+font-family:'IBM Plex Mono',monospace;
+font-size:10px;
+letter-spacing:.14em;
+text-transform:uppercase;
+color:var(--muted);
+}
+.stat-chip .v{
+font-family:'IBM Plex Mono',monospace;
+font-size:22px;
+font-weight:600;
+letter-spacing:-.02em;
+margin-top:12px;
+}
+.stat-chip .s{
+font-size:12px;
+line-height:1.45;
+color:var(--text-soft);
+margin-top:8px;
+}
+.map-wrap{
+position:relative;
+flex:1;
+min-height:520px;
+overflow:hidden;
+border-radius:24px;
+border:1px solid var(--line);
+background:
+radial-gradient(circle at 30% 18%,rgba(108,145,179,.17),transparent 26%),
+radial-gradient(circle at 71% 62%,rgba(35,71,88,.28),transparent 25%),
+linear-gradient(180deg,var(--ocean-3) 0%,var(--ocean-2) 32%,var(--ocean-1) 100%);
+}
+.map-wrap.drag-ready{cursor:grab}
+.map-wrap.dragging{cursor:grabbing}
+.map-wrap::before{
+content:"";
+position:absolute;
+inset:0;
+background:
+repeating-linear-gradient(0deg,transparent 0 43px,rgba(255,255,255,.035) 44px 45px),
+repeating-linear-gradient(90deg,transparent 0 43px,rgba(255,255,255,.03) 44px 45px);
+opacity:.32;
+pointer-events:none;
+}
+.map-wrap::after{
+content:"";
+position:absolute;
+inset:12px;
+border-radius:20px;
+border:1px solid rgba(255,255,255,.04);
+pointer-events:none;
+}
+#mapSvg{
+position:absolute;
+inset:0;
+width:100%;
+height:100%;
+display:block;
+touch-action:none;
+}
+.map-tools{
+position:absolute;
+top:18px;
+right:18px;
+display:flex;
+flex-direction:column;
+gap:8px;
+z-index:4;
+align-items:flex-end;
+}
+.map-tool-row{
+display:flex;
+align-items:center;
+gap:8px;
+}
+.zoom-pill,
+.map-info-chip,
+.map-btn{
+display:inline-flex;
+align-items:center;
+justify-content:center;
+min-height:36px;
+padding:0 12px;
+border-radius:12px;
+border:1px solid rgba(255,255,255,.08);
+background:rgba(9,18,24,.82);
+backdrop-filter:blur(10px);
+box-shadow:0 12px 34px rgba(0,0,0,.22);
+font-family:'IBM Plex Mono',monospace;
+font-size:10px;
+letter-spacing:.1em;
+text-transform:uppercase;
+color:var(--text-soft);
+}
+.zoom-pill{min-width:74px}
+.map-info-chip{
+max-width:220px;
+text-align:right;
+line-height:1.35;
+padding:9px 12px;
+}
+.map-btn{
+cursor:pointer;
+transition:.2s ease;
+}
+.map-btn:hover{
+transform:translateY(-1px);
+border-color:rgba(255,255,255,.14);
+}
+.map-btn.square{
+width:36px;
+padding:0;
+font-size:14px;
+font-weight:600;
+}
+.map-btn.wide{padding:0 14px}
+.inset-stack{
+position:absolute;
+right:18px;
+bottom:18px;
+display:grid;
+grid-template-columns:repeat(2,minmax(0,184px));
+gap:10px;
+z-index:4;
+}
+.inset-card{
+padding:10px;
+border-radius:16px;
+border:1px solid rgba(255,255,255,.08);
+background:rgba(9,18,24,.82);
+backdrop-filter:blur(12px);
+box-shadow:0 12px 34px rgba(0,0,0,.24);
+transition:.2s ease;
+}
+.inset-card.dim{
+opacity:.58;
+}
+.inset-card.active{
+border-color:rgba(245,192,101,.28);
+}
+body.jm .inset-card.active{
+border-color:rgba(236,186,217,.28);
+}
+.inset-head{
+display:flex;
+justify-content:space-between;
+gap:8px;
+align-items:flex-start;
+margin-bottom:8px;
+}
+.inset-head strong{
+font-family:'IBM Plex Mono',monospace;
+font-size:10px;
+letter-spacing:.1em;
+text-transform:uppercase;
+color:var(--text-soft);
+}
+.inset-head span{
+font-size:10px;
+color:var(--muted);
+text-align:right;
+}
+.inset-svg{
+width:100%;
+height:120px;
+display:block;
+border-radius:12px;
+background:linear-gradient(180deg,rgba(22,52,68,.18),rgba(6,15,19,.06));
+}
+.inset-frame{
+fill:rgba(255,255,255,.02);
+stroke:rgba(255,255,255,.06);
+stroke-width:1;
+}
+.inset-province{
+cursor:pointer;
+stroke:rgba(255,255,255,.18);
+stroke-width:.7;
+stroke-linejoin:round;
+transition:opacity .2s ease,stroke .2s ease,stroke-width .2s ease;
+}
+.inset-province:hover{
+stroke:var(--white-acc);
+stroke-width:1.3;
+}
+body.jm .inset-province:hover{stroke:var(--jasmine-acc)}
+.inset-province.sel{
+stroke:var(--white-acc);
+stroke-width:1.6;
+}
+body.jm .inset-province.sel{stroke:var(--jasmine-acc)}
+.inset-province.faded{opacity:.22}
+.sea-label{
+position:absolute;
+font-family:'IBM Plex Mono',monospace;
+font-size:10px;
+letter-spacing:.22em;
+text-transform:uppercase;
+color:rgba(217,229,239,.26);
+pointer-events:none;
+}
+.sea-label.andaman{left:26px;top:44%;transform:rotate(-90deg)}
+.sea-label.gulf{right:26px;top:47%;transform:rotate(-90deg)}
+.map-badge{
+position:absolute;
+top:18px;
+left:18px;
+display:flex;
+align-items:center;
+gap:8px;
+padding:9px 12px;
+border-radius:999px;
+background:rgba(10,19,24,.84);
+border:1px solid rgba(245,213,106,.34);
+color:var(--warn);
+font-family:'IBM Plex Mono',monospace;
+font-size:10px;
+letter-spacing:.1em;
+text-transform:uppercase;
+backdrop-filter:blur(10px);
+opacity:0;
+transform:translateY(-4px);
+transition:.25s ease;
+pointer-events:none;
+}
+.map-badge.show{
+opacity:1;
+transform:translateY(0);
+}
+.compass{
+position:absolute;
+right:20px;
+bottom:18px;
+display:flex;
+flex-direction:column;
+align-items:center;
+gap:6px;
+color:rgba(245,192,101,.72);
+font-family:'IBM Plex Mono',monospace;
+font-weight:700;
+font-size:14px;
+pointer-events:none;
+}
+body.jm .compass{color:rgba(236,186,217,.82)}
+.compass i{
+display:block;
+width:1px;
+height:28px;
+background:currentColor;
+opacity:.76;
+}
+.legend{
+display:flex;
+justify-content:space-between;
+align-items:center;
+gap:16px;
+padding:14px 18px;
+border-radius:18px;
+border:1px solid var(--line);
+background:rgba(13,23,29,.72);
+}
+.legend-bar-wrap{
+display:flex;
+align-items:center;
+gap:10px;
+min-width:0;
+}
+.legend-bar{
+width:min(280px,42vw);
+height:10px;
+border-radius:999px;
+border:1px solid rgba(255,255,255,.08);
+overflow:hidden;
+}
+.legend-label{
+font-family:'IBM Plex Mono',monospace;
+font-size:10px;
+letter-spacing:.08em;
+color:var(--text-soft);
+white-space:nowrap;
+}
+.legend-copy{
+font-family:'IBM Plex Mono',monospace;
+font-size:10px;
+letter-spacing:.12em;
+text-transform:uppercase;
+color:var(--muted);
+text-align:right;
+}
+.legend-copy span{color:var(--text-soft)}
+.side-panel{
+padding:10px;
+display:flex;
+flex-direction:column;
+gap:7px;
+overflow-y:auto;
+overflow-x:hidden;
+}
+.stat-row-panel{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:8px;
+padding:10px !important;
+}
+.stat-chip-mini{
+display:flex;
+flex-direction:column;
+justify-content:space-between;
+padding:10px 10px;
+border-radius:14px;
+border:1px solid var(--line);
+background:linear-gradient(145deg,rgba(17,31,39,.88),rgba(13,23,29,.74));
+}
+.stat-chip-mini .k{
+font-family:'IBM Plex Mono',monospace;
+font-size:8.5px;
+letter-spacing:.1em;
+text-transform:uppercase;
+color:var(--muted);
+line-height:1.3;
+}
+.stat-chip-mini .v{
+font-family:'IBM Plex Mono',monospace;
+font-size:15px;
+font-weight:600;
+letter-spacing:-.02em;
+margin-top:6px;
+white-space:nowrap;
+overflow:hidden;
+text-overflow:ellipsis;
+}
+.stat-chip-mini .s{
+font-size:10px;
+line-height:1.35;
+color:var(--text-soft);
+margin-top:4px;
+white-space:nowrap;
+overflow:hidden;
+text-overflow:ellipsis;
+}
+.panel-block{
+padding:10px 12px;
+border-radius:16px;
+border:1px solid var(--line);
+background:var(--card-soft);
+}
+.panel-label{
+font-family:'IBM Plex Mono',monospace;
+font-size:9.5px;
+letter-spacing:.15em;
+text-transform:uppercase;
+color:var(--muted);
+margin-bottom:8px;
+}
+.pill-row{
+display:flex;
+flex-wrap:wrap;
+gap:7px;
+}
+.pill{
+padding:6px 10px;
+border-radius:999px;
+border:1px solid var(--line);
+background:rgba(0,0,0,.14);
+color:var(--text-soft);
+font-family:'Sarabun',sans-serif;
+font-size:11px;
+font-weight:600;
+cursor:pointer;
+transition:.2s ease;
+}
+.pill:hover{
+border-color:var(--line-strong);
+transform:translateY(-1px);
+}
+.pill.on{
+border-color:rgba(245,192,101,.4);
+box-shadow:inset 0 0 0 1px rgba(245,192,101,.08);
+background:rgba(245,192,101,.11);
+color:#ffe8bf;
+}
+body.jm .pill.on{
+border-color:rgba(236,186,217,.42);
+box-shadow:inset 0 0 0 1px rgba(236,186,217,.08);
+background:rgba(236,186,217,.11);
+color:#ffe4fa;
+}
+.micro-copy{
+font-size:12px;
+line-height:1.55;
+color:var(--text-soft);
+}
+.rank-head{
+display:flex;
+justify-content:space-between;
+align-items:flex-end;
+gap:12px;
+margin-bottom:14px;
+}
+.rank-title{
+font-family:'Cormorant Garamond',serif;
+font-size:24px;
+line-height:.95;
+}
+.rank-sub{
+font-family:'IBM Plex Mono',monospace;
+font-size:10px;
+letter-spacing:.14em;
+text-transform:uppercase;
+color:var(--muted);
+}
+.rank-list{
+display:flex;
+flex-direction:column;
+gap:7px;
+}
+.rank-row{
+display:grid;
+grid-template-columns:36px minmax(0,88px) minmax(0,1fr) 70px;
+gap:8px;
+align-items:center;
+padding:8px 10px;
+border-radius:14px;
+cursor:pointer;
+transition:.22s ease;
+}
+.rank-row:hover{
+background:rgba(255,255,255,.03);
+transform:translateX(2px);
+}
+.rank-index,
+.rank-value{
+font-family:'IBM Plex Mono',monospace;
+font-size:10px;
+color:var(--muted);
+}
+.rank-name{
+font-size:12px;
+font-weight:600;
+white-space:nowrap;
+overflow:hidden;
+text-overflow:ellipsis;
+}
+.rank-track{
+height:16px;
+border-radius:999px;
+overflow:hidden;
+background:rgba(255,255,255,.05);
+border:1px solid rgba(255,255,255,.04);
+}
+.rank-fill{
+height:100%;
+border-radius:999px;
+transition:width .75s cubic-bezier(.18,.9,.2,1);
+}
+.detail-card{
+display:none;
+gap:12px;
+}
+.detail-card.show{
+display:grid;
+animation:fadeUp .28s ease;
+}
+@keyframes fadeUp{
+from{opacity:0;transform:translateY(10px)}
+to{opacity:1;transform:translateY(0)}
+}
+.detail-head{
+display:flex;
+justify-content:space-between;
+gap:12px;
+align-items:flex-start;
+}
+.detail-name{
+font-family:'Cormorant Garamond',serif;
+font-size:30px;
+line-height:.92;
+}
+.detail-en{
+font-family:'IBM Plex Mono',monospace;
+font-size:11px;
+letter-spacing:.08em;
+color:var(--muted);
+margin-top:6px;
+}
+.detail-rank{
+padding:8px 10px;
+border-radius:14px;
+border:1px solid var(--line);
+background:rgba(255,255,255,.03);
+font-family:'IBM Plex Mono',monospace;
+font-size:10px;
+color:var(--text-soft);
+white-space:nowrap;
+}
+.detail-grid{
+display:grid;
+grid-template-columns:repeat(2,minmax(0,1fr));
+gap:10px;
+}
+.rice-card{
+padding:12px;
+border-radius:18px;
+border:1px solid var(--line);
+background:rgba(255,255,255,.02);
+}
+.rice-card .t{
+font-family:'IBM Plex Mono',monospace;
+font-size:10px;
+letter-spacing:.14em;
+text-transform:uppercase;
+margin-bottom:10px;
+}
+.rice-card.white .t{color:#f6cf84}
+.rice-card.jasmine .t{color:#f1c7ef}
+.metric{
+display:flex;
+justify-content:space-between;
+gap:10px;
+padding:7px 0;
+border-top:1px dashed rgba(255,255,255,.08);
+}
+.metric:first-of-type{border-top:none;padding-top:0}
+.metric .m-label{
+font-size:12px;
+color:var(--text-soft);
+}
+.metric .m-value{
+font-family:'IBM Plex Mono',monospace;
+font-size:12px;
+color:var(--text);
+text-align:right;
+}
+.spark{
+padding:12px;
+border-radius:18px;
+border:1px solid var(--line);
+background:rgba(255,255,255,.02);
+}
+.spark-top{
+display:flex;
+justify-content:space-between;
+gap:12px;
+margin-bottom:8px;
+}
+.spark-top strong{
+font-family:'IBM Plex Mono',monospace;
+font-size:10px;
+letter-spacing:.14em;
+text-transform:uppercase;
+color:var(--muted);
+}
+.spark-top span{
+font-size:12px;
+color:var(--text-soft);
+}
+#sparkSvg{
+width:100%;
+height:58px;
+display:block;
+}
+.placeholder{
+padding:16px;
+border-radius:18px;
+border:1px dashed rgba(255,255,255,.1);
+background:rgba(255,255,255,.02);
+font-size:13px;
+line-height:1.6;
+color:var(--text-soft);
+}
+.province{
+cursor:pointer;
+stroke:rgba(255,255,255,.16);
+stroke-width:.7;
+stroke-linejoin:round;
+transition:opacity .2s ease,stroke .2s ease,stroke-width .2s ease,filter .2s ease,fill .2s ease;
+}
+.province:hover{
+stroke:var(--white-acc);
+stroke-width:1.4;
+filter:url(#hoverGlowWhite);
+}
+body.jm .province:hover{
+stroke:var(--jasmine-acc);
+filter:url(#hoverGlowJasmine);
+}
+.province.sel{
+stroke:var(--white-acc);
+stroke-width:2;
+filter:url(#selectGlowWhite);
+}
+body.jm .province.sel{
+stroke:var(--jasmine-acc);
+filter:url(#selectGlowJasmine);
+}
+.province.faded{
+opacity:.15;
+}
+.province-label text{
+font-family:'IBM Plex Mono',monospace;
+font-size:10px;
+letter-spacing:.06em;
+fill:rgba(244,240,231,.9);
+paint-order:stroke;
+stroke:rgba(6,15,19,.82);
+stroke-width:4;
+stroke-linejoin:round;
+pointer-events:none;
+}
+.province-label circle{
+fill:rgba(255,255,255,.8);
+stroke:rgba(8,18,24,.8);
+stroke-width:2;
+pointer-events:none;
+}
+.tooltip{
+position:fixed;
+z-index:20;
+pointer-events:none;
+min-width:240px;
+max-width:290px;
+padding:14px 16px;
+border-radius:18px;
+border:1px solid var(--line);
+background:rgba(9,17,22,.95);
+backdrop-filter:blur(14px);
+box-shadow:0 20px 60px rgba(0,0,0,.38);
+opacity:0;
+transform:translateY(8px);
+transition:.15s ease;
+}
+.tooltip.show{
+opacity:1;
+transform:translateY(0);
+}
+.tooltip .th{
+font-size:18px;
+font-weight:700;
+}
+.tooltip .en{
+font-family:'IBM Plex Mono',monospace;
+font-size:10px;
+letter-spacing:.08em;
+color:var(--muted);
+margin-top:2px;
+}
+.tooltip .type{
+margin-top:10px;
+padding-top:10px;
+border-top:1px dashed rgba(255,255,255,.08);
+font-family:'IBM Plex Mono',monospace;
+font-size:10px;
+letter-spacing:.08em;
+text-transform:uppercase;
+color:#f7d59a;
+}
+body.jm .tooltip .type{color:#f0c9f1}
+.tooltip .metric-name{
+font-size:11px;
+color:var(--text-soft);
+margin-top:8px;
+}
+.tooltip .value{
+font-family:'IBM Plex Mono',monospace;
+font-size:24px;
+line-height:1.1;
+margin-top:4px;
+}
+.tooltip .rank{
+font-size:11px;
+color:var(--muted);
+margin-top:6px;
+}
+.tooltip .yoy{
+font-family:'IBM Plex Mono',monospace;
+font-size:11px;
+margin-top:7px;
+}
+.tooltip .yoy.pos{color:var(--pos)}
+.tooltip .yoy.neg{color:var(--neg)}
+.tooltip .est-badge{
+display:inline-block;
+padding:2px 7px;
+border-radius:999px;
+background:rgba(245,192,101,.18);
+border:1px solid rgba(245,192,101,.35);
+color:#f5c065;
+font-family:'IBM Plex Mono',monospace;
+font-size:9.5px;
+letter-spacing:.08em;
+text-transform:uppercase;
+margin-top:6px;
+}
+.rice-card .est-note{
+font-size:10px;
+color:rgba(245,192,101,.75);
+font-style:italic;
+margin-top:3px;
+}
+.toast{
+position:fixed;
+left:50%;
+bottom:26px;
+transform:translateX(-50%) translateY(12px);
+padding:11px 14px;
+border-radius:999px;
+background:rgba(9,17,22,.92);
+border:1px solid var(--line);
+color:var(--text-soft);
+font-size:12px;
+opacity:0;
+pointer-events:none;
+transition:.2s ease;
+z-index:30;
+}
+.toast.show{
+opacity:1;
+transform:translateX(-50%) translateY(0);
+}
+@media (max-width:1280px){
+.main{grid-template-columns:minmax(0,1fr) clamp(290px,24vw,340px)}
+}
+@media (max-width:980px){
+body{overflow-y:auto}
+.app{height:auto;min-height:100vh;padding:12px}
+.top-bar{flex-direction:column;align-items:flex-start}
+.brand{align-items:flex-start;flex-direction:column;gap:10px}
+.top-actions{width:100%;justify-content:flex-start}
+.main{grid-template-columns:1fr;height:auto}
+.map-wrap{min-height:65vw}
+.stat-row-panel{grid-template-columns:repeat(3,1fr)}
+.legend{flex-direction:column;align-items:flex-start}
+.legend-copy{text-align:left}
+.inset-stack{grid-template-columns:repeat(2,minmax(0,170px))}
+}
+@media (max-width:700px){
+.app{padding:10px}
+.top-bar,.map-panel,.side-panel{border-radius:20px}
+.brand-copy h1{font-size:28px}
+.stat-row-panel{grid-template-columns:1fr 1fr;gap:6px}
+.detail-grid{grid-template-columns:1fr}
+.rank-row{grid-template-columns:30px minmax(0,80px) minmax(0,1fr) 56px}
+.legend-bar{width:min(200px,48vw)}
+.sea-label{display:none}
+.map-tools{top:auto;right:12px;bottom:12px}
+.map-info-chip{display:none}
+.inset-stack{display:none}
+}
+</style>
+</head>
+<body>
+<div class="shell"></div>
+<div class="grain"></div>
+
+<div class="app">
+  <header class="top-bar">
+    <div class="brand">
+      <div class="brand-copy">
+        <h1>ประเทศไทย <span style="font-size:22px;color:var(--muted)">Thailand</span></h1>
+        <p>แผนที่ข้าวนาปีรายจังหวัด &nbsp;·&nbsp; <em>Thailand Paddy Rice Intelligence</em> <strong>77 จังหวัด / 77 Changwat</strong></p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <div class="rice-tog">
+        <button class="rice-btn aw" data-rice="white" onclick="setRice('white')">🌾 ข้าวขาว <small style="opacity:.72;font-size:10px">White Rice</small></button>
+        <button class="rice-btn" data-rice="jasmine" onclick="setRice('jasmine')">🌸 หอมมะลิ <small style="opacity:.72;font-size:10px">Jasmine</small></button>
+      </div>
+      <label class="import-btn">📂 นำเข้า CSV / Import CSV<input type="file" accept=".csv" onchange="csvUp(event)"></label>
+      <button class="action-btn" onclick="csvDl()">📥 ส่งออก / Export Slice</button>
+    </div>
+  </header>
+
+  <main class="main">
+    <section class="map-panel">
+      <div class="map-wrap" id="mapWrap">
+        <div class="map-badge show" id="latestBadge">OAE จังหวัดล่าสุด 2567 / Latest</div>
+        <div class="map-tools">
+          <div class="map-tool-row">
+            <div class="zoom-pill" id="zoomValue">100%</div>
+            <button class="map-btn square" type="button" onclick="zoomIn()">+</button>
+            <button class="map-btn square" type="button" onclick="zoomOut()">−</button>
+          </div>
+          <button class="map-btn wide" type="button" onclick="resetCamera()">รีเซ็ตมุมมอง / Reset View</button>
+          <div class="map-info-chip" id="dataStatus">กำลังโหลดข้อมูล CSV… / Loading…</div>
+        </div>
+        <div class="sea-label andaman">Andaman Sea</div>
+        <div class="sea-label gulf">Gulf of Thailand</div>
+        <svg id="mapSvg" xmlns="http://www.w3.org/2000/svg" aria-label="Thailand provincial rice map"></svg>
+        <div class="inset-stack">
+          <div class="inset-card" id="metroInsetCard">
+            <div class="inset-head">
+              <strong>Bangkok Metro</strong>
+              <span>จังหวัดขนาดเล็ก</span>
+            </div>
+            <svg class="inset-svg" id="metroInsetSvg" xmlns="http://www.w3.org/2000/svg"></svg>
+          </div>
+          <div class="inset-card" id="southInsetCard">
+            <div class="inset-head">
+              <strong>Southern Peninsula</strong>
+              <span>คาบสมุทรใต้</span>
+            </div>
+            <svg class="inset-svg" id="southInsetSvg" xmlns="http://www.w3.org/2000/svg"></svg>
+          </div>
+        </div>
+        <div class="compass">N<i></i></div>
+      </div>
+
+      <div class="legend">
+        <div class="legend-bar-wrap">
+          <span class="legend-label" id="legendLow">ต่ำ / Low</span>
+          <div class="legend-bar" id="legendBar"></div>
+          <span class="legend-label" id="legendHigh">สูง / High</span>
+        </div>
+        <div class="legend-copy">
+          <span id="legendType">ข้าวขาว</span> ·
+          <span id="legendLayer">ผลผลิต</span> ·
+          <span id="legendUnit">ตัน/ปี</span>
+        </div>
+      </div>
+    </section>
+
+    <aside class="side-panel">
+      <!-- Stat chips -->
+      <section class="panel-block stat-row-panel">
+        <div class="stat-chip-mini">
+          <div class="k" id="scopeLabel">ขอบเขต / Scope</div>
+          <div class="v" id="scopeValue">77 จว.</div>
+          <div class="s" id="scopeSub">ทั้งประเทศ</div>
+        </div>
+        <div class="stat-chip-mini">
+          <div class="k" id="aggLabel">ผลรวม / Total</div>
+          <div class="v" id="aggValue">-</div>
+          <div class="s" id="aggSub">-</div>
+        </div>
+        <div class="stat-chip-mini">
+          <div class="k" id="leadLabel">อันดับ 1 / No.1</div>
+          <div class="v" id="leadValue">-</div>
+          <div class="s" id="leadSub">-</div>
+        </div>
+      </section>
+
+      <section class="panel-block">
+        <div class="panel-label">ชั้นข้อมูล / Data Layer</div>
+        <div class="pill-row">
+          <button class="pill on" data-layer="production" onclick="setLayer('production')">ผลผลิต (ตัน)<br><small style="font-size:9px;opacity:.7">Production (tons)</small></button>
+          <button class="pill" data-layer="yield" onclick="setLayer('yield')">ผลผลิตต่อไร่<br><small style="font-size:9px;opacity:.7">Yield (kg/rai)</small></button>
+          <button class="pill" data-layer="area" onclick="setLayer('area')">เนื้อที่เก็บเกี่ยว<br><small style="font-size:9px;opacity:.7">Harvested Area (rai)</small></button>
+          <button class="pill" data-layer="price" onclick="setLayer('price')">ราคา (บาท/ตัน)<br><small style="font-size:9px;opacity:.7">Price (THB/ton)</small></button>
+        </div>
+      </section>
+
+      <!-- hidden elements used by JS refs only -->
+      <span id="headlineTitle" style="display:none">แผนที่ข้าวรายจังหวัด</span>
+      <span id="headlineDesc" style="display:none"></span>
+
+      <section class="panel-block">
+        <div class="panel-label">ปีเพาะปลูก / Crop Year</div>
+        <div class="pill-row" id="yearButtons"></div>
+      </section>
+
+      <section class="panel-block">
+        <div class="panel-label">ภาค / Region Focus</div>
+        <div class="pill-row">
+          <button class="pill on" data-region="all" onclick="setReg('all')">ทั้งหมด <small style="opacity:.65;font-size:9px">All</small></button>
+          <button class="pill" data-region="north" onclick="setReg('north')">เหนือ <small style="opacity:.65;font-size:9px">North</small></button>
+          <button class="pill" data-region="northeast" onclick="setReg('northeast')">อีสาน <small style="opacity:.65;font-size:9px">NE</small></button>
+          <button class="pill" data-region="central" onclick="setReg('central')">กลาง <small style="opacity:.65;font-size:9px">Central</small></button>
+          <button class="pill" data-region="east" onclick="setReg('east')">ตะวันออก <small style="opacity:.65;font-size:9px">East</small></button>
+          <button class="pill" data-region="south" onclick="setReg('south')">ใต้ <small style="opacity:.65;font-size:9px">South</small></button>
+        </div>
+      </section>
+
+      <section class="panel-block">
+        <div class="panel-label">หมายเหตุแผนที่ / Map Notes</div>
+        <p class="micro-copy" id="dataSourceNote">กำลังโหลดชุดข้อมูลจริงแบบผสม โดยผลผลิต/ผลผลิตต่อไร่/เนื้อที่เก็บเกี่ยวใช้ OAE ระดับจังหวัดปี 2565-2567 และราคาข้าวเปลือกใช้รายงานสมาคมโรงสีข้าวไทยปี 2568-2569 เท่าที่มีรายจังหวัด<br><span style="color:var(--muted)">Loading mixed dataset. Production/yield/area: OAE 2565–2569 where available. Price: Thai Rice Millers Association reports 2568–2569.</span></p>
+      </section>
+
+      <section class="panel-block">
+        <div class="rank-head">
+          <div>
+            <div class="rank-title">Top 10 จังหวัด <span style="font-size:14px;color:var(--muted)">/ Provinces</span></div>
+            <div class="rank-sub" id="topSub">ข้าวขาว / ผลผลิต / 2567</div>
+          </div>
+        </div>
+        <div class="rank-list" id="topList"></div>
+      </section>
+
+      <section class="panel-block detail-card" id="detailCard">
+        <div class="detail-head">
+          <div>
+            <div class="detail-name" id="detailName">-</div>
+            <div class="detail-en" id="detailEn">-</div>
+          </div>
+          <div class="detail-rank" id="detailRank">#-</div>
+        </div>
+        <div class="detail-grid" id="detailGrid"></div>
+        <div class="spark">
+          <div class="spark-top">
+            <strong id="sparkTitle">แนวโน้มตามปี / Year Trend</strong>
+            <span id="sparkHint">เลือกตาม layer ปัจจุบัน / Current layer</span>
+          </div>
+          <svg id="sparkSvg" xmlns="http://www.w3.org/2000/svg"></svg>
+        </div>
+      </section>
+
+      <section class="panel-block placeholder" id="detailPlaceholder">
+        คลิกจังหวัดบนแผนที่หรือในรายการ Top 10 เพื่อดูรายละเอียดเปรียบเทียบระหว่างข้าวขาวและหอมมะลิ โดยแยกชัดเจนว่าค่าไหนมาจาก OAE และค่าไหนมาจากรายงานราคาข้าวเปลือกของสมาคมโรงสีข้าวไทย<br><span style="color:var(--muted);font-size:11px">Click a province on the map or in the Top 10 list to view details comparing white rice and jasmine rice across years and data sources.</span>
+      </section>
+    </aside>
+  </main>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+<div class="toast" id="toast"></div>
+
+<script src="./thailand-data.js"></script>
+<script src="./rice-data.js"></script>
+<script>
+const NM={
+"Mae Hong Son":"แม่ฮ่องสอน","Chumphon":"ชุมพร","Nakhon Si Thammarat":"นครศรีธรรมราช",
+"Phuket":"ภูเก็ต","Phangnga":"พังงา","Ranong":"ระนอง","Surat Thani":"สุราษฎร์ธานี",
+"Krabi":"กระบี่","Phatthalung":"พัทลุง","Satun":"สตูล","Songkhla":"สงขลา",
+"Trang":"ตรัง","Yala":"ยะลา","Chiang Rai":"เชียงราย","Chiang Mai":"เชียงใหม่",
+"Lampang":"ลำปาง","Lamphun":"ลำพูน","Nan":"น่าน","Phayao":"พะเยา",
+"Phrae":"แพร่","Phitsanulok":"พิษณุโลก","Sukhothai":"สุโขทัย","Uttaradit":"อุตรดิตถ์",
+"Kanchanaburi":"กาญจนบุรี","Kamphaeng Phet":"กำแพงเพชร","Phichit":"พิจิตร",
+"Phetchabun":"เพชรบูรณ์","Suphan Buri":"สุพรรณบุรี","Tak":"ตาก",
+"Uthai Thani":"อุทัยธานี","Ang Thong":"อ่างทอง","Chai Nat":"ชัยนาท",
+"Lop Buri":"ลพบุรี","Nakhon Nayok":"นครนายก","Prachin Buri":"ปราจีนบุรี",
+"Nakhon Sawan":"นครสวรรค์","Phra Nakhon Si Ayutthaya":"พระนครศรีอยุธยา",
+"Pathum Thani":"ปทุมธานี","Sing Buri":"สิงห์บุรี","Saraburi":"สระบุรี",
+"Bangkok Metropolis":"กรุงเทพมหานคร","Nonthaburi":"นนทบุรี",
+"Nakhon Pathom":"นครปฐม","Phetchaburi":"เพชรบุรี",
+"Prachuap Khiri Khan":"ประจวบคีรีขันธ์","Ratchaburi":"ราชบุรี",
+"Samut Prakan":"สมุทรปราการ","Samut Sakhon":"สมุทรสาคร",
+"Samut Songkhram":"สมุทรสงคราม","Si Sa Ket":"ศรีสะเกษ",
+"Ubon Ratchathani":"อุบลราชธานี","Amnat Charoen":"อำนาจเจริญ",
+"Yasothon":"ยโสธร","Chon Buri":"ชลบุรี","Chachoengsao":"ฉะเชิงเทรา",
+"Chanthaburi":"จันทบุรี","Sa Kaeo":"สระแก้ว","Rayong":"ระยอง",
+"Trat":"ตราด","Buri Ram":"บุรีรัมย์","Chaiyaphum":"ชัยภูมิ",
+"Khon Kaen":"ขอนแก่น","Kalasin":"กาฬสินธุ์","Maha Sarakham":"มหาสารคาม",
+"Nakhon Ratchasima":"นครราชสีมา","Roi Et":"ร้อยเอ็ด","Surin":"สุรินทร์",
+"Loei":"เลย","Nong Khai":"หนองคาย","Sakon Nakhon":"สกลนคร",
+"Udon Thani":"อุดรธานี","Nong Bua Lam Phu":"หนองบัวลำภู",
+"Nakhon Phanom":"นครพนม","Mukdahan":"มุกดาหาร",
+"Narathiwat":"นราธิวาส","Pattani":"ปัตตานี","Bueng Kan":"บึงกาฬ"
+};
+
+const REG={
+north:["Chiang Mai","Chiang Rai","Lamphun","Lampang","Phrae","Nan","Phayao","Mae Hong Son","Uttaradit","Tak","Sukhothai","Phitsanulok","Kamphaeng Phet","Phichit","Phetchabun","Nakhon Sawan","Uthai Thani"],
+northeast:["Nakhon Ratchasima","Khon Kaen","Udon Thani","Ubon Ratchathani","Buri Ram","Surin","Si Sa Ket","Roi Et","Maha Sarakham","Kalasin","Sakon Nakhon","Nakhon Phanom","Nong Khai","Mukdahan","Chaiyaphum","Yasothon","Amnat Charoen","Loei","Nong Bua Lam Phu","Bueng Kan"],
+central:["Bangkok Metropolis","Nonthaburi","Pathum Thani","Samut Prakan","Samut Sakhon","Samut Songkhram","Nakhon Pathom","Suphan Buri","Chai Nat","Sing Buri","Ang Thong","Lop Buri","Saraburi","Phra Nakhon Si Ayutthaya","Nakhon Nayok","Kanchanaburi","Ratchaburi","Phetchaburi","Prachuap Khiri Khan"],
+east:["Chon Buri","Rayong","Chanthaburi","Trat","Chachoengsao","Prachin Buri","Sa Kaeo"],
+south:["Nakhon Si Thammarat","Surat Thani","Chumphon","Ranong","Phangnga","Phuket","Krabi","Trang","Phatthalung","Songkhla","Satun","Pattani","Yala","Narathiwat"]
+};
+
+const PRODUCTION_YEARS=["2565","2566","2567","2568","2569"];
+const PRICE_YEARS=["2568","2569"];
+const ALL_YEARS=[...new Set([...PRODUCTION_YEARS,...PRICE_YEARS])];
+const RICE_TYPES=["white","jasmine"];
+const allEN=[...new Set(Object.values(REG).flat())];
+const METRO_PROVS=["Bangkok Metropolis","Nonthaburi","Pathum Thani","Samut Prakan","Samut Sakhon","Samut Songkhram","Nakhon Pathom","Phra Nakhon Si Ayutthaya"];
+const layerMeta={
+production:{th:"ผลผลิต",en:"Paddy Production",unit:"ตัน/ปี",unitShort:"ตัน",summary:"ผลผลิตรวม",summaryMode:"sum"},
+yield:{th:"ผลผลิตต่อไร่",en:"Yield",unit:"กก./ไร่ (เก็บเกี่ยว)",unitShort:"กก./ไร่",summary:"ผลผลิตเฉลี่ยต่อไร่",summaryMode:"weighted"},
+area:{th:"เนื้อที่เก็บเกี่ยว",en:"Harvested Area",unit:"ไร่",unitShort:"ไร่",summary:"เนื้อที่เก็บเกี่ยวรวม",summaryMode:"sum"},
+price:{th:"ราคา",en:"Paddy Price",unit:"บาท/ตัน",unitShort:"฿/ตัน",summary:"ราคาเฉลี่ยจังหวัดที่มีข้อมูล",summaryMode:"avg_nonzero"}
+};
+const riceMeta={
+white:{th:"ข้าวขาว",badge:"🌾",type:"ข้าวขาว / White rice"},
+jasmine:{th:"หอมมะลิ",badge:"🌸",type:"ข้าวหอมมะลิ / Jasmine wet-season paddy"}
+};
+
+const refs={
+mapWrap:document.getElementById("mapWrap"),
+mapSvg:document.getElementById("mapSvg"),
+tooltip:document.getElementById("tooltip"),
+topList:document.getElementById("topList"),
+yearButtons:document.getElementById("yearButtons"),
+zoomValue:document.getElementById("zoomValue"),
+dataStatus:document.getElementById("dataStatus"),
+dataSourceNote:document.getElementById("dataSourceNote"),
+metroInsetCard:document.getElementById("metroInsetCard"),
+metroInsetSvg:document.getElementById("metroInsetSvg"),
+southInsetCard:document.getElementById("southInsetCard"),
+southInsetSvg:document.getElementById("southInsetSvg"),
+detailCard:document.getElementById("detailCard"),
+detailPlaceholder:document.getElementById("detailPlaceholder"),
+detailName:document.getElementById("detailName"),
+detailEn:document.getElementById("detailEn"),
+detailRank:document.getElementById("detailRank"),
+detailGrid:document.getElementById("detailGrid"),
+sparkSvg:document.getElementById("sparkSvg"),
+sparkTitle:document.getElementById("sparkTitle"),
+latestBadge:document.getElementById("latestBadge"),
+legendBar:document.getElementById("legendBar"),
+legendLow:document.getElementById("legendLow"),
+legendHigh:document.getElementById("legendHigh"),
+legendType:document.getElementById("legendType"),
+legendLayer:document.getElementById("legendLayer"),
+legendUnit:document.getElementById("legendUnit"),
+headlineTitle:document.getElementById("headlineTitle"),
+headlineDesc:document.getElementById("headlineDesc"),
+scopeLabel:document.getElementById("scopeLabel"),
+scopeValue:document.getElementById("scopeValue"),
+scopeSub:document.getElementById("scopeSub"),
+aggLabel:document.getElementById("aggLabel"),
+aggValue:document.getElementById("aggValue"),
+aggSub:document.getElementById("aggSub"),
+leadLabel:document.getElementById("leadLabel"),
+leadValue:document.getElementById("leadValue"),
+leadSub:document.getElementById("leadSub"),
+topSub:document.getElementById("topSub"),
+sparkHint:document.getElementById("sparkHint"),
+toast:document.getElementById("toast")
+};
+
+let S={rice:"white",layer:"production",year:"2567",reg:"all",sel:null};
+let DATA={};
+let DATA_META={mode:"loading",label:"กำลังโหลดข้อมูล CSV",detail:"กำลังอ่านไฟล์ชุดเริ่มต้น"};
+let VIEW={
+  width:0,
+  height:0,
+  scale:1,
+  offsetX:0,
+  offsetY:0,
+  features:[],
+  featureMap:new Map(),
+  labelMap:new Map(),
+  camera:{k:1,x:0,y:0,min:1,max:7},
+  dragging:false,
+  didDrag:false,
+  draggedAt:0,
+  dragStart:null
+};
+let toastTimer=null;
+let mapInteractionsReady=false;
+
+function hsh(str){
+  let h=0;
+  for(let i=0;i<str.length;i+=1){h=((h<<5)-h)+str.charCodeAt(i);h|=0}
+  return Math.abs(h);
+}
+
+function srand(seed){
+  const x=Math.sin(seed)*10000;
+  return x-Math.floor(x);
+}
+
+function regionOf(en){
+  for(const [region,list] of Object.entries(REG)){
+    if(list.includes(en)) return region;
+  }
+  return "central";
+}
+
+function seedDataStructure(){
+  DATA={};
+  for(const en of allEN){
+    DATA[en]={};
+    for(const rice of RICE_TYPES){
+      DATA[en][rice]={};
+      ALL_YEARS.forEach(year=>{
+        DATA[en][rice][year]={
+          production:0,
+          yield:0,
+          area:0,
+          area_planted:0,
+          yield_planted:0,
+          price:0,
+          price_low:"",
+          price_high:"",
+          price_low_alt:"",
+          price_high_alt:"",
+          price_basis:"",
+          source:"",
+          source_title:"",
+          source_url:"",
+          source_note:"",
+          source_date:""
+        };
+      });
+    }
+  }
+}
+
+function buildFallbackData(){
+  if(Array.isArray(window.RICE_DATA_ROWS) && window.RICE_DATA_ROWS.length){
+    ingestRows(window.RICE_DATA_ROWS,{
+      mode:"embedded",
+      label:"Embedded Mixed Official Dataset",
+      detail:`โหลดจาก rice-data.js จำนวน ${fmtNumber(window.RICE_DATA_ROWS.length)} แถว`
+    });
+    return;
+  }
+  seedDataStructure();
+  DATA_META={
+    mode:"empty",
+    label:"Dataset unavailable",
+    detail:"โหลดทั้ง rice-data.csv และ rice-data.js ไม่สำเร็จ จึงยังไม่มีข้อมูลให้แสดง"
+  };
+}
+
+function applyRecord(record){
+  const en=(record.province_en||record.province||record.en||"").trim();
+  const rawRice=(record.rice_type||"").trim().toLowerCase();
+  const rice=rawRice==="napi" ? "white" : (rawRice||"white");
+  const year=(record.year||"").trim();
+  if(!DATA[en]||!DATA[en][rice]||!DATA[en][rice][year]) return false;
+  const target=DATA[en][rice][year];
+  const normalizedRecord={
+    ...record,
+    yield:record.yield,
+    area_planted:record.area_planted,
+    yield_planted:record.yield_planted
+  };
+  ["production","yield","area","area_planted","yield_planted","price","price_low","price_high","price_low_alt","price_high_alt"].forEach(layer=>{
+    const num=Number(normalizedRecord[layer]);
+    if(String(normalizedRecord[layer]??"").trim()!=="" && Number.isFinite(num)) target[layer]=num;
+  });
+  target.price_basis=(record.price_basis||"").trim();
+  target.source=(record.source||record.data_source||"csv_local").trim()||"csv_local";
+  target.source_title=(record.source_title||"").trim();
+  target.source_url=(record.source_url||"").trim();
+  target.source_note=(record.source_note||"").trim();
+  target.source_date=(record.source_date||"").trim();
+  return true;
+}
+
+function ingestRows(rows,meta={}){
+  seedDataStructure();
+  let applied=0;
+  rows.forEach(record=>{
+    if(applyRecord(record)) applied+=1;
+  });
+  DATA_META={
+    mode:meta.mode||"csv",
+    label:meta.label||"Local CSV",
+    detail:meta.detail||`อ่านข้อมูลจาก CSV แล้ว ${fmtNumber(applied)} เรคคอร์ด`
+  };
+  return applied;
+}
+
+async function fetchDefaultCSV(){
+  try{
+    const response=await fetch("./rice-data.csv",{cache:"no-store"});
+    if(!response.ok) throw new Error(`HTTP ${response.status}`);
+    const text=await response.text();
+    const rows=parseCSV(text);
+    if(rows.length<2) throw new Error("CSV empty");
+    const headers=rows[0].map(h=>String(h).trim());
+    const records=rows.slice(1).map(row=>{
+      const obj={};
+      headers.forEach((header,idx)=>obj[header]=String(row[idx]??"").trim());
+      return obj;
+    });
+    ingestRows(records,{
+      mode:"csv",
+      label:"OAE + Thai Rice Millers CSV",
+      detail:`โหลดจาก rice-data.csv จำนวน ${fmtNumber(records.length)} แถว`
+    });
+  }catch(error){
+    buildFallbackData();
+    console.warn("rice-data.csv load failed; using embedded mixed dataset", error);
+  }
+}
+
+function getVisibleProvinces(){
+  if(S.reg==="all") return allEN;
+  return REG[S.reg]||allEN;
+}
+
+function yearsForLayer(layer=S.layer){
+  return layer==="price" ? PRICE_YEARS : PRODUCTION_YEARS;
+}
+
+function entryOf(en,rice=S.rice,year=S.year){
+  return DATA[en]?.[rice]?.[year]||{};
+}
+
+function isEstimated(en,rice=S.rice,year=S.year){
+  const src=entryOf(en,rice,year).source||'';
+  return src==='estimated_trend';
+}
+
+function valueOf(en,rice=S.rice,year=S.year,layer=S.layer){
+  return Number(entryOf(en,rice,year)[layer]||0);
+}
+
+function hasLayerValue(en,rice=S.rice,year=S.year,layer=S.layer){
+  return valueOf(en,rice,year,layer)>0;
+}
+
+function priceRange(entry){
+  const low=Number(entry.price_low||0);
+  const high=Number(entry.price_high||0);
+  if(!low||!high) return "—";
+  return `${fmtNumber(low)}-${fmtNumber(high)}`;
+}
+
+function priceAltRange(entry){
+  const low=Number(entry.price_low_alt||0);
+  const high=Number(entry.price_high_alt||0);
+  if(!low||!high) return "";
+  return `${fmtNumber(low)}-${fmtNumber(high)}`;
+}
+
+function riceTypeDescription(rice=S.rice,layer=S.layer){
+  if(rice==="white"){
+    return layer==="price"
+      ? "ข้าวเปลือกเจ้า / White paddy"
+      : "ข้าวเจ้าอื่นๆ / Other white rice";
+  }
+  return layer==="price"
+    ? "ข้าวเปลือกเจ้าหอมมะลิ / Hom Mali paddy"
+    : "ข้าวเจ้าหอมมะลิ (ในพื้นที่ + นอกพื้นที่) / Hom Mali";
+}
+
+function metricDisplay(en,rice=S.rice,year=S.year,layer=S.layer){
+  if(layer==="price") return priceRange(entryOf(en,rice,year));
+  return fmtValue(valueOf(en,rice,year,layer),layer);
+}
+
+function getPalette(){
+  return S.rice==="white"
+    ? {lo:[36,75,54],mid:[154,131,73],hi:[245,192,101],accent:"#ff8f4d"}
+    : {lo:[42,39,77],mid:[134,93,178],hi:[236,186,217],accent:"#d9a0ff"};
+}
+
+function rgb(arr){return `rgb(${arr[0]},${arr[1]},${arr[2]})`}
+
+function lerp(a,b,t){
+  return [
+    Math.round(a[0]+(b[0]-a[0])*t),
+    Math.round(a[1]+(b[1]-a[1])*t),
+    Math.round(a[2]+(b[2]-a[2])*t)
+  ];
+}
+
+function scaleT(v,min,max){
+  if(max<=min) return .5;
+  const ratio=(v-min)/(max-min);
+  if(S.layer==="yield") return Math.pow(ratio,.88);
+  return Math.pow(ratio,.62);
+}
+
+function fmtNumber(n){
+  if(!Number.isFinite(n)) return "—";
+  return n.toLocaleString("th-TH");
+}
+
+function fmtCompact(n){
+  if(!Number.isFinite(n)) return "—";
+  if(S.layer==="price") return fmtNumber(Math.round(n));
+  if(n>=1e6) return `${(n/1e6).toFixed(1)}M`;
+  if(n>=1e4) return `${Math.round(n/1e3)}K`;
+  return fmtNumber(Math.round(n));
+}
+
+function fmtValue(n,layer=S.layer){
+  if(!Number.isFinite(n)) return "—";
+  return fmtNumber(Math.round(n));
+}
+
+function sum(arr){return arr.reduce((acc,v)=>acc+v,0)}
+function average(arr){return arr.length?sum(arr)/arr.length:0}
+
+function aggregateFor(provinces,rice,year,layer,mode){
+  if(mode==="weighted"){
+    const production=sum(provinces.map(en=>valueOf(en,rice,year,"production")));
+    const area=sum(provinces.map(en=>valueOf(en,rice,year,"area")));
+    return area ? (production*1000)/area : 0;
+  }
+  if(mode==="avg_nonzero"){
+    const values=provinces.map(en=>valueOf(en,rice,year,layer)).filter(v=>v>0);
+    return values.length ? average(values) : 0;
+  }
+  const values=provinces.map(en=>valueOf(en,rice,year,layer));
+  return mode==="avg" ? average(values) : sum(values);
+}
+
+function yoyForProvinces(provinces,rice,year,layer,mode){
+  const prevYear=previousYear(year);
+  if(!prevYear) return null;
+  if(mode==="avg_nonzero"){
+    const overlap=provinces.filter(en=>valueOf(en,rice,year,layer)>0 && valueOf(en,rice,prevYear,layer)>0);
+    if(!overlap.length) return null;
+    const now=average(overlap.map(en=>valueOf(en,rice,year,layer)));
+    const prev=average(overlap.map(en=>valueOf(en,rice,prevYear,layer)));
+    return prev ? ((now-prev)/prev)*100 : null;
+  }
+  const now=aggregateFor(provinces,rice,year,layer,mode);
+  const prev=aggregateFor(provinces,rice,prevYear,layer,mode);
+  if(!prev) return null;
+  return ((now-prev)/prev)*100;
+}
+
+function toRad(deg){return deg*Math.PI/180}
+
+function mercatorRaw(lon,lat){
+  const lambda=toRad(lon);
+  const safeLat=Math.max(-85,Math.min(85,lat));
+  const phi=toRad(safeLat);
+  return [lambda,-Math.log(Math.tan(Math.PI/4+phi/2))];
+}
+
+function walkCoords(geometry,callback){
+  if(geometry.type==="Polygon"){
+    geometry.coordinates.forEach(ring=>ring.forEach(pt=>callback(pt)));
+    return;
+  }
+  if(geometry.type==="MultiPolygon"){
+    geometry.coordinates.forEach(poly=>poly.forEach(ring=>ring.forEach(pt=>callback(pt))));
+  }
+}
+
+function computeFitContext(features,width,height,pad){
+  let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+  features.forEach(feature=>{
+    walkCoords(feature.geometry,([lon,lat])=>{
+      const [x,y]=mercatorRaw(lon,lat);
+      if(x<minX) minX=x;
+      if(x>maxX) maxX=x;
+      if(y<minY) minY=y;
+      if(y>maxY) maxY=y;
+    });
+  });
+  const w=maxX-minX;
+  const h=maxY-minY;
+  const scale=Math.min((width-pad*2)/w,(height-pad*2)/h);
+  const offsetX=(width-w*scale)/2-minX*scale;
+  const offsetY=(height-h*scale)/2-minY*scale;
+  return {scale,offsetX,offsetY,width,height};
+}
+
+function fitFeatures(features,width,height){
+  const pad=width<700?24:36;
+  const ctx=computeFitContext(features,width,height,pad);
+  VIEW.scale=ctx.scale;
+  VIEW.offsetX=ctx.offsetX;
+  VIEW.offsetY=ctx.offsetY;
+}
+
+function projectWithContext(ctx,pt){
+  const [x,y]=mercatorRaw(pt[0],pt[1]);
+  return [x*ctx.scale+ctx.offsetX,y*ctx.scale+ctx.offsetY];
+}
+
+function project(pt){
+  return projectWithContext(VIEW,pt);
+}
+
+function ringPath(ring){
+  return ring.map((pt,idx)=>{
+    const [x,y]=project(pt);
+    return `${idx===0?"M":"L"}${x.toFixed(2)},${y.toFixed(2)}`;
+  }).join(" ")+" Z";
+}
+
+function featurePath(feature){
+  if(feature.geometry.type==="Polygon"){
+    return feature.geometry.coordinates.map(ringPath).join(" ");
+  }
+  return feature.geometry.coordinates.map(poly=>poly.map(ringPath).join(" ")).join(" ");
+}
+
+function ringPathWithContext(ctx,ring){
+  return ring.map((pt,idx)=>{
+    const [x,y]=projectWithContext(ctx,pt);
+    return `${idx===0?"M":"L"}${x.toFixed(2)},${y.toFixed(2)}`;
+  }).join(" ")+" Z";
+}
+
+function featurePathWithContext(ctx,feature){
+  if(feature.geometry.type==="Polygon"){
+    return feature.geometry.coordinates.map(ring=>ringPathWithContext(ctx,ring)).join(" ");
+  }
+  return feature.geometry.coordinates.map(poly=>poly.map(ring=>ringPathWithContext(ctx,ring)).join(" ")).join(" ");
+}
+
+function projectedArea(points){
+  let area=0;
+  for(let i=0;i<points.length;i+=1){
+    const [x1,y1]=points[i];
+    const [x2,y2]=points[(i+1)%points.length];
+    area+=x1*y2-x2*y1;
+  }
+  return area/2;
+}
+
+function centroidOfRing(ring){
+  const pts=ring.map(project);
+  let area=0,cx=0,cy=0;
+  for(let i=0;i<pts.length;i+=1){
+    const [x1,y1]=pts[i];
+    const [x2,y2]=pts[(i+1)%pts.length];
+    const cross=x1*y2-x2*y1;
+    area+=cross;
+    cx+=(x1+x2)*cross;
+    cy+=(y1+y2)*cross;
+  }
+  if(Math.abs(area)<1e-6){
+    const xs=pts.map(p=>p[0]);
+    const ys=pts.map(p=>p[1]);
+    return [average(xs),average(ys)];
+  }
+  return [cx/(3*area),cy/(3*area)];
+}
+
+function labelPoint(feature){
+  const geom=feature.geometry;
+  let bestRing=null;
+  let bestArea=0;
+  const polygons=geom.type==="Polygon" ? [geom.coordinates] : geom.coordinates;
+  polygons.forEach(poly=>{
+    const ring=poly[0];
+    const area=Math.abs(projectedArea(ring.map(project)));
+    if(area>bestArea){
+      bestArea=area;
+      bestRing=ring;
+    }
+  });
+  return bestRing ? centroidOfRing(bestRing) : [0,0];
+}
+
+function mapDefs(){
+  const palette=getPalette();
+  return `
+  <defs>
+    <filter id="coastShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="rgba(0,0,0,.35)"/>
+    </filter>
+    <filter id="hoverGlowWhite" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="${palette.accent}" flood-opacity=".55"/>
+    </filter>
+    <filter id="hoverGlowJasmine" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#d9a0ff" flood-opacity=".55"/>
+    </filter>
+    <filter id="selectGlowWhite" x="-60%" y="-60%" width="220%" height="220%">
+      <feDropShadow dx="0" dy="0" stdDeviation="7" flood-color="#ff8f4d" flood-opacity=".72"/>
+    </filter>
+    <filter id="selectGlowJasmine" x="-60%" y="-60%" width="220%" height="220%">
+      <feDropShadow dx="0" dy="0" stdDeviation="7" flood-color="#d9a0ff" flood-opacity=".72"/>
+    </filter>
+    <linearGradient id="oceanTint" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="rgba(149,211,255,.14)"/>
+      <stop offset="100%" stop-color="rgba(7,17,22,0)"/>
+    </linearGradient>
+    <linearGradient id="coastStroke" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="rgba(255,255,255,.18)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,.03)"/>
+    </linearGradient>
+  </defs>`;
+}
+
+function featuredLabels(){
+  if(S.sel) return [S.sel];
+  if(VIEW.width<980) return [];
+  const visible=getVisibleProvinces();
+  if(S.reg==="all"){
+    return Object.keys(REG).map(region=>{
+      return REG[region]
+        .filter(en=>visible.includes(en) && hasLayerValue(en))
+        .map(en=>({en,v:valueOf(en)}))
+        .sort((a,b)=>b.v-a.v)[0];
+    }).filter(Boolean).map(item=>item.en);
+  }
+  return visible
+    .filter(en=>hasLayerValue(en))
+    .map(en=>({en,v:valueOf(en)}))
+    .sort((a,b)=>b.v-a.v)
+    .slice(0,3)
+    .map(item=>item.en);
+}
+
+function renderMap(){
+  const featurePaths=[];
+  const silhouette=[];
+  VIEW.labelMap.clear();
+  VIEW.features.forEach(feature=>{
+    const en=feature.properties.name;
+    const d=featurePath(feature);
+    featurePaths.push(`<path class="province" data-en="${en}" d="${d}"></path>`);
+    silhouette.push(`<path d="${d}"></path>`);
+    VIEW.labelMap.set(en,labelPoint(feature));
+  });
+  const labelMarkup=featuredLabels().map(en=>{
+    const point=VIEW.labelMap.get(en);
+    if(!point) return "";
+    const [x,y]=point;
+    return `<g class="province-label" data-label="${en}" transform="translate(${x.toFixed(2)} ${y.toFixed(2)})">
+      <circle r="4.4"></circle>
+      <text x="8" y="-8">${NM[en]||en}</text>
+    </g>`;
+  }).join("");
+
+  refs.mapSvg.setAttribute("viewBox",`0 0 ${VIEW.width} ${VIEW.height}`);
+  refs.mapSvg.innerHTML=`
+    ${mapDefs()}
+    <rect width="${VIEW.width}" height="${VIEW.height}" fill="url(#oceanTint)" opacity=".8"></rect>
+    <g id="viewportGroup">
+      <g filter="url(#coastShadow)" opacity=".9">
+        <g fill="rgba(246,236,220,.09)" stroke="url(#coastStroke)" stroke-width="1.6" stroke-linejoin="round">${silhouette.join("")}</g>
+      </g>
+      <g id="provinceLayer">${featurePaths.join("")}</g>
+      <g id="labelLayer">${labelMarkup}</g>
+    </g>
+  `;
+  VIEW.viewportGroup=refs.mapSvg.querySelector("#viewportGroup");
+  applyCameraTransform();
+
+  refs.mapSvg.querySelectorAll(".province").forEach(path=>{
+    const en=path.dataset.en;
+    path.addEventListener("mouseenter",event=>showTooltip(event,en));
+    path.addEventListener("mousemove",moveTooltip);
+    path.addEventListener("mouseleave",hideTooltip);
+    path.addEventListener("click",()=>{
+      if(Date.now()-VIEW.draggedAt<220){
+        return;
+      }
+      selectProvince(en);
+    });
+  });
+  applyMapColors();
+  renderInsets();
+}
+
+function clampCamera(){
+  const extraX=Math.max(0,(VIEW.width*(VIEW.camera.k-1))/2+80);
+  const extraY=Math.max(0,(VIEW.height*(VIEW.camera.k-1))/2+60);
+  VIEW.camera.x=Math.max(-extraX,Math.min(extraX,VIEW.camera.x));
+  VIEW.camera.y=Math.max(-extraY,Math.min(extraY,VIEW.camera.y));
+}
+
+function applyCameraTransform(){
+  if(!VIEW.viewportGroup) return;
+  clampCamera();
+  VIEW.viewportGroup.setAttribute("transform",`translate(${VIEW.camera.x.toFixed(2)} ${VIEW.camera.y.toFixed(2)}) scale(${VIEW.camera.k.toFixed(3)})`);
+  refs.zoomValue.textContent=`${Math.round(VIEW.camera.k*100)}%`;
+}
+
+function zoomBy(factor,cx=VIEW.width/2,cy=VIEW.height/2){
+  const prev=VIEW.camera.k;
+  const next=Math.max(VIEW.camera.min,Math.min(VIEW.camera.max,prev*factor));
+  if(Math.abs(next-prev)<0.001) return;
+  const ratio=next/prev;
+  VIEW.camera.x=cx-(cx-VIEW.camera.x)*ratio;
+  VIEW.camera.y=cy-(cy-VIEW.camera.y)*ratio;
+  VIEW.camera.k=next;
+  applyCameraTransform();
+}
+
+function zoomIn(){zoomBy(1.22)}
+function zoomOut(){zoomBy(1/1.22)}
+
+function resetCamera(){
+  VIEW.camera.x=0;
+  VIEW.camera.y=0;
+  VIEW.camera.k=1;
+  applyCameraTransform();
+}
+
+function initMapInteractions(){
+  if(mapInteractionsReady) return;
+  mapInteractionsReady=true;
+  refs.mapWrap.classList.add("drag-ready");
+  refs.mapSvg.addEventListener("wheel",event=>{
+    event.preventDefault();
+    const rect=refs.mapSvg.getBoundingClientRect();
+    const x=event.clientX-rect.left;
+    const y=event.clientY-rect.top;
+    zoomBy(event.deltaY<0?1.16:1/1.16,x,y);
+  },{passive:false});
+  refs.mapSvg.addEventListener("pointerdown",event=>{
+    if(event.button!==0) return;
+    VIEW.dragging=true;
+    VIEW.didDrag=false;
+    VIEW.dragStart={x:event.clientX,y:event.clientY,tx:VIEW.camera.x,ty:VIEW.camera.y};
+    refs.mapWrap.classList.add("dragging");
+    refs.mapSvg.setPointerCapture(event.pointerId);
+  });
+  refs.mapSvg.addEventListener("pointermove",event=>{
+    if(!VIEW.dragging||!VIEW.dragStart) return;
+    const dx=event.clientX-VIEW.dragStart.x;
+    const dy=event.clientY-VIEW.dragStart.y;
+    if(Math.abs(dx)>3||Math.abs(dy)>3) VIEW.didDrag=true;
+    VIEW.camera.x=VIEW.dragStart.tx+dx;
+    VIEW.camera.y=VIEW.dragStart.ty+dy;
+    applyCameraTransform();
+  });
+  const stopDrag=event=>{
+    if(event?.pointerId!==undefined && refs.mapSvg.hasPointerCapture(event.pointerId)){
+      refs.mapSvg.releasePointerCapture(event.pointerId);
+    }
+    if(VIEW.didDrag) VIEW.draggedAt=Date.now();
+    VIEW.dragging=false;
+    VIEW.didDrag=false;
+    VIEW.dragStart=null;
+    refs.mapWrap.classList.remove("dragging");
+  };
+  refs.mapSvg.addEventListener("pointerup",stopDrag);
+  refs.mapSvg.addEventListener("pointercancel",stopDrag);
+  refs.mapSvg.addEventListener("dblclick",event=>{
+    event.preventDefault();
+    resetCamera();
+  });
+}
+
+function renderInset(svgEl,cardEl,featureNames,active){
+  const rect=svgEl.getBoundingClientRect();
+  const width=Math.round(rect.width||184);
+  const height=Math.round(rect.height||120);
+  if(!width||!height) return;
+  const features=featureNames
+    .map(name=>VIEW.featureMap.get(name))
+    .filter(Boolean);
+  const ctx=computeFitContext(features,width,height,12);
+  const visible=getVisibleProvinces();
+  const vals=featureNames.map(en=>valueOf(en)).filter(v=>v>0);
+  const min=vals.length?Math.min(...vals):0;
+  const max=vals.length?Math.max(...vals):1;
+  const palette=getPalette();
+  svgEl.setAttribute("viewBox",`0 0 ${width} ${height}`);
+  svgEl.innerHTML=`
+    <rect class="inset-frame" x=".5" y=".5" width="${width-1}" height="${height-1}" rx="12" ry="12"></rect>
+    <g>
+      ${features.map(feature=>{
+        const en=feature.properties.name;
+        const inside=visible.includes(en);
+        const hasData=hasLayerValue(en);
+        const t=scaleT(valueOf(en),min,max);
+        const tone=t<.55 ? lerp(palette.lo,palette.mid,t/.55) : lerp(palette.mid,palette.hi,(t-.55)/.45);
+        const cls=`inset-province${S.sel===en?" sel":""}${inside&&hasData?"":" faded"}`;
+        return `<path class="${cls}" data-en="${en}" fill="${inside&&hasData?rgb(tone):"rgba(255,255,255,.04)"}" d="${featurePathWithContext(ctx,feature)}"></path>`;
+      }).join("")}
+    </g>
+  `;
+  svgEl.querySelectorAll(".inset-province").forEach(path=>{
+    const en=path.dataset.en;
+    path.addEventListener("click",event=>{
+      event.stopPropagation();
+      if(!getVisibleProvinces().includes(en)){
+        S.reg=regionOf(en);
+        rerender();
+      }
+      selectProvince(en);
+    });
+  });
+  cardEl.classList.toggle("active",active);
+  cardEl.classList.toggle("dim",!active);
+}
+
+function renderInsets(){
+  const metroActive=S.reg==="all"||S.reg==="central"||METRO_PROVS.includes(S.sel);
+  const southActive=S.reg==="all"||S.reg==="south"||REG.south.includes(S.sel);
+  renderInset(refs.metroInsetSvg,refs.metroInsetCard,METRO_PROVS,metroActive);
+  renderInset(refs.southInsetSvg,refs.southInsetCard,REG.south,southActive);
+}
+
+function applyMapColors(){
+  const visible=getVisibleProvinces();
+  const vals=visible.map(en=>valueOf(en)).filter(v=>v>0);
+  const min=vals.length?Math.min(...vals):0;
+  const max=vals.length?Math.max(...vals):1;
+  const palette=getPalette();
+  refs.mapSvg.querySelectorAll(".province").forEach(path=>{
+    const en=path.dataset.en;
+    const inside=visible.includes(en);
+    const hasData=hasLayerValue(en);
+    path.classList.toggle("faded",!inside || !hasData);
+    path.classList.toggle("sel",S.sel===en);
+    if(!inside){
+      path.setAttribute("fill","rgba(255,255,255,.05)");
+      return;
+    }
+    if(!hasData){
+      path.setAttribute("fill","rgba(255,255,255,.08)");
+      return;
+    }
+    const t=scaleT(valueOf(en),min,max);
+    const tone=t<.55
+      ? lerp(palette.lo,palette.mid,t/.55)
+      : lerp(palette.mid,palette.hi,(t-.55)/.45);
+    path.setAttribute("fill",rgb(tone));
+  });
+  renderMapLabels();
+  updateLegend(min,max);
+}
+
+function renderMapLabels(){
+  const layer=refs.mapSvg.querySelector("#labelLayer");
+  if(!layer) return;
+  const visible=getVisibleProvinces();
+  const labels=featuredLabels().filter(en=>visible.includes(en));
+  layer.innerHTML=labels.map(en=>{
+    const point=VIEW.labelMap.get(en);
+    if(!point) return "";
+    const [x,y]=point;
+    const yShift=S.sel===en ? -12 : -8;
+    return `<g class="province-label" transform="translate(${x.toFixed(2)} ${y.toFixed(2)})">
+      <circle r="${S.sel===en?5.5:4.4}"></circle>
+      <text x="9" y="${yShift}">${NM[en]||en}</text>
+    </g>`;
+  }).join("");
+}
+
+function updateLegend(min,max){
+  const palette=getPalette();
+  refs.legendBar.style.background=`linear-gradient(90deg,${rgb(palette.lo)} 0%,${rgb(palette.mid)} 52%,${rgb(palette.hi)} 100%)`;
+  refs.legendLow.textContent=`${fmtCompact(min)} ${layerMeta[S.layer].unitShort}`;
+  refs.legendHigh.textContent=`${fmtCompact(max)} ${layerMeta[S.layer].unitShort}`;
+  refs.legendType.textContent=riceMeta[S.rice].th;
+  refs.legendLayer.textContent=layerMeta[S.layer].th;
+  refs.legendUnit.textContent=layerMeta[S.layer].unit;
+  refs.latestBadge.classList.add("show");
+  const isEstYear = S.layer!=="price" && S.year>="2568";
+  refs.latestBadge.textContent=S.layer==="price"
+    ? `ราคาอ้างอิง / Price Ref: ${entryOf(getVisibleProvinces().find(en=>hasLayerValue(en))||allEN[0]).source_date||S.year}`
+    : isEstYear
+      ? `📊 ประมาณการ ${S.year} / Trend Estimate (avg YoY 2565–2567)`
+      : `OAE ข้อมูลปี ${S.year} / Crop Year ${S.year}`;
+  refs.latestBadge.style.borderColor=isEstYear ? 'rgba(245,192,101,.55)' : '';
+}
+
+function updateDataSourceUI(){
+  refs.dataStatus.textContent=DATA_META.label;
+  const visible=getVisibleProvinces();
+  const covered=visible.filter(en=>hasLayerValue(en)).length;
+  const isEstYear=S.layer!=="price" && S.year>="2568";
+  if(isEstYear){
+    refs.dataSourceNote.innerHTML=`<strong style="color:#f5c065">📊 ข้อมูลปี ${S.year} เป็นการประมาณการ / Estimated Data</strong><br>คำนวณจากค่าเฉลี่ย YoY Growth Rate ปี 2565–2567 รายจังหวัด (capped ±30%/ปี)<br>${S.year==='2568' ? 'เนื้อที่เพาะปลูกปรับด้วย scale factor จากข้อมูลกรมการข้าว ณ 2 มี.ค. 2569 (58.5 ล้านไร่ทั้งประเทศ)' : 'ประมาณการต่อเนื่องจากปี 2568'}<br><span style="color:var(--muted)">Trend estimation: avg 2-year YoY (2565→2566→2567) applied to ${S.year}. ${S.year==='2568'?'Area_planted calibrated using Department of Rice 2568 regional planted-area data (58.5M rai national).':''} Not official OAE data — replace via Import CSV when official data is released.</span>`;
+    return;
+  }
+  if(S.layer==="price"){
+    const any=visible.map(en=>entryOf(en)).find(item=>Number(item.price||0)>0);
+    const dateText=any?.source_date||S.year;
+    refs.dataSourceNote.textContent=`${DATA_META.detail} ราคาใช้รายงานรายวันของสมาคมโรงสีข้าวไทย ณ ${dateText}; ค่าลงสีแผนที่ใช้ค่ากลางของช่วงราคา ความชื้น 15%; แสดงเฉพาะจังหวัดที่มีราคาในรายงาน (${covered}/${visible.length} จังหวัด)`;
+    return;
+  }
+  refs.dataSourceNote.textContent=`${DATA_META.detail} ผลผลิต/ผลผลิตต่อไร่/เนื้อที่เก็บเกี่ยว ใช้ตารางที่ 1.4 จากเอกสาร “สถิติการเกษตรของประเทศไทย ปี 2567” ของ OAE; ชุดรายจังหวัดทางการที่ใช้ในหน้าจอนี้มีปี 2565-2567; ข้าวขาวอ้างอิงหมวด “ข้าวเจ้าอื่นๆ”; หอมมะลิรวม “ในพื้นที่ + นอกพื้นที่”`;
+}
+
+function previousYear(year){
+  const years=yearsForLayer();
+  const idx=years.indexOf(year);
+  return idx>0 ? years[idx-1] : null;
+}
+
+function updateSummary(){
+  const visible=getVisibleProvinces();
+  const covered=visible.filter(en=>hasLayerValue(en));
+  const meta=layerMeta[S.layer];
+  const mode=meta.summaryMode;
+  const agg=aggregateFor(visible,S.rice,S.year,S.layer,mode);
+  const leader=covered
+    .map(en=>({en,v:valueOf(en)}))
+    .sort((a,b)=>b.v-a.v)[0];
+  const prevYear=previousYear(S.year);
+  let yoyText="ยังไม่มีฐานเทียบ / No prior year";
+  if(prevYear){
+    const yoy=yoyForProvinces(visible,S.rice,S.year,S.layer,mode);
+    if(Number.isFinite(yoy)){
+      const dir=yoy>=0 ? "เพิ่มขึ้น ▲" : "ลดลง ▼";
+      const dirEN=yoy>=0 ? "▲ up" : "▼ down";
+      yoyText=`${dir} ${Math.abs(yoy).toFixed(1)}% เทียบ ${prevYear} · ${dirEN} ${Math.abs(yoy).toFixed(1)}% vs ${prevYear}`;
+    }
+  }
+  refs.scopeLabel.textContent="ขอบเขต / Scope";
+  refs.scopeValue.textContent=S.layer==="price" ? `${covered.length}/${visible.length} จังหวัด` : `${visible.length} จว.`;
+  refs.scopeSub.textContent=S.layer==="price"
+    ? "จังหวัดที่มีราคา / Provinces with price"
+    : (S.reg==="all" ? "ทั้งประเทศ / Nationwide" : `ภาค${thaiRegionName(S.reg)} / ${S.reg.charAt(0).toUpperCase()+S.reg.slice(1)}`);
+  refs.aggLabel.textContent=`${meta.th} / ${meta.en}`;
+  refs.aggValue.textContent=fmtCompact(agg);
+  refs.aggSub.textContent=`${meta.unit} · ${yoyText}`;
+  refs.leadLabel.textContent="อันดับ 1 / Leader";
+  refs.leadValue.textContent=leader ? (NM[leader.en]||leader.en) : "—";
+  refs.leadSub.textContent=leader ? `${S.layer==="price" ? priceRange(entryOf(leader.en)) : fmtValue(leader.v)} ${meta.unitShort}` : "—";
+  refs.headlineTitle.textContent=`แผนที่${riceMeta[S.rice].th}รายจังหวัด`;
+  refs.headlineDesc.textContent=S.layer==="price"
+    ? `แผนที่ fit ตามสัดส่วนประเทศไทยและใช้รายงานราคาข้าวเปลือกรายวันของสมาคมโรงสีข้าวไทย โดยไฮไลต์ราคาของ ${riceTypeDescription(S.rice,S.layer)} ปี ${S.year}`
+    : `แผนที่ fit ตามสัดส่วนประเทศไทยและใช้ข้อมูลทางการ OAE ระดับจังหวัดสำหรับ ${riceTypeDescription(S.rice,S.layer)} โดยไฮไลต์ ${layerMeta[S.layer].th} ปี ${S.year} ในมุมมอง${S.reg==="all"?"ทั้งประเทศ":`ภาค${thaiRegionName(S.reg)}`}`;
+}
+
+function updateTopList(){
+  const visible=getVisibleProvinces();
+  const meta=layerMeta[S.layer];
+  refs.topSub.textContent=`${riceMeta[S.rice].th} (${S.rice==='white'?'White':'Jasmine'}) · ${meta.th} / ${meta.en} · ปี ${S.year}`;
+  const items=visible
+    .filter(en=>hasLayerValue(en))
+    .map(en=>({en,v:valueOf(en)}))
+    .sort((a,b)=>b.v-a.v)
+    .slice(0,10);
+  const max=items[0]?.v||1;
+  const palette=getPalette();
+  refs.topList.innerHTML=items.map((item,idx)=>{
+    const pct=Math.max(6,(item.v/max)*100);
+    const tone=idx===0 ? palette.hi : lerp(palette.lo,palette.hi,Math.max(.16,item.v/max));
+    return `<div class="rank-row" onclick="selectProvince('${item.en.replace(/'/g,"\\'")}')">
+      <div class="rank-index">#${idx+1}</div>
+      <div class="rank-name">${NM[item.en]||item.en}</div>
+      <div class="rank-track"><div class="rank-fill" style="width:${pct.toFixed(1)}%;background:${rgb(tone)}"></div></div>
+      <div class="rank-value">${fmtCompact(item.v)}</div>
+    </div>`;
+  }).join("");
+}
+
+function currentRank(en){
+  const visible=getVisibleProvinces();
+  const sorted=visible
+    .filter(name=>hasLayerValue(name))
+    .map(name=>({en:name,v:valueOf(name)}))
+    .sort((a,b)=>b.v-a.v);
+  const idx=sorted.findIndex(item=>item.en===en);
+  return idx>=0 ? idx+1 : null;
+}
+
+function selectProvince(en){
+  S.sel=en;
+  hideTooltip();
+  refs.detailCard.classList.add("show");
+  refs.detailPlaceholder.style.display="none";
+  refs.detailName.textContent=NM[en]||en;
+  refs.detailEn.textContent=en;
+  const covered=getVisibleProvinces().filter(name=>hasLayerValue(name)).length;
+  const rank=currentRank(en);
+  refs.detailRank.textContent=rank ? `อันดับ #${rank} / Rank #${rank} of ${covered||getVisibleProvinces().length}` : "ไม่มีข้อมูล / No data";
+
+  const metrics=["production","yield","area","price"];
+  const cardHtml=RICE_TYPES.map(rice=>{
+    const entryForRice=entryOf(en,rice,S.year);
+    const estNote=isEstimated(en,rice,S.year)
+      ? `<div class="est-note">📊 ประมาณการแนวโน้ม (avg YoY 2565–2567) · Trend Estimate</div>`
+      : "";
+    return `<div class="rice-card ${rice}">
+      <div class="t">${riceMeta[rice].badge} ${riceMeta[rice].th}</div>
+      ${estNote}
+      ${metrics.map(layer=>{
+        const entry=entryOf(en,rice,S.year);
+        const mainValue=layer==="price"
+          ? `${priceRange(entry)} <small>${layerMeta[layer].unitShort}</small>`
+          : `${fmtValue(valueOf(en,rice,S.year,layer),layer)} <small>${layerMeta[layer].unitShort}</small>`;
+        const subValue=layer==="price" && priceAltRange(entry)
+          ? `<div class="m-label" style="margin-top:2px">ความชื้น 25%: ${priceAltRange(entry)}</div>`
+          : "";
+        return `<div class="metric">
+          <div class="m-label">${layerMeta[layer].th}</div>
+          <div class="m-value">${mainValue}</div>
+          ${subValue}
+        </div>`;
+      }).join("")}
+    </div>`;
+  }).join("");
+  refs.detailGrid.innerHTML=cardHtml;
+  refs.sparkHint.textContent=S.layer==="price"
+    ? "ค่ากลางของช่วงราคา / Midpoint of price range"
+    : `${layerMeta[S.layer].th} / ${layerMeta[S.layer].en}`;
+  drawSpark(en);
+  applyMapColors();
+  refs.detailCard.scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+
+function drawSpark(en){
+  const years=yearsForLayer();
+  const values=years.map(year=>valueOf(en,S.rice,year,S.layer));
+  const w=320,h=58,pad=9;
+  const min=Math.min(...values)*.92;
+  const max=Math.max(...values)*1.08;
+  const palette=getPalette();
+  const pts=values.map((val,idx)=>{
+    const x=pad+(idx/(values.length-1))*(w-pad*2);
+    const y=h-pad-((val-min)/(max-min||1))*(h-pad*2);
+    return [x,y];
+  });
+  const path=pts.map((pt,idx)=>`${idx===0?"M":"L"}${pt[0].toFixed(2)},${pt[1].toFixed(2)}`).join(" ");
+  refs.sparkTitle.textContent=`แนวโน้ม ${years[0]}→${years[years.length-1]} / Trend ${years[0]}→${years[years.length-1]}`;
+  refs.sparkSvg.setAttribute("viewBox",`0 0 ${w} ${h}`);
+  refs.sparkSvg.innerHTML=`
+    <path d="M${pad},${h-pad} L${w-pad},${h-pad}" stroke="rgba(255,255,255,.08)" stroke-width="1"/>
+    <path d="${path}" fill="none" stroke="${rgb(palette.hi)}" stroke-width="2.4" stroke-linecap="round"/>
+    ${pts.map((pt,idx)=>`
+      <circle cx="${pt[0]}" cy="${pt[1]}" r="3" fill="${rgb(palette.hi)}"/>
+      <text x="${pt[0]}" y="${h-2}" text-anchor="middle" fill="rgba(255,255,255,.42)" font-size="7" font-family="IBM Plex Mono">${years[idx]}</text>
+    `).join("")}
+  `;
+}
+
+function thaiRegionName(region){
+  return ({
+    north:"เหนือ",
+    northeast:"อีสาน",
+    central:"กลาง",
+    east:"ตะวันออก",
+    south:"ใต้",
+    all:"ทั้งหมด"
+  })[region]||region;
+}
+
+function tooltipContent(en){
+  const value=valueOf(en);
+  const rank=currentRank(en);
+  const prevYear=previousYear(S.year);
+  let yoyHTML="";
+  if(prevYear){
+    const prev=valueOf(en,S.rice,prevYear,S.layer);
+    if(prev){
+      const yoy=((value-prev)/prev)*100;
+      const cls=yoy>=0 ? "pos" : "neg";
+      const arrow=yoy>=0 ? "▲" : "▼";
+      yoyHTML=`<div class="yoy ${cls}">${arrow} ${Math.abs(yoy).toFixed(1)}% YoY</div>`;
+    }
+  }
+  const entry=entryOf(en);
+  const est=S.layer!=="price" && isEstimated(en);
+  const estBadge=est ? `<div class="est-badge">📊 ประมาณการ · Estimated (Trend)</div>` : "";
+  const valueHTML=S.layer==="price"
+    ? `${priceRange(entry)} <small style="font-size:12px;color:var(--muted)">${layerMeta[S.layer].unitShort}</small>${priceAltRange(entry)?`<div class="rank" style="margin-top:4px">ความชื้น 25%: ${priceAltRange(entry)}</div>`:""}`
+    : `${fmtValue(value)} <small style="font-size:12px;color:var(--muted)">${layerMeta[S.layer].unitShort}</small>`;
+  return `
+    <div class="th">${NM[en]||en}</div>
+    <div class="en">${en}</div>
+    <div class="type">${riceTypeDescription(S.rice,S.layer)}</div>
+    <div class="metric-name">${layerMeta[S.layer].th} / ${layerMeta[S.layer].en}</div>
+    <div class="value">${valueHTML}</div>
+    <div class="rank">${rank ? `อันดับ #${rank} / Rank #${rank} of ${getVisibleProvinces().filter(name=>hasLayerValue(name)).length||getVisibleProvinces().length}` : "ไม่มีข้อมูล / No data"}</div>
+    ${yoyHTML}
+    ${estBadge}
+  `;
+}
+
+function showTooltip(event,en){
+  refs.tooltip.innerHTML=tooltipContent(en);
+  refs.tooltip.classList.add("show");
+  moveTooltip(event);
+}
+
+function moveTooltip(event){
+  const pad=18;
+  const rect=refs.tooltip.getBoundingClientRect();
+  let left=event.clientX+18;
+  let top=event.clientY-14;
+  if(left+rect.width>window.innerWidth-pad) left=event.clientX-rect.width-18;
+  if(top+rect.height>window.innerHeight-pad) top=window.innerHeight-rect.height-pad;
+  if(top<pad) top=pad;
+  refs.tooltip.style.left=`${left}px`;
+  refs.tooltip.style.top=`${top}px`;
+}
+
+function hideTooltip(){
+  refs.tooltip.classList.remove("show");
+}
+
+function updateControls(){
+  document.body.classList.toggle("jm",S.rice==="jasmine");
+  renderYearButtons();
+  document.querySelectorAll("[data-rice]").forEach(btn=>{
+    btn.className="rice-btn";
+    if(btn.dataset.rice===S.rice) btn.classList.add(S.rice==="white"?"aw":"aj");
+  });
+  document.querySelectorAll("[data-layer]").forEach(btn=>btn.classList.toggle("on",btn.dataset.layer===S.layer));
+  document.querySelectorAll("[data-year]").forEach(btn=>btn.classList.toggle("on",btn.dataset.year===S.year));
+  document.querySelectorAll("[data-region]").forEach(btn=>btn.classList.toggle("on",btn.dataset.region===S.reg));
+}
+
+function renderYearButtons(){
+  const years=yearsForLayer();
+  refs.yearButtons.innerHTML=years.map((year,idx)=>{
+    const suffix=idx===years.length-1 ? " ล่าสุด" : "";
+    const note=S.layer!=="price" && year>="2568" ? " <small style='font-size:9px;opacity:.6'>est.</small>" : "";
+    return `<button class="pill${year===S.year?" on":""}" data-year="${year}" onclick="setYear('${year}')">${year}${suffix}${note}</button>`;
+  }).join("");
+}
+
+function rerender(){
+  updateControls();
+  applyMapColors();
+  renderInsets();
+  updateSummary();
+  updateTopList();
+  updateDataSourceUI();
+  if(S.sel){
+    if(!getVisibleProvinces().includes(S.sel)){
+      S.sel=null;
+      refs.detailCard.classList.remove("show");
+      refs.detailPlaceholder.style.display="";
+    }else{
+      selectProvince(S.sel);
+    }
+  }else{
+    renderMapLabels();
+  }
+}
+
+function resize(){
+  const rect=refs.mapWrap.getBoundingClientRect();
+  VIEW.width=Math.max(320,Math.round(rect.width));
+  VIEW.height=Math.max(320,Math.round(rect.height));
+  fitFeatures(VIEW.features,VIEW.width,VIEW.height);
+  renderMap();
+  updateSummary();
+  updateTopList();
+  updateDataSourceUI();
+  applyCameraTransform();
+  if(S.sel) selectProvince(S.sel);
+}
+
+function setRice(rice){
+  S.rice=rice;
+  rerender();
+}
+
+function setLayer(layer){
+  S.layer=layer;
+  if(!yearsForLayer(layer).includes(S.year)){
+    S.year=yearsForLayer(layer)[yearsForLayer(layer).length-1];
+  }
+  rerender();
+}
+
+function setYear(year){
+  S.year=year;
+  rerender();
+}
+
+function setReg(region){
+  S.reg=region;
+  if(S.sel && !getVisibleProvinces().includes(S.sel)) S.sel=null;
+  rerender();
+}
+
+function parseCSV(text){
+  const rows=[];
+  let row=[],cell="",inside=false;
+  for(let i=0;i<text.length;i+=1){
+    const ch=text[i];
+    const next=text[i+1];
+    if(ch==='"'){
+      if(inside&&next==='"'){cell+='"';i+=1}
+      else inside=!inside;
+      continue;
+    }
+    if(ch===','&&!inside){
+      row.push(cell);
+      cell="";
+      continue;
+    }
+    if((ch==='\n'||ch==='\r')&&!inside){
+      if(ch==='\r'&&next==='\n') i+=1;
+      if(cell.length||row.length){
+        row.push(cell);
+        rows.push(row);
+      }
+      row=[];
+      cell="";
+      continue;
+    }
+    cell+=ch;
+  }
+  if(cell.length||row.length){
+    row.push(cell);
+    rows.push(row);
+  }
+  return rows.filter(r=>r.some(v=>String(v).trim()!==""));
+}
+
+function csvUp(event){
+  const file=event.target.files?.[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const rows=parseCSV(String(ev.target?.result||""));
+    if(rows.length<2){
+      toast("ไม่พบข้อมูลในไฟล์ CSV");
+      return;
+    }
+    const headers=rows[0].map(h=>String(h).trim());
+    let applied=0;
+    for(let i=1;i<rows.length;i+=1){
+      const record={};
+      headers.forEach((header,idx)=>record[header]=String(rows[i][idx]??"").trim());
+      if(record.production||record.yield||record.price||record.area){
+        if(applyRecord(record)) applied+=1;
+        continue;
+      }
+      const en=(record.province_en||record.province||record.en||"").trim();
+      const rawRice=(record.rice_type||S.rice).trim().toLowerCase();
+      const rice=rawRice==="napi" ? "white" : rawRice;
+      const year=(record.year||S.year).trim();
+      const layer=(record.layer||S.layer).trim().toLowerCase();
+      const num=Number(record.value);
+      if(DATA[en]?.[rice]?.[year]&&["production","yield","area","price"].includes(layer)&&String(record.value??"").trim()!==""&&Number.isFinite(num)){
+        DATA[en][rice][year][layer]=num;
+        DATA[en][rice][year].source="import_csv";
+        applied+=1;
+      }
+    }
+    if(applied){
+      DATA_META={
+        mode:"import",
+        label:"Imported CSV Merge",
+        detail:`ผสานข้อมูลจากไฟล์ ${file.name} แล้ว ${fmtNumber(applied)} แถว/ค่า`
+      };
+      rerender();
+      toast(`อัปเดตข้อมูล ${applied} ค่าเรียบร้อย`);
+    }else{
+      toast("รูปแบบ CSV ยังไม่ตรงกับคอลัมน์ที่รองรับ");
+    }
+    event.target.value="";
+  };
+  reader.readAsText(file);
+}
+
+function csvDl(){
+  const visible=getVisibleProvinces();
+  const rows=[
+    ["province_th","province_en","region","rice_type","year","production","yield","area","area_planted","yield_planted","price","price_low","price_high","price_low_alt","price_high_alt","price_basis","source","source_title","source_url","source_note","source_date"]
+  ];
+  visible.forEach(en=>{
+    const entry=entryOf(en,S.rice,S.year);
+    rows.push([
+      NM[en]||en,
+      en,
+      regionOf(en),
+      S.rice,
+      S.year,
+      valueOf(en,S.rice,S.year,"production"),
+      valueOf(en,S.rice,S.year,"yield"),
+      valueOf(en,S.rice,S.year,"area"),
+      entry.area_planted||0,
+      entry.yield_planted||0,
+      entry.price||0,
+      entry.price_low||"",
+      entry.price_high||"",
+      entry.price_low_alt||"",
+      entry.price_high_alt||"",
+      entry.price_basis||"",
+      entry.source||DATA_META.mode,
+      entry.source_title||"",
+      entry.source_url||"",
+      entry.source_note||"",
+      entry.source_date||""
+    ]);
+  });
+  const csv=rows.map(row=>row.map(cell=>{
+    const value=String(cell ?? "");
+    return /[",\n]/.test(value) ? `"${value.replace(/"/g,'""')}"` : value;
+  }).join(",")).join("\n");
+  const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8;"});
+  const link=document.createElement("a");
+  link.href=URL.createObjectURL(blob);
+  link.download=`rice-map_${S.rice}_${S.year}_${S.reg}.csv`;
+  link.click();
+  setTimeout(()=>URL.revokeObjectURL(link.href),500);
+}
+
+function toast(message){
+  refs.toast.textContent=message;
+  refs.toast.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>refs.toast.classList.remove("show"),2200);
+}
+
+async function init(){
+  if(!window.THAILAND_GEO?.features?.length){
+    toast("โหลดข้อมูลแผนที่ไม่สำเร็จ");
+    return;
+  }
+  await fetchDefaultCSV();
+  VIEW.features=window.THAILAND_GEO.features.filter(feature=>allEN.includes(feature.properties.name));
+  VIEW.featureMap=new Map(VIEW.features.map(feature=>[feature.properties.name,feature]));
+  updateControls();
+  initMapInteractions();
+  resize();
+  window.addEventListener("resize",resize);
+}
+
+window.setRice=setRice;
+window.setLayer=setLayer;
+window.setYear=setYear;
+window.setReg=setReg;
+window.zoomIn=zoomIn;
+window.zoomOut=zoomOut;
+window.resetCamera=resetCamera;
+window.csvUp=csvUp;
+window.csvDl=csvDl;
+
+init();
+</script>
+</body>
+</html>
