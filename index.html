@@ -956,6 +956,17 @@ z-index:30;
 opacity:1;
 transform:translateX(-50%) translateY(0);
 }
+.credit{
+position:fixed;
+bottom:10px;
+left:16px;
+font-family:'IBM Plex Mono',monospace;
+font-size:10px;
+letter-spacing:.08em;
+color:rgba(255,255,255,.22);
+pointer-events:none;
+z-index:5;
+}
 @media (max-width:1280px){
 .main{grid-template-columns:minmax(0,1fr) clamp(290px,24vw,340px)}
 }
@@ -2425,5 +2436,6 @@ window.csvDl=csvDl;
 
 init();
 </script>
+<div class="credit">Created by Sponlapat</div>
 </body>
 </html>
