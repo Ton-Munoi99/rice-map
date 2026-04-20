@@ -1178,6 +1178,7 @@ body{overflow-y:auto}
           <button class="pill" data-layer="yield" onclick="setLayer('yield')">ผลผลิตต่อไร่<br><small style="font-size:9px;opacity:.7">Yield (kg/rai)</small></button>
           <button class="pill" data-layer="area" onclick="setLayer('area')">เนื้อที่เก็บเกี่ยว<br><small style="font-size:9px;opacity:.7">Harvested Area (rai)</small></button>
           <button class="pill" data-layer="price" onclick="setLayer('price')">ราคาที่โรงสีรับซื้อ (บาท/ตัน)<br><small style="font-size:9px;opacity:.7">Mill Purchase Price (THB/ton)</small></button>
+          <button class="pill" data-layer="households" onclick="setLayer('households')">ครัวเรือนเกษตรกร<br><small style="font-size:9px;opacity:.7">Farmer Households</small></button>
         </div>
       </section>
 
@@ -1305,7 +1306,8 @@ const layerMeta={
 production:{th:"ผลผลิต",en:"Paddy Production",unit:"ตัน/ปี",unitShort:"ตัน",summary:"ผลผลิตรวม",summaryMode:"sum"},
 yield:{th:"ผลผลิตต่อไร่",en:"Yield",unit:"กก./ไร่ (เก็บเกี่ยว)",unitShort:"กก./ไร่",summary:"ผลผลิตเฉลี่ยต่อไร่",summaryMode:"weighted"},
 area:{th:"เนื้อที่เก็บเกี่ยว",en:"Harvested Area",unit:"ไร่",unitShort:"ไร่",summary:"เนื้อที่เก็บเกี่ยวรวม",summaryMode:"sum"},
-price:{th:"ราคาที่โรงสีรับซื้อ",en:"Mill Purchase Price",unit:"บาท/ตัน (ราคาโรงสี)",unitShort:"฿/ตัน",summary:"ราคาเฉลี่ยจังหวัดที่มีข้อมูล",summaryMode:"avg_nonzero"}
+price:{th:"ราคาที่โรงสีรับซื้อ",en:"Mill Purchase Price",unit:"บาท/ตัน (ราคาโรงสี)",unitShort:"฿/ตัน",summary:"ราคาเฉลี่ยจังหวัดที่มีข้อมูล",summaryMode:"avg_nonzero"},
+households:{th:"ครัวเรือนเกษตรกร",en:"Farmer Households",unit:"ครัวเรือน (ปี 2566)",unitShort:"ครัวเรือน",summary:"ครัวเรือนเกษตรกรรวม",summaryMode:"sum"}
 };
 const riceMeta={
 white:{th:"ข้าวขาว",badge:"🌾",type:"ข้าวขาว / White rice"},
@@ -1512,6 +1514,7 @@ function getVisibleProvinces(){
 }
 
 function yearsForLayer(layer=S.layer){
+  if(layer==="households") return ["2566"];
   return layer==="price" ? PRICE_YEARS : PRODUCTION_YEARS;
 }
 
@@ -1524,7 +1527,14 @@ function isEstimated(en,rice=S.rice,year=S.year){
   return src==='estimated_trend';
 }
 
+function householdValueOf(en){
+  const thName=NM[en];
+  if(!thName||!window.PROVINCE_HOUSEHOLDS) return 0;
+  return Number(window.PROVINCE_HOUSEHOLDS[thName]||0);
+}
+
 function valueOf(en,rice=S.rice,year=S.year,layer=S.layer){
+  if(layer==="households") return householdValueOf(en);
   return Number(entryOf(en,rice,year)[layer]||0);
 }
 
@@ -1593,6 +1603,11 @@ function fmtNumber(n){
 function fmtCompact(n){
   if(!Number.isFinite(n)) return "—";
   if(S.layer==="price") return fmtNumber(Math.round(n));
+  if(S.layer==="households"){
+    if(n>=1e6) return `${(n/1e6).toFixed(2)}M`;
+    if(n>=1e4) return `${Math.round(n/1e3)}K`;
+    return fmtNumber(Math.round(n));
+  }
   if(n>=1e6) return `${(n/1e6).toFixed(1)}M`;
   if(n>=1e4) return `${Math.round(n/1e3)}K`;
   return fmtNumber(Math.round(n));
@@ -2054,12 +2069,14 @@ function updateLegend(min,max){
   refs.legendLayer.textContent=layerMeta[S.layer].th;
   refs.legendUnit.textContent=layerMeta[S.layer].unit;
   refs.latestBadge.classList.add("show");
-  const isEstYear = S.layer!=="price" && S.year>="2568";
+  const isEstYear = S.layer!=="price" && S.layer!=="households" && S.year>="2568";
   refs.latestBadge.textContent=S.layer==="price"
     ? `ราคาอ้างอิง / Price Ref: ${entryOf(getVisibleProvinces().find(en=>hasLayerValue(en))||allEN[0]).source_date||S.year}`
-    : isEstYear
-      ? `📊 ประมาณการ ${S.year} / Trend Estimate (avg YoY 2565–2567)`
-      : `OAE ข้อมูลปี ${S.year} / Crop Year ${S.year}`;
+    : S.layer==="households"
+      ? `👨‍🌾 ครัวเรือนเกษตรกร / OAE 2566`
+      : isEstYear
+        ? `📊 ประมาณการ ${S.year} / Trend Estimate (avg YoY 2565–2567)`
+        : `OAE ข้อมูลปี ${S.year} / Crop Year ${S.year}`;
   refs.latestBadge.style.borderColor=isEstYear ? 'rgba(245,192,101,.55)' : '';
 }
 
@@ -2168,6 +2185,15 @@ function selectProvince(en){
   refs.detailRank.textContent=rank ? `อันดับ #${rank} / Rank #${rank} of ${covered||getVisibleProvinces().length}` : "ไม่มีข้อมูล / No data";
 
   const metrics=["production","yield","area","price"];
+  const householdsHtml=window.PROVINCE_HOUSEHOLDS ? `
+    <div class="rice-card" style="grid-column:1/-1;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2)">
+      <div class="t">👨‍🌾 ครัวเรือนเกษตรกร (รวมทุกสินค้า)</div>
+      <div class="metric">
+        <div class="m-label">จำนวนครัวเรือนเกษตรกร / Farmer Households</div>
+        <div class="m-value">${fmtNumber(householdValueOf(en))} <small>${layerMeta.households.unitShort}</small></div>
+      </div>
+      <div style="font-size:9px;color:var(--muted);margin-top:4px">ที่มา: สำนักงานเศรษฐกิจการเกษตร (OAE) · ปีอ้างอิง 2566 · ครอบคลุมทุกประเภทการเกษตร</div>
+    </div>` : "";
   const cardHtml=RICE_TYPES.map(rice=>{
     const entryForRice=entryOf(en,rice,S.year);
     const estNote=isEstimated(en,rice,S.year)
@@ -2192,7 +2218,7 @@ function selectProvince(en){
       }).join("")}
     </div>`;
   }).join("");
-  refs.detailGrid.innerHTML=cardHtml;
+  refs.detailGrid.innerHTML=householdsHtml+cardHtml;
   refs.sparkHint.textContent=S.layer==="price"
     ? "ค่ากลางของช่วงราคา / Midpoint of price range"
     : `${layerMeta[S.layer].th} / ${layerMeta[S.layer].en}`;
@@ -2257,15 +2283,19 @@ function tooltipContent(en){
   const valueHTML=S.layer==="price"
     ? `${priceRange(entry)} <small style="font-size:12px;color:var(--muted)">${layerMeta[S.layer].unitShort}</small>${priceAltRange(entry)?`<div class="rank" style="margin-top:4px">ความชื้น 25%: ${priceAltRange(entry)}</div>`:""}`
     : `${fmtValue(value)} <small style="font-size:12px;color:var(--muted)">${layerMeta[S.layer].unitShort}</small>`;
+  const householdsLine=S.layer!=="households" && window.PROVINCE_HOUSEHOLDS
+    ? `<div style="font-size:10px;color:var(--muted);margin-top:4px">👨‍🌾 ครัวเรือนเกษตรกร: ${fmtNumber(householdValueOf(en))} ครัวเรือน (OAE 2566)</div>`
+    : "";
   return `
     <div class="th">${NM[en]||en}</div>
     <div class="en">${en}</div>
-    <div class="type">${riceTypeDescription(S.rice,S.layer)}</div>
+    <div class="type">${S.layer==="households" ? "ครัวเรือนเกษตรกร / Farmer Households (OAE 2566)" : riceTypeDescription(S.rice,S.layer)}</div>
     <div class="metric-name">${layerMeta[S.layer].th} / ${layerMeta[S.layer].en}</div>
     <div class="value">${valueHTML}</div>
     <div class="rank">${rank ? `อันดับ #${rank} / Rank #${rank} of ${getVisibleProvinces().filter(name=>hasLayerValue(name)).length||getVisibleProvinces().length}` : "ไม่มีข้อมูล / No data"}</div>
     ${yoyHTML}
     ${estBadge}
+    ${householdsLine}
   `;
 }
 
