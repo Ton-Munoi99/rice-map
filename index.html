@@ -2528,21 +2528,26 @@ window.csvDl=csvDl;
 
 /* ── Live Prices Loader ── */
 let LIVE_PRICES=null;
+let FOB_PRICES=null;
 
 async function fetchLivePrices(){
   try{
     const res=await fetch('data/prices-live.json?_='+Date.now(),{cache:'no-store'});
-    if(!res.ok) return;
-    LIVE_PRICES=await res.json();
-    renderLivePriceWidget();
+    if(res.ok) LIVE_PRICES=await res.json();
   }catch(e){
-    // ไม่มีไฟล์ = ปกติ (local dev), ไม่ต้อง error
     console.info('prices-live.json not found (local dev mode)');
   }
+  try{
+    const res2=await fetch('data/trea-fob.json?_='+Date.now(),{cache:'no-store'});
+    if(res2.ok) FOB_PRICES=await res2.json();
+  }catch(e){
+    console.info('trea-fob.json not found (local dev mode)');
+  }
+  
+  if(LIVE_PRICES || FOB_PRICES) renderLivePriceWidget();
 }
 
 function renderLivePriceWidget(){
-  if(!LIVE_PRICES) return;
   const panel=document.getElementById('livePricePanel');
   const block=document.getElementById('livePriceBlock');
   const updEl=document.getElementById('livePriceUpdated');
@@ -2550,8 +2555,22 @@ function renderLivePriceWidget(){
 
   const rows=[];
 
-  // 1) OAE national price
-  const oae=LIVE_PRICES.oae_national||{};
+  // 1) FOB Prices (Global Export Price)
+  if(FOB_PRICES && FOB_PRICES.prices){
+    const w = FOB_PRICES.prices.white_fob;
+    const j = FOB_PRICES.prices.jasmine_fob;
+    rows.push(`
+      <div class="live-price-row">
+        <div class="live-price-label"><strong style="color:#60a5fa">🚢 ราคาส่งออกหน้าท่าเรือ (F.O.B.)</strong><br>
+          <span style="font-size:9px;color:var(--muted)">TREA · ${FOB_PRICES.date}</span><br>
+          <span style="font-size:9px;color:var(--muted)">ข้าวขาว 5%: $${w} | หอมมะลิ: $${j}</span>
+        </div>
+        <div class="live-price-val" style="display:none"></div>
+      </div>`);
+  }
+
+  // 2) OAE national price
+  const oae=LIVE_PRICES?.oae_national||{};
   if(oae.white?.latest?.value_thb_per_ton){
     const v=oae.white.latest;
     const monthNames=['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
