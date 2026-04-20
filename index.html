@@ -2584,8 +2584,8 @@ function renderLivePriceWidget(){
       </div>`);
   }
 
-  // 2) Provincial prices (PDF) – แสดงตัวอย่าง 3 จังหวัด
-  const prov=LIVE_PRICES.provincial_prices?.data||{};
+  // 3) Provincial prices (PDF) – แสดงตัวอย่าง 3 จังหวัด
+  const prov=LIVE_PRICES?.provincial_prices?.data||{};
   const provEntries=Object.entries(prov).filter(([,v])=>v.white||v.jasmine).slice(0,3);
   if(provEntries.length){
     const srcDate=Object.values(prov)[0]?.date||'';
