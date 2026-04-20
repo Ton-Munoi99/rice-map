@@ -967,6 +967,56 @@ color:rgba(255,255,255,.22);
 pointer-events:none;
 z-index:5;
 }
+/* ── Live Price Widget ── */
+.live-price-block{
+display:flex;
+flex-direction:column;
+gap:7px;
+}
+.live-price-row{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:7px 10px;
+border-radius:10px;
+border:1px solid var(--line);
+background:rgba(255,255,255,.03);
+}
+.live-price-label{
+font-size:11px;
+color:var(--text-soft);
+line-height:1.3;
+}
+.live-price-val{
+font-family:'IBM Plex Mono',monospace;
+font-size:13px;
+font-weight:600;
+letter-spacing:-.01em;
+white-space:nowrap;
+}
+.live-price-val.up{color:#86efac}
+.live-price-val.down{color:#fca5a5}
+.live-price-updated{
+font-family:'IBM Plex Mono',monospace;
+font-size:9px;
+letter-spacing:.06em;
+color:var(--muted);
+text-align:right;
+margin-top:2px;
+}
+.live-dot{
+display:inline-block;
+width:6px;height:6px;
+border-radius:50%;
+background:#86efac;
+margin-right:5px;
+vertical-align:middle;
+animation:livePulse 2.4s ease-in-out infinite;
+}
+@keyframes livePulse{
+0%,100%{opacity:1;transform:scale(1)}
+50%{opacity:.35;transform:scale(.75)}
+}
 @media (max-width:1280px){
 .main{grid-template-columns:minmax(0,1fr) clamp(290px,24vw,340px)}
 }
@@ -1123,6 +1173,15 @@ body{overflow-y:auto}
       <section class="panel-block">
         <div class="panel-label">หมายเหตุแผนที่ / Map Notes</div>
         <p class="micro-copy" id="dataSourceNote">กำลังโหลดชุดข้อมูลจริงแบบผสม โดยผลผลิต/ผลผลิตต่อไร่/เนื้อที่เก็บเกี่ยวใช้ OAE ระดับจังหวัดปี 2565-2567 และราคาข้าวเปลือกใช้รายงานสมาคมโรงสีข้าวไทยปี 2568-2569 เท่าที่มีรายจังหวัด<br><span style="color:var(--muted)">Loading mixed dataset. Production/yield/area: OAE 2565–2569 where available. Price: Thai Rice Millers Association reports 2568–2569.</span></p>
+      </section>
+
+      <!-- Live Prices Widget (auto-populated from data/prices-live.json) -->
+      <section class="panel-block" id="livePricePanel" style="display:none">
+        <div class="panel-label">
+          <span class="live-dot"></span>ราคาอ้างอิงล่าสุด / Live Reference Price
+        </div>
+        <div class="live-price-block" id="livePriceBlock"></div>
+        <div class="live-price-updated" id="livePriceUpdated"></div>
       </section>
 
       <section class="panel-block">
@@ -2416,6 +2475,7 @@ async function init(){
     return;
   }
   await fetchDefaultCSV();
+  fetchLivePrices(); // โหลดราคา live แบบ async (ไม่บล็อก)
   VIEW.features=window.THAILAND_GEO.features.filter(feature=>allEN.includes(feature.properties.name));
   VIEW.featureMap=new Map(VIEW.features.map(feature=>[feature.properties.name,feature]));
   updateControls();
@@ -2433,6 +2493,87 @@ window.zoomOut=zoomOut;
 window.resetCamera=resetCamera;
 window.csvUp=csvUp;
 window.csvDl=csvDl;
+
+/* ── Live Prices Loader ── */
+let LIVE_PRICES=null;
+
+async function fetchLivePrices(){
+  try{
+    const res=await fetch('data/prices-live.json?_='+Date.now(),{cache:'no-store'});
+    if(!res.ok) return;
+    LIVE_PRICES=await res.json();
+    renderLivePriceWidget();
+  }catch(e){
+    // ไม่มีไฟล์ = ปกติ (local dev), ไม่ต้อง error
+    console.info('prices-live.json not found (local dev mode)');
+  }
+}
+
+function renderLivePriceWidget(){
+  if(!LIVE_PRICES) return;
+  const panel=document.getElementById('livePricePanel');
+  const block=document.getElementById('livePriceBlock');
+  const updEl=document.getElementById('livePriceUpdated');
+  if(!panel||!block) return;
+
+  const rows=[];
+
+  // 1) OAE national price
+  const oae=LIVE_PRICES.oae_national||{};
+  if(oae.white?.latest?.value_thb_per_ton){
+    const v=oae.white.latest;
+    const monthNames=['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+    const mLabel=monthNames[v.month]||v.month;
+    const pyear=v.year>2500?v.year:v.year+543;
+    rows.push(`
+      <div class="live-price-row">
+        <div class="live-price-label">🌾 ข้าวเจ้า (ระดับประเทศ)<br>
+          <span style="font-size:9px;color:var(--muted)">OAE ที่ไร่นา · ${mLabel} ${pyear}</span></div>
+        <div class="live-price-val">${Number(v.value_thb_per_ton).toLocaleString()} <span style="font-size:10px;opacity:.6">฿/ตัน</span></div>
+      </div>`);
+  }
+
+  // 2) Provincial prices (PDF) – แสดงตัวอย่าง 3 จังหวัด
+  const prov=LIVE_PRICES.provincial_prices?.data||{};
+  const provEntries=Object.entries(prov).filter(([,v])=>v.white||v.jasmine).slice(0,3);
+  if(provEntries.length){
+    const srcDate=Object.values(prov)[0]?.date||'';
+    provEntries.forEach(([name,vals])=>{
+      const w=vals.white?Number(vals.white).toLocaleString()+' ฿':'-';
+      const j=vals.jasmine?Number(vals.jasmine).toLocaleString()+' ฿':'-';
+      rows.push(`
+        <div class="live-price-row">
+          <div class="live-price-label">📍 ${name}<br>
+            <span style="font-size:9px;color:var(--muted)">เจ้า: ${w} &nbsp;|&nbsp; หอมมะลิ: ${j}</span></div>
+          <div class="live-price-val" style="font-size:9.5px;color:var(--muted)">${srcDate}</div>
+        </div>`);
+    });
+    if(Object.keys(prov).length>3){
+      rows.push(`<div style="font-size:9px;color:var(--muted);text-align:center;padding:2px 0">
+        + ${Object.keys(prov).length-3} จังหวัดอื่น</div>`);
+    }
+  }
+
+  if(rows.length===0){
+    panel.style.display='none';
+    return;
+  }
+
+  block.innerHTML=rows.join('');
+
+  // อัพเดตเวลา
+  const updatedAt=LIVE_PRICES.meta?.updated_at||LIVE_PRICES.oae_national?.white?.latest?.year||'';
+  if(updatedAt){
+    try{
+      const d=new Date(updatedAt);
+      if(!isNaN(d)){
+        updEl.textContent='อัพเดต '+d.toLocaleDateString('th-TH',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+      }
+    }catch(_){updEl.textContent='';}
+  }
+
+  panel.style.display='';
+}
 
 init();
 </script>
