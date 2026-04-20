@@ -1,0 +1,40 @@
+name: 📄 Process PDF Rice Prices (Thai Rice Millers)
+
+on:
+  push:
+    paths:
+      - 'data/prices/*.pdf'   # trigger เมื่อวาง PDF ใหม่
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  process-pdf:
+    runs-on: ubuntu-latest
+    name: Extract prices from PDF & Update prices-live.json
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 📦 Install dependencies
+        run: pip install pdfplumber pandas
+
+      - name: 🔍 Extract PDF prices
+        run: python scripts/extract_pdf_prices.py
+
+      - name: 📤 Commit & Push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/prices-live.json
+          git diff --staged --quiet && echo "No changes." || (
+            git commit -m "🤖 Auto-update: Rice prices from PDF $(date +'%Y-%m-%d')"
+            git push
+          )
