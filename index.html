@@ -2576,11 +2576,14 @@ function renderLivePriceWidget(){
     const monthNames=['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
     const mLabel=monthNames[v.month]||v.month;
     const pyear=v.year>2500?v.year:v.year+543;
+    const wh = Number(v.value_thb_per_ton).toLocaleString() + ' ฿';
     rows.push(`
       <div class="live-price-row">
-        <div class="live-price-label"><strong style="color:#86efac">🌾 ราคาที่ไร่นา (farm-gate)</strong> ข้าวเจ้า<br>
-          <span style="font-size:9px;color:var(--muted)">OAE · ความชื้น 15% · ระดับประเทศ · ${mLabel} ${pyear}</span></div>
-        <div class="live-price-val">${Number(v.value_thb_per_ton).toLocaleString()} <span style="font-size:10px;opacity:.6">฿/ตัน</span></div>
+        <div class="live-price-label"><strong style="color:#86efac">🌾 ราคาที่ไร่นาเฉลี่ย (Farm-gate)</strong><br>
+          <span style="font-size:9px;color:var(--muted)">OAE · ภาพรวมระดับประเทศ (National) · ${mLabel} ${pyear}</span><br>
+          <span style="font-size:9px;color:var(--muted)">ข้าวเจ้า 15%: ${wh}/ตัน</span>
+        </div>
+        <div class="live-price-val" style="display:none"></div>
       </div>`);
   }
 
@@ -2596,7 +2599,7 @@ function renderLivePriceWidget(){
         <div class="live-price-row">
           <div class="live-price-label"><strong style="color:#fbbf24">🏭 ราคาที่โรงสีรับซื้อ</strong> (${srcDate})<br>
             <span style="font-size:9px;color:var(--muted)">📍 ${name} · สมาคมโรงสีข้าวไทย</span><br>
-            <span style="font-size:9px;color:var(--muted)">เจ้า: ${w} &nbsp;|&nbsp; หอมมะลิ: ${j}</span></div>
+            <span style="font-size:9px;color:var(--muted)">ข้าวเจ้า: ${w} &nbsp;|&nbsp; หอมมะลิ: ${j}</span></div>
           <div class="live-price-val" style="display:none"></div>
         </div>`);
     });
