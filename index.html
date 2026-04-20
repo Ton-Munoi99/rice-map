@@ -1177,7 +1177,7 @@ body{overflow-y:auto}
           <button class="pill on" data-layer="production" onclick="setLayer('production')">ผลผลิต (ตัน)<br><small style="font-size:9px;opacity:.7">Production (tons)</small></button>
           <button class="pill" data-layer="yield" onclick="setLayer('yield')">ผลผลิตต่อไร่<br><small style="font-size:9px;opacity:.7">Yield (kg/rai)</small></button>
           <button class="pill" data-layer="area" onclick="setLayer('area')">เนื้อที่เก็บเกี่ยว<br><small style="font-size:9px;opacity:.7">Harvested Area (rai)</small></button>
-          <button class="pill" data-layer="price" onclick="setLayer('price')">ราคา (บาท/ตัน)<br><small style="font-size:9px;opacity:.7">Price (THB/ton)</small></button>
+          <button class="pill" data-layer="price" onclick="setLayer('price')">ราคาที่โรงสีรับซื้อ (บาท/ตัน)<br><small style="font-size:9px;opacity:.7">Mill Purchase Price (THB/ton)</small></button>
         </div>
       </section>
 
@@ -1305,7 +1305,7 @@ const layerMeta={
 production:{th:"ผลผลิต",en:"Paddy Production",unit:"ตัน/ปี",unitShort:"ตัน",summary:"ผลผลิตรวม",summaryMode:"sum"},
 yield:{th:"ผลผลิตต่อไร่",en:"Yield",unit:"กก./ไร่ (เก็บเกี่ยว)",unitShort:"กก./ไร่",summary:"ผลผลิตเฉลี่ยต่อไร่",summaryMode:"weighted"},
 area:{th:"เนื้อที่เก็บเกี่ยว",en:"Harvested Area",unit:"ไร่",unitShort:"ไร่",summary:"เนื้อที่เก็บเกี่ยวรวม",summaryMode:"sum"},
-price:{th:"ราคา",en:"Paddy Price",unit:"บาท/ตัน",unitShort:"฿/ตัน",summary:"ราคาเฉลี่ยจังหวัดที่มีข้อมูล",summaryMode:"avg_nonzero"}
+price:{th:"ราคาที่โรงสีรับซื้อ",en:"Mill Purchase Price",unit:"บาท/ตัน (ราคาโรงสี)",unitShort:"฿/ตัน",summary:"ราคาเฉลี่ยจังหวัดที่มีข้อมูล",summaryMode:"avg_nonzero"}
 };
 const riceMeta={
 white:{th:"ข้าวขาว",badge:"🌾",type:"ข้าวขาว / White rice"},
@@ -2559,8 +2559,8 @@ function renderLivePriceWidget(){
     const pyear=v.year>2500?v.year:v.year+543;
     rows.push(`
       <div class="live-price-row">
-        <div class="live-price-label">🌾 ข้าวเจ้า (ระดับประเทศ)<br>
-          <span style="font-size:9px;color:var(--muted)">OAE ที่ไร่นา (ความชื้น 15%) · ${mLabel} ${pyear}</span></div>
+        <div class="live-price-label"><strong style="color:#86efac">🌾 ราคาที่ไร่นา (farm-gate)</strong> ข้าวเจ้า<br>
+          <span style="font-size:9px;color:var(--muted)">OAE · ความชื้น 15% · ระดับประเทศ · ${mLabel} ${pyear}</span></div>
         <div class="live-price-val">${Number(v.value_thb_per_ton).toLocaleString()} <span style="font-size:10px;opacity:.6">฿/ตัน</span></div>
       </div>`);
   }
@@ -2575,9 +2575,10 @@ function renderLivePriceWidget(){
       const j=vals.jasmine?Number(vals.jasmine).toLocaleString()+' ฿':'-';
       rows.push(`
         <div class="live-price-row">
-          <div class="live-price-label">📍 ${name}<br>
+          <div class="live-price-label"><strong style="color:#fbbf24">🏭 ราคาที่โรงสีรับซื้อ</strong> (${srcDate})<br>
+            <span style="font-size:9px;color:var(--muted)">📍 ${name} · สมาคมโรงสีข้าวไทย</span><br>
             <span style="font-size:9px;color:var(--muted)">เจ้า: ${w} &nbsp;|&nbsp; หอมมะลิ: ${j}</span></div>
-          <div class="live-price-val" style="font-size:9.5px;color:var(--muted)">${srcDate}</div>
+          <div class="live-price-val" style="display:none"></div>
         </div>`);
     });
     if(Object.keys(prov).length>3){
