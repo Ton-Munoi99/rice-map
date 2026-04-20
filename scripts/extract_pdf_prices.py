@@ -30,6 +30,10 @@ except ImportError:
 PDF_DIR    = "data/prices"
 OUTPUT_FILE = "data/prices-live.json"
 
+# เจาะจงเฉพาะราคาที่ความชื้น 15%  (keyword ที่หาใน header column)
+MOISTURE_FILTER = ["15%", "15 %", "ความชื้น 15", "ชื้น15", "15"]  # ถ้าไม่มี keyword ก็ใช้ข้อมูลที่มี
+MOISTURE_NOTE = "ความชื้น 15% / 15% moisture"
+
 # Map ชื่อสินค้าใน PDF → key ใน JSON
 RICE_TYPE_MAP = {
     "ข้าวเปลือกหอมมะลิ 105":   "jasmine",
@@ -142,14 +146,28 @@ def extract_prices_from_pdf(pdf_path: str) -> dict:
                     (i for i, h in enumerate(header)
                      if any(k in h for k in ["จังหวัด", "Province"])), None
                 )
+                # หาตำแหน่งคอลัมน์ (เน้นหา column ที่มี ความชื้น 15%)
+                header_text = " ".join(header).lower()
                 price_cols = {
                     "white": next(
                         (i for i, h in enumerate(header)
-                         if any(k in h for k in ["เจ้า", "ขาว", "White"])), None
+                         if any(k in h for k in ["เจ้า", "ขาว", "White"])
+                         and any(m in h for m in ["15", "ความชื้น"])) or
+                        next(
+                            (i for i, h in enumerate(header)
+                             if any(k in h for k in ["เจ้า", "ขาว", "White"])), None
+                        ),
+                        None
                     ),
                     "jasmine": next(
                         (i for i, h in enumerate(header)
-                         if any(k in h for k in ["หอมมะลิ", "Jasmine", "KDML"])), None
+                         if any(k in h for k in ["หอมมะลิ", "Jasmine", "KDML"])
+                         and any(m in h for m in ["15", "ความชื้น"])) or
+                        next(
+                            (i for i, h in enumerate(header)
+                             if any(k in h for k in ["หอมมะลิ", "Jasmine", "KDML"])), None
+                        ),
+                        None
                     ),
                 }
 
@@ -217,8 +235,9 @@ def main():
             "source_th": "สมาคมโรงสีข้าวไทย",
             "source_en": "Thai Rice Millers Association",
             "updated_at": datetime.now(timezone.utc).isoformat(),
-            "note_th": "ราคาข้าวเปลือกรายจังหวัด (บาท/ตัน)",
-            "note_en": "Provincial paddy rice prices (THB/ton)",
+            "note_th": "ราคาข้าวเปลือกรายจังหวัด ความชื้น 15% (บาท/ตัน)",
+            "note_en": "Provincial paddy rice prices at 15% moisture (THB/ton)",
+            "moisture": "15%",
             "data": all_prices
         }
     }

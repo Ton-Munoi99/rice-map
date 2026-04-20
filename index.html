@@ -1065,8 +1065,6 @@ body{overflow-y:auto}
         <button class="rice-btn aw" data-rice="white" onclick="setRice('white')">🌾 ข้าวขาว <small style="opacity:.72;font-size:10px">White Rice</small></button>
         <button class="rice-btn" data-rice="jasmine" onclick="setRice('jasmine')">🌸 หอมมะลิ <small style="opacity:.72;font-size:10px">Jasmine</small></button>
       </div>
-      <label class="import-btn">📂 นำเข้า CSV / Import CSV<input type="file" accept=".csv" onchange="csvUp(event)"></label>
-      <button class="action-btn" onclick="csvDl()">📥 ส่งออก / Export Slice</button>
     </div>
   </header>
 
@@ -1081,7 +1079,7 @@ body{overflow-y:auto}
             <button class="map-btn square" type="button" onclick="zoomOut()">−</button>
           </div>
           <button class="map-btn wide" type="button" onclick="resetCamera()">รีเซ็ตมุมมอง / Reset View</button>
-          <div class="map-info-chip" id="dataStatus">กำลังโหลดข้อมูล CSV… / Loading…</div>
+          <div class="map-info-chip" id="dataStatus" style="display:none"></div>
         </div>
         <div class="sea-label andaman">Andaman Sea</div>
         <div class="sea-label gulf">Gulf of Thailand</div>
@@ -2528,7 +2526,7 @@ function renderLivePriceWidget(){
     rows.push(`
       <div class="live-price-row">
         <div class="live-price-label">🌾 ข้าวเจ้า (ระดับประเทศ)<br>
-          <span style="font-size:9px;color:var(--muted)">OAE ที่ไร่นา · ${mLabel} ${pyear}</span></div>
+          <span style="font-size:9px;color:var(--muted)">OAE ที่ไร่นา (ความชื้น 15%) · ${mLabel} ${pyear}</span></div>
         <div class="live-price-val">${Number(v.value_thb_per_ton).toLocaleString()} <span style="font-size:10px;opacity:.6">฿/ตัน</span></div>
       </div>`);
   }
