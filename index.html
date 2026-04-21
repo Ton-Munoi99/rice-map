@@ -1391,6 +1391,29 @@
         display: none
       }
     }
+
+    /* ── Language toggle ─────────────────────────────────────────── */
+    body:not(.lang-en) .en-t { display: none }
+    body.lang-en .th-t { display: none }
+
+    .lang-btn {
+      padding: 6px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--line-strong);
+      background: rgba(17, 31, 39, .7);
+      color: var(--text-soft);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: .2s ease;
+      letter-spacing: .06em;
+    }
+    .lang-btn:hover {
+      border-color: rgba(255,255,255,.28);
+      color: var(--text);
+      transform: translateY(-1px);
+    }
   </style>
 </head>
 
@@ -1420,7 +1443,12 @@
           <button class="rice-btn" data-rice="jasmine" onclick="setRice('jasmine')">🌸 หอมมะลิ <small
               style="opacity:.72;font-size:10px">Jasmine</small></button>
         </div>
-        <button class="action-btn" onclick="csvDl()">📥 ส่งออก / Export</button>
+        <button class="lang-btn" onclick="toggleLang()" title="Switch language / เปลี่ยนภาษา">
+          <span class="th-t">EN</span><span class="en-t">ภาษาไทย</span>
+        </button>
+        <button class="action-btn" onclick="csvDl()">
+          <span class="th-t">📥 ส่งออก</span><span class="en-t">📥 Export</span>
+        </button>
       </div>
     </header>
 
@@ -1494,22 +1522,15 @@
         </section>
 
         <section class="panel-block">
-          <div class="panel-label">ชั้นข้อมูล / Data Layer</div>
+          <div class="panel-label"><span class="th-t">ชั้นข้อมูล</span><span class="en-t">Data Layer</span></div>
           <div class="pill-row">
-            <button class="pill on" data-layer="production" onclick="setLayer('production')">ผลผลิต (ตัน)<br><small
-                style="font-size:9px;opacity:.7">Production (tons)</small></button>
-            <button class="pill" data-layer="yield" onclick="setLayer('yield')">ผลผลิตต่อไร่<br><small
-                style="font-size:9px;opacity:.7">Yield (kg/rai)</small></button>
-            <button class="pill" data-layer="area" onclick="setLayer('area')">เนื้อที่เก็บเกี่ยว<br><small
-                style="font-size:9px;opacity:.7">Harvested Area (rai)</small></button>
-            <button class="pill" data-layer="price" onclick="setLayer('price')">ราคาที่โรงสีรับซื้อ (บาท/ตัน)<br><small
-                style="font-size:9px;opacity:.7">Mill Purchase Price (THB/ton)</small></button>
-            <button class="pill" data-layer="households" onclick="setLayer('households')">ครัวเรือนเกษตรกร<br><small
-                style="font-size:9px;opacity:.7">Farmer Households</small></button>
-            <button class="pill" data-layer="rainfall" onclick="setLayer('rainfall')">น้ำฝนสะสม<br><small
-                style="font-size:9px;opacity:.7">Season Rainfall (mm)</small></button>
-            <button class="pill" data-layer="drought" onclick="setLayer('drought')">ดัชนีภัยแล้ง<br><small
-                style="font-size:9px;opacity:.7">Water Balance (mm)</small></button>
+            <button class="pill on" data-layer="production" onclick="setLayer('production')"><span class="th-t">ผลผลิต (ตัน)</span><span class="en-t">Production (tons)</span></button>
+            <button class="pill" data-layer="yield" onclick="setLayer('yield')"><span class="th-t">ผลผลิตต่อไร่</span><span class="en-t">Yield (kg/rai)</span></button>
+            <button class="pill" data-layer="area" onclick="setLayer('area')"><span class="th-t">เนื้อที่เก็บเกี่ยว</span><span class="en-t">Harvested Area (rai)</span></button>
+            <button class="pill" data-layer="price" onclick="setLayer('price')"><span class="th-t">ราคาโรงสี (฿/ตัน)</span><span class="en-t">Mill Price (THB/ton)</span></button>
+            <button class="pill" data-layer="households" onclick="setLayer('households')"><span class="th-t">ครัวเรือนเกษตรกร</span><span class="en-t">Farmer Households</span></button>
+            <button class="pill" data-layer="rainfall" onclick="setLayer('rainfall')"><span class="th-t">น้ำฝนสะสม</span><span class="en-t">Season Rainfall (mm)</span></button>
+            <button class="pill" data-layer="drought" onclick="setLayer('drought')"><span class="th-t">ดัชนีภัยแล้ง</span><span class="en-t">Water Balance (mm)</span></button>
           </div>
         </section>
 
@@ -1518,30 +1539,24 @@
         <span id="headlineDesc" style="display:none"></span>
 
         <section class="panel-block">
-          <div class="panel-label">ปีเพาะปลูก / Crop Year</div>
+          <div class="panel-label"><span class="th-t">ปีเพาะปลูก</span><span class="en-t">Crop Year</span></div>
           <div class="pill-row" id="yearButtons"></div>
         </section>
 
         <section class="panel-block">
-          <div class="panel-label">ภาค / Region Focus</div>
+          <div class="panel-label"><span class="th-t">ภาค</span><span class="en-t">Region Focus</span></div>
           <div class="pill-row">
-            <button class="pill on" data-region="all" onclick="setReg('all')">ทั้งหมด <small
-                style="opacity:.65;font-size:9px">All</small></button>
-            <button class="pill" data-region="north" onclick="setReg('north')">เหนือ <small
-                style="opacity:.65;font-size:9px">North</small></button>
-            <button class="pill" data-region="northeast" onclick="setReg('northeast')">อีสาน <small
-                style="opacity:.65;font-size:9px">NE</small></button>
-            <button class="pill" data-region="central" onclick="setReg('central')">กลาง <small
-                style="opacity:.65;font-size:9px">Central</small></button>
-            <button class="pill" data-region="east" onclick="setReg('east')">ตะวันออก <small
-                style="opacity:.65;font-size:9px">East</small></button>
-            <button class="pill" data-region="south" onclick="setReg('south')">ใต้ <small
-                style="opacity:.65;font-size:9px">South</small></button>
+            <button class="pill on" data-region="all" onclick="setReg('all')"><span class="th-t">ทั้งหมด</span><span class="en-t">All</span></button>
+            <button class="pill" data-region="north" onclick="setReg('north')"><span class="th-t">เหนือ</span><span class="en-t">North</span></button>
+            <button class="pill" data-region="northeast" onclick="setReg('northeast')"><span class="th-t">อีสาน</span><span class="en-t">NE</span></button>
+            <button class="pill" data-region="central" onclick="setReg('central')"><span class="th-t">กลาง</span><span class="en-t">Central</span></button>
+            <button class="pill" data-region="east" onclick="setReg('east')"><span class="th-t">ตะวันออก</span><span class="en-t">East</span></button>
+            <button class="pill" data-region="south" onclick="setReg('south')"><span class="th-t">ใต้</span><span class="en-t">South</span></button>
           </div>
         </section>
 
         <section class="panel-block">
-          <div class="panel-label">หมายเหตุแผนที่ / Map Notes</div>
+          <div class="panel-label"><span class="th-t">หมายเหตุแผนที่</span><span class="en-t">Map Notes</span></div>
           <p class="micro-copy" id="dataSourceNote">กำลังโหลดชุดข้อมูลจริงแบบผสม
             โดยผลผลิต/ผลผลิตต่อไร่/เนื้อที่เก็บเกี่ยวใช้ OAE ระดับจังหวัดปี 2565-2567
             และราคาข้าวเปลือกใช้รายงานสมาคมโรงสีข้าวไทยปี 2568-2569 เท่าที่มีรายจังหวัด<br><span
@@ -1552,7 +1567,7 @@
         <!-- Live Prices Widget (auto-populated from data/prices-live.json) -->
         <section class="panel-block" id="livePricePanel" style="display:none">
           <div class="panel-label">
-            <span class="live-dot"></span>ราคาอ้างอิงล่าสุด / Live Reference Price
+            <span class="live-dot"></span><span class="th-t">ราคาอ้างอิงล่าสุด</span><span class="en-t">Live Reference Price</span>
           </div>
           <div class="live-price-block" id="livePriceBlock"></div>
           <div class="live-price-updated" id="livePriceUpdated"></div>
@@ -1560,13 +1575,13 @@
 
         <!-- National Cost Summary Panel -->
         <section class="panel-block" id="costSummaryPanel">
-          <div class="panel-label" id="costSummaryTitle">📊 โครงสร้างต้นทุน / Production Cost <br><small style="font-size:9px; font-weight:400; opacity:.6">Benchmark: OAE 2566/67</small></div>
+          <div class="panel-label" id="costSummaryTitle">📊 <span class="th-t">โครงสร้างต้นทุน</span><span class="en-t">Production Cost</span> <br><small style="font-size:9px; font-weight:400; opacity:.6">Benchmark: OAE 2566/67</small></div>
           <div class="cost-summary-block" id="costSummaryBlock"></div>
         </section>
 
         <!-- National Fertilizer Prices Panel -->
         <section class="panel-block" id="nationalFertPanel" style="display:none">
-          <div class="panel-label">🌱 ราคาปุ๋ยเคมีเฉลี่ย (ทั้งประเทศ) / National Fert. Price</div>
+          <div class="panel-label">🌱 <span class="th-t">ราคาปุ๋ยเคมีเฉลี่ย (ทั้งประเทศ)</span><span class="en-t">National Fert. Price</span></div>
           <div class="live-price-block" id="nationalFertBlock"></div>
           <div style="font-size:9px; color:var(--muted); margin-top:5px; text-align:right">ที่มา: กระทรวงพาณิชย์ (MOC)</div>
         </section>
@@ -1574,9 +1589,8 @@
         <section class="panel-block">
           <div class="rank-head">
             <div>
-              <div class="rank-title">Top 10 จังหวัด <span style="font-size:14px;color:var(--muted)">/ Provinces</span>
-              </div>
-              <div class="rank-sub" id="topSub">ข้าวขาว / ผลผลิต / 2567</div>
+              <div class="rank-title">Top 10 <span class="th-t">จังหวัด</span><span class="en-t">Provinces</span></div>
+              <div class="rank-sub" id="topSub"></div>
             </div>
           </div>
           <div class="rank-list" id="topList"></div>
@@ -1889,6 +1903,17 @@
     function isWeatherLayer(layer = S.layer) {
       return layer === "rainfall" || layer === "drought";
     }
+
+    function t(th, en) {
+      return document.body.classList.contains('lang-en') ? en : th;
+    }
+    function toggleLang() {
+      document.body.classList.toggle('lang-en');
+      rerender();
+      renderLivePriceWidget();
+      updateNationalFert();
+    }
+    window.toggleLang = toggleLang;
 
     function entryOf(en, rice = S.rice, year = S.year) {
       return DATA[en]?.[rice]?.[year] || {};
@@ -2533,9 +2558,11 @@
       const meta = layerMeta[S.layer];
       const riceEN = S.rice === 'white' ? 'White' : 'Jasmine';
       const yearLabel = isWeatherLayer()
-        ? (window.WEATHER_DATA?._meta?.season_label || 'นาปี (มิ.ย.–พ.ย.) · Main Season (Jun–Nov)')
-        : `ปี / Year ${S.year}`;
-      refs.topSub.innerHTML = `${riceMeta[S.rice].th} / ${riceEN} &nbsp;·&nbsp; ${meta.th} / ${meta.en}<br>${yearLabel}`;
+        ? (window.WEATHER_DATA?._meta?.season_label || t('นาปี (มิ.ย.–พ.ย.)', 'Main Season (Jun–Nov)'))
+        : t(`ปี ${S.year}`, `Year ${S.year}`);
+      const riceLabel = t(riceMeta[S.rice].th, riceEN);
+      const metaLabel = t(meta.th, meta.en);
+      refs.topSub.innerHTML = `${riceLabel} &nbsp;·&nbsp; ${metaLabel}<br>${yearLabel}`;
       const items = visible
         .filter(en => hasLayerValue(en))
         .map(en => ({ en, v: valueOf(en) }))
@@ -2681,9 +2708,9 @@
       const weatherBadge = isWeatherLayer() && wp
         ? (() => {
             const wb = wp.water_balance_mm;
-            const status = wb < -100 ? "🔴 แห้งแล้ง / Drought" : wb < 0 ? "🟡 ค่อนข้างแห้ง / Dry" : wb < 200 ? "🟢 สมดุล / Balanced" : "💧 ชื้นมาก / Wet";
+            const status = wb < -100 ? t("🔴 แห้งแล้ง","🔴 Drought") : wb < 0 ? t("🟡 ค่อนข้างแห้ง","🟡 Dry") : wb < 200 ? t("🟢 สมดุล","🟢 Balanced") : t("💧 ชื้นมาก","💧 Wet");
             return `<div class="est-badge" style="margin-top:4px">${status}</div>
-    <div style="font-size:10px;color:var(--muted);margin-top:3px">🌧 ฝน/Rain ${fmtNumber(wp.season_rainfall_mm)} มม. · ET₀ ${fmtNumber(wp.season_et0_mm)} มม. · อุณหภูมิ/Temp ${wp.season_temp_c}°C</div>`;
+    <div style="font-size:10px;color:var(--muted);margin-top:3px">🌧 ${t('ฝน','Rain')} ${fmtNumber(wp.season_rainfall_mm)} ${t('มม.','mm')} · ET₀ ${fmtNumber(wp.season_et0_mm)} ${t('มม.','mm')} · ${t('อุณหภูมิ','Temp')} ${wp.season_temp_c}°C</div>`;
           })()
         : "";
 
@@ -2696,10 +2723,10 @@
       return `
     <div class="th">${NM[en] || en}</div>
     <div class="en">${en}</div>
-    <div class="type">${isWeatherLayer() ? `Open-Meteo · ${window.WEATHER_DATA?._meta?.season_label || "นาปี"}` : S.layer === "households" ? "ครัวเรือนเกษตรกร / Farmer Households (OAE 2566)" : riceTypeDescription(S.rice, S.layer)}</div>
-    <div class="metric-name">${layerMeta[S.layer].th} / ${layerMeta[S.layer].en}</div>
+    <div class="type">${isWeatherLayer() ? `Open-Meteo · ${window.WEATHER_DATA?._meta?.season_label || t("นาปี","Main Season")}` : S.layer === "households" ? t("ครัวเรือนเกษตรกร (OAE 2566)","Farmer Households (OAE 2566)") : riceTypeDescription(S.rice, S.layer)}</div>
+    <div class="metric-name">${t(layerMeta[S.layer].th, layerMeta[S.layer].en)}</div>
     <div class="value">${valueHTML}</div>
-    <div class="rank">${rank ? `อันดับ #${rank} / Rank #${rank} of ${getVisibleProvinces().filter(name => hasLayerValue(name)).length || getVisibleProvinces().length}` : "ไม่มีข้อมูล / No data"}</div>
+    <div class="rank">${rank ? `${t('อันดับ','Rank')} #${rank} / ${getVisibleProvinces().filter(name => hasLayerValue(name)).length || getVisibleProvinces().length}` : t("ไม่มีข้อมูล","No data")}</div>
     ${yoyHTML}
     ${estBadge}
     ${weatherBadge}
@@ -3084,9 +3111,9 @@
         const j = FOB_PRICES.prices.jasmine_fob;
         rows.push(`
       <div class="live-price-row">
-        <div class="live-price-label"><strong style="color:#60a5fa">🚢 ราคาส่งออกหน้าท่าเรือ / Export Price (F.O.B.)</strong><br>
+        <div class="live-price-label"><strong style="color:#60a5fa">🚢 ${t('ราคาส่งออกหน้าท่าเรือ','Export Price')} (F.O.B.)</strong><br>
           <span style="font-size:9px;color:var(--muted)">TREA · ${FOB_PRICES.date}</span><br>
-          <span style="font-size:9px;color:var(--muted)">ข้าวขาว / White 5%: $${w} &nbsp;|&nbsp; หอมมะลิ / Jasmine: $${j}</span>
+          <span style="font-size:9px;color:var(--muted)">${t('ข้าวขาว','White')} 5%: $${w} &nbsp;|&nbsp; ${t('หอมมะลิ','Jasmine')}: $${j}</span>
         </div>
         <div class="live-price-val" style="display:none"></div>
       </div>`);
@@ -3102,9 +3129,9 @@
         const wh = Number(v.value_thb_per_ton).toLocaleString() + ' ฿';
         rows.push(`
       <div class="live-price-row">
-        <div class="live-price-label"><strong style="color:#86efac">🌾 ราคาที่ไร่นาเฉลี่ย / Farm-gate Price</strong><br>
-          <span style="font-size:9px;color:var(--muted)">OAE · ระดับประเทศ / National · ${mLabel} ${pyear}</span><br>
-          <span style="font-size:9px;color:var(--muted)">ข้าวเจ้า / White 15%: ${wh}/ตัน</span>
+        <div class="live-price-label"><strong style="color:#86efac">🌾 ${t('ราคาที่ไร่นาเฉลี่ย','Farm-gate Price')}</strong><br>
+          <span style="font-size:9px;color:var(--muted)">OAE · ${t('ระดับประเทศ','National')} · ${mLabel} ${pyear}</span><br>
+          <span style="font-size:9px;color:var(--muted)">${t('ข้าวเจ้า','White')} 15%: ${wh}/${t('ตัน','ton')}</span>
         </div>
         <div class="live-price-val" style="display:none"></div>
       </div>`);
@@ -3120,9 +3147,9 @@
           const j = vals.jasmine ? Number(vals.jasmine).toLocaleString() + ' ฿' : '-';
           rows.push(`
         <div class="live-price-row">
-          <div class="live-price-label"><strong style="color:#fbbf24">🏭 ราคาที่โรงสีรับซื้อ / Mill Purchase Price</strong> (${srcDate})<br>
-            <span style="font-size:9px;color:var(--muted)">📍 ${name} · สมาคมโรงสีข้าวไทย / Thai Rice Millers Assoc.</span><br>
-            <span style="font-size:9px;color:var(--muted)">ข้าวเจ้า / White: ${w} &nbsp;|&nbsp; หอมมะลิ / Jasmine: ${j}</span></div>
+          <div class="live-price-label"><strong style="color:#fbbf24">🏭 ${t('ราคาที่โรงสีรับซื้อ','Mill Purchase Price')}</strong> (${srcDate})<br>
+            <span style="font-size:9px;color:var(--muted)">📍 ${name} · ${t('สมาคมโรงสีข้าวไทย','Thai Rice Millers Assoc.')}</span><br>
+            <span style="font-size:9px;color:var(--muted)">${t('ข้าวเจ้า','White')}: ${w} &nbsp;|&nbsp; ${t('หอมมะลิ','Jasmine')}: ${j}</span></div>
           <div class="live-price-val" style="display:none"></div>
         </div>`);
         });
@@ -3145,7 +3172,7 @@
         try {
           const d = new Date(updatedAt);
           if (!isNaN(d)) {
-            updEl.textContent = 'อัปเดต / Updated ' + d.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            updEl.textContent = t('อัปเดต', 'Updated') + ' ' + d.toLocaleDateString(t('th-TH','en-GB'), { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
           }
         } catch (_) { updEl.textContent = ''; }
       }
@@ -3159,21 +3186,20 @@
       const n = window.FERT_NATIONAL;
       const rows = [];
       const types = [
-        { key: 'urea_46_0_0', label: 'ยูเรีย / Urea 46-0-0', color: '#60a5fa' },
-        { key: 'form_16_20_0', label: 'สูตร / Formula 16-20-0', color: '#93c5fd' },
-        { key: 'form_15_15_15', label: 'สูตร / Formula 15-15-15', color: '#bfdbfe' }
+        { key: 'urea_46_0_0', th: 'ยูเรีย 46-0-0', en: 'Urea 46-0-0', color: '#60a5fa' },
+        { key: 'form_16_20_0', th: 'สูตร 16-20-0', en: 'Formula 16-20-0', color: '#93c5fd' },
+        { key: 'form_15_15_15', th: 'สูตร 15-15-15', en: 'Formula 15-15-15', color: '#bfdbfe' }
       ];
       
-      types.forEach(t => {
-        const d = n[t.key];
+      types.forEach(fert => {
+        const d = n[fert.key];
         if (!d) return;
         const val = d.price_avg || d;
         if (!val || val < 10) return;
-        
         rows.push(`
           <div class="live-price-row">
-            <div class="live-price-label"><strong style="color:${t.color}">${t.label}</strong><br>
-              <span style="font-size:9px;color:var(--muted)">ราคาเฉลี่ยทั้งประเทศ / Natl. Avg. (บาท / THB per 50kg bag)</span>
+            <div class="live-price-label"><strong style="color:${fert.color}">${t(fert.th, fert.en)}</strong><br>
+              <span style="font-size:9px;color:var(--muted)">${t('ราคาเฉลี่ยทั้งประเทศ (บาท/กระสอบ 50 กก.)', 'Natl. Avg. (THB / 50kg bag)')}</span>
             </div>
             <div class="live-price-val">${fmtNumber(Math.round(val))}</div>
           </div>
