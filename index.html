@@ -1393,8 +1393,8 @@
     }
 
     /* ── Language toggle ─────────────────────────────────────────── */
-    body:not(.lang-en) .en-t { display: none }
-    body.lang-en .th-t { display: none }
+    body:not(.lang-en) .en-t { display: none !important }
+    body.lang-en .th-t { display: none !important }
 
     .lang-btn {
       padding: 6px 12px;
@@ -2476,20 +2476,20 @@
       refs.legendBar.style.background = `linear-gradient(90deg,${rgb(palette.lo)} 0%,${rgb(palette.mid)} 52%,${rgb(palette.hi)} 100%)`;
       refs.legendLow.textContent = `${fmtCompact(min)} ${layerMeta[S.layer].unitShort}`;
       refs.legendHigh.textContent = `${fmtCompact(max)} ${layerMeta[S.layer].unitShort}`;
-      refs.legendType.textContent = riceMeta[S.rice].th;
-      refs.legendLayer.textContent = layerMeta[S.layer].th;
+      refs.legendType.textContent = t(riceMeta[S.rice].th, riceMeta[S.rice].en);
+      refs.legendLayer.textContent = t(layerMeta[S.layer].th, layerMeta[S.layer].en);
       refs.legendUnit.textContent = layerMeta[S.layer].unit;
       refs.latestBadge.classList.add("show");
       const isEstYear = S.layer !== "price" && S.layer !== "households" && S.layer !== "fertilizer" && S.year >= "2568";
       refs.latestBadge.textContent = S.layer === "price"
-        ? `ราคาอ้างอิง / Price Ref: ${entryOf(getVisibleProvinces().find(en => hasLayerValue(en)) || allEN[0]).source_date || S.year}`
+        ? `${t('ราคาอ้างอิง','Price Ref')}: ${entryOf(getVisibleProvinces().find(en => hasLayerValue(en)) || allEN[0]).source_date || S.year}`
         : S.layer === "households"
-          ? `👨‍🌾 ครัวเรือนเกษตรกร / OAE 2566`
+          ? `👨‍🌾 ${t('ครัวเรือนเกษตรกร','Farm Households')} OAE 2566`
           : S.layer === "fertilizer"
-            ? `🌱 ราคาปุ๋ยเคมีรายจังหวัด / Fertilizer Price (MOC 2567)`
+            ? `🌱 ${t('ราคาปุ๋ยเคมีรายจังหวัด','Fertilizer Price by Province')} MOC 2567`
             : isEstYear
-              ? `📊 ประมาณการ ${S.year} / Trend Estimate (avg YoY 2565–2567)`
-              : `OAE ข้อมูลปี ${S.year} / Crop Year ${S.year}`;
+              ? `📊 ${t('ประมาณการ','Estimate')} ${S.year}`
+              : `OAE ${t('ข้อมูลปี','Crop Year')} ${S.year}`;
       refs.latestBadge.style.borderColor = isEstYear ? 'rgba(245,192,101,.55)' : '';
     }
 
@@ -2505,10 +2505,14 @@
       if (S.layer === "price") {
         const any = visible.map(en => entryOf(en)).find(item => Number(item.price || 0) > 0);
         const dateText = any?.source_date || S.year;
-        refs.dataSourceNote.textContent = `ราคาใช้รายงานสมาคมโรงสีข้าวไทย ณ ${dateText}. บันทึกความชื้น 15%. / Prices from Thai Rice Miller Association as of ${dateText}. 15% moisture basis.`;
+        refs.dataSourceNote.textContent = t(
+          `ราคาใช้รายงานสมาคมโรงสีข้าวไทย ณ ${dateText}. บันทึกความชื้น 15%.`,
+          `Prices from Thai Rice Miller Association as of ${dateText}. 15% moisture basis.`);
         return;
       }
-      refs.dataSourceNote.textContent = `ข้อมูล OAE ปี ${S.year} (รายงานสถิติการเกษตร 1.4). / OAE Data ${S.year} (Agricultural Statistics Report 1.4).`;
+      refs.dataSourceNote.textContent = t(
+        `ข้อมูล OAE ปี ${S.year} (รายงานสถิติการเกษตร 1.4).`,
+        `OAE Data ${S.year} (Agricultural Statistics Report 1.4).`);
     }
 
     function previousYear(year) {
@@ -2527,30 +2531,31 @@
         .map(en => ({ en, v: valueOf(en) }))
         .sort((a, b) => b.v - a.v)[0];
       const prevYear = previousYear(S.year);
-      let yoyText = "ยังไม่มีฐานเทียบ / No prior year";
+      let yoyText = t("ยังไม่มีฐานเทียบ", "No prior year");
       if (prevYear) {
         const yoy = yoyForProvinces(visible, S.rice, S.year, S.layer, mode);
         if (Number.isFinite(yoy)) {
-          const dir = yoy >= 0 ? "เพิ่มขึ้น ▲" : "ลดลง ▼";
-          const dirEN = yoy >= 0 ? "▲ up" : "▼ down";
-          yoyText = `${dir} ${Math.abs(yoy).toFixed(1)}% เทียบ ${prevYear} · ${dirEN} ${Math.abs(yoy).toFixed(1)}% vs ${prevYear}`;
+          const dir = yoy >= 0 ? t("เพิ่มขึ้น ▲", "▲ up") : t("ลดลง ▼", "▼ down");
+          yoyText = `${dir} ${Math.abs(yoy).toFixed(1)}% ${t('เทียบ','vs')} ${prevYear}`;
         }
       }
-      refs.scopeLabel.textContent = "ขอบเขต / Scope";
-      refs.scopeValue.textContent = S.layer === "price" ? `${covered.length}/${visible.length} จว. / Prov.` : `${visible.length} จว. / Prov.`;
+      refs.scopeLabel.textContent = t("ขอบเขต", "Scope");
+      refs.scopeValue.textContent = S.layer === "price" ? `${covered.length}/${visible.length} ${t('จว.','Prov.')}` : `${visible.length} ${t('จว.','Prov.')}`;
       refs.scopeSub.textContent = S.layer === "price"
-        ? "จังหวัดที่มีราคา / Provinces with price"
-        : (S.reg === "all" ? "ทั้งประเทศ / Nationwide" : `ภาค${thaiRegionName(S.reg)} / ${S.reg.charAt(0).toUpperCase() + S.reg.slice(1)}`);
-      refs.aggLabel.textContent = `${meta.th} / ${meta.en}`;
+        ? t("จังหวัดที่มีราคา", "Provinces with price")
+        : (S.reg === "all" ? t("ทั้งประเทศ", "Nationwide") : t(`ภาค${thaiRegionName(S.reg)}`, `${S.reg.charAt(0).toUpperCase() + S.reg.slice(1)} Region`));
+      refs.aggLabel.textContent = t(meta.th, meta.en);
       refs.aggValue.textContent = fmtCompact(agg);
       refs.aggSub.textContent = `${meta.unit} · ${yoyText}`;
-      refs.leadLabel.textContent = "อันดับ 1 / Leader";
+      refs.leadLabel.textContent = t("อันดับ 1", "Leader");
       refs.leadValue.textContent = leader ? (NM[leader.en] || leader.en) : "—";
       refs.leadSub.textContent = leader ? `${S.layer === "price" ? priceRange(entryOf(leader.en)) : fmtValue(leader.v)} ${meta.unitShort}` : "—";
-      refs.headlineTitle.textContent = `แผนที่${riceMeta[S.rice].th}รายจังหวัด`;
+      refs.headlineTitle.textContent = t(`แผนที่${riceMeta[S.rice].th}รายจังหวัด`, `${riceMeta[S.rice].en} Rice · Province Map`);
       refs.headlineDesc.textContent = S.layer === "price"
-        ? `แผนที่ fit ตามสัดส่วนประเทศไทยและใช้รายงานราคาข้าวเปลือกรายวันของสมาคมโรงสีข้าวไทย โดยไฮไลต์ราคาของ ${riceTypeDescription(S.rice, S.layer)} ปี ${S.year}`
-        : `แผนที่ fit ตามสัดส่วนประเทศไทยและใช้ข้อมูลทางการ OAE ระดับจังหวัดสำหรับ ${riceTypeDescription(S.rice, S.layer)} โดยไฮไลต์ ${layerMeta[S.layer].th} ปี ${S.year} ในมุมมอง${S.reg === "all" ? "ทั้งประเทศ" : `ภาค${thaiRegionName(S.reg)}`}`;
+        ? t(`แผนที่ fit ตามสัดส่วนประเทศไทยและใช้รายงานราคาข้าวเปลือกรายวันของสมาคมโรงสีข้าวไทย โดยไฮไลต์ราคาของ ${riceTypeDescription(S.rice, S.layer)} ปี ${S.year}`,
+           `Province-level paddy price map using Thai Rice Miller Association daily reports. ${riceTypeDescription(S.rice, S.layer)} · Crop year ${S.year}.`)
+        : t(`แผนที่ fit ตามสัดส่วนประเทศไทยและใช้ข้อมูลทางการ OAE ระดับจังหวัดสำหรับ ${riceTypeDescription(S.rice, S.layer)} โดยไฮไลต์ ${layerMeta[S.layer].th} ปี ${S.year} ในมุมมอง${S.reg === "all" ? "ทั้งประเทศ" : `ภาค${thaiRegionName(S.reg)}`}`,
+           `Province-level OAE data for ${riceTypeDescription(S.rice, S.layer)}. ${layerMeta[S.layer].en} · Crop year ${S.year}${S.reg === "all" ? " · Nationwide" : ` · ${S.reg.charAt(0).toUpperCase() + S.reg.slice(1)} Region`}.`);
     }
 
     function updateTopList() {
@@ -2601,17 +2606,17 @@
       refs.detailEn.textContent = en;
       const covered = getVisibleProvinces().filter(name => hasLayerValue(name)).length;
       const rank = currentRank(en);
-      refs.detailRank.textContent = rank ? `อันดับ #${rank} / Rank #${rank} of ${covered || getVisibleProvinces().length}` : "ไม่มีข้อมูล / No data";
+      refs.detailRank.textContent = rank ? t(`อันดับ #${rank} จาก ${covered || getVisibleProvinces().length} จังหวัด`, `Rank #${rank} of ${covered || getVisibleProvinces().length}`) : t("ไม่มีข้อมูล", "No data");
 
       const metrics = ["production", "yield", "area", "price"];
       const householdsHtml = window.PROVINCE_HOUSEHOLDS ? `
     <div class="rice-card" style="grid-column:1/-1;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2)">
-      <div class="t">👨‍🌾 ครัวเรือนเกษตรกร (รวมทุกสินค้า)</div>
+      <div class="t">👨‍🌾 ${t('ครัวเรือนเกษตรกร (รวมทุกสินค้า)','Farm Households (All Crops)')}</div>
       <div class="metric">
-        <div class="m-label">จำนวนครัวเรือนเกษตรกร / Farmer Households</div>
+        <div class="m-label">${t('จำนวนครัวเรือนเกษตรกร','Farmer Households')}</div>
         <div class="m-value">${fmtNumber(householdValueOf(en))} <small>${layerMeta.households.unitShort}</small></div>
       </div>
-      <div style="font-size:9px;color:var(--muted);margin-top:4px">ที่มา: สำนักงานเศรษฐกิจการเกษตร (OAE) · ปีอ้างอิง 2566 · ครอบคลุมทุกประเภทการเกษตร</div>
+      <div style="font-size:9px;color:var(--muted);margin-top:4px">${t('ที่มา: สำนักงานเศรษฐกิจการเกษตร (OAE) · ปีอ้างอิง 2566 · ครอบคลุมทุกประเภทการเกษตร','Source: OAE 2566 · Covers all agricultural types')}</div>
     </div>` : "";
 
       let fertHtml = "";
@@ -2619,10 +2624,10 @@
       const cardHtml = RICE_TYPES.map(rice => {
         const entryForRice = entryOf(en, rice, S.year);
         const estNote = isEstimated(en, rice, S.year)
-          ? `<div class="est-note">📊 ประมาณการแนวโน้ม (avg YoY 2565–2567) · Trend Estimate</div>`
+          ? `<div class="est-note">📊 ${t('ประมาณการแนวโน้ม (avg YoY 2565–2567)','Trend Estimate (avg YoY 2565–2567)')}</div>`
           : "";
         return `<div class="rice-card ${rice}">
-      <div class="t">${riceMeta[rice].badge} ${riceMeta[rice].th}</div>
+      <div class="t">${riceMeta[rice].badge} ${t(riceMeta[rice].th, riceMeta[rice].en)}</div>
       ${estNote}
       ${metrics.map(layer => {
           const entry = entryOf(en, rice, S.year);
@@ -2630,10 +2635,10 @@
             ? `${priceRange(entry)} <small>${layerMeta[layer].unitShort}</small>`
             : `${fmtValue(valueOf(en, rice, S.year, layer), layer)} <small>${layerMeta[layer].unitShort}</small>`;
           const subValue = layer === "price" && priceAltRange(entry)
-            ? `<div class="m-label" style="margin-top:2px">ความชื้น 25%: ${priceAltRange(entry)}</div>`
+            ? `<div class="m-label" style="margin-top:2px">${t('ความชื้น 25%','Moisture 25%')}: ${priceAltRange(entry)}</div>`
             : "";
           return `<div class="metric">
-          <div class="m-label">${layerMeta[layer].th}</div>
+          <div class="m-label">${t(layerMeta[layer].th, layerMeta[layer].en)}</div>
           <div class="m-value">${mainValue}</div>
           ${subValue}
         </div>`;
@@ -2642,8 +2647,8 @@
       }).join("");
       refs.detailGrid.innerHTML = householdsHtml + fertHtml + cardHtml;
       refs.sparkHint.textContent = S.layer === "price"
-        ? "ค่ากลางของช่วงราคา / Midpoint of price range"
-        : `${layerMeta[S.layer].th} / ${layerMeta[S.layer].en}`;
+        ? t("ค่ากลางของช่วงราคา", "Midpoint of price range")
+        : t(layerMeta[S.layer].th, layerMeta[S.layer].en);
       drawSpark(en);
       applyMapColors();
       refs.detailCard.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -2662,7 +2667,7 @@
         return [x, y];
       });
       const path = pts.map((pt, idx) => `${idx === 0 ? "M" : "L"}${pt[0].toFixed(2)},${pt[1].toFixed(2)}`).join(" ");
-      refs.sparkTitle.textContent = `แนวโน้ม ${years[0]}→${years[years.length - 1]} / Trend ${years[0]}→${years[years.length - 1]}`;
+      refs.sparkTitle.textContent = t(`แนวโน้ม ${years[0]}→${years[years.length - 1]}`, `Trend ${years[0]}→${years[years.length - 1]}`);
       refs.sparkSvg.setAttribute("viewBox", `0 0 ${w} ${h}`);
       refs.sparkSvg.innerHTML = `
     <path d="M${pad},${h - pad} L${w - pad},${h - pad}" stroke="rgba(255,255,255,.08)" stroke-width="1"/>
@@ -2718,7 +2723,7 @@
         ? `${priceRange(entry)} <small style="font-size:12px;color:var(--muted)">${layerMeta[S.layer].unitShort}</small>${priceAltRange(entry) ? `<div class="rank" style="margin-top:4px">ความชื้น 25%: ${priceAltRange(entry)}</div>` : ""}`
         : `${fmtValue(value)} <small style="font-size:12px;color:var(--muted)">${layerMeta[S.layer].unitShort}</small>`;
       const householdsLine = !isWeatherLayer() && S.layer !== "households" && window.PROVINCE_HOUSEHOLDS
-        ? `<div style="font-size:10px;color:var(--muted);margin-top:4px">👨‍🌾 ครัวเรือนเกษตรกร: ${fmtNumber(householdValueOf(en))} ครัวเรือน (OAE 2566)</div>`
+        ? `<div style="font-size:10px;color:var(--muted);margin-top:4px">👨‍🌾 ${t('ครัวเรือนเกษตรกร','Farm Households')}: ${fmtNumber(householdValueOf(en))} ${t('ครัวเรือน','HH')} (OAE 2566)</div>`
         : "";
       return `
     <div class="th">${NM[en] || en}</div>
@@ -2785,15 +2790,12 @@
       }).join("");
     }
 
-
     function updateCostSummary() {
-      if (!refs.costSummaryBlock) return;
       const isJasmine = S.rice === "jasmine";
-
       if (refs.costSummaryTitle) {
-        refs.costSummaryTitle.innerHTML = `📊 โครงสร้างต้นทุน / Production Cost <br><small style="font-size:9px; font-weight:400; opacity:.6">Benchmark: OAE 2566/67</small>`;
+        refs.costSummaryTitle.innerHTML = `📊 ${t('โครงสร้างต้นทุน','Production Cost')} <br><small style="font-size:9px; font-weight:400; opacity:.6">Benchmark: OAE 2566/67</small>`;
       }
-      
+
       const cost = isJasmine ? 4877 : 5760;
       let fert = isJasmine ? 877 : 1440;
       const labor = isJasmine ? 2048 : 2016;
@@ -2803,40 +2805,40 @@
       
       let fertSource = "อ้างอิง สศก. / OAE Ref.";
       
-      if (window.FERT_NATIONAL && window.FERT_NATIONAL.urea_46_0_0) {
-        const bagsPerRai = isJasmine ? 1.0 : 1.5;
+      if(window.FERT_NATIONAL && window.FERT_NATIONAL.urea_46_0_0) {
+        // Adjust fertilizer cost based on real national urea price
+        // OAE benchmark assumes Urea around 750-800. We scale linearly.
+        const bagsPerRai = isJasmine ? 1.0 : 1.5; 
         const realUrea = window.FERT_NATIONAL.urea_46_0_0.price_avg || window.FERT_NATIONAL.urea_46_0_0;
         if (realUrea > 100) {
-          fert = Math.round(realUrea * bagsPerRai);
-          fertSource = "คำนวณจากราคาเฉลี่ย MOC / MOC Avg Based";
+           fert = Math.round(realUrea * bagsPerRai);
+           fertSource = "คำนวณจากราคาเฉลี่ย MOC / MOC Avg Based";
         }
       }
 
       const tone = isJasmine ? 'var(--jasmine-hi)' : 'var(--white-hi)';
       const bg = isJasmine ? 'rgba(236,186,217,.08)' : 'rgba(245,192,101,.08)';
       const border = isJasmine ? 'rgba(236,186,217,.25)' : 'rgba(245,192,101,.25)';
-      const totalCost = cost - (isJasmine ? 877 : 1440) + fert;
 
       refs.costSummaryBlock.innerHTML = `
-        <div style="font-size:10px; color:var(--muted); margin-bottom:6px; letter-spacing:0.05em">ระดับประเทศ / National Average</div>
+        <div style="font-size:10px; color:var(--muted); margin-bottom:6px; letter-spacing:0.05em">${t('ระดับประเทศ','National Average')}</div>
         <div style="padding:12px; border-radius:14px; background:${bg}; border:1px solid ${border}">
           <div style="display:flex; justify-content:space-between; margin-bottom:12px; align-items:flex-end">
-            <span style="font-size:13px; font-weight:700; color:${tone}">${isJasmine ? '🌸 หอมมะลิ / Jasmine' : '🌾 ข้าวขาว / White Rice'}</span>
-            <span style="font-family:'IBM Plex Mono'; font-weight:700; color:${tone}; font-size:16px">${fmtNumber(totalCost)} <small style="font-size:9px; font-weight:400">฿/ไร่ (Rai)</small></span>
+            <span style="font-size:13px; font-weight:700; color:${tone}">${isJasmine ? t('🌸 หอมมะลิ','🌸 Jasmine') : t('🌾 ข้าวขาว','🌾 White Rice')}</span>
+            <span style="font-family:'IBM Plex Mono'; font-weight:700; color:${tone}; font-size:16px">${fmtNumber(cost - (isJasmine ? 877 : 1440) + fert)} <small style="font-size:9px; font-weight:400">฿/${t('ไร่','Rai')}</small></span>
           </div>
-          <div class="metric"><div class="m-label" style="font-size:10px">ปุ๋ยเคมี / Fertilizer <br><small style="opacity:.6">${fertSource}</small></div><div class="m-value" style="font-size:11px">${fmtNumber(fert)}</div></div>
-          <div class="metric"><div class="m-label" style="font-size:10px">แรงงาน / Labor</div><div class="m-value" style="font-size:11px">${fmtNumber(labor)}</div></div>
-          <div class="metric"><div class="m-label" style="font-size:10px">เมล็ดพันธุ์ / Seed</div><div class="m-value" style="font-size:11px">${fmtNumber(seed)}</div></div>
-          <div class="metric"><div class="m-label" style="font-size:10px">เครื่องจักร / Machinery</div><div class="m-value" style="font-size:11px">${fmtNumber(mach)}</div></div>
-          <div class="metric"><div class="m-label" style="font-size:10px">ค่าเช่าและอื่น ๆ / Rent & Others</div><div class="m-value" style="font-size:11px">${fmtNumber(others)}</div></div>
+          <div class="metric"><div class="m-label" style="font-size:10px">${t('ปุ๋ยเคมี','Fertilizer')} <br><small style="opacity:.6">${fertSource}</small></div><div class="m-value" style="font-size:11px">${fmtNumber(fert)}</div></div>
+          <div class="metric"><div class="m-label" style="font-size:10px">${t('แรงงาน','Labor')}</div><div class="m-value" style="font-size:11px">${fmtNumber(labor)}</div></div>
+          <div class="metric"><div class="m-label" style="font-size:10px">${t('เมล็ดพันธุ์','Seed')}</div><div class="m-value" style="font-size:11px">${fmtNumber(seed)}</div></div>
+          <div class="metric"><div class="m-label" style="font-size:10px">${t('เครื่องจักร','Machinery')}</div><div class="m-value" style="font-size:11px">${fmtNumber(mach)}</div></div>
+          <div class="metric"><div class="m-label" style="font-size:10px">${t('ค่าเช่าและอื่น ๆ','Rent & Others')}</div><div class="m-value" style="font-size:11px">${fmtNumber(others)}</div></div>
+
           <div style="font-size:9px; color:var(--muted); margin-top:10px; line-height:1.4">
-            ฐานข้อมูลเฉลี่ย สศก. 2566/67 สำหรับแรงงาน/เมล็ด/เครื่องจักร <br>
-            <span style="opacity:0.6">OAE Benchmark 2566/67 for labor/seed/machinery.</span>
+            ${t('ฐานข้อมูลเฉลี่ย สศก. 2566/67 สำหรับแรงงาน/เมล็ด/เครื่องจักร','OAE Benchmark 2566/67 for labor / seed / machinery.')}
           </div>
         </div>
       `;
     }
-
 
     function rerender() {
       updateControls();
@@ -3155,7 +3157,7 @@
         });
         if (Object.keys(prov).length > 3) {
           rows.push(`<div style="font-size:9px;color:var(--muted);text-align:center;padding:2px 0">
-        + ${Object.keys(prov).length - 3} จังหวัดอื่น</div>`);
+        + ${Object.keys(prov).length - 3} ${t('จังหวัดอื่น','more provinces')}</div>`);
         }
       }
 
