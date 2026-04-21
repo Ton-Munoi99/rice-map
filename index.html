@@ -1506,8 +1506,6 @@
                 style="font-size:9px;opacity:.7">Mill Purchase Price (THB/ton)</small></button>
             <button class="pill" data-layer="households" onclick="setLayer('households')">ครัวเรือนเกษตรกร<br><small
                 style="font-size:9px;opacity:.7">Farmer Households</small></button>
-            <button class="pill" data-layer="fertilizer" onclick="setLayer('fertilizer')">ราคาปุ๋ยเคมี<br><small
-                style="font-size:9px;opacity:.7">Fertilizer Prices</small></button>
           </div>
         </section>
 
@@ -1560,6 +1558,13 @@
         <section class="panel-block" id="costSummaryPanel">
           <div class="panel-label" id="costSummaryTitle">📊 โครงสร้างต้นทุน / Production Cost <br><small style="font-size:9px; font-weight:400; opacity:.6">Benchmark: OAE 2566/67</small></div>
           <div class="cost-summary-block" id="costSummaryBlock"></div>
+        </section>
+
+        <!-- National Fertilizer Prices Panel -->
+        <section class="panel-block" id="nationalFertPanel" style="display:none">
+          <div class="panel-label">🌱 ราคาปุ๋ยเคมีเฉลี่ย (ทั้งประเทศ) / National Fert. Price</div>
+          <div class="live-price-block" id="nationalFertBlock"></div>
+          <div style="font-size:9px; color:var(--muted); margin-top:5px; text-align:right">ที่มา: กระทรวงพาณิชย์ (MOC)</div>
         </section>
 
         <section class="panel-block">
@@ -1707,8 +1712,11 @@
       topSub: document.getElementById("topSub"),
       sparkHint: document.getElementById("sparkHint"),
       toast: document.getElementById("toast"),
+      cost_summary_title: document.getElementById("costSummaryTitle"), // match the underscore in next edit or keep camelCase
       costSummaryTitle: document.getElementById("costSummaryTitle"),
-      costSummaryBlock: document.getElementById("costSummaryBlock")
+      costSummaryBlock: document.getElementById("costSummaryBlock"),
+      nationalFertPanel: document.getElementById("nationalFertPanel"),
+      nationalFertBlock: document.getElementById("nationalFertBlock")
     };
 
     let S = { rice: "white", layer: "production", year: "2567", reg: "all", sel: null };
@@ -1867,7 +1875,7 @@
     }
 
     function yearsForLayer(layer = S.layer) {
-      if (layer === "households" || layer === "fertilizer") return ["2567"];
+      if (layer === "households") return ["2567"];
       return layer === "price" ? PRICE_YEARS : PRODUCTION_YEARS;
     }
 
@@ -1888,11 +1896,6 @@
 
     function valueOf(en, rice = S.rice, year = S.year, layer = S.layer) {
       if (layer === "households") return householdValueOf(en);
-      if (layer === "fertilizer") {
-        const thName = NM[en];
-        if (window.FERT_DATA && window.FERT_DATA[thName]) return Number(window.FERT_DATA[thName].urea_46_0_0 || 0);
-        return 0;
-      }
       return Number(entryOf(en, rice, year)[layer] || 0);
     }
 
@@ -2557,20 +2560,6 @@
     </div>` : "";
 
       let fertHtml = "";
-      if (window.FERT_DATA && window.FERT_DATA[NM[en]]) {
-        const fData = window.FERT_DATA[NM[en]];
-        fertHtml = `
-    <div class="rice-card" style="grid-column:1/-1;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2)">
-      <div class="t">🌱 ต้นทุนราคาปุ๋ยเคมี (บาท / กระสอบ 50 กก.)</div>
-      <div class="metric" style="border-top:none">
-        <div class="m-label">ยูเรีย 46-0-0 (ราคาเฉลี่ย)</div>
-        <div class="m-value" style="font-size:16px;color:#93c5fd">${fmtNumber(fData.urea_46_0_0)} <small>฿/กระสอบ</small></div>
-      </div>
-      <div class="metric"><div class="m-label">สูตร 16-20-0</div><div class="m-value">${fmtNumber(fData.form_16_20_0)}</div></div>
-      <div class="metric"><div class="m-label">สูตร 15-15-15</div><div class="m-value">${fmtNumber(fData.form_15_15_15)}</div></div>
-      <div style="font-size:9px;color:var(--muted);margin-top:4px">ที่มา: กระทรวงพาณิชย์ (dataapi.moc.go.th) - ข้อมูลอ้างอิงเดือนล่าสุด ปี 2567</div>
-    </div>`;
-      }
 
       const cardHtml = RICE_TYPES.map(rice => {
         const entryForRice = entryOf(en, rice, S.year);
@@ -2667,19 +2656,12 @@
       return `
     <div class="th">${NM[en] || en}</div>
     <div class="en">${en}</div>
-    <div class="type">${S.layer === "households" ? "ครัวเรือนเกษตรกร / Farmer Households (OAE 2566)" : (S.layer === "fertilizer" ? "ราคาปุ๋ยเคมี / Fertilizer Retail Price" : riceTypeDescription(S.rice, S.layer))}</div>
+    <div class="type">${S.layer === "households" ? "ครัวเรือนเกษตรกร / Farmer Households (OAE 2566)" : riceTypeDescription(S.rice, S.layer)}</div>
     <div class="metric-name">${layerMeta[S.layer].th} / ${layerMeta[S.layer].en}</div>
     <div class="value">${valueHTML}</div>
     <div class="rank">${rank ? `อันดับ #${rank} / Rank #${rank} of ${getVisibleProvinces().filter(name => hasLayerValue(name)).length || getVisibleProvinces().length}` : "ไม่มีข้อมูล / No data"}</div>
     ${yoyHTML}
     ${estBadge}
-    ${S.layer === "fertilizer" && window.FERT_DATA && window.FERT_DATA[NM[en]] ? `
-      <div style="margin-top:10px; padding-top:10px; border-top:1px dashed rgba(255,255,255,.12); font-size:11px">
-        <div style="display:flex; justify-content:space-between"><span>ยูเรีย 46-0-0 (Urea):</span> <span>${fmtNumber(window.FERT_DATA[NM[en]].urea_46_0_0)} ฿</span></div>
-        <div style="display:flex; justify-content:space-between"><span>สูตร 16-20-0 (Formula):</span> <span>${fmtNumber(window.FERT_DATA[NM[en]].form_16_20_0)} ฿</span></div>
-        <div style="display:flex; justify-content:space-between"><span>สูตร 15-15-15 (Formula):</span> <span>${fmtNumber(window.FERT_DATA[NM[en]].form_15_15_15)} ฿</span></div>
-      </div>
-    ` : ""}
     ${householdsLine}
   `;
     }
@@ -2727,37 +2709,28 @@
       }).join("");
     }
 
-    function updateCostSummary() {
-      if (!refs.costSummaryBlock) return;
-      const isJasmine = S.rice === "jasmine";
-      const hasSel = S.sel && window.FERT_DATA && window.FERT_DATA[NM[S.sel]];
-
       if (refs.costSummaryTitle) {
-        refs.costSummaryTitle.innerHTML = hasSel 
-          ? `📍 ต้นทุน: ${NM[S.sel] || S.sel} / Local Cost` 
-          : `📊 โครงสร้างต้นทุน / Production Cost <br><small style="font-size:9px; font-weight:400; opacity:.6">Benchmark: OAE 2566/67</small>`;
+        refs.costSummaryTitle.innerHTML = `📊 โครงสร้างต้นทุน / Production Cost <br><small style="font-size:9px; font-weight:400; opacity:.6">Benchmark: OAE 2566/67</small>`;
       }
       
-      // Base National Costs (OAE 2566/67)
-      let cost = isJasmine ? 4877 : 5760;
+      const cost = isJasmine ? 4877 : 5760;
       let fert = isJasmine ? 877 : 1440;
-      let labor = isJasmine ? 2048 : 2016;
-      let seed = isJasmine ? 731 : 864;
-      let mach = isJasmine ? 975 : 1152;
-      let others = isJasmine ? 244 : 288;
+      const labor = isJasmine ? 2048 : 2016;
+      const seed = isJasmine ? 731 : 864;
+      const mach = isJasmine ? 975 : 1152;
+      const others = isJasmine ? 244 : 288;
       
-      let contextTitle = "ระดับประเทศ / National Average";
       let fertSource = "อ้างอิง สศก. / OAE Ref.";
       
-      if(hasSel) {
-        const f = window.FERT_DATA[NM[S.sel]];
-        contextTitle = `📍 ${NM[S.sel]} (${S.sel})`;
-        // For provincial view, we still use national labor/seed/mach but update the Fertilizer part with real MOC data
-        // We assume approx 1.5 - 2 bags per rai to show a representative "Fertilizer Cost/Rai"
+      if(window.FERT_NATIONAL && window.FERT_NATIONAL.urea_46_0_0) {
+        // Adjust fertilizer cost based on real national urea price
+        // OAE benchmark assumes Urea around 750-800. We scale linearly.
         const bagsPerRai = isJasmine ? 1.0 : 1.5; 
-        fert = Math.round(f.urea_46_0_0 * bagsPerRai);
-        cost = labor + seed + mach + others + fert;
-        fertSource = "ราคาจริงรายพื้นที่ / Local MOC Price";
+        const realUrea = window.FERT_NATIONAL.urea_46_0_0.price_avg || window.FERT_NATIONAL.urea_46_0_0;
+        if (realUrea > 100) {
+           fert = Math.round(realUrea * bagsPerRai);
+           fertSource = "คำนวณจากราคาเฉลี่ย MOC / MOC Avg Based";
+        }
       }
 
       const tone = isJasmine ? 'var(--jasmine-hi)' : 'var(--white-hi)';
@@ -2765,11 +2738,11 @@
       const border = isJasmine ? 'rgba(236,186,217,.25)' : 'rgba(245,192,101,.25)';
 
       refs.costSummaryBlock.innerHTML = `
-        <div style="font-size:10px; color:var(--muted); margin-bottom:6px; letter-spacing:0.05em">${contextTitle}</div>
+        <div style="font-size:10px; color:var(--muted); margin-bottom:6px; letter-spacing:0.05em">ระดับประเทศ / National Average</div>
         <div style="padding:12px; border-radius:14px; background:${bg}; border:1px solid ${border}">
           <div style="display:flex; justify-content:space-between; margin-bottom:12px; align-items:flex-end">
             <span style="font-size:13px; font-weight:700; color:${tone}">${isJasmine ? '🌸 หอมมะลิ / Jasmine' : '🌾 ข้าวขาว / White Rice'}</span>
-            <span style="font-family:'IBM Plex Mono'; font-weight:700; color:${tone}; font-size:16px">${fmtNumber(cost)} <small style="font-size:9px; font-weight:400">฿/ไร่ (Rai)</small></span>
+            <span style="font-family:'IBM Plex Mono'; font-weight:700; color:${tone}; font-size:16px">${fmtNumber(cost - (isJasmine ? 877 : 1440) + fert)} <small style="font-size:9px; font-weight:400">฿/ไร่ (Rai)</small></span>
           </div>
           <div class="metric"><div class="m-label" style="font-size:10px">ปุ๋ยเคมี / Fertilizer <br><small style="opacity:.6">${fertSource}</small></div><div class="m-value" style="font-size:11px">${fmtNumber(fert)}</div></div>
           <div class="metric"><div class="m-label" style="font-size:10px">แรงงาน / Labor</div><div class="m-value" style="font-size:11px">${fmtNumber(labor)}</div></div>
@@ -2777,13 +2750,12 @@
           <div class="metric"><div class="m-label" style="font-size:10px">เครื่องจักร / Machinery</div><div class="m-value" style="font-size:11px">${fmtNumber(mach)}</div></div>
           <div class="metric"><div class="m-label" style="font-size:10px">ค่าเช่าและอื่น ๆ / Rent & Others</div><div class="m-value" style="font-size:11px">${fmtNumber(others)}</div></div>
           
-          ${hasSel ? `
-          <div style="margin-top:12px; padding-top:10px; border-top:1px dashed ${border}; font-size:10px">
-            <div style="color:var(--text-soft); font-weight:600; margin-bottom:5px">ราคาขายปลีก / Retail Prices (MOC):</div>
-            <div style="display:flex; justify-content:space-between"><span>ยูเรีย 46-0-0:</span> <span style="color:${tone}">${fmtNumber(window.FERT_DATA[NM[S.sel]].urea_46_0_0)} ฿</span></div>
-            <div style="display:flex; justify-content:space-between"><span>สูตร 16-20-0:</span> <span>${fmtNumber(window.FERT_DATA[NM[S.sel]].form_16_20_0)} ฿</span></div>
-            <div style="display:flex; justify-content:space-between"><span>สูตร 15-15-15:</span> <span>${fmtNumber(window.FERT_DATA[NM[S.sel]].form_15_15_15)} ฿</span></div>
-          </div>` : ''}
+          <div style="font-size:9px; color:var(--muted); margin-top:10px; line-height:1.4">
+            ฐานข้อมูลเฉลี่ย สศก. 2566/67 สำหรับแรงงาน/เมล็ด/เครื่องจักร <br>
+            <span style="opacity:0.6">OAE Benchmark 2566/67 for labor/seed/machinery.</span>
+          </div>
+        </div>
+      `;
 
           <div style="font-size:9px; color:var(--muted); margin-top:10px; line-height:1.4">
             ฐานข้อมูลเฉลี่ย สศก. 2566/67 สำหรับแรงงาน/เมล็ด/เครื่องจักร <br>
@@ -2990,7 +2962,8 @@
         return;
       }
       await fetchDefaultCSV();
-      fetchLivePrices(); // โหลดราคา live แบบ async (ไม่บล็อก)
+      fetchLivePrices(); 
+      updateNationalFert();
       VIEW.features = window.THAILAND_GEO.features.filter(feature => allEN.includes(feature.properties.name));
       VIEW.featureMap = new Map(VIEW.features.map(feature => [feature.properties.name, feature]));
       updateControls();
@@ -3117,6 +3090,39 @@
       }
 
       panel.style.display = '';
+    }
+
+    function updateNationalFert() {
+      if (!window.FERT_NATIONAL || !refs.nationalFertPanel || !refs.nationalFertBlock) return;
+      
+      const n = window.FERT_NATIONAL;
+      const rows = [];
+      const types = [
+        { key: 'urea_46_0_0', label: 'ยูเรีย 46-0-0', color: '#60a5fa' },
+        { key: 'form_16_20_0', label: 'สูตร 16-20-0', color: '#93c5fd' },
+        { key: 'form_15_15_15', label: 'สูตร 15-15-15', color: '#bfdbfe' }
+      ];
+      
+      types.forEach(t => {
+        const d = n[t.key];
+        if (!d) return;
+        const val = d.price_avg || d;
+        if (!val || val < 10) return;
+        
+        rows.push(`
+          <div class="live-price-row">
+            <div class="live-price-label"><strong style="color:${t.color}">${t.label}</strong><br>
+              <span style="font-size:9px;color:var(--muted)">ราคาเฉลี่ยทั้งประเทศ (บาท/กระสอบ 50 กก.)</span>
+            </div>
+            <div class="live-price-val">${fmtNumber(Math.round(val))}</div>
+          </div>
+        `);
+      });
+      
+      if (rows.length) {
+        refs.nationalFertBlock.innerHTML = rows.join('');
+        refs.nationalFertPanel.style.display = '';
+      }
     }
 
     init();

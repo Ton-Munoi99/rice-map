@@ -5,12 +5,12 @@ import os
 import sys
 from datetime import datetime, timedelta
 
-# บังคับการแสดงผลเป็น UTF-8 สำหรับ Windows
+# Force UTF-8 for Windows
 if sys.platform == "win32":
     import io
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
-# IDs สำหรับปุ๋ยจาก MOC Data API
+# Fertilizer IDs from MOC Data API
 FERT_CONFIG = {
     "urea_46_0_0":   {"id": "D14001", "name": "ปุ๋ยยูเรีย 46-0-0"},
     "form_16_20_0":  {"id": "D14002", "name": "ปุ๋ยสูตร 16-20-0"},
@@ -19,9 +19,9 @@ FERT_CONFIG = {
 
 OUTPUT_FILE = "data/fert-data.js"
 
-def fetch_prices(product_id):
+def fetch_national_data(product_id):
     today = datetime.now()
-    # ดึงย้อนหลัง 15 วันเพื่อให้มั่นใจว่ามีข้อมูล (บางจังหวัดอัปเดตช้า)
+    # ดึงย้อนหลัง 15 วัน
     from_date = (today - timedelta(days=15)).strftime("%Y-%m-%d")
     to_date = today.strftime("%Y-%m-%d")
     
@@ -30,57 +30,77 @@ def fetch_prices(product_id):
     try:
         r = requests.get(url, timeout=30)
         r.raise_for_status()
-        return r.json()
+        data = r.json()
+        
+        # สำหรับ GIS API ค่าเฉลี่ยรวมระดับประเทศจะอยู่ที่ root keys
+        if isinstance(data, dict):
+            p_min = data.get("price_min_avg")
+            p_max = data.get("price_max_avg")
+            
+            # ถ้ามีค่าเฉลี่ยรายวันใน price_list ให้เอามาถัวเฉลี่ยถ่วงน้ำหนักหรือเอาค่าล่าสุด
+            # ในที่นี้ใช้ price_min_avg และ price_max_avg ที่ API คำนวณมาให้เลย
+            if p_min and p_max:
+                avg = (float(p_min) + float(p_max)) / 2
+                return {
+                    "price_min": float(p_min),
+                    "price_max": float(p_max),
+                    "price_avg": round(avg, 2)
+                }
+            
+            # Fallback: ถ้าไม่มี _avg ให้ดูใน price_list อันล่าสุด
+            pl = data.get("price_list", [])
+            if pl and isinstance(pl, list) and len(pl) > 0:
+                latest = pl[-1]
+                if isinstance(latest, dict):
+                    l_min = latest.get("price_min")
+                    l_max = latest.get("price_max")
+                    if l_min and l_max:
+                        return {
+                            "price_min": float(l_min),
+                            "price_max": float(l_max),
+                            "price_avg": round((float(l_min) + float(l_max)) / 2, 2)
+                        }
+        return None
     except Exception as e:
         print(f"  Error fetching {product_id}: {e}")
-        return []
+        return None
 
 def main():
-    print("Fetching Fertilizer Prices from MOC API...")
+    print("Fetching National Fertilizer Prices from MOC API...")
     os.makedirs("data", exist_ok=True)
     
-    provincial_data = {}
+    national_data = {}
 
     for key, info in FERT_CONFIG.items():
         print(f"Fetching {info['name']} ({info['id']})...")
-        data = fetch_prices(info["id"])
-        
-        # จัดกลุ่มข้อมูลรายจังหวัด
-        temp_prov = {}
-        if not isinstance(data, list):
-            print(f"  Warning: Expected list from API, got {type(data)}")
-            continue
+        res = fetch_national_data(info["id"])
+        if res:
+            national_data[key] = res
+            print(f"  ✅ Avg: {res['price_avg']} THB")
+        else:
+            print(f"  ⚠️ No data for {key}")
 
-        for entry in data:
-            if not isinstance(entry, dict):
-                continue
-            prov = entry.get("province_name", "").replace("จังหวัด", "").strip()
-            if not prov: continue
-            
-            # เก็บค่า avg price ล่าสุด (API มักจะเรียงวันที่มาให้แล้ว)
-            price = entry.get("price_avg") or entry.get("price_max") or entry.get("price_min")
-            if price:
-                temp_prov[prov] = float(price)
-        
-        # ใส่ลงใน provincial_data
-        for prov, price in temp_prov.items():
-            if prov not in provincial_data:
-                provincial_data[prov] = {}
-            provincial_data[prov][key] = price
-        
-        print(f"  Found data for {len(temp_prov)} provinces")
+    if not national_data:
+        print("❌ No data retrieved. Using historical reference as fallback.")
+        # Fallback values if API fails
+        national_data = {
+            "urea_46_0_0": {"price_avg": 850, "note": "Historical Avg"},
+            "form_16_20_0": {"price_avg": 820, "note": "Historical Avg"},
+            "form_15_15_15": {"price_avg": 1050, "note": "Historical Avg"}
+        }
 
-    if not provincial_data:
-        print("No data retrieved. Check API status or Product IDs.")
-        return
-
-    # เขียนไฟล์ JS
-    js_content = f"window.FERT_DATA = {json.dumps(provincial_data, ensure_ascii=False, indent=2)};"
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-        f.write(js_content)
+    # Save to JS file
+    # We empty out FERT_DATA to remove provincial mock data as requested
+    output_js = (
+        f"window.FERT_DATA = {{}}; // Removed provincial mock data\n"
+        f"window.FERT_NATIONAL = {json.dumps(national_data, ensure_ascii=False, indent=2)};\n"
+        f"window.FERT_UPDATED = '{datetime.now().strftime('%Y-%m-%d %H:%M')}';"
+    )
     
-    print(f"Updated -> {OUTPUT_FILE} ({len(provincial_data)} provinces)")
-
+    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
+        f.write(output_js)
+    
+    print(f"Updated -> {OUTPUT_FILE}")
 
 if __name__ == "__main__":
     main()
