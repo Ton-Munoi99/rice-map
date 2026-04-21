@@ -2679,7 +2679,7 @@
             const wb = wp.water_balance_mm;
             const status = wb < -100 ? "🔴 แห้งแล้ง / Drought" : wb < 0 ? "🟡 ค่อนข้างแห้ง / Dry" : wb < 200 ? "🟢 สมดุล / Balanced" : "💧 ชื้นมาก / Wet";
             return `<div class="est-badge" style="margin-top:4px">${status}</div>
-    <div style="font-size:10px;color:var(--muted);margin-top:3px">🌧 ฝน ${fmtNumber(wp.season_rainfall_mm)} มม. · ET₀ ${fmtNumber(wp.season_et0_mm)} มม. · ${wp.season_temp_c}°C</div>`;
+    <div style="font-size:10px;color:var(--muted);margin-top:3px">🌧 ฝน/Rain ${fmtNumber(wp.season_rainfall_mm)} มม. · ET₀ ${fmtNumber(wp.season_et0_mm)} มม. · อุณหภูมิ/Temp ${wp.season_temp_c}°C</div>`;
           })()
         : "";
 
@@ -2741,8 +2741,9 @@
       const years = yearsForLayer();
       if (years[0] === "weather") {
         const meta = window.WEATHER_DATA?._meta;
-        const label = meta?.season_label || `นาปี ${new Date().getFullYear() + 543}  (มิ.ย.–พ.ย.)`;
-        const upd   = meta?.updated ? ` · อัปเดต ${meta.updated}` : "";
+        const y = new Date().getFullYear();
+        const label = meta?.season_label || `นาปี ${y + 543} (มิ.ย.–พ.ย.) · Main Season ${y} (Jun–Nov)`;
+        const upd   = meta?.updated ? ` · อัปเดต / Updated ${meta.updated}` : "";
         refs.yearButtons.innerHTML = `<button class="pill on" data-year="weather" style="pointer-events:none">${label}${upd}</button>`;
         return;
       }

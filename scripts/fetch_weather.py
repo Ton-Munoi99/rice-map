@@ -118,7 +118,7 @@ def main():
             "updated": datetime.now().strftime("%Y-%m-%d"),
             "season": f"{start_date} → {end_date}",
             "year": year,
-            "season_label": f"นาปี {year + 543}  (มิ.ย.–พ.ย.)",
+            "season_label": f"นาปี {year + 543} (มิ.ย.–พ.ย.) · Main Season {year} (Jun–Nov)",
             "source": "Open-Meteo Archive API — archive-api.open-meteo.com",
             "variables": {
                 "season_rainfall_mm": "Total precipitation Jun–Nov (mm)",
