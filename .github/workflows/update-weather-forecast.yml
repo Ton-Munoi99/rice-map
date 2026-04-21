@@ -1,0 +1,37 @@
+name: Update Seasonal Weather Forecast
+
+on:
+  schedule:
+    # 1st of every month at 07:30 UTC (14:30 BKK) — refresh ECMWF ensemble
+    - cron: '30 7 1 * *'
+  workflow_dispatch:
+
+jobs:
+  update-forecast:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Fetch seasonal forecast (Open-Meteo ECMWF)
+        run: python scripts/fetch_weather_forecast.py
+
+      - name: Commit and push
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/weather-forecast.json
+          git diff --quiet && git diff --staged --quiet || \
+            (git commit -m "auto: update seasonal weather forecast (ECMWF IFS)" && git push)
