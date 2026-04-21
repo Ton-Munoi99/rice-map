@@ -810,9 +810,9 @@
     .rank-sub {
       font-family: 'IBM Plex Mono', monospace;
       font-size: 10px;
-      letter-spacing: .14em;
-      text-transform: uppercase;
+      letter-spacing: .08em;
       color: var(--muted);
+      line-height: 1.5;
     }
 
     .rank-list {
@@ -2531,7 +2531,11 @@
     function updateTopList() {
       const visible = getVisibleProvinces();
       const meta = layerMeta[S.layer];
-      refs.topSub.textContent = `${riceMeta[S.rice].th} (${S.rice === 'white' ? 'White' : 'Jasmine'}) · ${meta.th} / ${meta.en} · ปี ${S.year}`;
+      const riceEN = S.rice === 'white' ? 'White' : 'Jasmine';
+      const yearLabel = isWeatherLayer()
+        ? (window.WEATHER_DATA?._meta?.season_label || 'นาปี (มิ.ย.–พ.ย.) · Main Season (Jun–Nov)')
+        : `ปี / Year ${S.year}`;
+      refs.topSub.innerHTML = `${riceMeta[S.rice].th} / ${riceEN} &nbsp;·&nbsp; ${meta.th} / ${meta.en}<br>${yearLabel}`;
       const items = visible
         .filter(en => hasLayerValue(en))
         .map(en => ({ en, v: valueOf(en) }))
@@ -3080,9 +3084,9 @@
         const j = FOB_PRICES.prices.jasmine_fob;
         rows.push(`
       <div class="live-price-row">
-        <div class="live-price-label"><strong style="color:#60a5fa">🚢 ราคาส่งออกหน้าท่าเรือ (F.O.B.)</strong><br>
+        <div class="live-price-label"><strong style="color:#60a5fa">🚢 ราคาส่งออกหน้าท่าเรือ / Export Price (F.O.B.)</strong><br>
           <span style="font-size:9px;color:var(--muted)">TREA · ${FOB_PRICES.date}</span><br>
-          <span style="font-size:9px;color:var(--muted)">ข้าวขาว 5%: $${w} | หอมมะลิ: $${j}</span>
+          <span style="font-size:9px;color:var(--muted)">ข้าวขาว / White 5%: $${w} &nbsp;|&nbsp; หอมมะลิ / Jasmine: $${j}</span>
         </div>
         <div class="live-price-val" style="display:none"></div>
       </div>`);
@@ -3098,9 +3102,9 @@
         const wh = Number(v.value_thb_per_ton).toLocaleString() + ' ฿';
         rows.push(`
       <div class="live-price-row">
-        <div class="live-price-label"><strong style="color:#86efac">🌾 ราคาที่ไร่นาเฉลี่ย (Farm-gate)</strong><br>
-          <span style="font-size:9px;color:var(--muted)">OAE · ภาพรวมระดับประเทศ (National) · ${mLabel} ${pyear}</span><br>
-          <span style="font-size:9px;color:var(--muted)">ข้าวเจ้า 15%: ${wh}/ตัน</span>
+        <div class="live-price-label"><strong style="color:#86efac">🌾 ราคาที่ไร่นาเฉลี่ย / Farm-gate Price</strong><br>
+          <span style="font-size:9px;color:var(--muted)">OAE · ระดับประเทศ / National · ${mLabel} ${pyear}</span><br>
+          <span style="font-size:9px;color:var(--muted)">ข้าวเจ้า / White 15%: ${wh}/ตัน</span>
         </div>
         <div class="live-price-val" style="display:none"></div>
       </div>`);
@@ -3116,9 +3120,9 @@
           const j = vals.jasmine ? Number(vals.jasmine).toLocaleString() + ' ฿' : '-';
           rows.push(`
         <div class="live-price-row">
-          <div class="live-price-label"><strong style="color:#fbbf24">🏭 ราคาที่โรงสีรับซื้อ</strong> (${srcDate})<br>
-            <span style="font-size:9px;color:var(--muted)">📍 ${name} · สมาคมโรงสีข้าวไทย</span><br>
-            <span style="font-size:9px;color:var(--muted)">ข้าวเจ้า: ${w} &nbsp;|&nbsp; หอมมะลิ: ${j}</span></div>
+          <div class="live-price-label"><strong style="color:#fbbf24">🏭 ราคาที่โรงสีรับซื้อ / Mill Purchase Price</strong> (${srcDate})<br>
+            <span style="font-size:9px;color:var(--muted)">📍 ${name} · สมาคมโรงสีข้าวไทย / Thai Rice Millers Assoc.</span><br>
+            <span style="font-size:9px;color:var(--muted)">ข้าวเจ้า / White: ${w} &nbsp;|&nbsp; หอมมะลิ / Jasmine: ${j}</span></div>
           <div class="live-price-val" style="display:none"></div>
         </div>`);
         });
@@ -3141,7 +3145,7 @@
         try {
           const d = new Date(updatedAt);
           if (!isNaN(d)) {
-            updEl.textContent = 'อัพเดต ' + d.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            updEl.textContent = 'อัปเดต / Updated ' + d.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
           }
         } catch (_) { updEl.textContent = ''; }
       }
@@ -3155,9 +3159,9 @@
       const n = window.FERT_NATIONAL;
       const rows = [];
       const types = [
-        { key: 'urea_46_0_0', label: 'ยูเรีย 46-0-0', color: '#60a5fa' },
-        { key: 'form_16_20_0', label: 'สูตร 16-20-0', color: '#93c5fd' },
-        { key: 'form_15_15_15', label: 'สูตร 15-15-15', color: '#bfdbfe' }
+        { key: 'urea_46_0_0', label: 'ยูเรีย / Urea 46-0-0', color: '#60a5fa' },
+        { key: 'form_16_20_0', label: 'สูตร / Formula 16-20-0', color: '#93c5fd' },
+        { key: 'form_15_15_15', label: 'สูตร / Formula 15-15-15', color: '#bfdbfe' }
       ];
       
       types.forEach(t => {
@@ -3169,7 +3173,7 @@
         rows.push(`
           <div class="live-price-row">
             <div class="live-price-label"><strong style="color:${t.color}">${t.label}</strong><br>
-              <span style="font-size:9px;color:var(--muted)">ราคาเฉลี่ยทั้งประเทศ (บาท/กระสอบ 50 กก.)</span>
+              <span style="font-size:9px;color:var(--muted)">ราคาเฉลี่ยทั้งประเทศ / Natl. Avg. (บาท / THB per 50kg bag)</span>
             </div>
             <div class="live-price-val">${fmtNumber(Math.round(val))}</div>
           </div>
