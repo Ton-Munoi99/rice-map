@@ -1529,6 +1529,7 @@
             <button class="pill" data-layer="area" onclick="setLayer('area')"><span class="th-t">เนื้อที่เก็บเกี่ยว</span><span class="en-t">Harvested Area (rai)</span></button>
             <button class="pill" data-layer="price" onclick="setLayer('price')"><span class="th-t">ราคาโรงสี (฿/ตัน)</span><span class="en-t">Mill Price (THB/ton)</span></button>
             <button class="pill" data-layer="households" onclick="setLayer('households')"><span class="th-t">ครัวเรือนเกษตรกร</span><span class="en-t">Farmer Households</span></button>
+            <button class="pill" data-layer="dam" onclick="setLayer('dam')"><span class="th-t">ระดับน้ำในเขื่อน</span><span class="en-t">Dam Level</span></button>
           </div>
         </section>
 
@@ -1680,6 +1681,7 @@
       price: { th: "ราคาที่โรงสีรับซื้อ", en: "Mill Purchase Price", unit: "บาท/ตัน (ราคาโรงสี)", unitShort: "฿/ตัน", summary: "ราคาเฉลี่ยจังหวัดที่มีข้อมูล", summaryMode: "avg_nonzero" },
       households: { th: "ครัวเรือนเกษตรกร", en: "Farmer Households", unit: "ครัวเรือน (ปี 2566)", unitShort: "ครัวเรือน", summary: "ครัวเรือนเกษตรกรรวม", summaryMode: "sum" },
       fertilizer: { th: "ราคาปุ๋ยเคมีรายจังหวัด", en: "Fertilizer Price", unit: "บาท/กระสอบ 50 กก.", unitShort: "฿/กระสอบ", summary: "ราคาปุ๋ยเฉลี่ย", summaryMode: "avg_nonzero" },
+      dam: { th: "ระดับน้ำในเขื่อน", en: "Dam Water Level", unit: "% ความจุ (RID)", unitShort: "%", summary: "ระดับน้ำเฉลี่ย", summaryMode: "avg_nonzero" },
     };
     const riceMeta = {
       white: { th: "ข้าวขาว", badge: "🌾", type: "ข้าวขาว / White rice" },
@@ -1891,6 +1893,7 @@
     }
 
     function yearsForLayer(layer = S.layer) {
+      if (layer === "dam") return ["dam"];
       if (layer === "households") return ["2567"];
       return layer === "price" ? PRICE_YEARS : PRODUCTION_YEARS;
     }
@@ -1921,12 +1924,18 @@ function t(th, en) {
       return Number(window.PROVINCE_HOUSEHOLDS[thName] || 0);
     }
 
+    function damValueOf(en) {
+      return window.DAM_DATA?.provinces?.[en]?.dam_level_pct ?? 0;
+    }
+
     function valueOf(en, rice = S.rice, year = S.year, layer = S.layer) {
       if (layer === "households") return householdValueOf(en);
+      if (layer === "dam") return damValueOf(en);
       return Number(entryOf(en, rice, year)[layer] || 0);
     }
 
     function hasLayerValue(en, rice = S.rice, year = S.year, layer = S.layer) {
+      if (layer === "dam") return window.DAM_DATA?.provinces?.[en] != null;
       return valueOf(en, rice, year, layer) > 0;
     }
 
@@ -1961,7 +1970,8 @@ function t(th, en) {
     }
 
     function getPalette() {
-return S.rice === "white"
+      if (S.layer === "dam") return { lo: [192, 57, 43], mid: [241, 196, 15], hi: [41, 128, 185], accent: "#3498db" };
+      return S.rice === "white"
         ? { lo: [36, 75, 54], mid: [154, 131, 73], hi: [245, 192, 101], accent: "#ff8f4d" }
         : { lo: [42, 39, 77], mid: [134, 93, 178], hi: [236, 186, 217], accent: "#d9a0ff" };
     }
@@ -1990,6 +2000,7 @@ return S.rice === "white"
 
     function fmtCompact(n) {
       if (!Number.isFinite(n)) return "—";
+      if (S.layer === "dam") return n.toFixed(1) + "%";
       if (S.layer === "price") return fmtNumber(Math.round(n));
       if (S.layer === "households") {
         if (n >= 1e6) return `${(n / 1e6).toFixed(2)}M`;
@@ -2004,6 +2015,7 @@ return S.rice === "white"
 
     function fmtValue(n, layer = S.layer) {
       if (!Number.isFinite(n)) return "—";
+      if (layer === "dam") return n.toFixed(1) + "%";
       return fmtNumber(Math.round(n));
     }
 
@@ -2454,20 +2466,22 @@ return S.rice === "white"
       refs.legendBar.style.background = `linear-gradient(90deg,${rgb(palette.lo)} 0%,${rgb(palette.mid)} 52%,${rgb(palette.hi)} 100%)`;
       refs.legendLow.textContent = `${fmtCompact(min)} ${layerMeta[S.layer].unitShort}`;
       refs.legendHigh.textContent = `${fmtCompact(max)} ${layerMeta[S.layer].unitShort}`;
-      refs.legendType.textContent = t(riceMeta[S.rice].th, riceMeta[S.rice].en);
+      refs.legendType.textContent = S.layer === "dam" ? t("กรมชลประทาน", "RID") : t(riceMeta[S.rice].th, riceMeta[S.rice].en);
       refs.legendLayer.textContent = t(layerMeta[S.layer].th, layerMeta[S.layer].en);
       refs.legendUnit.textContent = layerMeta[S.layer].unit;
       refs.latestBadge.classList.add("show");
-      const isEstYear = S.layer !== "price" && S.layer !== "households" && S.layer !== "fertilizer" && S.year >= "2568";
+      const isEstYear = S.layer !== "price" && S.layer !== "households" && S.layer !== "fertilizer" && S.layer !== "dam" && S.year >= "2568";
       refs.latestBadge.textContent = S.layer === "price"
         ? `${t('ราคาอ้างอิง','Price Ref')}: ${entryOf(getVisibleProvinces().find(en => hasLayerValue(en)) || allEN[0]).source_date || S.year}`
         : S.layer === "households"
           ? `👨‍🌾 ${t('ครัวเรือนเกษตรกร','Farm Households')} OAE 2566`
           : S.layer === "fertilizer"
             ? `🌱 ${t('ราคาปุ๋ยเคมีรายจังหวัด','Fertilizer Price by Province')} MOC 2567`
-            : isEstYear
-              ? `📊 ${t('ประมาณการ','Estimate')} ${S.year}`
-              : `OAE ${t('ข้อมูลปี','Crop Year')} ${S.year}`;
+            : S.layer === "dam"
+              ? `💧 ${t('ระดับน้ำในเขื่อน','Dam Level')} RID ${window.DAM_DATA?._meta?.updated || ''}`
+              : isEstYear
+                ? `📊 ${t('ประมาณการ','Estimate')} ${S.year}`
+                : `OAE ${t('ข้อมูลปี','Crop Year')} ${S.year}`;
       refs.latestBadge.style.borderColor = isEstYear ? 'rgba(245,192,101,.55)' : '';
     }
 
@@ -2475,6 +2489,14 @@ return S.rice === "white"
       refs.dataStatus.textContent = DATA_META.label;
       const visible = getVisibleProvinces();
       const covered = visible.filter(en => hasLayerValue(en)).length;
+      if (S.layer === "dam") {
+        const updated = window.DAM_DATA?._meta?.updated || "—";
+        refs.dataSourceNote.textContent = t(
+          `ข้อมูลระดับน้ำในเขื่อนขนาดใหญ่ 35 แห่ง จากกรมชลประทาน (RID) อัปเดต ${updated} ครอบคลุม ${covered} จังหวัด`,
+          `Large dam water levels (35 dams) from Royal Irrigation Dept. (RID). Updated ${updated}. Covers ${covered} provinces.`
+        );
+        return;
+      }
       const isEstYear = S.layer !== "price" && S.year >= "2568";
       if (isEstYear) {
         refs.dataSourceNote.innerHTML = `<strong style="color:#f5c065">📊 ข้อมูลปี ${S.year} เป็นการประมาณการ / Estimated Data</strong><br>คำนวณจากค่าเฉลี่ย YoY Growth Rate ปี 2565–2567 รายจังหวัด (capped ±30%/ปี)<br>${S.year === '2568' ? 'เนื้อที่เพาะปลูกปรับด้วย scale factor จากข้อมูลกรมการข้าว ณ 2 มี.ค. 2569 (58.5 ล้านไร่ทั้งประเทศ)' : 'ประมาณการต่อเนื่องจากปี 2568'}<br><span style="color:var(--muted)">Trend estimation: avg 2-year YoY (2565→2566→2567) applied to ${S.year}. ${S.year === '2568' ? 'Area_planted calibrated using Department of Rice 2568 regional planted-area data (58.5M rai national).' : ''} Not official OAE data — replace via Import CSV when official data is released.</span>`;
@@ -2518,7 +2540,7 @@ return S.rice === "white"
         }
       }
       refs.scopeLabel.textContent = t("ขอบเขต", "Scope");
-      refs.scopeValue.textContent = S.layer === "price" ? `${covered.length}/${visible.length} ${t('จว.','Prov.')}` : `${visible.length} ${t('จว.','Prov.')}`;
+      refs.scopeValue.textContent = (S.layer === "price" || S.layer === "dam") ? `${covered.length}/${visible.length} ${t('จว.','Prov.')}` : `${visible.length} ${t('จว.','Prov.')}`;
       refs.scopeSub.textContent = S.layer === "price"
         ? t("จังหวัดที่มีราคา", "Provinces with price")
         : (S.reg === "all" ? t("ทั้งประเทศ", "Nationwide") : t(`ภาค${thaiRegionName(S.reg)}`, `${S.reg.charAt(0).toUpperCase() + S.reg.slice(1)} Region`));
@@ -2528,8 +2550,12 @@ return S.rice === "white"
       refs.leadLabel.textContent = t("อันดับ 1", "Leader");
       refs.leadValue.textContent = leader ? (NM[leader.en] || leader.en) : "—";
       refs.leadSub.textContent = leader ? `${S.layer === "price" ? priceRange(entryOf(leader.en)) : fmtValue(leader.v)} ${meta.unitShort}` : "—";
-      refs.headlineTitle.textContent = t(`แผนที่${riceMeta[S.rice].th}รายจังหวัด`, `${riceMeta[S.rice].en} Rice · Province Map`);
-      refs.headlineDesc.textContent = S.layer === "price"
+      refs.headlineTitle.textContent = S.layer === "dam"
+        ? t("แผนที่ระดับน้ำในเขื่อนรายจังหวัด", "Dam Water Levels by Province")
+        : t(`แผนที่${riceMeta[S.rice].th}รายจังหวัด`, `${riceMeta[S.rice].en} Rice · Province Map`);
+      refs.headlineDesc.textContent = S.layer === "dam"
+        ? t("ระดับน้ำในเขื่อนขนาดใหญ่ 35 แห่ง จากกรมชลประทาน (RID) อัปเดตรายวัน", "Large dam water levels from Royal Irrigation Dept. (RID). 35 dams, daily update.")
+        : S.layer === "price"
         ? t(`แผนที่ fit ตามสัดส่วนประเทศไทยและใช้รายงานราคาข้าวเปลือกรายวันของสมาคมโรงสีข้าวไทย โดยไฮไลต์ราคาของ ${riceTypeDescription(S.rice, S.layer)} ปี ${S.year}`,
            `Province-level paddy price map using Thai Rice Miller Association daily reports. ${riceTypeDescription(S.rice, S.layer)} · Crop year ${S.year}.`)
         : t(`แผนที่ fit ตามสัดส่วนประเทศไทยและใช้ข้อมูลทางการ OAE ระดับจังหวัดสำหรับ ${riceTypeDescription(S.rice, S.layer)} โดยไฮไลต์ ${layerMeta[S.layer].th} ปี ${S.year} ในมุมมอง${S.reg === "all" ? "ทั้งประเทศ" : `ภาค${thaiRegionName(S.reg)}`}`,
@@ -2540,7 +2566,7 @@ return S.rice === "white"
       const visible = getVisibleProvinces();
       const meta = layerMeta[S.layer];
       const riceEN = S.rice === 'white' ? 'White' : 'Jasmine';
-      const yearLabel = t(`ปี ${S.year}`, `Year ${S.year}`);
+      const yearLabel = S.layer === "dam" ? t("ล่าสุด", "Latest") : t(`ปี ${S.year}`, `Year ${S.year}`);
       const riceLabel = t(riceMeta[S.rice].th, riceEN);
       const metaLabel = t(meta.th, meta.en);
       refs.topSub.innerHTML = `${riceLabel} &nbsp;·&nbsp; ${metaLabel}<br>${yearLabel}`;
@@ -2597,6 +2623,31 @@ return S.rice === "white"
 
       let fertHtml = "";
 
+      let damHtml = "";
+      if (window.DAM_DATA?.provinces?.[en]) {
+        const dp = window.DAM_DATA.provinces[en];
+        const damColor = dp.dam_level_pct < 30 ? '#c0392b' : dp.dam_level_pct < 60 ? '#f39c12' : '#2980b9';
+        const damsDetail = dp.dams.map(d => `
+          <div class="metric">
+            <div class="m-label" style="font-size:10px">${d.name}</div>
+            <div class="m-value" style="font-size:11px;color:${dp.dam_level_pct < 30 ? '#c0392b' : dp.dam_level_pct < 60 ? '#f39c12' : '#2980b9'}">${Number(d.pct || 0).toFixed(1)}%</div>
+          </div>`).join("");
+        damHtml = `
+          <div class="rice-card" style="grid-column:1/-1;background:rgba(41,128,185,.08);border:1px solid rgba(41,128,185,.2)">
+            <div class="t">💧 ${t('ระดับน้ำในเขื่อน (RID)','Dam Water Level (RID)')}</div>
+            <div class="metric">
+              <div class="m-label">${t('ระดับน้ำรวม (volume-weighted)','Total Level (volume-weighted)')}</div>
+              <div class="m-value" style="color:${damColor}">${dp.dam_level_pct != null ? dp.dam_level_pct.toFixed(1) : "—"}% <small>${t('ความจุ','capacity')}</small></div>
+            </div>
+            <div class="metric">
+              <div class="m-label">${t('ปริมาณน้ำ / ความจุ','Volume / Capacity')}</div>
+              <div class="m-value" style="font-size:11px">${dp.total_volume_mm3.toFixed(0)} / ${dp.total_storage_mm3.toFixed(0)} <small>ล้าน ม.³</small></div>
+            </div>
+            ${damsDetail}
+            <div style="font-size:9px;color:var(--muted);margin-top:6px">${t('ที่มา: กรมชลประทาน (RID) · อัปเดตรายวัน','Source: Royal Irrigation Dept. (RID) · Daily update')} ${window.DAM_DATA._meta.updated}</div>
+          </div>`;
+      }
+
       const cardHtml = RICE_TYPES.map(rice => {
         const entryForRice = entryOf(en, rice, S.year);
         const estNote = isEstimated(en, rice, S.year)
@@ -2621,7 +2672,7 @@ return S.rice === "white"
         }).join("")}
     </div>`;
       }).join("");
-      refs.detailGrid.innerHTML = householdsHtml + fertHtml + cardHtml;
+      refs.detailGrid.innerHTML = damHtml + householdsHtml + fertHtml + cardHtml;
       refs.sparkHint.textContent = S.layer === "price"
         ? t("ค่ากลางของช่วงราคา", "Midpoint of price range")
         : t(layerMeta[S.layer].th, layerMeta[S.layer].en);
@@ -2631,6 +2682,11 @@ return S.rice === "white"
     }
 
     function drawSpark(en) {
+      if (S.layer === "dam") {
+        refs.sparkSvg.innerHTML = "";
+        refs.sparkTitle.textContent = t("ไม่มีข้อมูลอนุกรมเวลา", "No time-series data");
+        return;
+      }
       const years = yearsForLayer();
       const values = years.map(year => valueOf(en, S.rice, year, S.layer));
       const w = 320, h = 58, pad = 9;
@@ -2667,6 +2723,22 @@ return S.rice === "white"
     }
 
     function tooltipContent(en) {
+      if (S.layer === "dam") {
+        const prov = window.DAM_DATA?.provinces?.[en];
+        if (!prov) return `<div class="th">${NM[en] || en}</div><div class="en">${en}</div><div style="color:var(--muted);font-size:11px;margin-top:6px">${t('ไม่มีข้อมูลเขื่อน','No dam data')}</div>`;
+        const rank = currentRank(en);
+        const visible = getVisibleProvinces().filter(name => hasLayerValue(name)).length;
+        const damsHtml = prov.dams.map(d => `<div style="font-size:9px;color:var(--muted);margin-top:2px">${d.name}: ${Number(d.pct || 0).toFixed(1)}%</div>`).join("");
+        return `
+    <div class="th">${NM[en] || en}</div>
+    <div class="en">${en}</div>
+    <div class="metric-name">${t('ระดับน้ำในเขื่อน','Dam Water Level')}</div>
+    <div class="value">${prov.dam_level_pct != null ? prov.dam_level_pct.toFixed(1) : "—"}% <small style="font-size:12px;color:var(--muted)">${t('ความจุ','capacity')}</small></div>
+    <div class="rank">${rank ? `${t('อันดับ','Rank')} #${rank} / ${visible}` : t('ไม่มีข้อมูล','No data')} · ${prov.n_dams} ${t('เขื่อน','dams')}</div>
+    <div style="font-size:10px;color:var(--muted);margin-top:4px">${prov.total_volume_mm3.toFixed(0)} / ${prov.total_storage_mm3.toFixed(0)} ล้าน ม.³</div>
+    ${damsHtml}
+  `;
+      }
       const value = valueOf(en);
       const rank = currentRank(en);
       const prevYear = previousYear(S.year);
@@ -2738,6 +2810,11 @@ return S.rice === "white"
     }
 
     function renderYearButtons() {
+      if (S.layer === "dam") {
+        const updated = window.DAM_DATA?._meta?.updated || "—";
+        refs.yearButtons.innerHTML = `<button class="pill on" data-year="dam">💧 ${t('ล่าสุด','Latest')} ${updated}</button>`;
+        return;
+      }
       const years = yearsForLayer();
       refs.yearButtons.innerHTML = years.map((year, idx) => {
         const suffix = idx === years.length - 1 ? " ล่าสุด" : "";
@@ -2987,6 +3064,15 @@ return S.rice === "white"
       toastTimer = setTimeout(() => refs.toast.classList.remove("show"), 2200);
     }
 
+    async function fetchDamData() {
+      try {
+        const res = await fetch('data/dam-water.json?_=' + Date.now(), { cache: 'no-store' });
+        if (res.ok) window.DAM_DATA = await res.json();
+      } catch (e) {
+        console.info('dam-water.json not available (local mode)');
+      }
+    }
+
     async function init() {
       if (!window.THAILAND_GEO?.features?.length) {
         toast("โหลดข้อมูลแผนที่ไม่สำเร็จ");
@@ -2994,6 +3080,7 @@ return S.rice === "white"
       }
       await fetchDefaultCSV();
       fetchLivePrices();
+      fetchDamData();
       updateNationalFert();
 
       VIEW.features = window.THAILAND_GEO.features.filter(feature => allEN.includes(feature.properties.name));
