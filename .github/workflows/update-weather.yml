@@ -1,0 +1,37 @@
+name: Update Province Weather Data
+
+on:
+  schedule:
+    # 1st of every month at 06:30 UTC (13:30 BKK) — after the previous month is complete
+    - cron: '30 6 1 * *'
+  workflow_dispatch:
+
+jobs:
+  update-weather:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Fetch weather data (Open-Meteo)
+        run: python scripts/fetch_weather.py
+
+      - name: Commit and push
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/weather-province.json
+          git diff --quiet && git diff --staged --quiet || \
+            (git commit -m "auto: update province weather data (Open-Meteo)" && git push)
