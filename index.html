@@ -2709,6 +2709,11 @@
       }).join("");
     }
 
+
+    function updateCostSummary() {
+      if (!refs.costSummaryBlock) return;
+      const isJasmine = S.rice === "jasmine";
+
       if (refs.costSummaryTitle) {
         refs.costSummaryTitle.innerHTML = `📊 โครงสร้างต้นทุน / Production Cost <br><small style="font-size:9px; font-weight:400; opacity:.6">Benchmark: OAE 2566/67</small>`;
       }
@@ -2722,41 +2727,32 @@
       
       let fertSource = "อ้างอิง สศก. / OAE Ref.";
       
-      if(window.FERT_NATIONAL && window.FERT_NATIONAL.urea_46_0_0) {
-        // Adjust fertilizer cost based on real national urea price
-        // OAE benchmark assumes Urea around 750-800. We scale linearly.
-        const bagsPerRai = isJasmine ? 1.0 : 1.5; 
+      if (window.FERT_NATIONAL && window.FERT_NATIONAL.urea_46_0_0) {
+        const bagsPerRai = isJasmine ? 1.0 : 1.5;
         const realUrea = window.FERT_NATIONAL.urea_46_0_0.price_avg || window.FERT_NATIONAL.urea_46_0_0;
         if (realUrea > 100) {
-           fert = Math.round(realUrea * bagsPerRai);
-           fertSource = "คำนวณจากราคาเฉลี่ย MOC / MOC Avg Based";
+          fert = Math.round(realUrea * bagsPerRai);
+          fertSource = "คำนวณจากราคาเฉลี่ย MOC / MOC Avg Based";
         }
       }
 
       const tone = isJasmine ? 'var(--jasmine-hi)' : 'var(--white-hi)';
       const bg = isJasmine ? 'rgba(236,186,217,.08)' : 'rgba(245,192,101,.08)';
       const border = isJasmine ? 'rgba(236,186,217,.25)' : 'rgba(245,192,101,.25)';
+      const totalCost = cost - (isJasmine ? 877 : 1440) + fert;
 
       refs.costSummaryBlock.innerHTML = `
         <div style="font-size:10px; color:var(--muted); margin-bottom:6px; letter-spacing:0.05em">ระดับประเทศ / National Average</div>
         <div style="padding:12px; border-radius:14px; background:${bg}; border:1px solid ${border}">
           <div style="display:flex; justify-content:space-between; margin-bottom:12px; align-items:flex-end">
             <span style="font-size:13px; font-weight:700; color:${tone}">${isJasmine ? '🌸 หอมมะลิ / Jasmine' : '🌾 ข้าวขาว / White Rice'}</span>
-            <span style="font-family:'IBM Plex Mono'; font-weight:700; color:${tone}; font-size:16px">${fmtNumber(cost - (isJasmine ? 877 : 1440) + fert)} <small style="font-size:9px; font-weight:400">฿/ไร่ (Rai)</small></span>
+            <span style="font-family:'IBM Plex Mono'; font-weight:700; color:${tone}; font-size:16px">${fmtNumber(totalCost)} <small style="font-size:9px; font-weight:400">฿/ไร่ (Rai)</small></span>
           </div>
           <div class="metric"><div class="m-label" style="font-size:10px">ปุ๋ยเคมี / Fertilizer <br><small style="opacity:.6">${fertSource}</small></div><div class="m-value" style="font-size:11px">${fmtNumber(fert)}</div></div>
           <div class="metric"><div class="m-label" style="font-size:10px">แรงงาน / Labor</div><div class="m-value" style="font-size:11px">${fmtNumber(labor)}</div></div>
           <div class="metric"><div class="m-label" style="font-size:10px">เมล็ดพันธุ์ / Seed</div><div class="m-value" style="font-size:11px">${fmtNumber(seed)}</div></div>
           <div class="metric"><div class="m-label" style="font-size:10px">เครื่องจักร / Machinery</div><div class="m-value" style="font-size:11px">${fmtNumber(mach)}</div></div>
           <div class="metric"><div class="m-label" style="font-size:10px">ค่าเช่าและอื่น ๆ / Rent & Others</div><div class="m-value" style="font-size:11px">${fmtNumber(others)}</div></div>
-          
-          <div style="font-size:9px; color:var(--muted); margin-top:10px; line-height:1.4">
-            ฐานข้อมูลเฉลี่ย สศก. 2566/67 สำหรับแรงงาน/เมล็ด/เครื่องจักร <br>
-            <span style="opacity:0.6">OAE Benchmark 2566/67 for labor/seed/machinery.</span>
-          </div>
-        </div>
-      `;
-
           <div style="font-size:9px; color:var(--muted); margin-top:10px; line-height:1.4">
             ฐานข้อมูลเฉลี่ย สศก. 2566/67 สำหรับแรงงาน/เมล็ด/เครื่องจักร <br>
             <span style="opacity:0.6">OAE Benchmark 2566/67 for labor/seed/machinery.</span>
@@ -2764,6 +2760,7 @@
         </div>
       `;
     }
+
 
     function rerender() {
       updateControls();
