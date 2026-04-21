@@ -2709,10 +2709,12 @@
       }).join("");
     }
 
+    function updateCostSummary() {
+      const isJasmine = S.rice === "jasmine";
       if (refs.costSummaryTitle) {
         refs.costSummaryTitle.innerHTML = `📊 โครงสร้างต้นทุน / Production Cost <br><small style="font-size:9px; font-weight:400; opacity:.6">Benchmark: OAE 2566/67</small>`;
       }
-      
+
       const cost = isJasmine ? 4877 : 5760;
       let fert = isJasmine ? 877 : 1440;
       const labor = isJasmine ? 2048 : 2016;
@@ -2750,13 +2752,6 @@
           <div class="metric"><div class="m-label" style="font-size:10px">เครื่องจักร / Machinery</div><div class="m-value" style="font-size:11px">${fmtNumber(mach)}</div></div>
           <div class="metric"><div class="m-label" style="font-size:10px">ค่าเช่าและอื่น ๆ / Rent & Others</div><div class="m-value" style="font-size:11px">${fmtNumber(others)}</div></div>
           
-          <div style="font-size:9px; color:var(--muted); margin-top:10px; line-height:1.4">
-            ฐานข้อมูลเฉลี่ย สศก. 2566/67 สำหรับแรงงาน/เมล็ด/เครื่องจักร <br>
-            <span style="opacity:0.6">OAE Benchmark 2566/67 for labor/seed/machinery.</span>
-          </div>
-        </div>
-      `;
-
           <div style="font-size:9px; color:var(--muted); margin-top:10px; line-height:1.4">
             ฐานข้อมูลเฉลี่ย สศก. 2566/67 สำหรับแรงงาน/เมล็ด/เครื่องจักร <br>
             <span style="opacity:0.6">OAE Benchmark 2566/67 for labor/seed/machinery.</span>
