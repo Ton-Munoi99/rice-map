@@ -1529,10 +1529,6 @@
             <button class="pill" data-layer="area" onclick="setLayer('area')"><span class="th-t">เนื้อที่เก็บเกี่ยว</span><span class="en-t">Harvested Area (rai)</span></button>
             <button class="pill" data-layer="price" onclick="setLayer('price')"><span class="th-t">ราคาโรงสี (฿/ตัน)</span><span class="en-t">Mill Price (THB/ton)</span></button>
             <button class="pill" data-layer="households" onclick="setLayer('households')"><span class="th-t">ครัวเรือนเกษตรกร</span><span class="en-t">Farmer Households</span></button>
-            <button class="pill" data-layer="rainfall" onclick="setLayer('rainfall')"><span class="th-t">น้ำฝนสะสม 2568</span><span class="en-t">Rainfall 2568 (hist.)</span></button>
-            <button class="pill" data-layer="drought" onclick="setLayer('drought')"><span class="th-t">ดัชนีภัยแล้ง 2568</span><span class="en-t">Water Balance 2568</span></button>
-            <button class="pill" data-layer="rainfall_fc" onclick="setLayer('rainfall_fc')"><span class="th-t">📊 ค่าปกติฝน 5 ปี</span><span class="en-t">📊 5-yr Rainfall Normal</span></button>
-            <button class="pill" data-layer="drought_fc" onclick="setLayer('drought_fc')"><span class="th-t">📊 ค่าปกติภัยแล้ง 5 ปี</span><span class="en-t">📊 5-yr Drought Normal</span></button>
           </div>
         </section>
 
@@ -1684,10 +1680,6 @@
       price: { th: "ราคาที่โรงสีรับซื้อ", en: "Mill Purchase Price", unit: "บาท/ตัน (ราคาโรงสี)", unitShort: "฿/ตัน", summary: "ราคาเฉลี่ยจังหวัดที่มีข้อมูล", summaryMode: "avg_nonzero" },
       households: { th: "ครัวเรือนเกษตรกร", en: "Farmer Households", unit: "ครัวเรือน (ปี 2566)", unitShort: "ครัวเรือน", summary: "ครัวเรือนเกษตรกรรวม", summaryMode: "sum" },
       fertilizer: { th: "ราคาปุ๋ยเคมีรายจังหวัด", en: "Fertilizer Price", unit: "บาท/กระสอบ 50 กก.", unitShort: "฿/กระสอบ", summary: "ราคาปุ๋ยเฉลี่ย", summaryMode: "avg_nonzero" },
-      rainfall:    { th: "น้ำฝนสะสม (นาปี 2568)", en: "Season Rainfall 2568", unit: "มม. (มิ.ย.–พ.ย.)", unitShort: "มม.", summary: "น้ำฝนเฉลี่ยรายจังหวัด", summaryMode: "avg" },
-      drought:     { th: "ดัชนีภัยแล้ง 2568 (Water Balance)", en: "Water Balance 2568 (Rain − ET₀)", unit: "มม. (มิ.ย.–พ.ย.)", unitShort: "มม.", summary: "Water Balance เฉลี่ย", summaryMode: "avg" },
-      rainfall_fc: { th: "ค่าปกติน้ำฝน 5 ปี (2020–2024)", en: "5-yr Rainfall Normal (2020–2024)", unit: "มม. (มิ.ย.–พ.ย.)", unitShort: "มม.", summary: "น้ำฝนค่าปกติเฉลี่ย", summaryMode: "avg" },
-      drought_fc:  { th: "ค่าปกติภัยแล้ง 5 ปี (2020–2024)", en: "5-yr Drought Normal (2020–2024)", unit: "มม. (มิ.ย.–พ.ย.)", unitShort: "มม.", summary: "Water Balance ค่าปกติเฉลี่ย", summaryMode: "avg" }
     };
     const riceMeta = {
       white: { th: "ข้าวขาว", badge: "🌾", type: "ข้าวขาว / White rice" },
@@ -1900,20 +1892,10 @@
 
     function yearsForLayer(layer = S.layer) {
       if (layer === "households") return ["2567"];
-      if (layer === "rainfall" || layer === "drought") return ["weather"];
-      if (layer === "rainfall_fc" || layer === "drought_fc") return ["forecast"];
       return layer === "price" ? PRICE_YEARS : PRODUCTION_YEARS;
     }
 
-    function isWeatherLayer(layer = S.layer) {
-      return layer === "rainfall" || layer === "drought" || layer === "rainfall_fc" || layer === "drought_fc";
-    }
-
-    function isForecastLayer(layer = S.layer) {
-      return layer === "rainfall_fc" || layer === "drought_fc";
-    }
-
-    function t(th, en) {
+function t(th, en) {
       return document.body.classList.contains('lang-en') ? en : th;
     }
     function toggleLang() {
@@ -1939,26 +1921,12 @@
       return Number(window.PROVINCE_HOUSEHOLDS[thName] || 0);
     }
 
-    function weatherValueOf(en, layer) {
-      if (layer === "rainfall_fc" || layer === "drought_fc") {
-        const p = window.WEATHER_FORECAST?.provinces?.[en];
-        if (!p) return null;
-        return layer === "rainfall_fc" ? p.forecast_rainfall_mm : p.forecast_wb_mm;
-      }
-      const p = window.WEATHER_DATA?.provinces?.[en];
-      if (!p) return null;
-      return layer === "rainfall" ? p.season_rainfall_mm : p.water_balance_mm;
-    }
-
     function valueOf(en, rice = S.rice, year = S.year, layer = S.layer) {
       if (layer === "households") return householdValueOf(en);
-      if (isWeatherLayer(layer)) return weatherValueOf(en, layer) ?? 0;
       return Number(entryOf(en, rice, year)[layer] || 0);
     }
 
     function hasLayerValue(en, rice = S.rice, year = S.year, layer = S.layer) {
-      if (layer === "rainfall_fc" || layer === "drought_fc") return window.WEATHER_FORECAST?.provinces?.[en] != null;
-      if (isWeatherLayer(layer)) return window.WEATHER_DATA?.provinces?.[en] != null;
       return valueOf(en, rice, year, layer) > 0;
     }
 
@@ -1993,11 +1961,7 @@
     }
 
     function getPalette() {
-      if (S.layer === "rainfall" || S.layer === "rainfall_fc")
-        return { lo: [20, 55, 100], mid: [30, 140, 180], hi: [60, 210, 220], accent: "#3cd4e0" };
-      if (S.layer === "drought" || S.layer === "drought_fc")
-        return { lo: [200, 55, 30], mid: [215, 185, 45], hi: [38, 165, 90], accent: "#26c878" };
-      return S.rice === "white"
+return S.rice === "white"
         ? { lo: [36, 75, 54], mid: [154, 131, 73], hi: [245, 192, 101], accent: "#ff8f4d" }
         : { lo: [42, 39, 77], mid: [134, 93, 178], hi: [236, 186, 217], accent: "#d9a0ff" };
     }
@@ -2040,7 +2004,6 @@
 
     function fmtValue(n, layer = S.layer) {
       if (!Number.isFinite(n)) return "—";
-      if (layer === "drought" || layer === "drought_fc") return (n >= 0 ? "+" : "") + fmtNumber(Math.round(n));
       return fmtNumber(Math.round(n));
     }
 
@@ -2577,11 +2540,7 @@
       const visible = getVisibleProvinces();
       const meta = layerMeta[S.layer];
       const riceEN = S.rice === 'white' ? 'White' : 'Jasmine';
-      const yearLabel = isForecastLayer()
-        ? (window.WEATHER_FORECAST?._meta?.season_label || t('คาดการณ์นาปี 2569 (มิ.ย.–พ.ย.)', 'Forecast 2569 (Jun–Nov)'))
-        : isWeatherLayer()
-        ? (window.WEATHER_DATA?._meta?.season_label || t('นาปี (มิ.ย.–พ.ย.)', 'Main Season (Jun–Nov)'))
-        : t(`ปี ${S.year}`, `Year ${S.year}`);
+      const yearLabel = t(`ปี ${S.year}`, `Year ${S.year}`);
       const riceLabel = t(riceMeta[S.rice].th, riceEN);
       const metaLabel = t(meta.th, meta.en);
       refs.topSub.innerHTML = `${riceLabel} &nbsp;·&nbsp; ${metaLabel}<br>${yearLabel}`;
@@ -2722,46 +2681,24 @@
         }
       }
       const entry = entryOf(en);
-      const est = S.layer !== "price" && !isWeatherLayer() && isEstimated(en);
+      const est = S.layer !== "price" && isEstimated(en);
       const estBadge = est ? `<div class="est-badge">📊 ประมาณการ · Estimated (Trend)</div>` : "";
-
-      // weather / forecast extra info
-      const wp  = window.WEATHER_DATA?.provinces?.[en];
-      const wfp = window.WEATHER_FORECAST?.provinces?.[en];
-      const weatherBadge = isWeatherLayer() && !isForecastLayer() && wp
-        ? (() => {
-            const wb = wp.water_balance_mm;
-            const status = wb < -100 ? t("🔴 แห้งแล้ง","🔴 Drought") : wb < 0 ? t("🟡 ค่อนข้างแห้ง","🟡 Dry") : wb < 200 ? t("🟢 สมดุล","🟢 Balanced") : t("💧 ชื้นมาก","💧 Wet");
-            return `<div class="est-badge" style="margin-top:4px">${status}</div>
-    <div style="font-size:10px;color:var(--muted);margin-top:3px">🌧 ${t('ฝน','Rain')} ${fmtNumber(wp.season_rainfall_mm)} ${t('มม.','mm')} · ET₀ ${fmtNumber(wp.season_et0_mm)} ${t('มม.','mm')} · ${t('อุณหภูมิ','Temp')} ${wp.season_temp_c}°C</div>`;
-          })()
-        : isForecastLayer() && wfp
-        ? (() => {
-            const wb = wfp.forecast_wb_mm;
-            const status = wb < -100 ? t("🔴 แห้งแล้ง (ค่าปกติ)","🔴 Drought (normal)") : wb < 0 ? t("🟡 ค่อนข้างแห้ง","🟡 Dry") : wb < 200 ? t("🟢 สมดุล","🟢 Balanced") : t("💧 ชื้น","💧 Wet");
-            const baseYrs = window.WEATHER_FORECAST?._meta?.base_years || "2020–2024";
-            return `<div class="est-badge" style="margin-top:4px;background:rgba(168,216,168,.12);border-color:rgba(168,216,168,.35)">📊 ${t('ค่าปกติ 5 ปี','5-yr Normal')} · ${status}</div>
-    <div style="font-size:10px;color:var(--muted);margin-top:3px">🌧 ${fmtNumber(wfp.forecast_rainfall_mm)} mm · ${t('ช่วง','Range')} ${fmtNumber(wfp.rainfall_p10_mm)}–${fmtNumber(wfp.rainfall_p90_mm)} mm</div>
-    <div style="font-size:9px;color:var(--muted);margin-top:2px">${t('ฐาน','Avg')} ${baseYrs} · ${wfp.n_members} ${t('ปี','yrs')}</div>`;
-          })()
-        : "";
 
       const valueHTML = S.layer === "price"
         ? `${priceRange(entry)} <small style="font-size:12px;color:var(--muted)">${layerMeta[S.layer].unitShort}</small>${priceAltRange(entry) ? `<div class="rank" style="margin-top:4px">ความชื้น 25%: ${priceAltRange(entry)}</div>` : ""}`
         : `${fmtValue(value)} <small style="font-size:12px;color:var(--muted)">${layerMeta[S.layer].unitShort}</small>`;
-      const householdsLine = !isWeatherLayer() && S.layer !== "households" && window.PROVINCE_HOUSEHOLDS
+      const householdsLine = S.layer !== "households" && window.PROVINCE_HOUSEHOLDS
         ? `<div style="font-size:10px;color:var(--muted);margin-top:4px">👨‍🌾 ${t('ครัวเรือนเกษตรกร','Farm Households')}: ${fmtNumber(householdValueOf(en))} ${t('ครัวเรือน','HH')} (OAE 2566)</div>`
         : "";
       return `
     <div class="th">${NM[en] || en}</div>
     <div class="en">${en}</div>
-    <div class="type">${isForecastLayer() ? `📊 ${window.WEATHER_FORECAST?._meta?.season_label || t("ค่าปกติ 5 ปี นาปี","5-yr Normal Jun–Nov")}` : isWeatherLayer() ? `Open-Meteo · ${window.WEATHER_DATA?._meta?.season_label || t("นาปี","Main Season")}` : S.layer === "households" ? t("ครัวเรือนเกษตรกร (OAE 2566)","Farmer Households (OAE 2566)") : riceTypeDescription(S.rice, S.layer)}</div>
+    <div class="type">${S.layer === "households" ? t("ครัวเรือนเกษตรกร (OAE 2566)","Farmer Households (OAE 2566)") : riceTypeDescription(S.rice, S.layer)}</div>
     <div class="metric-name">${t(layerMeta[S.layer].th, layerMeta[S.layer].en)}</div>
     <div class="value">${valueHTML}</div>
     <div class="rank">${rank ? `${t('อันดับ','Rank')} #${rank} / ${getVisibleProvinces().filter(name => hasLayerValue(name)).length || getVisibleProvinces().length}` : t("ไม่มีข้อมูล","No data")}</div>
     ${yoyHTML}
     ${estBadge}
-    ${weatherBadge}
     ${householdsLine}
   `;
     }
@@ -2802,18 +2739,6 @@
 
     function renderYearButtons() {
       const years = yearsForLayer();
-      if (years[0] === "weather" || years[0] === "forecast") {
-        const isFc  = years[0] === "forecast";
-        const meta  = isFc ? window.WEATHER_FORECAST?._meta : window.WEATHER_DATA?._meta;
-        const y     = new Date().getFullYear();
-        const label = meta?.season_label || (isFc
-          ? `📊 ค่าปกติ 5 ปี นาปี (มิ.ย.–พ.ย.) · 5-yr Normal (Jun–Nov)`
-          : `นาปี ${y + 543} (มิ.ย.–พ.ย.) · Main Season ${y} (Jun–Nov)`);
-        const upd   = meta?.updated ? ` · ${t('อัปเดต','Updated')} ${meta.updated}` : "";
-        const badge = isFc ? ` <small style="opacity:.6;font-size:9px">${meta?.base_years || "2020–2024"}</small>` : "";
-        refs.yearButtons.innerHTML = `<button class="pill on" data-year="${years[0]}" style="pointer-events:none">${label}${upd}${badge}</button>`;
-        return;
-      }
       refs.yearButtons.innerHTML = years.map((year, idx) => {
         const suffix = idx === years.length - 1 ? " ล่าสุด" : "";
         const note = S.layer !== "price" && year >= "2568" ? " <small style='font-size:9px;opacity:.6'>est.</small>" : "";
@@ -3070,8 +2995,7 @@
       await fetchDefaultCSV();
       fetchLivePrices();
       updateNationalFert();
-      fetchWeatherData();
-      fetchWeatherForecast();
+
       VIEW.features = window.THAILAND_GEO.features.filter(feature => allEN.includes(feature.properties.name));
       VIEW.featureMap = new Map(VIEW.features.map(feature => [feature.properties.name, feature]));
       updateControls();
@@ -3090,34 +3014,7 @@
     window.csvUp = csvUp;
     window.csvDl = csvDl;
 
-    /* ── Weather Data Loaders ── */
-    async function fetchWeatherData() {
-      try {
-        const res = await fetch('data/weather-province.json?_=' + Date.now(), { cache: 'no-store' });
-        if (res.ok) {
-          window.WEATHER_DATA = await res.json();
-          console.info('Weather data loaded:', Object.keys(window.WEATHER_DATA?.provinces || {}).length, 'provinces');
-          if (isWeatherLayer() && !isForecastLayer()) rerender();
-        }
-      } catch (e) {
-        console.info('weather-province.json not found — run GH Action to generate');
-      }
-    }
-
-    async function fetchWeatherForecast() {
-      try {
-        const res = await fetch('data/weather-forecast.json?_=' + Date.now(), { cache: 'no-store' });
-        if (res.ok) {
-          window.WEATHER_FORECAST = await res.json();
-          console.info('Forecast data loaded:', Object.keys(window.WEATHER_FORECAST?.provinces || {}).length, 'provinces');
-          if (isForecastLayer()) rerender();
-        }
-      } catch (e) {
-        console.info('weather-forecast.json not found — run scripts/fetch_weather_forecast.py or GH Action');
-      }
-    }
-
-    /* ── Live Prices Loader ── */
+/* ── Live Prices Loader ── */
     let LIVE_PRICES = null;
     // Hardcoded FOB fallback (matches data/trea-fob.json) — used when file:// CORS blocks fetch
     let FOB_PRICES = {
