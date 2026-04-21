@@ -1,0 +1,41 @@
+name: 🏭 Auto-Update Thai Rice Millers Prices
+
+on:
+  schedule:
+    # รันทุกวัน 08:00 น. เวลาไทย (01:00 UTC)
+    # สมาคมโรงสีมักอัพเดตเช้า → รัน 8 โมงเพื่อให้ได้ข้อมูลวันนั้น
+    - cron: '0 1 * * *'
+  workflow_dispatch: # รันด้วยมือได้
+
+permissions:
+  contents: write
+
+jobs:
+  fetch-prices:
+    runs-on: ubuntu-latest
+    name: Fetch Miller PDF & Extract Prices
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 📦 Install dependencies
+        run: pip install requests pdfplumber
+
+      - name: 🔄 Fetch latest PDF and extract prices
+        run: python scripts/fetch_miller_prices.py
+
+      - name: 📤 Commit & Push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/prices-live.json
+          git diff --staged --quiet && echo "No changes — prices already up to date." || (
+            git commit -m "🤖 Auto-update: Thai Rice Millers prices $(date +'%Y-%m-%d')"
+            git push
+          )
