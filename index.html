@@ -1655,6 +1655,28 @@
       "Narathiwat": "นราธิวาส", "Pattani": "ปัตตานี", "Bueng Kan": "บึงกาฬ"
     };
 
+    // Dam name English lookup (keyed by RID dam ID — matches dam-water.json)
+    const DAM_NAME_EN = {
+      "100211": "Lam Nang Rong Dam",        "100502": "Khlong Si Yat Dam",
+      "200204": "Chulabhorn Dam",            "100104": "Mae Kuang Udom Thara Dam",
+      "200103": "Mae Ngat Somboon Chon Dam", "100503": "Bang Phra Dam",
+      "100206": "Lam Pao Dam",              "200401": "Srinakarin Dam",
+      "200402": "Vajiralongkorn Dam",        "200205": "Ubolratana Dam",
+      "100105": "Kiew Lom Dam",             "100106": "Kiew Kho Ma Dam",
+      "100108": "Mae Mok Dam",              "100501": "Khun Dan Prakan Chon Dam",
+      "100207": "Lam Takhong Dam",          "100208": "Lam Phra Phloeng Dam",
+      "100209": "Mun Bon Dam",              "100210": "Lam Chae Dam",
+      "200601": "Kaeng Krachan Dam",         "100107": "Khwae Noi Bamrung Dan Dam",
+      "100514": "Naruebodintharajinda Dam",  "100602": "Pran Buri Dam",
+      "100504": "Nong Pla Lai Dam",         "100505": "Prasae Dam",
+      "100202": "Nam Un Dam",               "200203": "Nam Pung Dam",
+      "100301": "Pa Sak Jolasid Dam",        "100303": "Krasiao Dam",
+      "200603": "Ratchaprapha Dam",          "200101": "Bhumibol Dam",
+      "200212": "Sirindhorn Dam",            "100201": "Huai Luang Dam",
+      "100302": "Thabsala Dam",             "200102": "Sirikit Dam",
+      "200604": "Bang Lang Dam",
+    };
+
     const REG = {
       north: ["Chiang Mai", "Chiang Rai", "Lamphun", "Lampang", "Phrae", "Nan", "Phayao", "Mae Hong Son", "Uttaradit", "Tak", "Sukhothai", "Phitsanulok", "Kamphaeng Phet", "Phichit", "Phetchabun", "Nakhon Sawan", "Uthai Thani"],
       northeast: ["Nakhon Ratchasima", "Khon Kaen", "Udon Thani", "Ubon Ratchathani", "Buri Ram", "Surin", "Si Sa Ket", "Roi Et", "Maha Sarakham", "Kalasin", "Sakon Nakhon", "Nakhon Phanom", "Nong Khai", "Mukdahan", "Chaiyaphum", "Yasothon", "Amnat Charoen", "Loei", "Nong Bua Lam Phu", "Bueng Kan"],
@@ -2242,7 +2264,7 @@ function t(th, en) {
         const [x, y] = point;
         return `<g class="province-label" data-label="${en}" transform="translate(${x.toFixed(2)} ${y.toFixed(2)})">
       <circle r="4.4"></circle>
-      <text x="8" y="-8">${NM[en] || en}</text>
+      <text x="8" y="-8">${t(NM[en] || en, en)}</text>
     </g>`;
       }).join("");
 
@@ -2451,7 +2473,7 @@ function t(th, en) {
         const yShift = S.sel === en ? -12 : -8;
         return `<g class="province-label" transform="translate(${x.toFixed(2)} ${y.toFixed(2)})">
       <circle r="${S.sel === en ? 5.5 : 4.4}"></circle>
-      <text x="9" y="${yShift}">${NM[en] || en}</text>
+      <text x="9" y="${yShift}">${t(NM[en] || en, en)}</text>
     </g>`;
       }).join("");
     }
@@ -2573,7 +2595,7 @@ function t(th, en) {
         const tone = idx === 0 ? palette.hi : lerp(palette.lo, palette.hi, Math.max(.16, item.v / max));
         return `<div class="rank-row" onclick="selectProvince('${item.en.replace(/'/g, "\\'")}')">
       <div class="rank-index">#${idx + 1}</div>
-      <div class="rank-name">${NM[item.en] || item.en}<br><small style="font-size:9px;opacity:.65">${item.en}</small></div>
+      <div class="rank-name">${t(NM[item.en] || item.en, item.en)}<br><small style="font-size:9px;opacity:.65">${item.en}</small></div>
       <div class="rank-track"><div class="rank-fill" style="width:${pct.toFixed(1)}%;background:${rgb(tone)}"></div></div>
       <div class="rank-value">${fmtCompact(item.v)}</div>
     </div>`;
@@ -2595,7 +2617,7 @@ function t(th, en) {
       hideTooltip();
       refs.detailCard.classList.add("show");
       refs.detailPlaceholder.style.display = "none";
-      refs.detailName.textContent = NM[en] || en;
+      refs.detailName.textContent = t(NM[en] || en, en);
       refs.detailEn.textContent = en;
       const covered = getVisibleProvinces().filter(name => hasLayerValue(name)).length;
       const rank = currentRank(en);
@@ -2620,7 +2642,7 @@ function t(th, en) {
         const damColor = dp.dam_level_pct < 30 ? '#c0392b' : dp.dam_level_pct < 60 ? '#f39c12' : '#2980b9';
         const damsDetail = dp.dams.map(d => `
           <div class="metric">
-            <div class="m-label" style="font-size:10px">${d.name}</div>
+            <div class="m-label" style="font-size:10px">${t(d.name, DAM_NAME_EN[d.id] || d.name)}</div>
             <div class="m-value" style="font-size:11px;color:${dp.dam_level_pct < 30 ? '#c0392b' : dp.dam_level_pct < 60 ? '#f39c12' : '#2980b9'}">${Number(d.pct || 0).toFixed(1)}%</div>
           </div>`).join("");
         damHtml = `
@@ -2716,12 +2738,12 @@ function t(th, en) {
     function tooltipContent(en) {
       if (S.layer === "dam") {
         const prov = window.DAM_DATA?.provinces?.[en];
-        if (!prov) return `<div class="th">${NM[en] || en}</div><div class="en">${en}</div><div style="color:var(--muted);font-size:11px;margin-top:6px">${t('ไม่มีข้อมูลเขื่อน','No dam data')}</div>`;
+        if (!prov) return `<div class="th">${t(NM[en] || en, en)}</div><div class="en">${en}</div><div style="color:var(--muted);font-size:11px;margin-top:6px">${t('ไม่มีข้อมูลเขื่อน','No dam data')}</div>`;
         const rank = currentRank(en);
         const visible = getVisibleProvinces().filter(name => hasLayerValue(name)).length;
-        const damsHtml = prov.dams.map(d => `<div style="font-size:9px;color:var(--muted);margin-top:2px">${d.name}: ${Number(d.pct || 0).toFixed(1)}%</div>`).join("");
+        const damsHtml = prov.dams.map(d => `<div style="font-size:9px;color:var(--muted);margin-top:2px">${t(d.name, DAM_NAME_EN[d.id] || d.name)}: ${Number(d.pct || 0).toFixed(1)}%</div>`).join("");
         return `
-    <div class="th">${NM[en] || en}</div>
+    <div class="th">${t(NM[en] || en, en)}</div>
     <div class="en">${en}</div>
     <div class="metric-name">${t('ระดับน้ำในเขื่อน','Dam Water Level')}</div>
     <div class="value">${prov.dam_level_pct != null ? prov.dam_level_pct.toFixed(1) : "—"}% <small style="font-size:12px;color:var(--muted)">${t('ความจุ','capacity')}</small></div>
@@ -2754,7 +2776,7 @@ function t(th, en) {
         ? `<div style="font-size:10px;color:var(--muted);margin-top:4px">👨‍🌾 ${t('ครัวเรือนเกษตรกร','Farm Households')}: ${fmtNumber(householdValueOf(en))} ${t('ครัวเรือน','HH')} (OAE 2566)</div>`
         : "";
       return `
-    <div class="th">${NM[en] || en}</div>
+    <div class="th">${t(NM[en] || en, en)}</div>
     <div class="en">${en}</div>
     <div class="type">${S.layer === "households" ? t("ครัวเรือนเกษตรกร (OAE 2566)","Farmer Households (OAE 2566)") : riceTypeDescription(S.rice, S.layer)}</div>
     <div class="metric-name">${t(layerMeta[S.layer].th, layerMeta[S.layer].en)}</div>
