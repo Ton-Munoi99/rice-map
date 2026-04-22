@@ -2846,19 +2846,10 @@ function t(th, en) {
                    oaeTonCost:11150, oaeYield:365, oaeRaiCost:4066 },
       };
 
-      // Fertilizer: adjust if real MOC urea price is available
-      let fertW = BASE.white.fert, fertJ = BASE.jasmine.fert, fertNote = '';
-      if (window.FERT_NATIONAL?.urea_46_0_0) {
-        const urea = window.FERT_NATIONAL.urea_46_0_0.price_avg || window.FERT_NATIONAL.urea_46_0_0;
-        if (urea > 100) {
-          fertW = Math.round(urea * 1.5);
-          fertJ = Math.round(urea * 1.0);
-          fertNote = t('(ปรับตามราคายูเรียจริง MOC)', '(adj. real MOC urea)');
-        }
-      }
-
-      const totalW = BASE.white.seed  + fertW + BASE.white.chem  + BASE.white.labor  + BASE.white.rent  + BASE.white.fuel  + BASE.white.other;
-      const totalJ = BASE.jasmine.seed + fertJ + BASE.jasmine.chem + BASE.jasmine.labor + BASE.jasmine.rent + BASE.jasmine.fuel + BASE.jasmine.other;
+      // Use OAE official figures — no adjustment
+      const fertW = BASE.white.fert, fertJ = BASE.jasmine.fert;
+      const totalW = BASE.white.oaeRaiCost;    // 4,903 (official OAE cost/rai)
+      const totalJ = BASE.jasmine.oaeRaiCost;  // 4,066 (official OAE cost/rai)
 
       if (refs.costSummaryTitle) {
         refs.costSummaryTitle.innerHTML =
@@ -2868,7 +2859,7 @@ function t(th, en) {
 
       const rows = [
         { th:'ค่าเมล็ดพันธุ์',         en:'Seed',                 w:BASE.white.seed,  j:BASE.jasmine.seed  },
-        { th:'ค่าปุ๋ยเคมี',             en:'Fertilizer',           w:fertW,            j:fertJ, note:fertNote },
+        { th:'ค่าปุ๋ยเคมี',             en:'Fertilizer',           w:fertW,            j:fertJ },
         { th:'ค่าสารเคมี/ยาฆ่าแมลง',   en:'Chemicals / Pesticide',w:BASE.white.chem,  j:BASE.jasmine.chem  },
         { th:'ค่าแรงงาน+เครื่องจักร',  en:'Labor + Machinery',    w:BASE.white.labor, j:BASE.jasmine.labor },
         { th:'ค่าเช่านา (ผู้เช่า)',     en:'Land Rent (lessee)',   w:BASE.white.rent,  j:BASE.jasmine.rent, wSup:'*' },
