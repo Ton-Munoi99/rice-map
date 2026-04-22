@@ -1531,12 +1531,6 @@
             <button class="pill" data-layer="households" onclick="setLayer('households')"><span class="th-t">ครัวเรือนเกษตรกร</span><span class="en-t">Farmer Households</span></button>
             <button class="pill" data-layer="dam" onclick="setLayer('dam')"><span class="th-t">ระดับน้ำในเขื่อน</span><span class="en-t">Dam Level</span></button>
           </div>
-          <div style="font-size:9px;color:var(--muted);margin:6px 0 4px;letter-spacing:.05em;opacity:.7"><span class="th-t">🌾 นาปรัง (ข้าวเจ้าอื่นๆ)</span><span class="en-t">🌾 2nd Rice Season (White)</span></div>
-          <div class="pill-row">
-            <button class="pill" data-layer="naprang_production" onclick="setLayer('naprang_production')"><span class="th-t">ผลผลิตนาปรัง</span><span class="en-t">2nd Rice Prod.</span></button>
-            <button class="pill" data-layer="naprang_yield" onclick="setLayer('naprang_yield')"><span class="th-t">ผลผลิต/ไร่ นาปรัง</span><span class="en-t">2nd Rice Yield</span></button>
-            <button class="pill" data-layer="naprang_area" onclick="setLayer('naprang_area')"><span class="th-t">เนื้อที่ นาปรัง</span><span class="en-t">2nd Rice Area</span></button>
-          </div>
         </section>
 
         <!-- hidden elements used by JS refs only -->
@@ -1635,7 +1629,6 @@
   <script src="./thailand-data.js"></script>
   <script src="./rice-data.js"></script>
   <script src="./data/fert-data.js"></script>
-  <script src="./data/naprang-data.js"></script>
   <script>
     const NM = {
       "Mae Hong Son": "แม่ฮ่องสอน", "Chumphon": "ชุมพร", "Nakhon Si Thammarat": "นครศรีธรรมราช",
@@ -1689,9 +1682,6 @@
       households: { th: "ครัวเรือนเกษตรกร", en: "Farmer Households", unit: "ครัวเรือน (ปี 2566)", unitShort: "ครัวเรือน", summary: "ครัวเรือนเกษตรกรรวม", summaryMode: "sum" },
       fertilizer: { th: "ราคาปุ๋ยเคมีรายจังหวัด", en: "Fertilizer Price", unit: "บาท/กระสอบ 50 กก.", unitShort: "฿/กระสอบ", summary: "ราคาปุ๋ยเฉลี่ย", summaryMode: "avg_nonzero" },
       dam: { th: "ระดับน้ำในเขื่อน", en: "Dam Water Level", unit: "% ความจุ (RID)", unitShort: "%", summary: "ระดับน้ำเฉลี่ย", summaryMode: "avg_nonzero" },
-      naprang_production: { th: "ผลผลิตนาปรัง", en: "2nd Rice Production", unit: "ตัน/ปี", unitShort: "ตัน", summary: "ผลผลิตรวม นาปรัง", summaryMode: "sum" },
-      naprang_yield:      { th: "ผลผลิตต่อไร่ นาปรัง", en: "2nd Rice Yield", unit: "กก./ไร่ (นาปรัง)", unitShort: "กก./ไร่", summary: "ผลผลิตเฉลี่ยต่อไร่ นาปรัง", summaryMode: "weighted" },
-      naprang_area:       { th: "เนื้อที่เก็บเกี่ยว นาปรัง", en: "2nd Rice Harvested Area", unit: "ไร่ (นาปรัง)", unitShort: "ไร่", summary: "เนื้อที่เก็บเกี่ยวรวม นาปรัง", summaryMode: "sum" },
     };
     const riceMeta = {
       white: { th: "ข้าวขาว", badge: "🌾", type: "ข้าวขาว / White rice" },
@@ -1905,7 +1895,6 @@
     function yearsForLayer(layer = S.layer) {
       if (layer === "dam") return ["dam"];
       if (layer === "households") return ["2567"];
-      if (layer.startsWith("naprang_")) return ["2567", "2568", "2569"];
       return layer === "price" ? PRICE_YEARS : PRODUCTION_YEARS;
     }
 
@@ -1939,25 +1928,14 @@ function t(th, en) {
       return window.DAM_DATA?.provinces?.[en]?.dam_level_pct ?? 0;
     }
 
-    function naprangValueOf(en, layer, year) {
-      const d = window.NAPRANG_DATA?.[en]?.white?.[year];
-      if (!d) return 0;
-      if (layer === "naprang_production") return d.production || 0;
-      if (layer === "naprang_yield")      return d.yield      || 0;
-      if (layer === "naprang_area")       return d.area       || 0;
-      return 0;
-    }
-
     function valueOf(en, rice = S.rice, year = S.year, layer = S.layer) {
       if (layer === "households") return householdValueOf(en);
       if (layer === "dam") return damValueOf(en);
-      if (layer.startsWith("naprang_")) return naprangValueOf(en, layer, year);
       return Number(entryOf(en, rice, year)[layer] || 0);
     }
 
     function hasLayerValue(en, rice = S.rice, year = S.year, layer = S.layer) {
       if (layer === "dam") return window.DAM_DATA?.provinces?.[en] != null;
-      if (layer.startsWith("naprang_")) return (window.NAPRANG_DATA?.[en]?.white?.[year]?.production || 0) > 0;
       return valueOf(en, rice, year, layer) > 0;
     }
 
@@ -1993,7 +1971,6 @@ function t(th, en) {
 
     function getPalette() {
       if (S.layer === "dam") return { lo: [192, 57, 43], mid: [241, 196, 15], hi: [41, 128, 185], accent: "#3498db" };
-      if (S.layer.startsWith("naprang_")) return { lo: [36, 75, 54], mid: [154, 131, 73], hi: [245, 192, 101], accent: "#ff8f4d" };
       return S.rice === "white"
         ? { lo: [36, 75, 54], mid: [154, 131, 73], hi: [245, 192, 101], accent: "#ff8f4d" }
         : { lo: [42, 39, 77], mid: [134, 93, 178], hi: [236, 186, 217], accent: "#d9a0ff" };
@@ -2012,7 +1989,7 @@ function t(th, en) {
     function scaleT(v, min, max) {
       if (max <= min) return .5;
       const ratio = (v - min) / (max - min);
-      if (S.layer === "yield" || S.layer === "naprang_yield") return Math.pow(ratio, .88);
+      if (S.layer === "yield") return Math.pow(ratio, .88);
       return Math.pow(ratio, .62);
     }
 
@@ -2047,11 +2024,6 @@ function t(th, en) {
 
     function aggregateFor(provinces, rice, year, layer, mode) {
       if (mode === "weighted") {
-        if (layer === "naprang_yield") {
-          const production = sum(provinces.map(en => naprangValueOf(en, "naprang_production", year)));
-          const area = sum(provinces.map(en => naprangValueOf(en, "naprang_area", year)));
-          return area ? (production * 1000) / area : 0;
-        }
         const production = sum(provinces.map(en => valueOf(en, rice, year, "production")));
         const area = sum(provinces.map(en => valueOf(en, rice, year, "area")));
         return area ? (production * 1000) / area : 0;
@@ -2494,11 +2466,11 @@ function t(th, en) {
       refs.legendBar.style.background = `linear-gradient(90deg,${rgb(palette.lo)} 0%,${rgb(palette.mid)} 52%,${rgb(palette.hi)} 100%)`;
       refs.legendLow.textContent = `${fmtCompact(min)} ${layerMeta[S.layer].unitShort}`;
       refs.legendHigh.textContent = `${fmtCompact(max)} ${layerMeta[S.layer].unitShort}`;
-      refs.legendType.textContent = S.layer === "dam" ? t("กรมชลประทาน", "RID") : S.layer.startsWith("naprang_") ? t("ข้าวเจ้าอื่นๆ นาปรัง", "White Rice 2nd Season") : t(riceMeta[S.rice].th, riceMeta[S.rice].en);
+      refs.legendType.textContent = S.layer === "dam" ? t("กรมชลประทาน", "RID") : t(riceMeta[S.rice].th, riceMeta[S.rice].en);
       refs.legendLayer.textContent = t(layerMeta[S.layer].th, layerMeta[S.layer].en);
       refs.legendUnit.textContent = layerMeta[S.layer].unit;
       refs.latestBadge.classList.add("show");
-      const isEstYear = S.layer !== "price" && S.layer !== "households" && S.layer !== "fertilizer" && S.layer !== "dam" && !S.layer.startsWith("naprang_") && S.year >= "2568";
+      const isEstYear = S.layer !== "price" && S.layer !== "households" && S.layer !== "fertilizer" && S.layer !== "dam" && S.year >= "2568";
       refs.latestBadge.textContent = S.layer === "price"
         ? `${t('ราคาอ้างอิง','Price Ref')}: ${entryOf(getVisibleProvinces().find(en => hasLayerValue(en)) || allEN[0]).source_date || S.year}`
         : S.layer === "households"
@@ -2507,8 +2479,6 @@ function t(th, en) {
             ? `🌱 ${t('ราคาปุ๋ยเคมีรายจังหวัด','Fertilizer Price by Province')} MOC 2567`
             : S.layer === "dam"
               ? `💧 ${t('ระดับน้ำในเขื่อน','Dam Level')} RID ${window.DAM_DATA?._meta?.updated || ''}`
-              : S.layer.startsWith("naprang_")
-              ? `🌾 OAE ${t('นาปรัง ปี','2nd Rice Year')} ${S.year}${S.year >= "2568" ? " (f)" : ""}`
               : isEstYear
                 ? `📊 ${t('ประมาณการ','Estimate')} ${S.year}`
                 : `OAE ${t('ข้อมูลปี','Crop Year')} ${S.year}`;
@@ -2524,13 +2494,6 @@ function t(th, en) {
         refs.dataSourceNote.textContent = t(
           `ข้อมูลระดับน้ำในเขื่อนขนาดใหญ่ 35 แห่ง จากกรมชลประทาน (RID) อัปเดต ${updated} ครอบคลุม ${covered} จังหวัด`,
           `Large dam water levels (35 dams) from Royal Irrigation Dept. (RID). Updated ${updated}. Covers ${covered} provinces.`
-        );
-        return;
-      }
-      if (S.layer.startsWith("naprang_")) {
-        refs.dataSourceNote.textContent = t(
-          `ข้อมูลนาปรัง (ข้าวเจ้าอื่นๆ) จาก OAE สถิติการเกษตรฯ ปี 2568 ตารางที่ 1.7 · ปี 2567 = ข้อมูลจริง · ปี 2568–2569 = พยากรณ์ (f) · ครอบคลุม ${covered} จังหวัด`,
-          `2nd rice (white) from OAE Agricultural Statistics 2568, Table 1.7 · 2567 = official · 2568–2569 = forecast (f) · ${covered} provinces`
         );
         return;
       }
@@ -2589,13 +2552,9 @@ function t(th, en) {
       refs.leadSub.textContent = leader ? `${S.layer === "price" ? priceRange(entryOf(leader.en)) : fmtValue(leader.v)} ${meta.unitShort}` : "—";
       refs.headlineTitle.textContent = S.layer === "dam"
         ? t("แผนที่ระดับน้ำในเขื่อนรายจังหวัด", "Dam Water Levels by Province")
-        : S.layer.startsWith("naprang_")
-        ? t("แผนที่ข้าวนาปรังรายจังหวัด", "2nd Rice Season · Province Map")
         : t(`แผนที่${riceMeta[S.rice].th}รายจังหวัด`, `${riceMeta[S.rice].en} Rice · Province Map`);
       refs.headlineDesc.textContent = S.layer === "dam"
         ? t("ระดับน้ำในเขื่อนขนาดใหญ่ 35 แห่ง จากกรมชลประทาน (RID) อัปเดตรายวัน", "Large dam water levels from Royal Irrigation Dept. (RID). 35 dams, daily update.")
-        : S.layer.startsWith("naprang_")
-        ? t(`ข้าวนาปรัง ข้าวเจ้าอื่นๆ รายจังหวัด จาก OAE ตารางที่ 1.7 ปี ${S.year}${S.year >= "2568" ? " (พยากรณ์)" : ""}`, `2nd rice season (white rice) by province · OAE Table 1.7 · Year ${S.year}${S.year >= "2568" ? " (forecast)" : ""}`)
         : S.layer === "price"
         ? t(`แผนที่ fit ตามสัดส่วนประเทศไทยและใช้รายงานราคาข้าวเปลือกรายวันของสมาคมโรงสีข้าวไทย โดยไฮไลต์ราคาของ ${riceTypeDescription(S.rice, S.layer)} ปี ${S.year}`,
            `Province-level paddy price map using Thai Rice Miller Association daily reports. ${riceTypeDescription(S.rice, S.layer)} · Crop year ${S.year}.`)
@@ -2607,14 +2566,8 @@ function t(th, en) {
       const visible = getVisibleProvinces();
       const meta = layerMeta[S.layer];
       const riceEN = S.rice === 'white' ? 'White' : 'Jasmine';
-      const yearLabel = S.layer === "dam"
-        ? t("ล่าสุด", "Latest")
-        : (S.layer.startsWith("naprang_") && (S.year === "2568" || S.year === "2569"))
-          ? t(`ปี ${S.year}f (ประมาณการ)`, `Year ${S.year}f (Forecast)`)
-          : t(`ปี ${S.year}`, `Year ${S.year}`);
-      const riceLabel = S.layer.startsWith("naprang_")
-        ? t("นาปรัง (ข้าวเจ้าอื่นๆ)", "2nd Rice (White)")
-        : t(riceMeta[S.rice].th, riceEN);
+      const yearLabel = S.layer === "dam" ? t("ล่าสุด", "Latest") : t(`ปี ${S.year}`, `Year ${S.year}`);
+      const riceLabel = t(riceMeta[S.rice].th, riceEN);
       const metaLabel = t(meta.th, meta.en);
       refs.topSub.innerHTML = `${riceLabel} &nbsp;·&nbsp; ${metaLabel}<br>${yearLabel}`;
       const items = visible
@@ -2736,7 +2689,6 @@ function t(th, en) {
       }
       const years = yearsForLayer();
       const values = years.map(year => valueOf(en, S.rice, year, S.layer));
-      const yearLabelFor = y => S.layer.startsWith("naprang_") && (y === "2568" || y === "2569") ? y + "f" : y;
       const w = 320, h = 58, pad = 9;
       const min = Math.min(...values) * .92;
       const max = Math.max(...values) * 1.08;
@@ -2754,7 +2706,7 @@ function t(th, en) {
     <path d="${path}" fill="none" stroke="${rgb(palette.hi)}" stroke-width="2.4" stroke-linecap="round"/>
     ${pts.map((pt, idx) => `
       <circle cx="${pt[0]}" cy="${pt[1]}" r="3" fill="${rgb(palette.hi)}"/>
-      <text x="${pt[0]}" y="${h - 2}" text-anchor="middle" fill="rgba(255,255,255,.42)" font-size="7" font-family="IBM Plex Mono">${yearLabelFor(years[idx])}</text>
+      <text x="${pt[0]}" y="${h - 2}" text-anchor="middle" fill="rgba(255,255,255,.42)" font-size="7" font-family="IBM Plex Mono">${years[idx]}</text>
     `).join("")}
   `;
     }
@@ -2785,30 +2737,6 @@ function t(th, en) {
     <div class="rank">${rank ? `${t('อันดับ','Rank')} #${rank} / ${visible}` : t('ไม่มีข้อมูล','No data')} · ${prov.n_dams} ${t('เขื่อน','dams')}</div>
     <div style="font-size:10px;color:var(--muted);margin-top:4px">${prov.total_volume_mm3.toFixed(0)} / ${prov.total_storage_mm3.toFixed(0)} ล้าน ม.³</div>
     ${damsHtml}
-  `;
-      }
-      if (S.layer.startsWith("naprang_")) {
-        const value = naprangValueOf(en, S.layer, S.year);
-        const rank = currentRank(en);
-        const d = window.NAPRANG_DATA?.[en]?.white?.[S.year];
-        const visible = getVisibleProvinces().filter(name => hasLayerValue(name)).length;
-        const isEst = S.year === "2568" || S.year === "2569";
-        const estBadge = isEst ? `<div class="est-badge">📊 ประมาณการ (OAE) · Forecast</div>` : "";
-        const detailHtml = d ? `<div style="font-size:10px;color:var(--muted);margin-top:5px;line-height:1.7">
-    เนื้อที่เพาะปลูก: ${fmtNumber(d.area_planted)} ไร่<br>
-    เนื้อที่เก็บเกี่ยว: ${fmtNumber(d.area)} ไร่<br>
-    ผลผลิต: ${fmtNumber(d.production)} ตัน<br>
-    ผลผลิตต่อไร่: ${fmtNumber(d.yield)} กก./ไร่
-  </div>` : "";
-        return `
-    <div class="th">${NM[en] || en}</div>
-    <div class="en">${en}</div>
-    <div class="type">${t("นาปรัง · ข้าวเจ้าอื่นๆ", "2nd Rice Season · White Rice")}</div>
-    <div class="metric-name">${t(layerMeta[S.layer].th, layerMeta[S.layer].en)}</div>
-    <div class="value">${fmtValue(value)} <small style="font-size:12px;color:var(--muted)">${layerMeta[S.layer].unitShort}</small></div>
-    <div class="rank">${rank ? `${t('อันดับ','Rank')} #${rank} / ${visible || getVisibleProvinces().length}` : t("ไม่มีข้อมูล","No data")}</div>
-    ${estBadge}
-    ${detailHtml}
   `;
       }
       const value = valueOf(en);
@@ -2890,8 +2818,7 @@ function t(th, en) {
       const years = yearsForLayer();
       refs.yearButtons.innerHTML = years.map((year, idx) => {
         const suffix = idx === years.length - 1 ? " ล่าสุด" : "";
-        const isNaprang = S.layer.startsWith("naprang_");
-        const isForecast = isNaprang ? year >= "2568" : (S.layer !== "price" && year >= "2568");
+        const isForecast = S.layer !== "price" && year >= "2568";
         const note = isForecast ? " <small style='font-size:9px;opacity:.6'>f</small>" : "";
         return `<button class="pill${year === S.year ? " on" : ""}" data-year="${year}" onclick="setYear('${year}')">${year}${suffix}${note}</button>`;
       }).join("");
