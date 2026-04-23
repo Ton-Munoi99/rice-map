@@ -2705,6 +2705,9 @@ function t(th, en) {
       ${estNote}
       ${metrics.map(layer => {
           const entry = entryOf(en, rice, S.year);
+          const mainMoistLabel = layer === "price" && entry.price_basis === "moisture_15_pct"
+            ? `<div class="m-label" style="margin-top:1px;opacity:.6">${t('ความชื้น 15%','15% moisture')}</div>`
+            : "";
           const mainValue = layer === "price"
             ? `${priceRange(entry)} <small>${usLabel(layer)}</small>`
             : `${fmtValue(valueOf(en, rice, S.year, layer), layer)} <small>${usLabel(layer)}</small>`;
@@ -2714,7 +2717,7 @@ function t(th, en) {
           return `<div class="metric">
           <div class="m-label">${t(layerMeta[layer].th, layerMeta[layer].en)}</div>
           <div class="m-value">${mainValue}</div>
-          ${subValue}
+          ${mainMoistLabel}${subValue}
         </div>`;
         }).join("")}
     </div>`;
@@ -2810,8 +2813,9 @@ function t(th, en) {
       const est = S.layer !== "price" && isEstimated(en);
       const estBadge = est ? `<div class="est-badge">${t('📊 ประมาณการ · Estimated (Trend)','📊 Estimated (Trend)')}</div>` : "";
 
+      const mainMoist = entry.price_basis === "moisture_15_pct" ? t('ความชื้น 15%','15% moisture') : "";
       const valueHTML = S.layer === "price"
-        ? `${priceRange(entry)} <small style="font-size:12px;color:var(--muted)">${usLabel()}</small>${priceAltRange(entry) ? `<div class="rank" style="margin-top:4px">${t('ความชื้น 25%','Moisture 25%')}: ${priceAltRange(entry)}</div>` : ""}`
+        ? `${priceRange(entry)} <small style="font-size:12px;color:var(--muted)">${usLabel()}</small>${mainMoist ? `<div class="rank" style="margin-top:2px;font-size:10px;opacity:.7">${mainMoist}</div>` : ""}${priceAltRange(entry) ? `<div class="rank" style="margin-top:2px">${t('ความชื้น 25%','Moisture 25%')}: ${priceAltRange(entry)}</div>` : ""}`
         : `${fmtValue(value)} <small style="font-size:12px;color:var(--muted)">${usLabel()}</small>`;
       const householdsLine = S.layer !== "households" && window.PROVINCE_HOUSEHOLDS
         ? `<div style="font-size:10px;color:var(--muted);margin-top:4px">👨‍🌾 ${t('ครัวเรือนเกษตรกร','Farm Households')}: ${fmtNumber(householdValueOf(en))} ${t('ครัวเรือน','HH')} (OAE 2566)</div>`
