@@ -2717,7 +2717,14 @@ function t(th, en) {
         }).join("")}
     </div>`;
       }).join("");
-      refs.detailGrid.innerHTML = damHtml + householdsHtml + fertHtml + cardHtml;
+      const dataNote = `
+        <div style="grid-column:1/-1;font-size:8.5px;color:var(--muted);padding:7px 4px 2px;border-top:1px solid rgba(255,255,255,.08);line-height:1.6;margin-top:4px">
+          📌 ${t(
+            'ข้อมูลผลผลิต / ผลผลิตต่อไร่ / เนื้อที่เก็บเกี่ยว เป็นข้อมูลเฉพาะ<strong>นาปี</strong>เท่านั้น · ไม่รวมนาปรัง · ไม่รวม<strong>ข้าวเหนียว</strong>และ<strong>ข้าวเจ้าปทุม 1</strong>',
+            'Production / Yield / Harvested Area covers <strong>wet season (main crop)</strong> only · excludes dry season (2nd crop) · excludes <strong>glutinous rice</strong> and <strong>Pathum Thani 1</strong>'
+          )}
+        </div>`;
+      refs.detailGrid.innerHTML = damHtml + householdsHtml + fertHtml + cardHtml + dataNote;
       refs.sparkHint.textContent = S.layer === "price"
         ? t("ค่ากลางของช่วงราคา", "Midpoint of price range")
         : t(layerMeta[S.layer].th, layerMeta[S.layer].en);
