@@ -1574,10 +1574,9 @@
         </section>
 
         <!-- National Fertilizer Prices Panel -->
-        <section class="panel-block" id="nationalFertPanel" style="display:none">
-          <div class="panel-label">🌱 <span class="th-t">ราคาปุ๋ยเคมีเฉลี่ย (ทั้งประเทศ)</span><span class="en-t">National Fert. Price</span></div>
-          <div class="live-price-block" id="nationalFertBlock"></div>
-          <div style="font-size:9px; color:var(--muted); margin-top:5px; text-align:right">ที่มา: กระทรวงพาณิชย์ (MOC)</div>
+        <section class="panel-block" id="nationalFertPanel">
+          <div class="panel-label" id="nationalFertTitle">🌱 <span class="th-t">ราคาปุ๋ยเคมี (ช่วงราคาทั่วประเทศ)</span><span class="en-t">Fertilizer Prices · National Survey</span></div>
+          <div id="nationalFertBlock"></div>
         </section>
 
         <section class="panel-block">
@@ -1701,8 +1700,40 @@
       dam:        { th: "ระดับน้ำในเขื่อน", en: "Dam Water Level", unit: "% ความจุ (RID)", unitEn: "% capacity (RID)", unitShort: "%", unitShortEn: "%", summary: "ระดับน้ำเฉลี่ย", summaryMode: "avg_nonzero" },
     };
     const riceMeta = {
-      white:   { th: "ข้าวขาว",  en: "White Rice",   badge: "🌾", type: "ข้าวขาว / White rice" },
-      jasmine: { th: "หอมมะลิ", en: "Jasmine Rice", badge: "🌸", type: "ข้าวหอมมะลิ / Jasmine wet-season paddy" }
+      white:   { th: "ข้าวขาว",  en: "White Rice",   badge: "🌾" },
+      jasmine: { th: "หอมมะลิ", en: "Jasmine Rice", badge: "🌸" }
+    };
+
+    // OAE สศก. ปีเพาะปลูก 2567/68 — static, defined once at module scope
+    const COST_BASE = {
+      white:   { seed:720, fert:810, chem:220, labor:2520, rent:20,  fuel:150, other:460,
+                 oaeTonCost:8199,  oaeYield:598, oaeRaiCost:4903 },
+      jasmine: { seed:550, fert:450, chem:90,  labor:1380, rent:990, fuel:320, other:290,
+                 oaeTonCost:11150, oaeYield:365, oaeRaiCost:4066 },
+    };
+    const COST_ROWS = [
+      { th:'ค่าเมล็ดพันธุ์',         en:'Seed',                 w:COST_BASE.white.seed,  j:COST_BASE.jasmine.seed  },
+      { th:'ค่าปุ๋ยเคมี',             en:'Fertilizer',           w:COST_BASE.white.fert,  j:COST_BASE.jasmine.fert  },
+      { th:'ค่าสารเคมี/ยาฆ่าแมลง',   en:'Chemicals / Pesticide',w:COST_BASE.white.chem,  j:COST_BASE.jasmine.chem  },
+      { th:'ค่าแรงงาน+เครื่องจักร',  en:'Labor + Machinery',    w:COST_BASE.white.labor, j:COST_BASE.jasmine.labor },
+      { th:'ค่าเช่านา (ผู้เช่า)',     en:'Land Rent (lessee)',   w:COST_BASE.white.rent,  j:COST_BASE.jasmine.rent, wSup:'*' },
+      { th:'ค่าน้ำมันเชื้อเพลิง',    en:'Fuel',                 w:COST_BASE.white.fuel,  j:COST_BASE.jasmine.fuel  },
+      { th:'ค่าขนส่ง/อื่นๆ',         en:'Transport / Other',    w:COST_BASE.white.other, j:COST_BASE.jasmine.other },
+    ];
+
+    // MOC / DIT official fertilizer price survey — 23 April 2569
+    const FERT_MOC = {
+      updated: { th: '23 เมษายน 2569', en: '23 April 2026' },
+      items: [
+        { formula:'46-0-0',      th:'ยูเรีย',              en:'Urea',               min:900,  max:1200, rice:true,  note:{ th:'พบมากที่สุดในการสำรวจ',     en:'Most commonly surveyed'        } },
+        { formula:'15-15-15',   th:'สูตรรวม',              en:'Compound',           min:1000, max:1225,             note:{ th:'ปุ๋ยสูตรรวมนิยมสูง',          en:'High-demand compound'          } },
+        { formula:'16-20-0',    th:'สำหรับข้าว/พืชไร่',   en:'For rice / field',   min:900,  max:980,  rice:true,  note:{ th:'ใช้กับข้าว/พืชไร่',           en:'Rice & field crop use'         } },
+        { formula:'21-0-0',     th:'แอมโมเนียมซัลเฟต',   en:'Ammonium Sulfate',   min:480,  max:600,             note:{ th:'ราคาต่ำสุดในกลุ่ม',           en:'Lowest price in group'         } },
+        { formula:'0-0-60',     th:'โพแทสเซียมคลอไรด์',   en:'Potassium Chloride', min:760,  max:900,             note:{ th:'โพแทสเซียมคลอไรด์',           en:'Potassium Chloride'            } },
+        { formula:'18-46-0',    th:'DAP',                  en:'DAP',                min:1450, max:1450,            note:{ th:'พบที่พัทลุง/ขอนแก่น',         en:'Phatthalung / Khon Kaen'       } },
+        { formula:'16-16-16',   th:'สูตรสมดุล',            en:'Balanced',           min:1380, max:1380,            note:{ th:'พบที่นครปฐม',                 en:'Nakhon Pathom'                 } },
+        { formula:'25-7-7',     th:'ออกฤทธิ์เร็ว',        en:'Fast Release',       min:1060, max:1060,            note:{ th:'พบที่นครปฐม',                 en:'Nakhon Pathom'                 } },
+      ],
     };
 
     const refs = {
@@ -1748,6 +1779,7 @@
       costSummaryTitle: document.getElementById("costSummaryTitle"),
       costSummaryBlock: document.getElementById("costSummaryBlock"),
       nationalFertPanel: document.getElementById("nationalFertPanel"),
+      nationalFertTitle: document.getElementById("nationalFertTitle"),
       nationalFertBlock: document.getElementById("nationalFertBlock")
     };
 
@@ -2838,60 +2870,37 @@ function t(th, en) {
     }
 
     function updateCostSummary() {
-      // ── OAE สศก. ปีเพาะปลูก 2567/68 ─────────────────────────────
-      const BASE = {
-        white:   { seed:720, fert:810, chem:220, labor:2520, rent:20,  fuel:150, other:460,
-                   oaeTonCost:8199,  oaeYield:598, oaeRaiCost:4903 },
-        jasmine: { seed:550, fert:450, chem:90,  labor:1380, rent:990, fuel:320, other:290,
-                   oaeTonCost:11150, oaeYield:365, oaeRaiCost:4066 },
-      };
-
-      // Use OAE official figures — no adjustment
-      const fertW = BASE.white.fert, fertJ = BASE.jasmine.fert;
-      const totalW = BASE.white.oaeRaiCost;    // 4,903 (official OAE cost/rai)
-      const totalJ = BASE.jasmine.oaeRaiCost;  // 4,066 (official OAE cost/rai)
-
       if (refs.costSummaryTitle) {
         refs.costSummaryTitle.innerHTML =
           `📊 ${t('โครงสร้างต้นทุนนาปี','Wet Season Production Cost')}<br>` +
           `<small style="font-size:9px;font-weight:400;opacity:.6">${t('หน่วย: บาท/ไร่/รอบ · สศก. 2567/68','Unit: ฿/rai/season · OAE 2567/68')}</small>`;
       }
 
-      const rows = [
-        { th:'ค่าเมล็ดพันธุ์',         en:'Seed',                 w:BASE.white.seed,  j:BASE.jasmine.seed  },
-        { th:'ค่าปุ๋ยเคมี',             en:'Fertilizer',           w:fertW,            j:fertJ },
-        { th:'ค่าสารเคมี/ยาฆ่าแมลง',   en:'Chemicals / Pesticide',w:BASE.white.chem,  j:BASE.jasmine.chem  },
-        { th:'ค่าแรงงาน+เครื่องจักร',  en:'Labor + Machinery',    w:BASE.white.labor, j:BASE.jasmine.labor },
-        { th:'ค่าเช่านา (ผู้เช่า)',     en:'Land Rent (lessee)',   w:BASE.white.rent,  j:BASE.jasmine.rent, wSup:'*' },
-        { th:'ค่าน้ำมันเชื้อเพลิง',    en:'Fuel',                 w:BASE.white.fuel,  j:BASE.jasmine.fuel  },
-        { th:'ค่าขนส่ง/อื่นๆ',         en:'Transport / Other',    w:BASE.white.other, j:BASE.jasmine.other },
-      ];
-
-      const th  = s => `style="text-align:left;padding:4px 0;${s||''}"`;
-      const td  = s => `style="text-align:right;font-family:'IBM Plex Mono';padding:3px 4px;${s||''}"`;
-      const tdL = s => `style="padding:3px 0;color:var(--text-soft);font-size:10px;${s||''}"`;
+      const sTh  = s => `style="text-align:left;padding:4px 0;${s||''}"`;
+      const sTd  = s => `style="text-align:right;font-family:'IBM Plex Mono';padding:3px 4px;${s||''}"`;
+      const sTdL = s => `style="padding:3px 0;color:var(--text-soft);font-size:10px;${s||''}"`;
 
       refs.costSummaryBlock.innerHTML = `
         <table style="width:100%;border-collapse:collapse;font-size:10px">
           <thead>
             <tr>
-              <th ${th('font-size:9px;color:var(--muted);font-weight:600;letter-spacing:.05em')}>${t('รายการ','Item')}</th>
-              <th ${td('font-size:9px;color:var(--white-hi);font-weight:700')}>🌾 ${t('ข้าวขาว','White')}</th>
-              <th ${td('font-size:9px;color:var(--jasmine-hi);font-weight:700')}>🌸 ${t('หอมมะลิ','Jasmine')}</th>
+              <th ${sTh('font-size:9px;color:var(--muted);font-weight:600;letter-spacing:.05em')}>${t('รายการ','Item')}</th>
+              <th ${sTd('font-size:9px;color:var(--white-hi);font-weight:700')}>🌾 ${t('ข้าวขาว','White')}</th>
+              <th ${sTd('font-size:9px;color:var(--jasmine-hi);font-weight:700')}>🌸 ${t('หอมมะลิ','Jasmine')}</th>
             </tr>
           </thead>
           <tbody>
-            ${rows.map(r => `<tr>
-              <td ${tdL()}>${t(r.th, r.en)}${r.note ? `<br><small style="font-size:8px;opacity:.55">${r.note}</small>` : ''}</td>
-              <td ${td()}>${fmtNumber(r.w)}${r.wSup ? `<sup style="font-size:7px;opacity:.7">${r.wSup}</sup>` : ''}</td>
-              <td ${td()}>~${fmtNumber(r.j)}</td>
+            ${COST_ROWS.map(r => `<tr>
+              <td ${sTdL()}>${t(r.th, r.en)}${r.note ? `<br><small style="font-size:8px;opacity:.55">${r.note}</small>` : ''}</td>
+              <td ${sTd()}>${fmtNumber(r.w)}${r.wSup ? `<sup style="font-size:7px;opacity:.7">${r.wSup}</sup>` : ''}</td>
+              <td ${sTd()}>~${fmtNumber(r.j)}</td>
             </tr>`).join('')}
           </tbody>
           <tfoot>
             <tr style="border-top:1px solid rgba(255,255,255,.15)">
               <td style="padding:6px 0;font-weight:700;font-size:11px">${t('รวมต้นทุน/ไร่','Total / rai')}</td>
-              <td ${td('font-weight:700;color:var(--white-hi);font-size:13px')}>~${fmtNumber(totalW)} <small style="font-size:8px;font-weight:400">฿</small></td>
-              <td ${td('font-weight:700;color:var(--jasmine-hi);font-size:13px')}>~${fmtNumber(totalJ)} <small style="font-size:8px;font-weight:400">฿</small></td>
+              <td ${sTd('font-weight:700;color:var(--white-hi);font-size:13px')}>~${fmtNumber(COST_BASE.white.oaeRaiCost)} <small style="font-size:8px;font-weight:400">฿</small></td>
+              <td ${sTd('font-weight:700;color:var(--jasmine-hi);font-size:13px')}>~${fmtNumber(COST_BASE.jasmine.oaeRaiCost)} <small style="font-size:8px;font-weight:400">฿</small></td>
             </tr>
           </tfoot>
         </table>
@@ -2903,19 +2912,19 @@ function t(th, en) {
           <table style="width:100%;border-collapse:collapse;font-size:10px">
             <tbody>
               <tr>
-                <td ${tdL()}>${t('ต้นทุนการผลิต','Production Cost')}</td>
-                <td ${td()}>~${fmtNumber(BASE.white.oaeTonCost)} <small style="font-size:8px;opacity:.7">฿/${t('ตัน','ton')}</small></td>
-                <td ${td()}>~${fmtNumber(BASE.jasmine.oaeTonCost)} <small style="font-size:8px;opacity:.7">฿/${t('ตัน','ton')}</small></td>
+                <td ${sTdL()}>${t('ต้นทุนการผลิต','Production Cost')}</td>
+                <td ${sTd()}>~${fmtNumber(COST_BASE.white.oaeTonCost)} <small style="font-size:8px;opacity:.7">฿/${t('ตัน','ton')}</small></td>
+                <td ${sTd()}>~${fmtNumber(COST_BASE.jasmine.oaeTonCost)} <small style="font-size:8px;opacity:.7">฿/${t('ตัน','ton')}</small></td>
               </tr>
               <tr>
-                <td ${tdL()}>${t('ผลผลิตต่อไร่','Yield / rai')}</td>
-                <td ${td()}>${BASE.white.oaeYield} <small style="font-size:8px;opacity:.7">${t('กก./ไร่','kg/rai')}</small></td>
-                <td ${td()}>~${BASE.jasmine.oaeYield} <small style="font-size:8px;opacity:.7">${t('กก./ไร่','kg/rai')}</small></td>
+                <td ${sTdL()}>${t('ผลผลิตต่อไร่','Yield / rai')}</td>
+                <td ${sTd()}>${COST_BASE.white.oaeYield} <small style="font-size:8px;opacity:.7">${t('กก./ไร่','kg/rai')}</small></td>
+                <td ${sTd()}>~${COST_BASE.jasmine.oaeYield} <small style="font-size:8px;opacity:.7">${t('กก./ไร่','kg/rai')}</small></td>
               </tr>
               <tr>
-                <td ${tdL()}>${t('คิดเป็นต้นทุน/ไร่','Cost / rai')}</td>
-                <td ${td()}>~${fmtNumber(BASE.white.oaeRaiCost)} <small style="font-size:8px;opacity:.7">฿</small></td>
-                <td ${td()}>~${fmtNumber(BASE.jasmine.oaeRaiCost)} <small style="font-size:8px;opacity:.7">฿</small></td>
+                <td ${sTdL()}>${t('คิดเป็นต้นทุน/ไร่','Cost / rai')}</td>
+                <td ${sTd()}>~${fmtNumber(COST_BASE.white.oaeRaiCost)} <small style="font-size:8px;opacity:.7">฿</small></td>
+                <td ${sTd()}>~${fmtNumber(COST_BASE.jasmine.oaeRaiCost)} <small style="font-size:8px;opacity:.7">฿</small></td>
               </tr>
             </tbody>
           </table>
@@ -3266,35 +3275,52 @@ function t(th, en) {
     }
 
     function updateNationalFert() {
-      if (!window.FERT_NATIONAL || !refs.nationalFertPanel || !refs.nationalFertBlock) return;
-      
-      const n = window.FERT_NATIONAL;
-      const rows = [];
-      const types = [
-        { key: 'urea_46_0_0', th: 'ยูเรีย 46-0-0', en: 'Urea 46-0-0', color: '#60a5fa' },
-        { key: 'form_16_20_0', th: 'สูตร 16-20-0', en: 'Formula 16-20-0', color: '#93c5fd' },
-        { key: 'form_15_15_15', th: 'สูตร 15-15-15', en: 'Formula 15-15-15', color: '#bfdbfe' }
-      ];
-      
-      types.forEach(fert => {
-        const d = n[fert.key];
-        if (!d) return;
-        const val = d.price_avg || d;
-        if (!val || val < 10) return;
-        rows.push(`
-          <div class="live-price-row">
-            <div class="live-price-label"><strong style="color:${fert.color}">${t(fert.th, fert.en)}</strong><br>
-              <span style="font-size:9px;color:var(--muted)">${t('ราคาเฉลี่ยทั้งประเทศ (บาท/กระสอบ 50 กก.)', 'Natl. Avg. (THB / 50kg bag)')}</span>
-            </div>
-            <div class="live-price-val">${fmtNumber(Math.round(val))}</div>
+      if (!refs.nationalFertBlock) return;
+
+      const sFh  = s => `style="text-align:left;padding:3px 0;${s||''}"`;
+      const sFd  = s => `style="text-align:right;font-family:'IBM Plex Mono';font-size:10px;padding:2px 3px;${s||''}"`;
+      const sFdL = s => `style="padding:2px 0;color:var(--text-soft);font-size:10px;${s||''}"`;
+
+      refs.nationalFertBlock.innerHTML = `
+        <table style="width:100%;border-collapse:collapse;font-size:10px;margin-top:4px">
+          <thead>
+            <tr>
+              <th ${sFh('font-size:9px;color:var(--muted);font-weight:600;letter-spacing:.04em')}>${t('สูตรปุ๋ย','Formula')}</th>
+              <th ${sFd('font-size:9px;color:var(--muted);font-weight:600')}>${t('ต่ำสุด','Min')}</th>
+              <th ${sFd('font-size:9px;color:var(--muted);font-weight:600')}>${t('สูงสุด','Max')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${FERT_MOC.items.map(r => {
+              const isRange = r.min !== r.max;
+              const accent  = r.rice ? 'color:#86efac' : '';
+              return `<tr>
+                <td ${sFdL()}>
+                  <span style="font-weight:700;${accent}">${r.formula}</span>
+                  <span style="font-size:8.5px;color:var(--text-soft)"> · ${t(r.note.th, r.note.en)}</span>
+                </td>
+                <td ${sFd(accent)}>${fmtNumber(r.min)}</td>
+                <td ${sFd(accent)}>${isRange ? fmtNumber(r.max) : '—'}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+        <div style="margin-top:7px;padding-top:6px;border-top:1px solid rgba(255,255,255,.08);font-size:8px;color:var(--muted);line-height:1.55">
+          <div style="margin-bottom:2px">
+            <span style="font-weight:600;color:var(--text-soft)">${t('หน่วย','Unit')}: ฿/${t('กระสอบ 50 กก.','50kg bag')}</span>
+            &nbsp;·&nbsp;
+            ${t('อัปเดต','Updated')}: ${t(FERT_MOC.updated.th, FERT_MOC.updated.en)}
           </div>
-        `);
-      });
-      
-      if (rows.length) {
-        refs.nationalFertBlock.innerHTML = rows.join('');
-        refs.nationalFertPanel.style.display = '';
-      }
+          <div style="margin-bottom:3px">
+            ${t('ที่มา: กระทรวงพาณิชย์ (MOC) และกรมการค้าภายใน (DIT)',
+                'Source: Ministry of Commerce (MOC) & Dept. of Internal Trade (DIT)')}
+          </div>
+          <div style="color:var(--muted);font-style:italic">
+            ⚠️ ${t('ราคา ณ วันที่สำรวจ จากร้านค้าในเครือข่ายพาณิชย์จังหวัด ไม่ใช่ราคากลางบังคับ',
+                    'Survey prices from provincial commerce network shops — not a nationally mandated price')}
+          </div>
+        </div>
+      `;
     }
 
     init();
