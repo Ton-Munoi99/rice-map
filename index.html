@@ -1935,6 +1935,26 @@
       }
     }
 
+    async function fetchHouseholds() {
+      try {
+        const res = await fetch("data/farmer_households.csv?_=" + Date.now(), { cache: "no-store" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const text = await res.text();
+        const rows = parseCSV(text);
+        if (rows.length < 2) throw new Error("empty");
+        const headers = rows[0].map(h => String(h).trim());
+        const idx = { year: headers.indexOf("year"), name: headers.indexOf("province_name"), amount: headers.indexOf("amount") };
+        // use latest available year (2566)
+        const latest = rows.slice(1)
+          .map(r => ({ year: String(r[idx.year] ?? "").trim(), name: String(r[idx.name] ?? "").trim(), amount: Number(r[idx.amount] || 0) }))
+          .filter(r => r.year === "2566" && r.name && r.amount > 0);
+        window.PROVINCE_HOUSEHOLDS = Object.fromEntries(latest.map(r => [r.name, r.amount]));
+        rerender();
+      } catch (e) {
+        console.warn("farmer_households.csv load failed", e);
+      }
+    }
+
     function getVisibleProvinces() {
       if (S.reg === "all") return allEN;
       return REG[S.reg] || allEN;
@@ -1942,7 +1962,7 @@
 
     function yearsForLayer(layer = S.layer) {
       if (layer === "dam") return ["dam"];
-      if (layer === "households") return ["2567"];
+      if (layer === "households") return ["2566"];
       return layer === "price" ? PRICE_YEARS : PRODUCTION_YEARS;
     }
 
@@ -3158,6 +3178,7 @@ function t(th, en) {
       await fetchDefaultCSV();
       fetchLivePrices();
       fetchDamData();
+      fetchHouseholds();
       updateNationalFert();
 
       VIEW.features = window.THAILAND_GEO.features.filter(feature => allEN.includes(feature.properties.name));
