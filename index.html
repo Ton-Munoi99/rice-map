@@ -1704,19 +1704,19 @@
       jasmine: { th: "หอมมะลิ", en: "Jasmine Rice", badge: "🌸" }
     };
 
-    // OAE สศก. ปีเพาะปลูก 2567/68 — static, defined once at module scope
+    // OAE/สศก. · ThaiPBS · ThaiPublica · Krungsri Research · ปีเพาะปลูก 2566/67–2567/68
     const COST_BASE = {
-      white:   { seed:720, fert:810, chem:220, labor:2520, rent:20,  fuel:150, other:460,
-                 oaeTonCost:8199,  oaeYield:598, oaeRaiCost:4903 },
-      jasmine: { seed:550, fert:450, chem:90,  labor:1380, rent:990, fuel:320, other:290,
-                 oaeTonCost:11150, oaeYield:365, oaeRaiCost:4066 },
+      white:   { seed:400, fert:1200, chem:500, labor:2200, rent:1000, fuel:500, other:300,
+                 oaeTonCost:10167, oaeYield:600, oaeRaiCost:6100 },
+      jasmine: { seed:800, fert:900,  chem:400, labor:1800, rent:700,  fuel:300, other:250,
+                 oaeTonCost:12875, oaeYield:400, oaeRaiCost:5150 },
     };
     const COST_ROWS = [
       { th:'ค่าเมล็ดพันธุ์',         en:'Seed',                 w:COST_BASE.white.seed,  j:COST_BASE.jasmine.seed  },
       { th:'ค่าปุ๋ยเคมี',             en:'Fertilizer',           w:COST_BASE.white.fert,  j:COST_BASE.jasmine.fert  },
       { th:'ค่าสารเคมี/ยาฆ่าแมลง',   en:'Chemicals / Pesticide',w:COST_BASE.white.chem,  j:COST_BASE.jasmine.chem  },
       { th:'ค่าแรงงาน+เครื่องจักร',  en:'Labor + Machinery',    w:COST_BASE.white.labor, j:COST_BASE.jasmine.labor },
-      { th:'ค่าเช่านา (ผู้เช่า)',     en:'Land Rent (lessee)',   w:COST_BASE.white.rent,  j:COST_BASE.jasmine.rent, wSup:'*' },
+      { th:'ค่าเช่านา (ผู้เช่า)',     en:'Land Rent (lessee)',   w:COST_BASE.white.rent,  j:COST_BASE.jasmine.rent },
       { th:'ค่าน้ำมันเชื้อเพลิง',    en:'Fuel',                 w:COST_BASE.white.fuel,  j:COST_BASE.jasmine.fuel  },
       { th:'ค่าขนส่ง/อื่นๆ',         en:'Transport / Other',    w:COST_BASE.white.other, j:COST_BASE.jasmine.other },
     ];
@@ -2904,8 +2904,8 @@ function t(th, en) {
     function updateCostSummary() {
       if (refs.costSummaryTitle) {
         refs.costSummaryTitle.innerHTML =
-          `📊 ${t('โครงสร้างต้นทุนนาปี','Wet Season Production Cost')}<br>` +
-          `<small style="font-size:9px;font-weight:400;opacity:.6">${t('หน่วย: บาท/ไร่/รอบ · สศก. 2567/68','Unit: ฿/rai/season · OAE 2567/68')}</small>`;
+          `📊 ${t('โครงสร้างต้นทุนการผลิตข้าว','Rice Production Cost Structure')}<br>` +
+          `<small style="font-size:9px;font-weight:400;opacity:.6">${t('หน่วย: บาท/ไร่/ฤดูกาล · OAE/สศก. 2566/67–2567/68','Unit: ฿/rai/season · OAE 2566/67–2567/68')}</small>`;
       }
 
       const sTh  = s => `style="text-align:left;padding:4px 0;${s||''}"`;
@@ -2923,23 +2923,23 @@ function t(th, en) {
           </thead>
           <tbody>
             ${COST_ROWS.map(r => `<tr>
-              <td ${sTdL()}>${t(r.th, r.en)}${r.note ? `<br><small style="font-size:8px;opacity:.55">${r.note}</small>` : ''}</td>
-              <td ${sTd()}>${fmtNumber(r.w)}${r.wSup ? `<sup style="font-size:7px;opacity:.7">${r.wSup}</sup>` : ''}</td>
-              <td ${sTd()}>~${fmtNumber(r.j)}</td>
+              <td ${sTdL()}>${t(r.th, r.en)}</td>
+              <td ${sTd()}>${fmtNumber(r.w)}</td>
+              <td ${sTd()}>${fmtNumber(r.j)}</td>
             </tr>`).join('')}
           </tbody>
           <tfoot>
             <tr style="border-top:1px solid rgba(255,255,255,.15)">
               <td style="padding:6px 0;font-weight:700;font-size:11px">${t('รวมต้นทุน/ไร่','Total / rai')}</td>
-              <td ${sTd('font-weight:700;color:var(--white-hi);font-size:13px')}>~${fmtNumber(COST_BASE.white.oaeRaiCost)} <small style="font-size:8px;font-weight:400">฿</small></td>
-              <td ${sTd('font-weight:700;color:var(--jasmine-hi);font-size:13px')}>~${fmtNumber(COST_BASE.jasmine.oaeRaiCost)} <small style="font-size:8px;font-weight:400">฿</small></td>
+              <td ${sTd('font-weight:700;color:var(--white-hi);font-size:13px')}>${fmtNumber(COST_BASE.white.oaeRaiCost)} <small style="font-size:8px;font-weight:400">฿</small></td>
+              <td ${sTd('font-weight:700;color:var(--jasmine-hi);font-size:13px')}>${fmtNumber(COST_BASE.jasmine.oaeRaiCost)} <small style="font-size:8px;font-weight:400">฿</small></td>
             </tr>
           </tfoot>
         </table>
 
         <div style="margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,.08)">
           <div style="font-size:8.5px;font-weight:700;letter-spacing:.08em;color:var(--muted);margin-bottom:5px;text-transform:uppercase">
-            ${t('ตัวตั้งทางการ สศก. ปีเพาะปลูก 2567/68','Official OAE Benchmark · Crop Year 2567/68')}
+            ${t('ต้นทุนและผลผลิต · ปีเพาะปลูก 2566/67–2567/68','Cost & Yield · Crop Year 2566/67–2567/68')}
           </div>
           <table style="width:100%;border-collapse:collapse;font-size:10px">
             <tbody>
@@ -2951,18 +2951,18 @@ function t(th, en) {
               <tr>
                 <td ${sTdL()}>${t('ผลผลิตต่อไร่','Yield / rai')}</td>
                 <td ${sTd()}>${COST_BASE.white.oaeYield} <small style="font-size:8px;opacity:.7">${t('กก./ไร่','kg/rai')}</small></td>
-                <td ${sTd()}>~${COST_BASE.jasmine.oaeYield} <small style="font-size:8px;opacity:.7">${t('กก./ไร่','kg/rai')}</small></td>
+                <td ${sTd()}>${COST_BASE.jasmine.oaeYield} <small style="font-size:8px;opacity:.7">${t('กก./ไร่','kg/rai')}</small></td>
               </tr>
               <tr>
                 <td ${sTdL()}>${t('คิดเป็นต้นทุน/ไร่','Cost / rai')}</td>
-                <td ${sTd()}>~${fmtNumber(COST_BASE.white.oaeRaiCost)} <small style="font-size:8px;opacity:.7">฿</small></td>
-                <td ${sTd()}>~${fmtNumber(COST_BASE.jasmine.oaeRaiCost)} <small style="font-size:8px;opacity:.7">฿</small></td>
+                <td ${sTd()}>${fmtNumber(COST_BASE.white.oaeRaiCost)} <small style="font-size:8px;opacity:.7">฿</small></td>
+                <td ${sTd()}>${fmtNumber(COST_BASE.jasmine.oaeRaiCost)} <small style="font-size:8px;opacity:.7">฿</small></td>
               </tr>
             </tbody>
           </table>
           <div style="font-size:8px;color:var(--muted);margin-top:6px;line-height:1.5">
-            * ${t('ค่าเช่านา ข้าวขาว = ค่าใช้จ่ายที่ดินสำหรับเจ้าของที่ดิน (ผู้เช่าจ่ายเพิ่มประมาณ 700+ บาท/ไร่)',
-                   'White rice land rent shown for own-land farmers; lessees pay ~700+ ฿/rai more')}
+            ${t('แหล่งข้อมูล: OAE/สศก. · ThaiPBS · ThaiPublica · Krungsri Research',
+                 'Sources: OAE · ThaiPBS · ThaiPublica · Krungsri Research')}
           </div>
         </div>
       `;
