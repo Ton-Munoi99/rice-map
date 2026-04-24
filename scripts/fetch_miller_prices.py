@@ -147,25 +147,37 @@ def generate_candidate_urls(days_back: int = 7):
 # Download PDF
 # ─────────────────────────────────────────────
 def find_and_download_pdf():
-    """ค้นหาและดาวน์โหลด PDF ล่าสุดที่มีอยู่จริง"""
+    """ค้นหาและดาวน์โหลด PDF 3-หน้าล่าสุด (มีข้อมูลรายจังหวัด)
+
+    สมาคมโรงสีออก PDF 2 แบบ:
+      - 3 หน้า (จ/พ/ศ): ราคา กทม + ข้าวเปลือกเจ้า + หอมมะลิ รายจังหวัด
+      - 1 หน้า (อ/พฤ): ราคา กทม. เท่านั้น — ใช้ไม่ได้
+
+    → ข้าม PDF ที่เล็กกว่า ~1MB (แบบ 1-หน้า) แล้วย้อนหาวันก่อนหน้า
+    """
     candidates = generate_candidate_urls(LOOK_BACK_DAYS)
     print(f"[search] {len(candidates)} URL candidates...")
+
+    MIN_FULL_REPORT_BYTES = 1_000_000  # 3-page PDFs ~1.9MB, 1-page ~650KB
 
     for date_str, url in candidates:
         try:
             r = requests.head(url, headers=HEADERS, timeout=10, allow_redirects=True)
-            if r.status_code == 200:
-                print(f"[found] {url}  [{date_str}]")
-                r2 = requests.get(url, headers=HEADERS, timeout=30)
-                r2.raise_for_status()
-                print(f"[size]  {len(r2.content):,} bytes")
-                return r2.content, date_str, url
-            else:
+            if r.status_code != 200:
                 print(f"[miss]  {date_str}: HTTP {r.status_code}")
+                continue
+            r2 = requests.get(url, headers=HEADERS, timeout=30)
+            r2.raise_for_status()
+            size = len(r2.content)
+            if size < MIN_FULL_REPORT_BYTES:
+                print(f"[skip]  {date_str}: {size:,}b (1-page, no provincial data)")
+                continue
+            print(f"[found] {url}  [{date_str}] {size:,}b")
+            return r2.content, date_str, url
         except requests.RequestException as e:
             print(f"[err]   {date_str}: {e}")
 
-    print("[warn] ไม่พบ PDF ใหม่ใน 7 วันที่ผ่านมา")
+    print("[warn] ไม่พบ PDF 3-หน้าใน 7 วันที่ผ่านมา")
     return None, None, None
 
 
