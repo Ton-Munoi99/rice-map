@@ -45,7 +45,7 @@ def fetch_trea_fob():
                     if f not in dates:
                         dates.append(f)
         
-        elif 'Thai Hom Mali Rice - Premium' in texts[0] and '(68/69)' in texts[0] or '(2025/26)' in texts[0]:
+        elif 'Thai Hom Mali Rice - Premium' in texts[0] and ('(68/69)' in texts[0] or '(2025/26)' in texts[0]):
             # Jasmine Rice
             if len(texts) > 1 and texts[-1].isdigit():
                 prices['jasmine_fob'] = int(texts[-1])
