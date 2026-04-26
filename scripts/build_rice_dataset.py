@@ -87,22 +87,34 @@ def normalize_key(text: str) -> str:
 
 
 def load_province_meta() -> dict[str, dict[str, str]]:
-    if not CSV_PATH.exists():
-        raise FileNotFoundError(f"Missing province metadata source: {CSV_PATH}")
     province_meta: dict[str, dict[str, str]] = {}
-    with CSV_PATH.open("r", encoding="utf-8-sig", newline="") as fh:
-        reader = csv.DictReader(fh)
-        for row in reader:
-            en = row["province_en"].strip()
-            province_meta.setdefault(
-                en,
-                {
-                    "province_th": row["province_th"].strip(),
-                    "region": row["region"].strip(),
-                },
-            )
+    if CSV_PATH.exists():
+        with CSV_PATH.open("r", encoding="utf-8-sig", newline="") as fh:
+            reader = csv.DictReader(fh)
+            for row in reader:
+                en = row["province_en"].strip()
+                province_meta.setdefault(
+                    en,
+                    {
+                        "province_th": row["province_th"].strip(),
+                        "region": row["region"].strip(),
+                    },
+                )
+    elif JS_PATH.exists():
+        raw = JS_PATH.read_text(encoding="utf-8")
+        match = re.search(r"window\.RICE_DATA_ROWS\s*=\s*(\[[\s\S]*\]);?\s*$", raw)
+        if not match:
+            raise RuntimeError(f"Province metadata could not be parsed from {JS_PATH}")
+        for row in json.loads(match.group(1)):
+            en = str(row.get("province_en", "")).strip()
+            province_th = str(row.get("province_th", "")).strip()
+            region = str(row.get("region", "")).strip()
+            if en and province_th and region:
+                province_meta.setdefault(en, {"province_th": province_th, "region": region})
+    else:
+        raise FileNotFoundError(f"Missing province metadata source: {CSV_PATH} or {JS_PATH}")
     if not province_meta:
-        raise RuntimeError("Province metadata could not be loaded from current rice-data.csv")
+        raise RuntimeError("Province metadata could not be loaded from current rice dataset")
     return province_meta
 
 
