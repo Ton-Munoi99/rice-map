@@ -116,8 +116,33 @@ def parse_price(text: str):
         return None
 
 
+def consonant_skeleton(text: str) -> str:
+    """ดึงเฉพาะพยัญชนะไทย (U+0E01–U+0E2E) ทิ้งสระ/วรรณยุกต์/ช่องว่างทั้งหมด
+
+    ใช้เพื่อจับชื่อจังหวัดเมื่อ PDF เพี้ยนลำดับสระ — เช่น
+    "ฉะเชงิ เทรา" → "ฉชงทร" ตรงกับ skeleton ของ "ฉะเชิงเทรา" → "ฉชงทร"
+    """
+    return ''.join(c for c in str(text) if 'ก' <= c <= 'ฮ')
+
+
+# Build skeleton lookup once: full names + abbreviations
+PROVINCE_BY_SKELETON = {}
+for _full in PROVINCE_MAP:
+    _skel = consonant_skeleton(_full)
+    if _skel:
+        PROVINCE_BY_SKELETON[_skel] = _full
+for _abbr, _full in ABBREV_MAP.items():
+    _skel = consonant_skeleton(_abbr)
+    if _skel:
+        PROVINCE_BY_SKELETON[_skel] = _full
+
+
 def find_province_th(text: str):
-    """ค้นหาชื่อจังหวัดจากข้อความ รองรับชื่อย่อใน PDF"""
+    """ค้นหาชื่อจังหวัดจากข้อความ — รองรับ:
+    1. ชื่อเต็ม (substring match)
+    2. ชื่อย่อใน PDF (ผ่าน ABBREV_MAP)
+    3. PDF ที่สระเพี้ยน (consonant skeleton match)
+    """
     text = str(text)
     for abbr, full in ABBREV_MAP.items():
         if abbr in text and full not in text:
@@ -125,6 +150,18 @@ def find_province_th(text: str):
     for th_name in PROVINCE_MAP:
         if th_name in text:
             return th_name
+    # Fallback: skeleton match for vowel-reorder PDF artifacts.
+    # Prefer the LONGEST matching skeleton to avoid short-name false positives
+    # (e.g. "แพร่"→"พร" matches inside "สุพรรณบุรี"→"สพรรณบร").
+    line_skel = consonant_skeleton(text)
+    if line_skel:
+        best = None
+        for prov_skel, full in PROVINCE_BY_SKELETON.items():
+            if prov_skel and prov_skel in line_skel:
+                if best is None or len(prov_skel) > len(best[0]):
+                    best = (prov_skel, full)
+        if best:
+            return best[1]
     return None
 
 
@@ -184,16 +221,41 @@ def find_and_download_pdf():
 # ─────────────────────────────────────────────
 # Extract prices from PDF
 # ─────────────────────────────────────────────
+# Page 3 section markers — stop processing jasmine when reaching these
+JASMINE_STOP_MARKERS_SKEL = [
+    consonant_skeleton("ข้าวเปลือกหอมปทุม"),     # Pathum
+    consonant_skeleton("ข้าวเปลือกเหนียว"),      # Sticky / kor 6
+    consonant_skeleton("ข้าวเปลือกเหนยี ว"),     # Sticky (vowel-reordered variant)
+    consonant_skeleton("ข้าว กข"),                # GorKor varieties
+    consonant_skeleton("ข้าวเปลอื กเหนียว"),     # variant
+]
+
+
+def _ensure_prov(prices: dict, th_name: str, date_str: str) -> dict:
+    if th_name not in prices:
+        prices[th_name] = {"white": None, "jasmine": None, "date": date_str}
+    return prices[th_name]
+
+
+def _avg_from_range(lo_str: str, hi_str: str):
+    """Parse a price range and return averaged THB/ton, or None if out of range."""
+    lo_v = parse_price(lo_str)
+    hi_v = parse_price(hi_str)
+    if lo_v and hi_v and 3000 <= lo_v <= 30000:
+        return round((lo_v + hi_v) / 2)
+    return None
+
+
 def extract_prices_from_bytes(pdf_bytes: bytes, date_str: str) -> dict:
-    """
-    อ่าน PDF bytes แล้วดึงราคาข้าวรายจังหวัด (ความชื้น 15%)
+    """อ่าน PDF bytes แล้วดึงราคาข้าวรายจังหวัด (ความชื้น 15%)
 
-    PDF มี 3 หน้า:
-      Page 2 = ข้าวเปลือกเจ้า  (white)   มี 2 คอลัมน์ราคา: 25% และ 15%
-               ราคา 15% เป็นกลุ่มที่ 2 บนบรรทัดเดียวกับจังหวัด
-      Page 3 = หอมมะลิ         (jasmine) มีคอลัมน์ 15% เพียงคอลัมน์เดียว
+    PDF format (3 หน้า):
+      Page 1: ราคา กทม — ข้าม
+      Page 2: ข้าวเปลือกเจ้า รายจังหวัด (white)  — มี 2 คอลัมน์: 25% และ 15%
+      Page 3: ข้าวเปลือกหอมมะลิ + ปทุม + เหนียว + กข79 (เอาเฉพาะหอมมะลิ)
 
-    raw text จาก extract_text() อ่านภาษาไทยได้ปกติ
+    Layout ของแต่ละแถว: บรรทัด 1 = ราคา, บรรทัด 2 = ชื่อจังหวัด
+    (PDF รุ่นใหม่กลับด้านจาก format เดิม)
     """
     prices = {}
     with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
@@ -201,63 +263,63 @@ def extract_prices_from_bytes(pdf_bytes: bytes, date_str: str) -> dict:
         tmp_path = tmp.name
 
     PAGE_TYPE = {2: "white", 3: "jasmine"}
+    PRICE_RE = re.compile(r"([\d,]+)\s*-\s*([\d,]+)")
 
     try:
         with pdfplumber.open(tmp_path) as pdf:
             for page_num, page in enumerate(pdf.pages, 1):
                 rice_type = PAGE_TYPE.get(page_num)
                 if rice_type is None:
-                    continue  # skip page 1
+                    continue
 
                 text = page.extract_text(x_tolerance=2, y_tolerance=2) or ""
-                lines = text.splitlines()
+                lines = [L.strip() for L in text.splitlines() if L.strip()]
                 print(f"  Page {page_num} ({rice_type}): {len(lines)} lines")
 
-                last_prov = None
+                pending_ranges = None  # price line awaiting its province
+                page_prov_count = 0
+
                 for line in lines:
-                    line = line.strip()
-                    if not line:
-                        continue
+                    # On jasmine page, stop at next-section markers
+                    if rice_type == "jasmine":
+                        line_skel = consonant_skeleton(line)
+                        if any(m and m in line_skel for m in JASMINE_STOP_MARKERS_SKEL):
+                            break
 
                     th_name = find_province_th(line)
+                    price_ranges = PRICE_RE.findall(line)
 
-                    # หาช่วงราคา เช่น "7,100-7,500"
-                    price_ranges = re.findall(r"([\d,]+)\s*-\s*([\d,]+)", line)
-                    # หาราคาเดี่ยว 5+ หลัก
-                    single_prices = re.findall(r"(?<!\d)([\d,]{5,})(?!\d)", line)
+                    # Case A: line has BOTH price and province (legacy format)
+                    if th_name and price_ranges:
+                        prov_data = _ensure_prov(prices, th_name, date_str)
+                        idx = 1 if len(price_ranges) >= 2 else 0
+                        avg = _avg_from_range(*price_ranges[idx])
+                        if avg is not None and prov_data[rice_type] is None:
+                            prov_data[rice_type] = avg
+                            page_prov_count += 1
+                        pending_ranges = None
+                        continue
 
-                    if th_name:
-                        last_prov = th_name
-                        if th_name not in prices:
-                            prices[th_name] = {
-                                "white":   None,
-                                "jasmine": None,
-                                "date":    date_str,
-                            }
+                    # Case B: price-only line → save for next province line
+                    if price_ranges:
+                        pending_ranges = price_ranges
+                        continue
 
-                    if last_prov and (price_ranges or single_prices):
-                        prov_data = prices[last_prov]
+                    # Case C: province-only line → pair with pending price
+                    if th_name and pending_ranges:
+                        prov_data = _ensure_prov(prices, th_name, date_str)
+                        idx = 1 if len(pending_ranges) >= 2 else 0
+                        avg = _avg_from_range(*pending_ranges[idx])
+                        if avg is not None and prov_data[rice_type] is None:
+                            prov_data[rice_type] = avg
+                            page_prov_count += 1
+                        pending_ranges = None
+                        continue
 
-                        if price_ranges:
-                            # Page 2: มี 2 กลุ่ม → กลุ่มที่ 2 = ความชื้น 15%
-                            if len(price_ranges) >= 2:
-                                lo_str, hi_str = price_ranges[1]
-                            else:
-                                lo_str, hi_str = price_ranges[0]
-                            lo_v = parse_price(lo_str)
-                            hi_v = parse_price(hi_str)
-                            if lo_v and hi_v and 3000 <= lo_v <= 30000:
-                                avg = round((lo_v + hi_v) / 2)
-                                if prov_data[rice_type] is None:
-                                    prov_data[rice_type] = avg
+                    # Province seen but no pending price (e.g. duplicate row from 2-col layout)
+                    # OR neither — just skip
 
-                        elif single_prices:
-                            v = parse_price(single_prices[0])
-                            if v and 3000 <= v <= 30000:
-                                if prov_data[rice_type] is None:
-                                    prov_data[rice_type] = v
-
-                print(f"    -> {len(prices)} provinces so far")
+                print(f"    -> +{page_prov_count} provinces from page {page_num}")
     finally:
         os.unlink(tmp_path)
 
