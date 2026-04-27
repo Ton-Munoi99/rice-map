@@ -233,17 +233,21 @@ JASMINE_STOP_MARKERS_SKEL = [
 
 def _ensure_prov(prices: dict, th_name: str, date_str: str) -> dict:
     if th_name not in prices:
-        prices[th_name] = {"white": None, "jasmine": None, "date": date_str}
+        prices[th_name] = {
+            "white": None, "white_low": None, "white_high": None,
+            "jasmine": None, "jasmine_low": None, "jasmine_high": None,
+            "date": date_str,
+        }
     return prices[th_name]
 
 
-def _avg_from_range(lo_str: str, hi_str: str):
-    """Parse a price range and return averaged THB/ton, or None if out of range."""
+def _parse_range(lo_str: str, hi_str: str):
+    """Parse a price range. Returns (low, high, avg) or (None, None, None) if out of range."""
     lo_v = parse_price(lo_str)
     hi_v = parse_price(hi_str)
     if lo_v and hi_v and 3000 <= lo_v <= 30000:
-        return round((lo_v + hi_v) / 2)
-    return None
+        return int(lo_v), int(hi_v), round((lo_v + hi_v) / 2)
+    return None, None, None
 
 
 def extract_prices_from_bytes(pdf_bytes: bytes, date_str: str) -> dict:
@@ -293,9 +297,11 @@ def extract_prices_from_bytes(pdf_bytes: bytes, date_str: str) -> dict:
                     if th_name and price_ranges:
                         prov_data = _ensure_prov(prices, th_name, date_str)
                         idx = 1 if len(price_ranges) >= 2 else 0
-                        avg = _avg_from_range(*price_ranges[idx])
+                        lo, hi, avg = _parse_range(*price_ranges[idx])
                         if avg is not None and prov_data[rice_type] is None:
                             prov_data[rice_type] = avg
+                            prov_data[f"{rice_type}_low"] = lo
+                            prov_data[f"{rice_type}_high"] = hi
                             page_prov_count += 1
                         pending_ranges = None
                         continue
@@ -309,9 +315,11 @@ def extract_prices_from_bytes(pdf_bytes: bytes, date_str: str) -> dict:
                     if th_name and pending_ranges:
                         prov_data = _ensure_prov(prices, th_name, date_str)
                         idx = 1 if len(pending_ranges) >= 2 else 0
-                        avg = _avg_from_range(*pending_ranges[idx])
+                        lo, hi, avg = _parse_range(*pending_ranges[idx])
                         if avg is not None and prov_data[rice_type] is None:
                             prov_data[rice_type] = avg
+                            prov_data[f"{rice_type}_low"] = lo
+                            prov_data[f"{rice_type}_high"] = hi
                             page_prov_count += 1
                         pending_ranges = None
                         continue

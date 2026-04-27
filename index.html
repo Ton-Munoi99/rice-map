@@ -3222,7 +3222,56 @@ function t(th, en) {
         console.info('trea-fob.json using cached fallback');
       }
 
-      renderLivePriceWidget(); // always render — FOB_PRICES is never null
+      const overlayChanged = applyLivePriceOverlay();
+      renderLivePriceWidget();   // always render — FOB_PRICES is never null
+      if (overlayChanged && typeof rerender === 'function') rerender();
+    }
+
+    // Overlay actual mill PDF prices onto DATA[en][rice][currentYear]. The CSV
+    // entries for the current year are "estimated_trend" placeholders — we
+    // replace them with real min/max from the latest mill report when available.
+    function applyLivePriceOverlay() {
+      const prov = LIVE_PRICES?.provincial_prices?.data;
+      if (!prov || !DATA) return;
+
+      // Latest year present in DATA — usually the "current" year (e.g. 2569)
+      let latestYear = 0;
+      for (const en of Object.keys(DATA)) {
+        for (const rice of Object.keys(DATA[en] || {})) {
+          for (const y of Object.keys(DATA[en][rice] || {})) {
+            const yn = Number(y);
+            if (yn > latestYear) latestYear = yn;
+          }
+        }
+        if (latestYear) break;  // sample one province
+      }
+      if (!latestYear) return;
+
+      const date = Object.values(prov)[0]?.date || '';
+      let patched = 0;
+      for (const en of Object.keys(DATA)) {
+        const thName = NM[en];
+        const live = thName ? prov[thName] : null;
+        if (!live) continue;
+
+        for (const rice of ['white', 'jasmine']) {
+          const lo = live[`${rice}_low`];
+          const hi = live[`${rice}_high`];
+          if (!lo || !hi) continue;
+          const entry = DATA[en]?.[rice]?.[latestYear];
+          if (!entry) continue;
+          entry.price_low = lo;
+          entry.price_high = hi;
+          entry.price_basis = 'moisture_15_pct';
+          entry.source = 'mill_pdf';
+          entry.source_title = LIVE_PRICES?.provincial_prices?.source_th || 'สมาคมโรงสีข้าวไทย';
+          entry.source_url = LIVE_PRICES?.provincial_prices?.source_url || '';
+          entry.source_note = date ? `PDF ${date}` : '';
+          patched++;
+        }
+      }
+      if (patched) console.info(`[live-prices] overlaid ${patched} entries for year ${latestYear}`);
+      return patched > 0;
     }
 
     function renderLivePriceWidget() {
