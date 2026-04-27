@@ -296,8 +296,9 @@ def extract_prices_from_bytes(pdf_bytes: bytes, date_str: str) -> dict:
                     # Case A: line has BOTH price and province (legacy format)
                     if th_name and price_ranges:
                         prov_data = _ensure_prov(prices, th_name, date_str)
-                        idx = 1 if len(price_ranges) >= 2 else 0
-                        lo, hi, avg = _parse_range(*price_ranges[idx])
+                        # Index 0 = ความชื้น 15% (left column) — always want this.
+                        # Index 1 would be ความชื้น 25% (right column) which we skip.
+                        lo, hi, avg = _parse_range(*price_ranges[0])
                         if avg is not None and prov_data[rice_type] is None:
                             prov_data[rice_type] = avg
                             prov_data[f"{rice_type}_low"] = lo
@@ -314,8 +315,8 @@ def extract_prices_from_bytes(pdf_bytes: bytes, date_str: str) -> dict:
                     # Case C: province-only line → pair with pending price
                     if th_name and pending_ranges:
                         prov_data = _ensure_prov(prices, th_name, date_str)
-                        idx = 1 if len(pending_ranges) >= 2 else 0
-                        lo, hi, avg = _parse_range(*pending_ranges[idx])
+                        # Index 0 = ความชื้น 15% (left column) — always want this.
+                        lo, hi, avg = _parse_range(*pending_ranges[0])
                         if avg is not None and prov_data[rice_type] is None:
                             prov_data[rice_type] = avg
                             prov_data[f"{rice_type}_low"] = lo
