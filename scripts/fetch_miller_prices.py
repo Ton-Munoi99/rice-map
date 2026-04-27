@@ -381,6 +381,26 @@ def main():
         print("[warn] ดึงราคาไม่ได้ — PDF format อาจเปลี่ยน")
         return
 
+    # ── Sanity-check: ราคาความชื้น 15% ควรอยู่ในช่วง 6,500–12,000 บาท/ตัน
+    # ถ้าต่ำกว่า 6,500 แสดงว่าอาจดึงคอลัมน์ 25% มาแทน → หยุดทันที
+    WHITE_MIN_15PCT = 6_500   # ต่ำกว่านี้ = น่าสงสัย (ช่วง 25% อยู่ที่ ~5,000-6,500)
+    WHITE_MAX_15PCT = 12_000
+    JASMINE_MIN     = 10_000
+    JASMINE_MAX     = 25_000
+    suspicious = []
+    for pname, pdata in prices.items():
+        w = pdata.get("white")
+        j = pdata.get("jasmine")
+        if w is not None and not (WHITE_MIN_15PCT <= w <= WHITE_MAX_15PCT):
+            suspicious.append(f"{pname} white={w} (ควร {WHITE_MIN_15PCT}-{WHITE_MAX_15PCT})")
+        if j is not None and not (JASMINE_MIN <= j <= JASMINE_MAX):
+            suspicious.append(f"{pname} jasmine={j} (ควร {JASMINE_MIN}-{JASMINE_MAX})")
+    if suspicious:
+        print(f"[ERROR] ราคาผิดปกติ — ไม่บันทึก! อาจดึงคอลัมน์ผิด:")
+        for s in suspicious:
+            print(f"  ⚠ {s}")
+        return
+
     result = {
         **existing,
         "provincial_prices": {

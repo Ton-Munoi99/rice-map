@@ -2,9 +2,10 @@ name: 🏭 Auto-Update Thai Rice Millers Prices
 
 on:
   schedule:
-    # รันทุกวัน 08:00 น. เวลาไทย (01:00 UTC)
-    # สมาคมโรงสีมักอัพเดตเช้า → รัน 8 โมงเพื่อให้ได้ข้อมูลวันนั้น
+    # รอบแรก  08:00 Bangkok (01:00 UTC) — PDF มักอัพเดตช่วงเช้า
+    # รอบสอง  11:00 Bangkok (04:00 UTC) — safety net กรณี PDF ออกสาย
     - cron: '0 1 * * *'
+    - cron: '0 4 * * *'
   workflow_dispatch: # รันด้วยมือได้
 
 permissions:
