@@ -87,14 +87,21 @@ def main():
 
     provinces = {}
     for province, dams in sorted(prov_dams.items()):
-        total_vol = sum(float(d["volume"] or 0) for d in dams if d.get("volume") is not None)
-        total_cap = sum(float(d["storage"] or 0) for d in dams if d.get("storage") is not None)
-        weighted_pct = round(total_vol / total_cap * 100, 2) if total_cap > 0 else None
+        # ใช้เฉพาะเขื่อนที่มีข้อมูล volume จริง — ถ้า volume=None = RID ยังไม่อัปเดต
+        valid = [dm for dm in dams if dm.get("volume") is not None]
+        if valid:
+            total_vol = sum(float(dm["volume"]) for dm in valid)
+            total_cap = sum(float(dm["storage"]) for dm in valid if dm.get("storage") is not None)
+            weighted_pct = round(total_vol / total_cap * 100, 2) if total_cap > 0 else None
+        else:
+            total_vol = None
+            total_cap = sum(float(dm["storage"]) for dm in dams if dm.get("storage") is not None)
+            weighted_pct = None   # ไม่มีข้อมูลวันนี้ — ไม่แสดง 0%
 
         provinces[province] = {
-            "dam_level_pct":    weighted_pct,
-            "total_volume_mm3": round(total_vol, 2),
-            "total_storage_mm3": round(total_cap, 2),
+            "dam_level_pct":     weighted_pct,
+            "total_volume_mm3":  round(total_vol, 2) if total_vol is not None else None,
+            "total_storage_mm3": round(total_cap, 2) if total_cap else None,
             "n_dams": len(dams),
             "dams": [
                 {
@@ -109,9 +116,20 @@ def main():
                 for dm in dams
             ],
         }
-        tag = "🔴" if (weighted_pct or 0) < 30 else ("🟡" if (weighted_pct or 0) < 60 else "💧")
-        dam_names = ", ".join(dm["name"] for dm in dams)
-        print(f"  {tag} {province:25s} {weighted_pct:5.1f}%  ({len(dams)} เขื่อน: {dam_names})")
+        if weighted_pct is None:
+            print(f"  ⬜ {province:25s}  N/A  ({len(dams)} เขื่อน — ยังไม่มีข้อมูลวันนี้)")
+        else:
+            tag = "🔴" if weighted_pct < 30 else ("🟡" if weighted_pct < 60 else "💧")
+            dam_names = ", ".join(dm["name"] for dm in dams)
+            print(f"  {tag} {province:25s} {weighted_pct:5.1f}%  ({len(dams)} เขื่อน: {dam_names})")
+
+    # ── Quality guard: ถ้า > 40% ของจังหวัดไม่มี volume → RID ยังไม่อัปเดต อย่าบันทึกทับ
+    null_count = sum(1 for p in provinces.values() if p["dam_level_pct"] is None)
+    null_pct   = null_count / len(provinces) * 100 if provinces else 0
+    if null_pct > 40:
+        print(f"\n[warn] {null_count}/{len(provinces)} จังหวัด ({null_pct:.0f}%) ยังไม่มีข้อมูล volume")
+        print("[warn] RID อาจยังไม่อัปเดตข้อมูลวันนี้ — ไม่บันทึกทับข้อมูลเดิม")
+        return
 
     output = {
         "_meta": {
