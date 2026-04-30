@@ -37,4 +37,6 @@ jobs:
           git add data/trea-fob.json
           
           # Only commit if there are changes
-          git diff --quiet && git diff --staged --quiet || (git commit -m "auto: update TREA FOB rice prices" && git push)
+          git diff --quiet && git diff --staged --quiet || \
+            (git commit -m "auto: update TREA FOB rice prices" && \
+             git pull --rebase origin main && git push)

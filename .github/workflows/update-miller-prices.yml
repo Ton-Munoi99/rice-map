@@ -38,5 +38,6 @@ jobs:
           git add data/prices-live.json
           git diff --staged --quiet && echo "No changes — prices already up to date." || (
             git commit -m "🤖 Auto-update: Thai Rice Millers prices $(date +'%Y-%m-%d')"
+            git pull --rebase origin main
             git push
           )
