@@ -2574,9 +2574,9 @@ function t(th, en) {
             : S.layer === "dam"
               ? `💧 ${t('ระดับน้ำในเขื่อน','Dam Level')} RID ${window.DAM_DATA?._meta?.updated || ''}`
               : S.layer === "rainfall"
-              ? `🌧 ${t('ปริมาณฝน นาปี','Season Rainfall')} ${WEATHER_DATA?._meta?.year ? WEATHER_DATA._meta.year + 543 : '2568'}`
+              ? `🌧 ${t('ปริมาณฝน นาปี','Season Rainfall')} ${WEATHER_DATA?._meta?.year ? toBE(WEATHER_DATA._meta.year) : '2568'}`
               : S.layer === "drought"
-              ? `🌡 ${t('ฝนเบี่ยงเบนจากปกติ','Rainfall Anomaly')} ${WEATHER_DATA?._meta?.year ? WEATHER_DATA._meta.year + 543 : '2568'} vs ${WEATHER_FORECAST?._meta?.base_years||'2020–2024'}`
+              ? `🌡 ${t('ฝนเบี่ยงเบนจากปกติ','Rainfall Anomaly')} ${WEATHER_DATA?._meta?.year ? toBE(WEATHER_DATA._meta.year) : '2568'} vs ${WEATHER_FORECAST?._meta?.base_years||'2020–2024'}`
               : isEstYear
                 ? `📊 ${t('ประมาณการ','Estimate')} ${S.year}`
                 : `OAE ${t('ข้อมูลปี','Crop Year')} ${S.year}`;
@@ -2598,13 +2598,12 @@ function t(th, en) {
       if (S.layer === "rainfall" || S.layer === "drought") {
         const meta = WEATHER_DATA?._meta;
         const season = meta?.season_label?.split('·')[0]?.trim() || "นาปี 2568 (มิ.ย.–พ.ย.)";
-        const src = "Open-Meteo Archive API";
         const baseYrs = WEATHER_FORECAST?._meta?.base_years || "2020–2024";
         const note = S.layer === "drought"
           ? t(`% เบี่ยงเบนจากค่าปกติ 5 ปี (${baseYrs}) · บวก = ฝนมากกว่าปกติ · ลบ = ฝนน้อยกว่าปกติ (เสี่ยงแล้ง)`,
               `% deviation from ${baseYrs} average · Positive = above normal · Negative = below normal (drought risk)`)
           : t("ปริมาณฝนสะสมตลอดฤดูนาปี (มิ.ย.–พ.ย.)", "Total seasonal precipitation Jun–Nov");
-        refs.dataSourceNote.textContent = `${t(season, meta?.season_label?.split('·')[1]?.trim() || 'Jun–Nov 2025')} · ${note} · ${src} · ${covered} ${t('จว.','prov.')}`;
+        refs.dataSourceNote.textContent = `${t(season, meta?.season_label?.split('·')[1]?.trim() || 'Jun–Nov 2025')} · ${note} · Open-Meteo Archive API · ${covered} ${t('จว.','prov.')}`;
         return;
       }
       const isEstYear = S.layer !== "price" && S.year >= "2568";
@@ -2753,10 +2752,9 @@ function t(th, en) {
       if (WEATHER_DATA?.provinces?.[en]) {
         const wp = WEATHER_DATA.provinces[en];
         const seasonLabel = WEATHER_DATA._meta?.season_label?.split('·')[0]?.trim() || 'นาปี 2568';
-        const fcast = WEATHER_FORECAST?.provinces?.[en];
-        const avgRain = fcast?.forecast_rainfall_mm;
+        const avgRain = WEATHER_FORECAST?.provinces?.[en]?.forecast_rainfall_mm;
         const baseYrs = WEATHER_FORECAST?._meta?.base_years || "2020–2024";
-        const anomaly = avgRain ? Math.round((wp.season_rainfall_mm - avgRain) / avgRain * 100 * 10) / 10 : null;
+        const anomaly = weatherValueOf(en, "drought");  // reuse existing calculation
         const anomColor = anomaly == null ? 'var(--muted)' : anomaly < -10 ? '#c0392b' : anomaly < 0 ? '#e67e22' : anomaly < 10 ? '#27ae60' : '#2980b9';
         const anomLabel = anomaly == null ? '—'
           : anomaly <= -20 ? t('แห้งแล้งรุนแรง ⚠️','Severe Drought ⚠️')
@@ -2996,7 +2994,7 @@ function t(th, en) {
       }
       if (S.layer === "rainfall" || S.layer === "drought") {
         const meta = WEATHER_DATA?._meta;
-        const seasonTh = meta ? `นาปี ${meta.year + 543}` : "นาปี 2568";
+        const seasonTh = meta ? `นาปี ${toBE(meta.year)}` : "นาปี 2568";
         const seasonEn = meta ? `Main Season ${meta.year}` : "Main Season 2025";
         refs.yearButtons.innerHTML = `<button class="pill on" data-year="weather">🌧 ${t(seasonTh, seasonEn)} (${t('มิ.ย.–พ.ย.','Jun–Nov')})</button>`;
         return;
@@ -3519,6 +3517,8 @@ function t(th, en) {
     // ── Weather Data Loader ───────────────────────────────────────────────────
     let WEATHER_DATA = null;
     let WEATHER_FORECAST = null;
+
+    const toBE = y => y + 543;   // ค.ศ. → พ.ศ.
 
     async function fetchWeatherData() {
       try {
