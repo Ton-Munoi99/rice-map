@@ -2573,11 +2573,14 @@ function t(th, en) {
         return;
       }
       if (S.layer === "price") {
+        // ดึงวันที่จาก prices-live.json โดยตรง (แม่นยำกว่า source_date ใน CSV)
+        const liveDate = Object.values(LIVE_PRICES?.provincial_prices?.data || {})
+          .map(v => v.date).filter(Boolean).sort().pop();
         const any = visible.map(en => entryOf(en)).find(item => Number(item.price || 0) > 0);
-        const dateText = any?.source_date || S.year;
+        const dateText = liveDate || any?.source_note?.replace('PDF ','') || any?.source_date || S.year;
         refs.dataSourceNote.textContent = t(
-          `ราคาใช้รายงานสมาคมโรงสีข้าวไทย ณ ${dateText}. บันทึกความชื้น 15%.`,
-          `Prices from Thai Rice Miller Association as of ${dateText}. 15% moisture basis.`);
+          `ราคาใช้รายงานสมาคมโรงสีข้าวไทย อัปเดต ${dateText}. บันทึกความชื้น 15%. ครอบคลุม ${covered} จังหวัด`,
+          `Prices from Thai Rice Millers Association. Updated ${dateText}. 15% moisture basis. Covers ${covered} provinces.`);
         return;
       }
       refs.dataSourceNote.textContent = t(
