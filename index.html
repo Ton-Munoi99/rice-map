@@ -3293,7 +3293,7 @@ function t(th, en) {
       <div class="live-price-row">
         <div class="live-price-label"><strong style="color:#60a5fa">🚢 ${t('ราคาส่งออกหน้าท่าเรือ','Export Price')} (F.O.B.)</strong><br>
           <span style="font-size:9px;color:var(--muted)">TREA · ${FOB_PRICES.date}</span><br>
-          <span style="font-size:9px;color:var(--muted)">${t('ข้าวขาว','White')} 5%: $${w} &nbsp;|&nbsp; ${t('หอมมะลิ','Jasmine')}: $${j}</span>
+          <span style="font-size:9px;color:var(--muted)">${t('ข้าวขาว','White')} 5%: $${w}${FOB_PRICES.usd_thb ? ` (~${fmtNumber(Math.round(w*FOB_PRICES.usd_thb))} ฿)` : ''} &nbsp;|&nbsp; ${t('หอมมะลิ','Jasmine')}: $${j}${FOB_PRICES.usd_thb ? ` (~${fmtNumber(Math.round(j*FOB_PRICES.usd_thb))} ฿)` : ''}</span>
         </div>
         <div class="live-price-val" style="display:none"></div>
       </div>`);

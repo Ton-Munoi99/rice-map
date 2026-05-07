@@ -21,6 +21,7 @@ import sys
 import io
 import urllib.request
 
+import requests
 from bs4 import BeautifulSoup
 
 if sys.platform == "win32":
@@ -104,11 +105,22 @@ def fetch_trea_fob():
         print("[ERROR] ไม่พบราคา — ตรวจสอบชื่อแถวในตาราง TREA")
         return
 
+    # ── อัตราแลกเปลี่ยน USD/THB จาก open.er-api.com (ฟรี ไม่ต้อง key)
+    usd_thb = None
+    try:
+        fx = requests.get("https://open.er-api.com/v6/latest/USD", timeout=10)
+        fx.raise_for_status()
+        usd_thb = round(fx.json()["rates"]["THB"], 2)
+        print(f"USD/THB: {usd_thb}")
+    except Exception as e:
+        print(f"[warn] ดึงอัตราแลกเปลี่ยนไม่ได้: {e}")
+
     output = {
-        "date":   latest_date,
-        "unit":   "USD/MT",
-        "prices": prices,
-        "source": "Thai Rice Exporters Association (TREA)",
+        "date":    latest_date,
+        "unit":    "USD/MT",
+        "prices":  prices,
+        "usd_thb": usd_thb,
+        "source":  "Thai Rice Exporters Association (TREA)",
     }
 
     print("Extracted FOB Prices:")
