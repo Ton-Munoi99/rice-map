@@ -9,7 +9,7 @@ Useful for comparing with the current/upcoming season.
 
 Output: data/weather-forecast.json
 """
-import json, re, sys, time, requests, io
+import json, os, re, sys, time, requests, io
 from datetime import date, datetime
 
 if sys.platform == "win32":
@@ -125,20 +125,37 @@ def main():
     centroids = load_centroids()
     print(f"Provinces: {len(centroids)}")
 
-    provinces = {}
-    for i, (name, c) in enumerate(centroids.items()):
+    # โหลดข้อมูลเดิม — ข้ามจังหวัดที่มีข้อมูลแล้ว รันเฉพาะที่ null
+    existing = {}
+    if os.path.exists(OUTPUT):
         try:
-            data = fetch_normal(c["lat"], c["lon"])
-            provinces[name] = data
-            rain = data["forecast_rainfall_mm"]
-            wb   = data["forecast_wb_mm"]
-            tag  = "💧 surplus" if wb > 150 else ("⚠️ deficit" if wb < 0 else "✓ balanced")
-            span = f"[{data['rainfall_p10_mm']:.0f}–{data['rainfall_p90_mm']:.0f}]"
-            print(f"  [{i+1:2}/{len(centroids)}] {name:25s} avg_rain={rain:6.1f}mm  wb={wb:+.0f}mm  {span}  {tag}")
-        except Exception as e:
-            print(f"  [{i+1:2}/{len(centroids)}] {name}: ERROR – {e}", file=sys.stderr)
-            provinces[name] = None
-        time.sleep(0.1)
+            with open(OUTPUT, encoding="utf-8") as fh:
+                existing = json.load(fh).get("provinces", {})
+        except Exception:
+            pass
+
+    provinces = dict(existing)
+    skipped = sum(1 for v in existing.values() if v is not None)
+    print(f"  Reusing {skipped} existing, fetching {len(centroids)-skipped} missing...")
+
+    for i, (name, c) in enumerate(centroids.items()):
+        if provinces.get(name) is not None:
+            continue
+        for attempt in range(3):
+            try:
+                data = fetch_normal(c["lat"], c["lon"])
+                provinces[name] = data
+                rain = data["forecast_rainfall_mm"]
+                span = f"[{data['rainfall_p10_mm']:.0f}-{data['rainfall_p90_mm']:.0f}]"
+                print(f"  [{i+1:2}/{len(centroids)}] {name:25s} avg={rain:.0f}mm {span}")
+                break
+            except Exception as e:
+                if attempt == 2:
+                    print(f"  [{i+1:2}/{len(centroids)}] {name}: ERROR – {e}", file=sys.stderr)
+                    provinces[name] = None
+                else:
+                    time.sleep(2)
+        time.sleep(0.3)
 
     output = {
         "_meta": {
