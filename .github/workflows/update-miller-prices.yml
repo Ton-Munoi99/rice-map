@@ -2,10 +2,12 @@ name: 🏭 Auto-Update Thai Rice Millers Prices
 
 on:
   schedule:
-    # รอบแรก  08:00 Bangkok (01:00 UTC) — PDF มักอัพเดตช่วงเช้า
-    # รอบสอง  11:00 Bangkok (04:00 UTC) — safety net กรณี PDF ออกสาย
+    # รอบแรก  08:00 Bangkok (01:00 UTC)
+    # รอบสอง  11:00 Bangkok (04:00 UTC)
+    # รอบสาม  15:00 Bangkok (08:00 UTC) — PDF มักออกช่วงบ่าย ต้องการรอบนี้มากที่สุด
     - cron: '0 1 * * *'
     - cron: '0 4 * * *'
+    - cron: '0 8 * * *'
   workflow_dispatch: # รันด้วยมือได้
 
 permissions:
