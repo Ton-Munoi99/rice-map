@@ -1526,7 +1526,7 @@
             <button class="pill" data-layer="households" onclick="setLayer('households')"><span class="th-t">ครัวเรือนเกษตรกร</span><span class="en-t">Farmer Households</span></button>
             <button class="pill" data-layer="dam" onclick="setLayer('dam')"><span class="th-t">ระดับน้ำในเขื่อน</span><span class="en-t">Dam Level</span></button>
             <button class="pill" data-layer="rainfall" onclick="setLayer('rainfall')"><span class="th-t">ปริมาณฝน (มม.)</span><span class="en-t">Season Rainfall</span></button>
-            <button class="pill" data-layer="drought" onclick="setLayer('drought')"><span class="th-t">ดัชนีความชุ่มชื้น</span><span class="en-t">Water Balance</span></button>
+            <button class="pill" data-layer="drought" onclick="setLayer('drought')"><span class="th-t">ฝนเบี่ยงเบนจากปกติ</span><span class="en-t">Rainfall Anomaly</span></button>
           </div>
         </section>
 
@@ -1701,7 +1701,7 @@
       fertilizer: { th: "ราคาปุ๋ยเคมีรายจังหวัด", en: "Fertilizer Price", unit: "บาท/กระสอบ 50 กก.", unitEn: "฿/50kg bag", unitShort: "฿/กระสอบ", unitShortEn: "฿/bag", summary: "ราคาปุ๋ยเฉลี่ย", summaryMode: "avg_nonzero" },
       dam:        { th: "ระดับน้ำในเขื่อน", en: "Dam Water Level", unit: "% ความจุ (RID)", unitEn: "% capacity (RID)", unitShort: "%", unitShortEn: "%", summary: "ระดับน้ำเฉลี่ย", summaryMode: "avg_nonzero" },
       rainfall:   { th: "ปริมาณฝน (นาปี)", en: "Season Rainfall", unit: "มม. (มิ.ย.–พ.ย.)", unitEn: "mm (Jun–Nov)", unitShort: "มม.", unitShortEn: "mm", summary: "ปริมาณฝนเฉลี่ย", summaryMode: "avg_nonzero" },
-      drought:    { th: "ดัชนีความชุ่มชื้น", en: "Water Balance", unit: "มม. (ฝน–ET₀)", unitEn: "mm (rain–ET₀)", unitShort: "มม.", unitShortEn: "mm", summary: "ดัชนีชุ่มชื้นเฉลี่ย", summaryMode: "avg_signed" },
+      drought:    { th: "ฝนเบี่ยงเบนจากปกติ", en: "Rainfall Anomaly", unit: "% เทียบค่าปกติ 5 ปี", unitEn: "% vs 5-yr avg", unitShort: "%", unitShortEn: "%", summary: "% เบี่ยงเบนเฉลี่ย", summaryMode: "avg_signed" },
     };
     const riceMeta = {
       white:   { th: "ข้าวขาว",  en: "White Rice",   badge: "🌾" },
@@ -2086,7 +2086,7 @@ function t(th, en) {
       if (!Number.isFinite(n)) return "—";
       if (S.layer === "dam")      return n.toFixed(1) + "%";
       if (S.layer === "rainfall") return fmtNumber(Math.round(n)) + " mm";
-      if (S.layer === "drought")  return (n >= 0 ? "+" : "") + fmtNumber(Math.round(n)) + " mm";
+      if (S.layer === "drought")  return (n >= 0 ? "+" : "") + n.toFixed(1) + "%";
       if (S.layer === "price") return fmtNumber(Math.round(n));
       if (S.layer === "households") {
         if (n >= 1e6) return `${(n / 1e6).toFixed(2)}M`;
@@ -2576,7 +2576,7 @@ function t(th, en) {
               : S.layer === "rainfall"
               ? `🌧 ${t('ปริมาณฝน นาปี','Season Rainfall')} ${WEATHER_DATA?._meta?.year ? WEATHER_DATA._meta.year + 543 : '2568'}`
               : S.layer === "drought"
-              ? `🌡 ${t('ดัชนีความชุ่มชื้น นาปี','Water Balance')} ${WEATHER_DATA?._meta?.year ? WEATHER_DATA._meta.year + 543 : '2568'}`
+              ? `🌡 ${t('ฝนเบี่ยงเบนจากปกติ','Rainfall Anomaly')} ${WEATHER_DATA?._meta?.year ? WEATHER_DATA._meta.year + 543 : '2568'} vs ${WEATHER_FORECAST?._meta?.base_years||'2020–2024'}`
               : isEstYear
                 ? `📊 ${t('ประมาณการ','Estimate')} ${S.year}`
                 : `OAE ${t('ข้อมูลปี','Crop Year')} ${S.year}`;
@@ -2599,9 +2599,10 @@ function t(th, en) {
         const meta = WEATHER_DATA?._meta;
         const season = meta?.season_label?.split('·')[0]?.trim() || "นาปี 2568 (มิ.ย.–พ.ย.)";
         const src = "Open-Meteo Archive API";
+        const baseYrs = WEATHER_FORECAST?._meta?.base_years || "2020–2024";
         const note = S.layer === "drought"
-          ? t("ดัชนี = ปริมาณฝน − ET₀ (FAO-56 Penman-Monteith) · บวก = ชุ่มชื้น · ลบ = เสี่ยงแล้ง",
-              "Index = Rainfall − ET₀ (FAO-56 Penman-Monteith) · Positive = surplus · Negative = drought stress")
+          ? t(`% เบี่ยงเบนจากค่าปกติ 5 ปี (${baseYrs}) · บวก = ฝนมากกว่าปกติ · ลบ = ฝนน้อยกว่าปกติ (เสี่ยงแล้ง)`,
+              `% deviation from ${baseYrs} average · Positive = above normal · Negative = below normal (drought risk)`)
           : t("ปริมาณฝนสะสมตลอดฤดูนาปี (มิ.ย.–พ.ย.)", "Total seasonal precipitation Jun–Nov");
         refs.dataSourceNote.textContent = `${t(season, meta?.season_label?.split('·')[1]?.trim() || 'Jun–Nov 2025')} · ${note} · ${src} · ${covered} ${t('จว.','prov.')}`;
         return;
@@ -2664,14 +2665,15 @@ function t(th, en) {
         : S.layer === "rainfall"
         ? t("แผนที่ปริมาณฝนฤดูนาปีรายจังหวัด", "Season Rainfall Map by Province")
         : S.layer === "drought"
-        ? t("แผนที่ดัชนีความชุ่มชื้นรายจังหวัด", "Water Balance (Drought Index) by Province")
+        ? t("แผนที่ฝนเบี่ยงเบนจากค่าปกติรายจังหวัด", "Rainfall Anomaly vs 5-Year Normal by Province")
         : t(`แผนที่${riceMeta[S.rice].th}รายจังหวัด`, `${riceMeta[S.rice].en} Rice · Province Map`);
       refs.headlineDesc.textContent = S.layer === "dam"
         ? t("ระดับน้ำในเขื่อนขนาดใหญ่ 35 แห่ง จากกรมชลประทาน (RID) อัปเดตรายวัน", "Large dam water levels from Royal Irrigation Dept. (RID). 35 dams, daily update.")
         : S.layer === "rainfall"
         ? t("ปริมาณฝนสะสมฤดูนาปี (มิ.ย.–พ.ย.) รายจังหวัด จาก Open-Meteo Archive API อัปเดตรายเดือน", "Seasonal cumulative rainfall (Jun–Nov) by province via Open-Meteo Archive API, updated monthly.")
         : S.layer === "drought"
-        ? t("ดัชนีความชุ่มชื้น = ปริมาณฝน − ET₀ (FAO-56) รายจังหวัด · บวก = น้ำเกิน (ชุ่มชื้น) · ลบ = น้ำขาด (เสี่ยงแล้ง)", "Water Balance = Rainfall − ET₀ (FAO-56) per province · Positive = surplus · Negative = drought stress.")
+        ? t(`% เบี่ยงเบนของฝนนาปีเทียบกับค่าเฉลี่ย 5 ปี (${WEATHER_FORECAST?._meta?.base_years||'2020–2024'}) รายจังหวัด · สีแดง = แห้งกว่าปกติ · สีน้ำเงิน = ชุ่มชื้นกว่าปกติ`,
+           `Season rainfall % deviation from ${WEATHER_FORECAST?._meta?.base_years||'2020–2024'} average by province · Red = below normal · Blue = above normal`)
         : S.layer === "price"
         ? t(`แผนที่ fit ตามสัดส่วนประเทศไทยและใช้รายงานราคาข้าวเปลือกรายวันของสมาคมโรงสีข้าวไทย โดยไฮไลต์ราคาของ ${riceTypeDescription(S.rice, S.layer)} ปี ${S.year}`,
            `Province-level paddy price map using Thai Rice Miller Association daily reports. ${riceTypeDescription(S.rice, S.layer)} · Crop year ${S.year}.`)
@@ -2743,29 +2745,36 @@ function t(th, en) {
       let weatherHtml = "";
       if (WEATHER_DATA?.provinces?.[en]) {
         const wp = WEATHER_DATA.provinces[en];
-        const wb = wp.water_balance_mm;
-        const wbColor = wb < 0 ? '#c0392b' : wb < 150 ? '#f39c12' : '#2980b9';
-        const wbLabel = wb < 0 ? t('เสี่ยงแล้ง ⚠️','Drought Risk ⚠️')
-                      : wb < 150 ? t('สมดุล ✓','Balanced ✓')
-                      : t('ชุ่มชื้น 💧','Surplus 💧');
         const seasonLabel = WEATHER_DATA._meta?.season_label?.split('·')[0]?.trim() || 'นาปี 2568';
+        const fcast = WEATHER_FORECAST?.provinces?.[en];
+        const avgRain = fcast?.forecast_rainfall_mm;
+        const baseYrs = WEATHER_FORECAST?._meta?.base_years || "2020–2024";
+        const anomaly = avgRain ? Math.round((wp.season_rainfall_mm - avgRain) / avgRain * 100 * 10) / 10 : null;
+        const anomColor = anomaly == null ? 'var(--muted)' : anomaly < -10 ? '#c0392b' : anomaly < 0 ? '#e67e22' : anomaly < 10 ? '#27ae60' : '#2980b9';
+        const anomLabel = anomaly == null ? '—'
+          : anomaly <= -20 ? t('แห้งแล้งรุนแรง ⚠️','Severe Drought ⚠️')
+          : anomaly <= -10 ? t('แห้งกว่าปกติ','Below Normal')
+          : anomaly < 10   ? t('ใกล้ค่าปกติ ✓','Near Normal ✓')
+          : t('ชุ่มชื้นกว่าปกติ 💧','Above Normal 💧');
         weatherHtml = `
           <div class="rice-card" style="grid-column:1/-1;background:rgba(30,100,195,.08);border:1px solid rgba(30,100,195,.2)">
             <div class="t">🌧 ${t('สภาพภูมิอากาศ','Climate')} · <span style="font-size:9px;font-weight:400;opacity:.7">${t(seasonLabel,'Main Season 2025')}</span></div>
             <div class="metric">
               <div class="m-label">${t('ปริมาณฝนสะสม (มิ.ย.–พ.ย.)','Season Rainfall (Jun–Nov)')}</div>
-              <div class="m-value">${wp.season_rainfall_mm?.toFixed(0) ?? '—'} <small>mm</small></div>
+              <div class="m-value">${wp.season_rainfall_mm?.toFixed(0) ?? '—'} <small>mm</small>
+                ${avgRain ? `<div class="m-label" style="margin-top:2px">${t('ค่าปกติ','Normal')} ${baseYrs}: ${avgRain.toFixed(0)} mm</div>` : ''}
+              </div>
             </div>
             <div class="metric">
-              <div class="m-label">${t('ดัชนีความชุ่มชื้น (ฝน–ET₀)','Water Balance (Rain–ET₀)')}</div>
-              <div class="m-value" style="color:${wbColor}">${wb != null ? (wb >= 0 ? '+' : '') + wb.toFixed(0) : '—'} <small>mm</small></div>
-              <div class="m-label" style="color:${wbColor};margin-top:2px">${wbLabel}</div>
+              <div class="m-label">${t('เบี่ยงเบนจากค่าปกติ','Anomaly vs Normal')}</div>
+              <div class="m-value" style="color:${anomColor}">${anomaly != null ? (anomaly >= 0 ? '+' : '') + anomaly.toFixed(1) + '%' : '—'}</div>
+              <div class="m-label" style="color:${anomColor};margin-top:2px">${anomLabel}</div>
             </div>
             <div class="metric">
               <div class="m-label">${t('อุณหภูมิเฉลี่ย','Mean Temp.')}</div>
               <div class="m-value">${wp.season_temp_c?.toFixed(1) ?? '—'} <small>°C</small></div>
             </div>
-            <div style="font-size:9px;color:var(--muted);margin-top:6px">${t('ที่มา: Open-Meteo Archive API · อัปเดตรายเดือน','Source: Open-Meteo Archive API · Monthly update')}</div>
+            <div style="font-size:9px;color:var(--muted);margin-top:6px">${t(`ที่มา: Open-Meteo Archive API · ค่าปกติจากฤดูกาล ${baseYrs}`,`Source: Open-Meteo Archive API · Normal baseline ${baseYrs}`)}</div>
           </div>`;
       }
       // ─────────────────────────────────────────────────────────────────────
@@ -3497,13 +3506,18 @@ function t(th, en) {
 
     // ── Weather Data Loader ───────────────────────────────────────────────────
     let WEATHER_DATA = null;
+    let WEATHER_FORECAST = null;
 
     async function fetchWeatherData() {
       try {
-        const res = await fetch('data/weather-province.json?_=' + Date.now(), { cache: 'no-store' });
-        if (res.ok) WEATHER_DATA = await res.json();
+        const [r1, r2] = await Promise.all([
+          fetch('data/weather-province.json?_='  + Date.now(), { cache: 'no-store' }),
+          fetch('data/weather-forecast.json?_=' + Date.now(), { cache: 'no-store' }),
+        ]);
+        if (r1.ok) WEATHER_DATA     = await r1.json();
+        if (r2.ok) WEATHER_FORECAST = await r2.json();
       } catch (e) {
-        console.info('weather-province.json not available');
+        console.info('weather JSON not available');
       }
     }
 
@@ -3511,7 +3525,12 @@ function t(th, en) {
       const p = WEATHER_DATA?.provinces?.[en];
       if (!p) return null;
       if (layer === "rainfall") return p.season_rainfall_mm ?? null;
-      if (layer === "drought")  return p.water_balance_mm  ?? null;
+      if (layer === "drought") {
+        // % เบี่ยงเบนจากค่าปกติ 5 ปี (2020–2024)
+        const avg = WEATHER_FORECAST?.provinces?.[en]?.forecast_rainfall_mm;
+        if (!avg || !p.season_rainfall_mm) return null;
+        return Math.round((p.season_rainfall_mm - avg) / avg * 100 * 10) / 10;
+      }
       return null;
     }
     // ─────────────────────────────────────────────────────────────────────────
