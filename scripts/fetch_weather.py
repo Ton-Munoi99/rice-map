@@ -11,7 +11,7 @@ Variables fetched per province:
 
 Output: data/weather-province.json
 """
-import json, re, sys, time, requests, io
+import json, os, re, sys, time, requests, io
 from datetime import date, datetime
 
 if sys.platform == "win32":
@@ -98,20 +98,39 @@ def main():
     centroids = load_centroids()
     print(f"Provinces found: {len(centroids)}")
 
-    provinces = {}
-    for i, (name, c) in enumerate(centroids.items()):
+    # โหลดข้อมูลเดิม (ถ้ามี) — ข้ามจังหวัดที่มีข้อมูลแล้ว รันเฉพาะที่ null
+    existing = {}
+    if os.path.exists(OUTPUT):
         try:
-            data = fetch_province(c["lat"], c["lon"])
-            data["lat"] = c["lat"]
-            data["lon"] = c["lon"]
-            provinces[name] = data
-            wb = data["water_balance_mm"]
-            tag = "💧 surplus" if wb > 150 else ("⚠️ deficit" if wb < 0 else "✓ balanced")
-            print(f"  [{i+1:2}/{len(centroids)}] {name:25s} rain={data['season_rainfall_mm']:6.1f}mm  wb={wb:+.0f}mm  {tag}")
-        except Exception as e:
-            print(f"  [{i+1:2}/{len(centroids)}] {name}: ERROR – {e}", file=sys.stderr)
-            provinces[name] = None
-        time.sleep(0.12)   # polite delay
+            with open(OUTPUT, encoding="utf-8") as f:
+                existing = json.load(f).get("provinces", {})
+        except Exception:
+            pass
+
+    provinces = dict(existing)
+    skipped = sum(1 for v in existing.values() if v is not None)
+    print(f"  Reusing {skipped} existing provinces, fetching the rest...")
+
+    for i, (name, c) in enumerate(centroids.items()):
+        if provinces.get(name) is not None:
+            continue  # มีข้อมูลดีแล้ว ข้ามไป
+        for attempt in range(3):   # retry 3 ครั้ง
+            try:
+                data = fetch_province(c["lat"], c["lon"])
+                data["lat"] = c["lat"]
+                data["lon"] = c["lon"]
+                provinces[name] = data
+                wb = data["water_balance_mm"]
+                tag = "surplus" if wb > 150 else ("deficit" if wb < 0 else "balanced")
+                print(f"  [{i+1:2}/{len(centroids)}] {name:25s} rain={data['season_rainfall_mm']:6.1f}mm  wb={wb:+.0f}mm  {tag}")
+                break
+            except Exception as e:
+                if attempt == 2:
+                    print(f"  [{i+1:2}/{len(centroids)}] {name}: ERROR after 3 attempts – {e}", file=sys.stderr)
+                    provinces[name] = None
+                else:
+                    time.sleep(2)  # รอก่อน retry
+        time.sleep(0.3)   # delay ระหว่างจังหวัด (เพิ่มจาก 0.12 → 0.3)
 
     output = {
         "_meta": {
