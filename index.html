@@ -2564,7 +2564,7 @@ function t(th, en) {
       refs.legendLayer.textContent = t(layerMeta[S.layer].th, layerMeta[S.layer].en);
       refs.legendUnit.textContent = uLabel();
       refs.latestBadge.classList.add("show");
-      const isEstYear = S.layer !== "price" && S.layer !== "households" && S.layer !== "fertilizer" && S.layer !== "dam" && S.year >= "2568";
+      const isEstYear = S.layer !== "price" && S.layer !== "households" && S.layer !== "fertilizer" && S.layer !== "dam" && S.layer !== "rainfall" && S.layer !== "drought" && S.year >= "2568";
       refs.latestBadge.textContent = S.layer === "price"
         ? `${t('ราคาอ้างอิง','Price Ref')}: ${entryOf(getVisibleProvinces().find(en => hasLayerValue(en)) || allEN[0]).source_date || S.year}`
         : S.layer === "households"
@@ -2694,10 +2694,17 @@ function t(th, en) {
         .sort((a, b) => b.v - a.v)
         .slice(0, 10);
       const max = items[0]?.v || 1;
+      // drought: ใช้ absolute value เพราะมีค่าติดลบ — bar width และ scaleT ต้องอิงค่า abs
+      const maxAbs = (S.layer === "drought")
+        ? Math.max(...items.map(i => Math.abs(i.v)), 1)
+        : (max || 1);
       const palette = getPalette();
       refs.topList.innerHTML = items.map((item, idx) => {
-        const pct = Math.max(6, (item.v / max) * 100);
-        const tone = idx === 0 ? palette.hi : lerp(palette.lo, palette.hi, Math.max(.16, item.v / max));
+        const pct = Math.max(6, (Math.abs(item.v) / maxAbs) * 100);
+        const t01 = S.layer === "drought"
+          ? Math.max(0, Math.min(1, 0.5 + 0.5 * (item.v / maxAbs)))
+          : Math.max(.16, item.v / (max || 1));
+        const tone = lerp(palette.lo, palette.hi, t01);
         return `<div class="rank-row" onclick="selectProvince('${item.en.replace(/'/g, "\\'")}')">
       <div class="rank-index">#${idx + 1}</div>
       <div class="rank-name">${t(NM[item.en] || item.en, item.en)}<br><small style="font-size:9px;opacity:.65">${item.en}</small></div>
@@ -2848,9 +2855,11 @@ function t(th, en) {
     }
 
     function drawSpark(en) {
-      if (S.layer === "dam") {
+      if (S.layer === "dam" || S.layer === "rainfall" || S.layer === "drought") {
         refs.sparkSvg.innerHTML = "";
-        refs.sparkTitle.textContent = t("ไม่มีข้อมูลอนุกรมเวลา", "No time-series data");
+        refs.sparkTitle.textContent = S.layer === "dam"
+          ? t("ไม่มีข้อมูลอนุกรมเวลา", "No time-series data")
+          : t("ข้อมูลฤดูกาลเดียว — ไม่มีอนุกรมเวลา", "Single season — no time series");
         return;
       }
       const years = yearsForLayer();
@@ -2932,7 +2941,10 @@ function t(th, en) {
       return `
     <div class="th">${t(NM[en] || en, en)}</div>
     <div class="en">${en}</div>
-    <div class="type">${S.layer === "households" ? t("ครัวเรือนเกษตรกร (OAE 2566)","Farmer Households (OAE 2566)") : riceTypeDescription(S.rice, S.layer)}</div>
+    <div class="type">${S.layer === "households" ? t("ครัวเรือนเกษตรกร (OAE 2566)","Farmer Households (OAE 2566)")
+        : S.layer === "rainfall" ? t("ปริมาณฝนนาปี (มิ.ย.–พ.ย.)","Season Rainfall (Jun–Nov)")
+        : S.layer === "drought"  ? t("ฝนเบี่ยงเบนจากค่าปกติ 5 ปี","Rainfall Anomaly vs 5-yr Normal")
+        : riceTypeDescription(S.rice, S.layer)}</div>
     <div class="metric-name">${t(layerMeta[S.layer].th, layerMeta[S.layer].en)}</div>
     <div class="value">${valueHTML}</div>
     <div class="rank">${rank ? `${t('อันดับ','Rank')} #${rank} / ${getVisibleProvinces().filter(name => hasLayerValue(name)).length || getVisibleProvinces().length}` : t("ไม่มีข้อมูล","No data")}</div>
@@ -3519,6 +3531,8 @@ function t(th, en) {
       } catch (e) {
         console.info('weather JSON not available');
       }
+      // rerender ถ้าผู้ใช้กด weather layer ก่อนที่ข้อมูลจะโหลดเสร็จ
+      if (S.layer === "rainfall" || S.layer === "drought") rerender();
     }
 
     function weatherValueOf(en, layer) {
