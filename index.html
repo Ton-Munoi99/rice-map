@@ -2884,7 +2884,9 @@ function t(th, en) {
         const thName = NM[en];
         const mp = RICE_MILLS_DATA.provinces?.[thName];
         if (mp) {
-          const listHtml = renderMillList(mp.mills, 10);
+          const listHtml = mp.mills.length
+            ? renderMillList(mp.mills, 10)
+            : `<div style="font-size:10px;color:var(--muted);margin-top:4px">${t('ไม่มีข้อมูลรายชื่อโรงสี — มีเฉพาะข้อมูลจำนวนรวมจากสำนักงานพาณิชย์จังหวัด','No individual mill records — aggregate count from provincial commerce office only')}</div>`;
           millsHtml = `
             <div class="rice-card" style="grid-column:1/-1;background:rgba(230,170,60,.07);border:1px solid rgba(230,170,60,.22)">
               <div class="t">🏭 ${t('โรงสีข้าว (DIT 2569)', 'Rice Mills (DIT 2026)')}</div>
@@ -2985,7 +2987,12 @@ function t(th, en) {
         const rank = currentRank(en);
         const total = getVisibleProvinces().filter(name => hasLayerValue(name)).length;
         if (!prov) return `<div class="th">${t(NM[en] || en, en)}</div><div class="en">${en}</div><div style="color:var(--muted);font-size:11px;margin-top:6px">${t('ไม่มีโรงสีข้าวจดทะเบียน','No registered mills')}</div>`;
-        const millListHtml = renderMillList(prov.mills, 5);
+        const millListHtml = prov.mills.length
+          ? renderMillList(prov.mills, 5)
+          : `<div style="font-size:9px;color:var(--muted);margin-top:3px">${t('ไม่มีข้อมูลรายชื่อ (ข้อมูลรวมจากพาณิชย์จังหวัด)', 'Aggregate count only — no individual records')}</div>`;
+        const sourceNote = prov.source_note
+          ? `<div style="font-size:8px;color:var(--muted);margin-top:3px;opacity:.7">${prov.source_note}</div>`
+          : "";
         return `
     <div class="th">${t(NM[en] || en, en)}</div>
     <div class="en">${en}</div>
@@ -2993,7 +3000,7 @@ function t(th, en) {
     <div class="metric-name">${t('จำนวนโรงสีข้าว', 'Number of Rice Mills')}</div>
     <div class="value">${prov.count} <small style="font-size:12px;color:var(--muted)">${t('แห่ง', 'mills')}</small></div>
     <div class="rank">${rank ? `${t('อันดับ', 'Rank')} #${rank} / ${total}` : t('ไม่มีข้อมูล', 'No data')} &nbsp;·&nbsp; ${t(`ใหญ่ ${prov.large}  กลาง ${prov.medium}  เล็ก ${prov.small}`, `L:${prov.large} M:${prov.medium} S:${prov.small}`)}</div>
-    ${millListHtml}
+    ${millListHtml}${sourceNote}
   `;
       }
       const value = valueOf(en);

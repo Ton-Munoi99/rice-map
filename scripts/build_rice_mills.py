@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 """
-Build data/rice-mills.json from two local DIT snapshots (no network required):
+Build data/rice-mills.json from two local DIT snapshots + manual supplements:
 
   Primary  : data/rice-mills-api-snapshot.xlsx   — 1,364 mills, 45 provinces
              (downloaded from DIT SearchRiceTrade API, Apr 2026)
   Fallback : thai_rice_mills_dit_2026-04-23.xlsx — 903 mills, 60 provinces
              (DIT web export, Apr 2026; used only for the 15 provinces
               absent from the API snapshot)
+  Supplements: MANUAL_ADDITIONS below — provinces confirmed present in
+             provincial-office data but absent from DIT API (API gap)
 
-To refresh: re-run scripts/fetch_rice_mills_api.py first, then this script.
+To refresh API snapshot: re-run scripts/fetch_rice_mills_api.py, then this script.
 Output: data/rice-mills.json
 """
 import json, os, sys, io
@@ -24,6 +26,17 @@ ROOT   = os.path.join(HERE, "..")
 API_XL = os.path.join(ROOT, "data", "rice-mills-api-snapshot.xlsx")
 XLS_XL = os.path.join(ROOT, "thai_rice_mills_dit_2026-04-23.xlsx")
 OUTPUT = os.path.join(ROOT, "data", "rice-mills.json")
+
+# Provinces confirmed by provincial-office data but absent from DIT API/Excel.
+# mills=[] means individual names unavailable; count/large/medium/small are known.
+# Source: สำนักงานพาณิชย์จังหวัด via data.go.th / gdcatalog.go.th (2568/2025)
+MANUAL_ADDITIONS: dict[str, dict] = {
+    "สุพรรณบุรี": {
+        "count": 85, "large": 28, "medium": 45, "small": 12,
+        "mills": [],
+        "source_note": "สำนักงานพาณิชย์จังหวัดสุพรรณบุรี (data.go.th) ปี 2568 — ไม่มีข้อมูลรายชื่อ",
+    },
+}
 
 # Short labels used in JSON (match tooltip + detail-card display)
 TYPE_MAP = {
@@ -123,18 +136,24 @@ def main() -> None:
     print("Loading Excel fallback...")
     xls = load_excel_fallback(set(api.keys()))
 
-    # api is primary: put api last so it wins on any province key collision
-    provinces = {p: _province_record(v) for p, v in {**xls, **api}.items()}
-    total     = sum(p["count"] for p in provinces.values())
+    # Merge order: manual < xls < api (api wins on any collision)
+    dit_provinces = {p: _province_record(v) for p, v in {**xls, **api}.items()}
+    manual_new    = {p: v for p, v in MANUAL_ADDITIONS.items() if p not in dit_provinces}
+    provinces     = {**manual_new, **dit_provinces}
+    total         = sum(p["count"] for p in provinces.values())
+
+    if manual_new:
+        print(f"  Manual supplements: {sum(v['count'] for v in manual_new.values())} mills / {len(manual_new)} provinces")
 
     output = {
         "_meta": {
-            "source":            "กรมการค้าภายใน (DIT) — API snapshot + Excel export",
+            "source":            "กรมการค้าภายใน (DIT) — API snapshot + Excel export + manual supplements",
             "updated":           date.today().isoformat(),
             "total_mills":       total,
             "provinces_covered": len(provinces),
             "api_mills":         sum(len(v) for v in api.values()),
             "excel_mills":       sum(len(v) for v in xls.values()),
+            "manual_mills":      sum(v["count"] for v in manual_new.values()),
             "note":              "กำลังการผลิต หน่วย ตัน/วัน",
         },
         "provinces": provinces,
