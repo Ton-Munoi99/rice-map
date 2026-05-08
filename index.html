@@ -2013,12 +2013,18 @@ function t(th, en) {
     }
 
     // Render a compact mill name list with a "+N more" footer — used by tooltip (limit 5) and detail card (limit 10)
+    const MILL_TYPE_EN = { "ใหญ่": "Large", "กลาง": "Medium", "เล็ก": "Small" };
     function renderMillList(mills, limit) {
-      const shown = mills.slice(0, limit);
-      const extra = mills.length - shown.length;
-      return shown.map(m =>
-        `<div style="font-size:9px;color:var(--muted);margin-top:2px">· ${m.name} <span style="opacity:.6">(${m.type}${m.capacity ? ', ' + fmtNumber(m.capacity) + ' ต./วัน' : ''})</span></div>`
-      ).join("") + (extra > 0
+      // Deduplicate by name before slicing
+      const seen = new Set();
+      const unique = mills.filter(m => { if (seen.has(m.name)) return false; seen.add(m.name); return true; });
+      const shown = unique.slice(0, limit);
+      const extra = unique.length - shown.length;
+      return shown.map(m => {
+        const typeLabel = t(m.type, MILL_TYPE_EN[m.type] || m.type);
+        const capLabel  = m.capacity ? `, ${fmtNumber(m.capacity)} ${t('ต./วัน','t/day')}` : '';
+        return `<div style="font-size:9px;color:var(--muted);margin-top:2px">· ${m.name} <span style="opacity:.6">(${typeLabel}${capLabel})</span></div>`;
+      }).join("") + (extra > 0
         ? `<div style="font-size:9px;color:var(--muted-2);margin-top:2px">...${t(`และอีก ${extra} แห่ง`, `+${extra} more`)}</div>`
         : "");
     }
@@ -2110,7 +2116,7 @@ function t(th, en) {
       if (S.layer === "dam")      return n.toFixed(1) + "%";
       if (S.layer === "rainfall") return fmtNumber(Math.round(n)) + " mm";
       if (S.layer === "drought")  return (n >= 0 ? "+" : "") + n.toFixed(1) + "%";
-      if (S.layer === "mills")    return fmtNumber(Math.round(n)) + " " + t("แห่ง", "mills");
+      if (S.layer === "mills")    return fmtNumber(Math.round(n));
       if (S.layer === "price") return fmtNumber(Math.round(n));
       if (S.layer === "households") {
         if (n >= 1e6) return `${(n / 1e6).toFixed(2)}M`;
