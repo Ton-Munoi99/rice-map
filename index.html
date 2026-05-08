@@ -1527,6 +1527,7 @@
             <button class="pill" data-layer="dam" onclick="setLayer('dam')"><span class="th-t">ระดับน้ำในเขื่อน</span><span class="en-t">Dam Level</span></button>
             <button class="pill" data-layer="rainfall" onclick="setLayer('rainfall')"><span class="th-t">ปริมาณฝน (มม.)</span><span class="en-t">Season Rainfall</span></button>
             <button class="pill" data-layer="drought" onclick="setLayer('drought')"><span class="th-t">ฝนเบี่ยงเบนจากปกติ</span><span class="en-t">Rainfall Anomaly</span></button>
+            <button class="pill" data-layer="mills" onclick="setLayer('mills')"><span class="th-t">🏭 โรงสีข้าว</span><span class="en-t">🏭 Rice Mills</span></button>
           </div>
         </section>
 
@@ -1702,6 +1703,7 @@
       dam:        { th: "ระดับน้ำในเขื่อน", en: "Dam Water Level", unit: "% ความจุ (RID)", unitEn: "% capacity (RID)", unitShort: "%", unitShortEn: "%", summary: "ระดับน้ำเฉลี่ย", summaryMode: "avg_nonzero" },
       rainfall:   { th: "ปริมาณฝน (นาปี)", en: "Season Rainfall", unit: "มม. (มิ.ย.–พ.ย.)", unitEn: "mm (Jun–Nov)", unitShort: "มม.", unitShortEn: "mm", summary: "ปริมาณฝนเฉลี่ย", summaryMode: "avg_nonzero" },
       drought:    { th: "ฝนเบี่ยงเบนจากปกติ", en: "Rainfall Anomaly", unit: "% เทียบค่าปกติ 5 ปี", unitEn: "% vs 5-yr avg", unitShort: "%", unitShortEn: "%", summary: "% เบี่ยงเบนเฉลี่ย", summaryMode: "avg_signed" },
+      mills:      { th: "โรงสีข้าว", en: "Rice Mills", unit: "แห่ง/จังหวัด", unitEn: "mills/prov", unitShort: "แห่ง", unitShortEn: "mills", summary: "โรงสีข้าวรวม", summaryMode: "sum" },
     };
     const riceMeta = {
       white:   { th: "ข้าวขาว",  en: "White Rice",   badge: "🌾" },
@@ -1967,6 +1969,7 @@
       if (layer === "dam") return ["dam"];
       if (layer === "rainfall" || layer === "drought") return ["weather"];
       if (layer === "households") return ["2566"];
+      if (layer === "mills") return ["mills"];
       return layer === "price" ? PRICE_YEARS : PRODUCTION_YEARS;
     }
 
@@ -2003,16 +2006,24 @@ function t(th, en) {
       return window.DAM_DATA?.provinces?.[en]?.dam_level_pct ?? 0;
     }
 
+    function millsValueOf(en) {
+      const thName = NM[en];
+      if (!thName || !RICE_MILLS_DATA) return 0;
+      return RICE_MILLS_DATA.provinces?.[thName]?.count ?? 0;
+    }
+
     function valueOf(en, rice = S.rice, year = S.year, layer = S.layer) {
       if (layer === "households") return householdValueOf(en);
       if (layer === "dam") return damValueOf(en);
       if (layer === "rainfall" || layer === "drought") return weatherValueOf(en, layer) ?? 0;
+      if (layer === "mills") return millsValueOf(en);
       return Number(entryOf(en, rice, year)[layer] || 0);
     }
 
     function hasLayerValue(en, rice = S.rice, year = S.year, layer = S.layer) {
       if (layer === "dam") return window.DAM_DATA?.provinces?.[en] != null;
       if (layer === "rainfall" || layer === "drought") return weatherValueOf(en, layer) != null;
+      if (layer === "mills") return millsValueOf(en) > 0;
       return valueOf(en, rice, year, layer) > 0;
     }
 
@@ -2050,6 +2061,7 @@ function t(th, en) {
       if (S.layer === "dam")      return { lo: [192, 57, 43], mid: [241, 196, 15], hi: [41, 128, 185], accent: "#3498db" };
       if (S.layer === "rainfall") return { lo: [180, 90, 30],  mid: [235, 185, 55], hi: [30, 100, 195],  accent: "#3b82f6" };
       if (S.layer === "drought")  return { lo: [192, 57, 43],  mid: [241, 196, 15], hi: [41, 128, 185],  accent: "#2ecc71" };
+      if (S.layer === "mills")    return { lo: [60, 40, 20],   mid: [160, 110, 40], hi: [230, 170, 60],  accent: "#e6aa3c" };
       return S.rice === "white"
         ? { lo: [36, 75, 54], mid: [154, 131, 73], hi: [245, 192, 101], accent: "#ff8f4d" }
         : { lo: [42, 39, 77], mid: [134, 93, 178], hi: [236, 186, 217], accent: "#d9a0ff" };
@@ -2087,6 +2099,7 @@ function t(th, en) {
       if (S.layer === "dam")      return n.toFixed(1) + "%";
       if (S.layer === "rainfall") return fmtNumber(Math.round(n)) + " mm";
       if (S.layer === "drought")  return (n >= 0 ? "+" : "") + n.toFixed(1) + "%";
+      if (S.layer === "mills")    return fmtNumber(Math.round(n)) + " " + t("แห่ง", "mills");
       if (S.layer === "price") return fmtNumber(Math.round(n));
       if (S.layer === "households") {
         if (n >= 1e6) return `${(n / 1e6).toFixed(2)}M`;
@@ -2560,12 +2573,15 @@ function t(th, en) {
       refs.legendHigh.textContent = `${fmtCompact(max)} ${usLabel()}`;
       refs.legendType.textContent = S.layer === "dam" ? t("กรมชลประทาน", "RID")
         : (S.layer === "rainfall" || S.layer === "drought") ? t("Open-Meteo", "Open-Meteo")
+        : S.layer === "mills" ? t("กรมการค้าภายใน", "DIT")
         : t(riceMeta[S.rice].th, riceMeta[S.rice].en);
       refs.legendLayer.textContent = t(layerMeta[S.layer].th, layerMeta[S.layer].en);
       refs.legendUnit.textContent = uLabel();
       refs.latestBadge.classList.add("show");
-      const isEstYear = S.layer !== "price" && S.layer !== "households" && S.layer !== "fertilizer" && S.layer !== "dam" && S.layer !== "rainfall" && S.layer !== "drought" && S.year >= "2568";
-      refs.latestBadge.textContent = S.layer === "price"
+      const isEstYear = S.layer !== "price" && S.layer !== "households" && S.layer !== "fertilizer" && S.layer !== "dam" && S.layer !== "rainfall" && S.layer !== "drought" && S.layer !== "mills" && S.year >= "2568";
+      refs.latestBadge.textContent = S.layer === "mills"
+        ? `🏭 ${t('โรงสีข้าว DIT','Rice Mills DIT')} ${RICE_MILLS_DATA?._meta?.updated || '2026-04-23'}`
+        : S.layer === "price"
         ? `${t('ราคาอ้างอิง','Price Ref')}: ${entryOf(getVisibleProvinces().find(en => hasLayerValue(en)) || allEN[0]).source_date || S.year}`
         : S.layer === "households"
           ? `👨‍🌾 ${t('ครัวเรือนเกษตรกร','Farm Households')} OAE 2566`
@@ -2592,6 +2608,15 @@ function t(th, en) {
         refs.dataSourceNote.textContent = t(
           `ข้อมูลระดับน้ำในเขื่อนขนาดใหญ่ 35 แห่ง จากกรมชลประทาน (RID) อัปเดต ${updated} ครอบคลุม ${covered} จังหวัด`,
           `Large dam water levels (35 dams) from Royal Irrigation Dept. (RID). Updated ${updated}. Covers ${covered} provinces.`
+        );
+        return;
+      }
+      if (S.layer === "mills") {
+        const meta = RICE_MILLS_DATA?._meta;
+        const covered = getVisibleProvinces().filter(en => hasLayerValue(en)).length;
+        refs.dataSourceNote.textContent = t(
+          `ข้อมูลโรงสีข้าวจดทะเบียน กรมการค้าภายใน (DIT) อัปเดต ${meta?.updated || '23 เมษายน 2569'} ครอบคลุม ${covered} จังหวัด จากทั้งหมด ${meta?.total_mills || 903} แห่ง`,
+          `Registered rice mills, Dept. of Internal Trade (DIT). Updated ${meta?.updated || '23 Apr 2026'}. Covers ${covered} provinces, ${meta?.total_mills || 903} mills total.`
         );
         return;
       }
@@ -2652,7 +2677,7 @@ function t(th, en) {
         }
       }
       refs.scopeLabel.textContent = t("ขอบเขต", "Scope");
-      refs.scopeValue.textContent = (S.layer === "price" || S.layer === "dam" || S.layer === "rainfall" || S.layer === "drought") ? `${covered.length}/${visible.length} ${t('จว.','Prov.')}` : `${visible.length} ${t('จว.','Prov.')}`;
+      refs.scopeValue.textContent = (S.layer === "price" || S.layer === "dam" || S.layer === "rainfall" || S.layer === "drought" || S.layer === "mills") ? `${covered.length}/${visible.length} ${t('จว.','Prov.')}` : `${visible.length} ${t('จว.','Prov.')}`;
       refs.scopeSub.textContent = S.layer === "price"
         ? t("จังหวัดที่มีราคา", "Provinces with price")
         : (S.reg === "all" ? t("ทั้งประเทศ", "Nationwide") : t(`ภาค${thaiRegionName(S.reg)}`, `${S.reg.charAt(0).toUpperCase() + S.reg.slice(1)} Region`));
@@ -2665,6 +2690,8 @@ function t(th, en) {
         ? t("แผนที่ปริมาณฝนฤดูนาปีรายจังหวัด", "Season Rainfall Map by Province")
         : S.layer === "drought"
         ? t("แผนที่ฝนเบี่ยงเบนจากค่าปกติรายจังหวัด", "Rainfall Anomaly vs 5-Year Normal by Province")
+        : S.layer === "mills"
+        ? t("แผนที่โรงสีข้าวรายจังหวัด", "Rice Mills by Province")
         : t(`แผนที่${riceMeta[S.rice].th}รายจังหวัด`, `${riceMeta[S.rice].en} Rice · Province Map`);
       refs.headlineDesc.textContent = S.layer === "dam"
         ? t("ระดับน้ำในเขื่อนขนาดใหญ่ 35 แห่ง จากกรมชลประทาน (RID) อัปเดตรายวัน", "Large dam water levels from Royal Irrigation Dept. (RID). 35 dams, daily update.")
@@ -2673,6 +2700,9 @@ function t(th, en) {
         : S.layer === "drought"
         ? t(`% เบี่ยงเบนของฝนนาปีเทียบกับค่าเฉลี่ย 5 ปี (${WEATHER_FORECAST?._meta?.base_years||'2020–2024'}) รายจังหวัด · สีแดง = แห้งกว่าปกติ · สีน้ำเงิน = ชุ่มชื้นกว่าปกติ`,
            `Season rainfall % deviation from ${WEATHER_FORECAST?._meta?.base_years||'2020–2024'} average by province · Red = below normal · Blue = above normal`)
+        : S.layer === "mills"
+        ? t(`โรงสีข้าวจดทะเบียนกับกรมการค้าภายใน (DIT) จำนวน ${RICE_MILLS_DATA?._meta?.total_mills || 903} แห่ง ใน ${RICE_MILLS_DATA?._meta?.provinces_covered || 60} จังหวัด จำแนกตามขนาด (ใหญ่/กลาง/เล็ก) ข้อมูล ณ เม.ย. 2569`,
+           `Registered rice mills with Dept. of Internal Trade (DIT): ${RICE_MILLS_DATA?._meta?.total_mills || 903} mills in ${RICE_MILLS_DATA?._meta?.provinces_covered || 60} provinces, classified by size (large/medium/small). Data as of Apr 2026.`)
         : S.layer === "price"
         ? t(`แผนที่ fit ตามสัดส่วนประเทศไทยและใช้รายงานราคาข้าวเปลือกรายวันของสมาคมโรงสีข้าวไทย โดยไฮไลต์ราคาของ ${riceTypeDescription(S.rice, S.layer)} ปี ${S.year}`,
            `Province-level paddy price map using Thai Rice Miller Association daily reports. ${riceTypeDescription(S.rice, S.layer)} · Crop year ${S.year}.`)
@@ -2686,7 +2716,9 @@ function t(th, en) {
       const yearLabel = S.layer === "dam" ? t("ล่าสุด", "Latest") : t(`ปี ${S.year}`, `Year ${S.year}`);
       const riceLabel = t(riceMeta[S.rice].th, riceMeta[S.rice].en);
       const metaLabel = t(meta.th, meta.en);
-      refs.topSub.innerHTML = `${riceLabel} &nbsp;·&nbsp; ${metaLabel}<br>${yearLabel}`;
+      refs.topSub.innerHTML = S.layer === "mills"
+        ? `${metaLabel}<br>${t('DIT 2569', 'DIT 2026')}`
+        : `${riceLabel} &nbsp;·&nbsp; ${metaLabel}<br>${yearLabel}`;
       const items = visible
         .filter(en => hasLayerValue(en))
         .map(en => ({ en, v: valueOf(en) }))
@@ -2836,7 +2868,39 @@ function t(th, en) {
         }).join("")}
     </div>`;
       }).join("");
-      refs.detailGrid.innerHTML = weatherHtml + damHtml + householdsHtml + fertHtml + cardHtml;
+      let millsHtml = "";
+      if (RICE_MILLS_DATA) {
+        const thName = NM[en];
+        const mp = RICE_MILLS_DATA.provinces?.[thName];
+        if (mp) {
+          const shown = mp.mills.slice(0, 10);
+          const extra = mp.mills.length - shown.length;
+          const listHtml = shown.map(m =>
+            `<div style="font-size:10px;color:var(--text-soft);margin-top:3px">
+              <span style="color:var(--muted);font-size:9px">${m.type}</span> · ${m.name}
+              ${m.capacity ? `<span style="color:var(--muted);font-size:9px"> (${fmtNumber(m.capacity)} ต./วัน)</span>` : ""}
+              ${m.district ? `<span style="color:var(--muted);font-size:9px"> · ${m.district}</span>` : ""}
+            </div>`
+          ).join("") + (extra > 0
+            ? `<div style="font-size:9px;color:var(--muted-2);margin-top:3px">...${t(`และอีก ${extra} แห่ง`, `+${extra} more mills`)}</div>`
+            : "");
+          millsHtml = `
+            <div class="rice-card" style="grid-column:1/-1;background:rgba(230,170,60,.07);border:1px solid rgba(230,170,60,.22)">
+              <div class="t">🏭 ${t('โรงสีข้าว (DIT 2569)', 'Rice Mills (DIT 2026)')}</div>
+              <div class="metric">
+                <div class="m-label">${t('จำนวนทั้งหมด', 'Total Mills')}</div>
+                <div class="m-value">${mp.count} <small>${t('แห่ง', 'mills')}</small></div>
+              </div>
+              <div class="metric">
+                <div class="m-label">${t('จำแนกตามขนาด', 'By Size')}</div>
+                <div class="m-value" style="font-size:12px">${t(`ใหญ่ ${mp.large} · กลาง ${mp.medium} · เล็ก ${mp.small}`, `L:${mp.large} · M:${mp.medium} · S:${mp.small}`)}</div>
+              </div>
+              ${listHtml}
+              <div style="font-size:9px;color:var(--muted);margin-top:6px">${t('ที่มา: กรมการค้าภายใน (DIT) 23 เม.ย. 2569', 'Source: Dept. of Internal Trade (DIT) 23 Apr 2026')}</div>
+            </div>`;
+        }
+      }
+      refs.detailGrid.innerHTML = weatherHtml + damHtml + millsHtml + householdsHtml + fertHtml + cardHtml;
       if (refs.detailDataNote) {
         refs.detailDataNote.innerHTML = `📌 ${t(
           'ข้อมูลผลผลิต / ผลผลิตต่อไร่ / เนื้อที่เก็บเกี่ยว เป็นข้อมูลเฉพาะ<strong>นาปี</strong>เท่านั้น · ไม่รวมนาปรัง · ไม่รวม<strong>ข้าวเหนียว</strong>และ<strong>ข้าวเจ้าปทุม 1</strong>',
@@ -2853,10 +2917,12 @@ function t(th, en) {
     }
 
     function drawSpark(en) {
-      if (S.layer === "dam" || S.layer === "rainfall" || S.layer === "drought") {
+      if (S.layer === "dam" || S.layer === "rainfall" || S.layer === "drought" || S.layer === "mills") {
         refs.sparkSvg.innerHTML = "";
         refs.sparkTitle.textContent = S.layer === "dam"
           ? t("ไม่มีข้อมูลอนุกรมเวลา", "No time-series data")
+          : S.layer === "mills"
+          ? t("ข้อมูล ณ เม.ย. 2569 — ไม่มีอนุกรมเวลา", "Apr 2026 snapshot — no time series")
           : t("ข้อมูลฤดูกาลเดียว — ไม่มีอนุกรมเวลา", "Single season — no time series");
         return;
       }
@@ -2910,6 +2976,29 @@ function t(th, en) {
     <div class="rank">${rank ? `${t('อันดับ','Rank')} #${rank} / ${visible}` : t('ไม่มีข้อมูล','No data')} · ${prov.n_dams} ${t('เขื่อน','dams')}</div>
     <div style="font-size:10px;color:var(--muted);margin-top:4px">${prov.total_volume_mm3.toFixed(0)} / ${prov.total_storage_mm3.toFixed(0)} ${t('ล้าน ม.³','million m³')}</div>
     ${damsHtml}
+  `;
+      }
+      if (S.layer === "mills") {
+        const thName = NM[en];
+        const prov = RICE_MILLS_DATA?.provinces?.[thName];
+        const rank = currentRank(en);
+        const total = getVisibleProvinces().filter(name => hasLayerValue(name)).length;
+        if (!prov) return `<div class="th">${t(NM[en] || en, en)}</div><div class="en">${en}</div><div style="color:var(--muted);font-size:11px;margin-top:6px">${t('ไม่มีโรงสีข้าวจดทะเบียน','No registered mills')}</div>`;
+        const shown = prov.mills.slice(0, 5);
+        const extra = prov.mills.length - shown.length;
+        const millListHtml = shown.map(m =>
+          `<div style="font-size:9px;color:var(--muted);margin-top:2px">· ${m.name} <span style="opacity:.6">(${m.type}${m.capacity ? ', ' + fmtNumber(m.capacity) + ' ต./วัน' : ''})</span></div>`
+        ).join("") + (extra > 0
+          ? `<div style="font-size:9px;color:var(--muted-2);margin-top:2px">...${t(`และอีก ${extra} แห่ง`, `+${extra} more`)}</div>`
+          : "");
+        return `
+    <div class="th">${t(NM[en] || en, en)}</div>
+    <div class="en">${en}</div>
+    <div class="type">${t('โรงสีข้าว · DIT 2569', 'Rice Mills · DIT 2026')}</div>
+    <div class="metric-name">${t('จำนวนโรงสีข้าว', 'Number of Rice Mills')}</div>
+    <div class="value">${prov.count} <small style="font-size:12px;color:var(--muted)">${t('แห่ง', 'mills')}</small></div>
+    <div class="rank">${rank ? `${t('อันดับ', 'Rank')} #${rank} / ${total}` : t('ไม่มีข้อมูล', 'No data')} &nbsp;·&nbsp; ${t(`ใหญ่ ${prov.large}  กลาง ${prov.medium}  เล็ก ${prov.small}`, `L:${prov.large} M:${prov.medium} S:${prov.small}`)}</div>
+    ${millListHtml}
   `;
       }
       const value = valueOf(en);
@@ -2997,6 +3086,11 @@ function t(th, en) {
         const seasonTh = meta ? `นาปี ${toBE(meta.year)}` : "นาปี 2568";
         const seasonEn = meta ? `Main Season ${meta.year}` : "Main Season 2025";
         refs.yearButtons.innerHTML = `<button class="pill on" data-year="weather">🌧 ${t(seasonTh, seasonEn)} (${t('มิ.ย.–พ.ย.','Jun–Nov')})</button>`;
+        return;
+      }
+      if (S.layer === "mills") {
+        const updated = RICE_MILLS_DATA?._meta?.updated || "2026-04-23";
+        refs.yearButtons.innerHTML = `<button class="pill on" data-year="mills">🏭 DIT ${t('อัปเดต','Updated')} ${updated}</button>`;
         return;
       }
       const years = yearsForLayer();
@@ -3121,6 +3215,7 @@ function t(th, en) {
       if (!yearsForLayer(layer).includes(S.year)) {
         S.year = yearsForLayer(layer)[yearsForLayer(layer).length - 1];
       }
+      if (layer === "mills" && !RICE_MILLS_DATA && !RICE_MILLS_LOADING) fetchMillsData();
       rerender();
     }
 
@@ -3305,6 +3400,22 @@ function t(th, en) {
     window.resetCamera = resetCamera;
     window.csvUp = csvUp;
     window.csvDl = csvDl;
+
+/* ── Rice Mills Loader ── */
+    let RICE_MILLS_DATA = null;
+    let RICE_MILLS_LOADING = false;
+
+    async function fetchMillsData() {
+      RICE_MILLS_LOADING = true;
+      try {
+        const res = await fetch('data/rice-mills.json?_=' + Date.now(), { cache: 'no-store' });
+        if (res.ok) RICE_MILLS_DATA = await res.json();
+      } catch (e) {
+        console.info('rice-mills.json not available');
+      }
+      RICE_MILLS_LOADING = false;
+      if (S.layer === "mills") rerender();
+    }
 
 /* ── Live Prices Loader ── */
     let LIVE_PRICES = null;
