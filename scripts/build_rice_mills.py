@@ -1,145 +1,149 @@
 #!/usr/bin/env python3
 """
-Build data/rice-mills.json by combining two DIT sources:
-  1. DIT live API (SearchRiceTrade) — 1,364 mills, 45 provinces (more complete per province)
-  2. DIT Excel export (thai_rice_mills_dit_2026-04-23.xlsx) — 903 mills, 60 provinces
-     → used only for the 15 provinces absent from the API
+Build data/rice-mills.json from two local DIT snapshots (no network required):
 
-Final output: ~1,450+ mills across ~60 provinces.
-กำลังการผลิต หน่วย ตัน/วัน
+  Primary  : data/rice-mills-api-snapshot.xlsx   — 1,364 mills, 45 provinces
+             (downloaded from DIT SearchRiceTrade API, Apr 2026)
+  Fallback : thai_rice_mills_dit_2026-04-23.xlsx — 903 mills, 60 provinces
+             (DIT web export, Apr 2026; used only for the 15 provinces
+              absent from the API snapshot)
+
+To refresh: re-run scripts/fetch_rice_mills_api.py first, then this script.
+Output: data/rice-mills.json
 """
-import json, os, sys, io, time, requests, pandas as pd
+import json, os, sys, io
 from datetime import date
+
+import pandas as pd
 
 if sys.platform == "win32":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
-EXCEL  = os.path.join(os.path.dirname(__file__), "..", "thai_rice_mills_dit_2026-04-23.xlsx")
-OUTPUT = os.path.join(os.path.dirname(__file__), "..", "data", "rice-mills.json")
-API_URL = "https://www.dit.go.th/api/RiceTradeApi/SearchRiceTrade"
+HERE   = os.path.dirname(__file__)
+ROOT   = os.path.join(HERE, "..")
+API_XL = os.path.join(ROOT, "data", "rice-mills-api-snapshot.xlsx")
+XLS_XL = os.path.join(ROOT, "thai_rice_mills_dit_2026-04-23.xlsx")
+OUTPUT = os.path.join(ROOT, "data", "rice-mills.json")
 
-TYPE_MAP_FULL = {
+# Short labels used in JSON (match tooltip + detail-card display)
+TYPE_MAP = {
     "โรงสีขนาดใหญ่": "ใหญ่",
     "โรงสีขนาดกลาง": "กลาง",
     "โรงสีขนาดเล็ก": "เล็ก",
 }
 
 
-# ── 1. Fetch from DIT API ──────────────────────────────────────────────────────
-def fetch_api_mills():
-    all_items = []
-    for page in range(1, 5):
-        r = requests.get(API_URL, params={"pageIndex": page, "pageSize": 1000}, timeout=30)
-        r.raise_for_status()
-        all_items.extend(r.json().get("items", []))
-        print(f"  API page {page}: {len(r.json().get('items', []))} records")
-        time.sleep(0.4)
+def _province_record(mills: list) -> dict:
+    """Sort mills by capacity desc and return the province summary dict."""
+    sorted_mills = sorted(mills, key=lambda m: m["capacity"], reverse=True)
+    return {
+        "count":  len(sorted_mills),
+        "large":  sum(1 for m in sorted_mills if m["type"] == "ใหญ่"),
+        "medium": sum(1 for m in sorted_mills if m["type"] == "กลาง"),
+        "small":  sum(1 for m in sorted_mills if m["type"] == "เล็ก"),
+        "mills":  sorted_mills,
+    }
 
-    mills = [x for x in all_items if "โรงสี" in str(x.get("description", ""))]
-    print(f"  API mills only: {len(mills)} records")
 
-    provinces = {}
-    for m in mills:
-        prov = (m.get("provinceName") or "").strip()
+def _mill_dict(name: str, type_short: str, capacity: int,
+               district: str, phone: str) -> dict:
+    """Return a compact mill dict, omitting empty optional fields."""
+    m: dict = {"name": name, "type": type_short, "capacity": capacity}
+    if district:
+        m["district"] = district
+    if phone:
+        m["phone"] = phone
+    return m
+
+
+def load_api_snapshot() -> dict[str, list]:
+    """Read API Excel snapshot → {province_th: [mill_dict, ...]}"""
+    df = pd.read_excel(API_XL, engine="openpyxl")
+    df["provinceName"]  = df["provinceName"].fillna("").str.strip()
+    df["description"]   = df["description"].fillna("")
+    df["millCapacity"]  = pd.to_numeric(df["millCapacity"], errors="coerce").fillna(0)
+    df["disctrictName"] = df["disctrictName"].fillna("").str.strip()
+    df["tel"]           = df["tel"].fillna("").str.strip()
+
+    provinces: dict[str, list] = {}
+    for _, row in df.iterrows():
+        prov = row["provinceName"]
         if not prov:
             continue
-        t_raw = str(m.get("description", "")).strip()
-        t_short = TYPE_MAP_FULL.get(t_raw, "เล็ก")
-        name = str(m.get("tName") or "").strip()
-        cap  = int(float(m.get("millCapacity") or 0))
-        dist = str(m.get("disctrictName") or "").strip()
-        phone = str(m.get("tel") or "").strip()
-        mill = {"name": name, "type": t_short, "capacity": cap}
-        if dist:
-            mill["district"] = dist
-        if phone:
-            mill["phone"] = phone
+        mill = _mill_dict(
+            name     = str(row.get("tName", "")).strip(),
+            type_short = TYPE_MAP.get(str(row["description"]).strip(), "เล็ก"),
+            capacity = int(row["millCapacity"]),
+            district = str(row["disctrictName"]),
+            phone    = str(row["tel"]),
+        )
         provinces.setdefault(prov, []).append(mill)
 
-    return provinces  # { Thai province name → [mill dicts] }
+    print(f"  API snapshot : {sum(len(v) for v in provinces.values())} mills / {len(provinces)} provinces")
+    return provinces
 
 
-# ── 2. Load from Excel (fallback for provinces missing from API) ───────────────
-def load_excel_mills(api_provinces: set):
-    df = pd.read_excel(EXCEL, engine="openpyxl")
+def load_excel_fallback(api_provinces: set) -> dict[str, list]:
+    """Read DIT Excel export → provinces NOT already covered by API."""
+    df = pd.read_excel(XLS_XL, engine="openpyxl")
     df.columns = [c.strip() for c in df.columns]
     df["จังหวัด"]     = df["จังหวัด"].fillna("").str.strip().str.removeprefix("จังหวัด")
     df["ประเภทโรงสี"] = df["ประเภทโรงสี"].fillna("")
     df["กำลังการผลิต"] = pd.to_numeric(df["กำลังการผลิต"], errors="coerce").fillna(0)
 
-    provinces = {}
-    for prov_th, grp in df.groupby("จังหวัด"):
-        if not prov_th or prov_th in api_provinces:
-            continue  # skip provinces already covered by API
-        mills = []
-        for _, row in grp.iterrows():
-            t_raw  = str(row["ประเภทโรงสี"]).strip()
-            t_short = TYPE_MAP_FULL.get(t_raw, "เล็ก")
-            name   = str(row["ชื่อโรงสี/ผู้ประกอบการ"]).strip()
-            cap    = int(row["กำลังการผลิต"])
-            dist   = str(row.get("อำเภอ/เขต", "")).strip()
-            phone  = str(row.get("โทรศัพท์", "")).strip()
-            mill   = {"name": name, "type": t_short, "capacity": cap}
-            if dist and dist != "nan":
-                mill["district"] = dist
-            if phone and phone != "nan":
-                mill["phone"] = phone
-            mills.append(mill)
+    provinces: dict[str, list] = {}
+    for prov, grp in df.groupby("จังหวัด"):
+        if not prov or prov in api_provinces:
+            continue
+        mills = [
+            _mill_dict(
+                name     = str(row["ชื่อโรงสี/ผู้ประกอบการ"]).strip(),
+                type_short = TYPE_MAP.get(str(row["ประเภทโรงสี"]).strip(), "เล็ก"),
+                capacity = int(row["กำลังการผลิต"]),
+                district = ("" if pd.isna(row.get("อำเภอ/เขต"))
+                            else str(row.get("อำเภอ/เขต","")).strip()),
+                phone    = ("" if pd.isna(row.get("โทรศัพท์"))
+                            else str(row.get("โทรศัพท์","")).strip()),
+            )
+            for _, row in grp.iterrows()
+        ]
         if mills:
-            provinces[prov_th] = mills
+            provinces[prov] = mills
 
-    print(f"  Excel fallback: {sum(len(v) for v in provinces.values())} mills in {len(provinces)} additional provinces")
+    print(f"  Excel fallback: {sum(len(v) for v in provinces.values())} mills / {len(provinces)} additional provinces")
     return provinces
 
 
-# ── 3. Assemble province records ───────────────────────────────────────────────
-def build_province_record(mills: list) -> dict:
-    mills_sorted = sorted(mills, key=lambda m: m["capacity"], reverse=True)
-    return {
-        "count":  len(mills_sorted),
-        "large":  sum(1 for m in mills_sorted if m["type"] == "ใหญ่"),
-        "medium": sum(1 for m in mills_sorted if m["type"] == "กลาง"),
-        "small":  sum(1 for m in mills_sorted if m["type"] == "เล็ก"),
-        "mills":  mills_sorted,
-    }
-
-
-# ── Main ──────────────────────────────────────────────────────────────────────
-def main():
-    today = date.today().isoformat()
-
-    print("Fetching from DIT API...")
-    api_mills = fetch_api_mills()
+def main() -> None:
+    print("Loading API snapshot...")
+    api = load_api_snapshot()
+    if not api:
+        sys.exit("ERROR: API snapshot has 0 mills — aborting to protect existing data")
 
     print("Loading Excel fallback...")
-    xls_mills = load_excel_mills(set(api_mills.keys()))
+    xls = load_excel_fallback(set(api.keys()))
 
-    combined = {**{p: build_province_record(v) for p, v in api_mills.items()},
-                **{p: build_province_record(v) for p, v in xls_mills.items()}}
-
-    total = sum(p["count"] for p in combined.values())
-    api_total = sum(len(v) for v in api_mills.values())
-    xls_total = sum(len(v) for v in xls_mills.values())
+    # api is primary: put api last so it wins on any province key collision
+    provinces = {p: _province_record(v) for p, v in {**xls, **api}.items()}
+    total     = sum(p["count"] for p in provinces.values())
 
     output = {
         "_meta": {
-            "source":            "กรมการค้าภายใน (DIT) — API + Excel export",
-            "updated":           today,
+            "source":            "กรมการค้าภายใน (DIT) — API snapshot + Excel export",
+            "updated":           date.today().isoformat(),
             "total_mills":       total,
-            "provinces_covered": len(combined),
-            "api_mills":         api_total,
-            "excel_mills":       xls_total,
-            "note":              "กำลังการผลิต หน่วย ตัน/วัน · API ครอบคลุม 45 จว. · Excel เพิ่มอีก 15 จว.",
+            "provinces_covered": len(provinces),
+            "api_mills":         sum(len(v) for v in api.values()),
+            "excel_mills":       sum(len(v) for v in xls.values()),
+            "note":              "กำลังการผลิต หน่วย ตัน/วัน",
         },
-        "provinces": combined,
+        "provinces": provinces,
     }
 
     with open(OUTPUT, "w", encoding="utf-8") as f:
         json.dump(output, f, ensure_ascii=False, indent=2)
 
-    print(f"\nSaved {total} mills across {len(combined)} provinces → {OUTPUT}")
-    print(f"  API: {api_total} mills / {len(api_mills)} provinces")
-    print(f"  Excel (additional): {xls_total} mills / {len(xls_mills)} provinces")
+    print(f"\nSaved {total} mills / {len(provinces)} provinces  →  {OUTPUT}")
 
 
 if __name__ == "__main__":
