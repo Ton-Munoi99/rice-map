@@ -2012,6 +2012,17 @@ function t(th, en) {
       return RICE_MILLS_DATA.provinces?.[thName]?.count ?? 0;
     }
 
+    // Render a compact mill name list with a "+N more" footer — used by tooltip (limit 5) and detail card (limit 10)
+    function renderMillList(mills, limit) {
+      const shown = mills.slice(0, limit);
+      const extra = mills.length - shown.length;
+      return shown.map(m =>
+        `<div style="font-size:9px;color:var(--muted);margin-top:2px">· ${m.name} <span style="opacity:.6">(${m.type}${m.capacity ? ', ' + fmtNumber(m.capacity) + ' ต./วัน' : ''})</span></div>`
+      ).join("") + (extra > 0
+        ? `<div style="font-size:9px;color:var(--muted-2);margin-top:2px">...${t(`และอีก ${extra} แห่ง`, `+${extra} more`)}</div>`
+        : "");
+    }
+
     function valueOf(en, rice = S.rice, year = S.year, layer = S.layer) {
       if (layer === "households") return householdValueOf(en);
       if (layer === "dam") return damValueOf(en);
@@ -2873,17 +2884,7 @@ function t(th, en) {
         const thName = NM[en];
         const mp = RICE_MILLS_DATA.provinces?.[thName];
         if (mp) {
-          const shown = mp.mills.slice(0, 10);
-          const extra = mp.mills.length - shown.length;
-          const listHtml = shown.map(m =>
-            `<div style="font-size:10px;color:var(--text-soft);margin-top:3px">
-              <span style="color:var(--muted);font-size:9px">${m.type}</span> · ${m.name}
-              ${m.capacity ? `<span style="color:var(--muted);font-size:9px"> (${fmtNumber(m.capacity)} ต./วัน)</span>` : ""}
-              ${m.district ? `<span style="color:var(--muted);font-size:9px"> · ${m.district}</span>` : ""}
-            </div>`
-          ).join("") + (extra > 0
-            ? `<div style="font-size:9px;color:var(--muted-2);margin-top:3px">...${t(`และอีก ${extra} แห่ง`, `+${extra} more mills`)}</div>`
-            : "");
+          const listHtml = renderMillList(mp.mills, 10);
           millsHtml = `
             <div class="rice-card" style="grid-column:1/-1;background:rgba(230,170,60,.07);border:1px solid rgba(230,170,60,.22)">
               <div class="t">🏭 ${t('โรงสีข้าว (DIT 2569)', 'Rice Mills (DIT 2026)')}</div>
@@ -2984,13 +2985,7 @@ function t(th, en) {
         const rank = currentRank(en);
         const total = getVisibleProvinces().filter(name => hasLayerValue(name)).length;
         if (!prov) return `<div class="th">${t(NM[en] || en, en)}</div><div class="en">${en}</div><div style="color:var(--muted);font-size:11px;margin-top:6px">${t('ไม่มีโรงสีข้าวจดทะเบียน','No registered mills')}</div>`;
-        const shown = prov.mills.slice(0, 5);
-        const extra = prov.mills.length - shown.length;
-        const millListHtml = shown.map(m =>
-          `<div style="font-size:9px;color:var(--muted);margin-top:2px">· ${m.name} <span style="opacity:.6">(${m.type}${m.capacity ? ', ' + fmtNumber(m.capacity) + ' ต./วัน' : ''})</span></div>`
-        ).join("") + (extra > 0
-          ? `<div style="font-size:9px;color:var(--muted-2);margin-top:2px">...${t(`และอีก ${extra} แห่ง`, `+${extra} more`)}</div>`
-          : "");
+        const millListHtml = renderMillList(prov.mills, 5);
         return `
     <div class="th">${t(NM[en] || en, en)}</div>
     <div class="en">${en}</div>
@@ -3380,6 +3375,7 @@ function t(th, en) {
       fetchLivePrices();
       fetchDamData();
       fetchWeatherData();
+      fetchMillsData();
       fetchHouseholds();
       updateNationalFert();
 
@@ -3408,7 +3404,7 @@ function t(th, en) {
     async function fetchMillsData() {
       RICE_MILLS_LOADING = true;
       try {
-        const res = await fetch('data/rice-mills.json?_=' + Date.now(), { cache: 'no-store' });
+        const res = await fetch('data/rice-mills.json');
         if (res.ok) RICE_MILLS_DATA = await res.json();
       } catch (e) {
         console.info('rice-mills.json not available');
