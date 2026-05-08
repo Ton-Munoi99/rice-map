@@ -47,14 +47,24 @@ TYPE_MAP = {
 
 
 def _province_record(mills: list) -> dict:
-    """Sort mills by capacity desc and return the province summary dict."""
+    """Deduplicate by name, sort by capacity desc, return province summary dict.
+
+    DIT issues multiple license records per mill (same name/capacity/address).
+    Keep the first occurrence after sorting — highest-capacity wins on ties.
+    """
     sorted_mills = sorted(mills, key=lambda m: m["capacity"], reverse=True)
+    seen: set = set()
+    unique_mills = []
+    for m in sorted_mills:
+        if m["name"] not in seen:
+            seen.add(m["name"])
+            unique_mills.append(m)
     return {
-        "count":  len(sorted_mills),
-        "large":  sum(1 for m in sorted_mills if m["type"] == "ใหญ่"),
-        "medium": sum(1 for m in sorted_mills if m["type"] == "กลาง"),
-        "small":  sum(1 for m in sorted_mills if m["type"] == "เล็ก"),
-        "mills":  sorted_mills,
+        "count":  len(unique_mills),
+        "large":  sum(1 for m in unique_mills if m["type"] == "ใหญ่"),
+        "medium": sum(1 for m in unique_mills if m["type"] == "กลาง"),
+        "small":  sum(1 for m in unique_mills if m["type"] == "เล็ก"),
+        "mills":  unique_mills,
     }
 
 
