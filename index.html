@@ -2012,21 +2012,16 @@ function t(th, en) {
       return RICE_MILLS_DATA.provinces?.[thName]?.count ?? 0;
     }
 
-    // Render a compact mill name list with a "+N more" footer — used by tooltip (limit 5) and detail card (limit 10)
+    // Render a full mill name list, deduplicated — used by tooltip and detail card
     const MILL_TYPE_EN = { "ใหญ่": "Large", "กลาง": "Medium", "เล็ก": "Small" };
-    function renderMillList(mills, limit) {
-      // Deduplicate by name before slicing
+    function renderMillList(mills) {
       const seen = new Set();
       const unique = mills.filter(m => { if (seen.has(m.name)) return false; seen.add(m.name); return true; });
-      const shown = unique.slice(0, limit);
-      const extra = unique.length - shown.length;
-      return shown.map(m => {
+      return unique.map(m => {
         const typeLabel = t(m.type, MILL_TYPE_EN[m.type] || m.type);
         const capLabel  = m.capacity ? `, ${fmtNumber(m.capacity)} ${t('ต./วัน','t/day')}` : '';
         return `<div style="font-size:9px;color:var(--muted);margin-top:2px">· ${m.name} <span style="opacity:.6">(${typeLabel}${capLabel})</span></div>`;
-      }).join("") + (extra > 0
-        ? `<div style="font-size:9px;color:var(--muted-2);margin-top:2px">...${t(`และอีก ${extra} แห่ง`, `+${extra} more`)}</div>`
-        : "");
+      }).join("");
     }
 
     function valueOf(en, rice = S.rice, year = S.year, layer = S.layer) {
@@ -2891,7 +2886,7 @@ function t(th, en) {
         const mp = RICE_MILLS_DATA.provinces?.[thName];
         if (mp) {
           const listHtml = mp.mills.length
-            ? renderMillList(mp.mills, 10)
+            ? renderMillList(mp.mills)
             : `<div style="font-size:10px;color:var(--muted);margin-top:4px">${t('ไม่มีข้อมูลรายชื่อโรงสี — มีเฉพาะข้อมูลจำนวนรวมจากสำนักงานพาณิชย์จังหวัด','No individual mill records — aggregate count from provincial commerce office only')}</div>`;
           millsHtml = `
             <div class="rice-card" style="grid-column:1/-1;background:rgba(230,170,60,.07);border:1px solid rgba(230,170,60,.22)">
@@ -2994,7 +2989,7 @@ function t(th, en) {
         const total = getVisibleProvinces().filter(name => hasLayerValue(name)).length;
         if (!prov) return `<div class="th">${t(NM[en] || en, en)}</div><div class="en">${en}</div><div style="color:var(--muted);font-size:11px;margin-top:6px">${t('ไม่มีโรงสีข้าวจดทะเบียน','No registered mills')}</div>`;
         const millListHtml = prov.mills.length
-          ? renderMillList(prov.mills, 5)
+          ? renderMillList(prov.mills)
           : `<div style="font-size:9px;color:var(--muted);margin-top:3px">${t('ไม่มีข้อมูลรายชื่อ (ข้อมูลรวมจากพาณิชย์จังหวัด)', 'Aggregate count only — no individual records')}</div>`;
         const sourceNote = prov.source_note
           ? `<div style="font-size:8px;color:var(--muted);margin-top:3px;opacity:.7">${prov.source_note}</div>`
