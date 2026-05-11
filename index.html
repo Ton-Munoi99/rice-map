@@ -2779,12 +2779,13 @@ function t(th, en) {
       refs.detailRank.textContent = rank ? t(`อันดับ #${rank} จาก ${covered || getVisibleProvinces().length} จังหวัด`, `Rank #${rank} of ${covered || getVisibleProvinces().length}`) : t("ไม่มีข้อมูล", "No data");
 
       const metrics = ["production", "yield", "area", "price"];
-      const householdsHtml = window.PROVINCE_HOUSEHOLDS ? `
+      const hhVal = householdValueOf(en);
+      const householdsHtml = (window.PROVINCE_HOUSEHOLDS && hhVal > 0) ? `
     <div class="rice-card" style="grid-column:1/-1;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2)">
       <div class="t">👨‍🌾 ${t('ครัวเรือนเกษตรกร (รวมทุกสินค้า)','Farm Households (All Crops)')}</div>
       <div class="metric">
         <div class="m-label">${t('จำนวนครัวเรือนเกษตรกร','Farmer Households')}</div>
-        <div class="m-value">${fmtNumber(householdValueOf(en))} <small>${usLabel('households')}</small></div>
+        <div class="m-value">${fmtNumber(hhVal)} <small>${usLabel('households')}</small></div>
       </div>
       <div style="font-size:9px;color:var(--muted);margin-top:4px">${t('ที่มา: สำนักงานเศรษฐกิจการเกษตร (OAE) · ปีอ้างอิง 2566 · ครอบคลุมทุกประเภทการเกษตร','Source: OAE 2566 · Covers all agricultural types')}</div>
     </div>` : "";
@@ -3372,6 +3373,8 @@ function t(th, en) {
       } catch (e) {
         console.info('dam-water.json not available (local mode)');
       }
+      if (S.layer === "dam") rerender();
+      if (S.sel) selectProvince(S.sel);
     }
 
     async function init() {
@@ -3657,7 +3660,7 @@ function t(th, en) {
       if (layer === "drought") {
         // % เบี่ยงเบนจากค่าปกติ 5 ปี (2020–2024)
         const avg = WEATHER_FORECAST?.provinces?.[en]?.forecast_rainfall_mm;
-        if (!avg || !p.season_rainfall_mm) return null;
+        if (avg == null || !p.season_rainfall_mm) return null;
         return Math.round((p.season_rainfall_mm - avg) / avg * 100 * 10) / 10;
       }
       return null;
