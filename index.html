@@ -12,7 +12,1409 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Sarabun:wght@300;400;500;600;700&display=swap"
     rel="stylesheet">
-  <link rel="stylesheet" href="./style.css">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    :root {
+      --bg: #071015;
+      --bg2: #0d171d;
+      --bg3: #111f27;
+      --card: #15232c;
+      --card-soft: rgba(21, 35, 44, .72);
+      --line: rgba(255, 255, 255, .08);
+      --line-strong: rgba(255, 255, 255, .14);
+      --text: #f1e7d6;
+      --text-soft: #c6b9a2;
+      --muted: #8b96a0;
+      --muted-2: #61717d;
+      --ocean-1: #08161f;
+      --ocean-2: #0d2330;
+      --ocean-3: #173848;
+      --white-lo: #244b36;
+      --white-mid: #9a8349;
+      --white-hi: #f5c065;
+      --white-acc: #ff8f4d;
+      --jasmine-lo: #2a274d;
+      --jasmine-mid: #8c5db2;
+      --jasmine-hi: #ecbad9;
+      --jasmine-acc: #d9a0ff;
+      --pos: #58d489;
+      --neg: #ff7c73;
+      --warn: #f5d56a;
+      --shadow: 0 24px 70px rgba(0, 0, 0, .34);
+    }
+
+    html,
+    body {
+      height: 100%
+    }
+
+    body {
+      font-family: 'Sarabun', sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 14% 16%, rgba(39, 83, 68, .22), transparent 26%),
+        radial-gradient(circle at 83% 21%, rgba(37, 68, 93, .34), transparent 24%),
+        radial-gradient(circle at 60% 88%, rgba(150, 105, 54, .16), transparent 24%),
+        linear-gradient(180deg, #081116 0%, #09141a 36%, #060c11 100%);
+      overflow-y: auto;
+    }
+
+    body.jm {
+      background:
+        radial-gradient(circle at 14% 16%, rgba(73, 57, 117, .25), transparent 26%),
+        radial-gradient(circle at 83% 21%, rgba(60, 85, 123, .3), transparent 24%),
+        radial-gradient(circle at 60% 88%, rgba(116, 76, 143, .18), transparent 24%),
+        linear-gradient(180deg, #081116 0%, #0b1019 36%, #070910 100%);
+    }
+
+    .shell {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, .022) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, .022) 1px, transparent 1px);
+      background-size: 72px 72px;
+      mask-image: radial-gradient(circle at center, black 50%, transparent 90%);
+      opacity: .45;
+    }
+
+    .grain {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .05;
+      mix-blend-mode: soft-light;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.78' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    .app {
+      height: 100vh;
+      min-height: 680px;
+      display: flex;
+      flex-direction: column;
+      padding: 12px;
+      gap: 10px;
+    }
+
+    .top-bar {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 12px;
+      padding: 9px 16px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(10, 18, 24, .7);
+      backdrop-filter: blur(14px);
+      box-shadow: var(--shadow);
+      flex-shrink: 0;
+    }
+
+    .top-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      text-align: center;
+    }
+
+    .top-center-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: .05em;
+      line-height: 1.1;
+      background: linear-gradient(135deg, #f5f0e8 0%, #d4a853 45%, #f5f0e8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      white-space: nowrap;
+    }
+
+    .top-center-sub {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-copy h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: .03em;
+    }
+
+    .brand-copy p {
+      display: none;
+    }
+
+    .brand-copy strong {
+      color: var(--text-soft);
+      font-weight: 500
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: nowrap;
+      justify-content: flex-end;
+    }
+
+    .rice-tog {
+      display: inline-flex;
+      padding: 3px;
+      gap: 3px;
+      border-radius: 999px;
+      background: rgba(5, 10, 14, .7);
+      border: 1px solid var(--line);
+    }
+
+    .rice-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 7px 13px;
+      font-family: 'Sarabun', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .01em;
+      cursor: pointer;
+      color: var(--muted);
+      background: transparent;
+      transition: .25s ease;
+    }
+
+    .rice-btn.aw {
+      color: #f8ddae;
+      background: linear-gradient(135deg, rgba(38, 75, 54, .95), rgba(110, 89, 50, .9));
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .06), 0 10px 26px rgba(245, 192, 101, .18);
+    }
+
+    .rice-btn.aj {
+      color: #f7d7f6;
+      background: linear-gradient(135deg, rgba(42, 39, 77, .96), rgba(124, 82, 164, .9));
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .05), 0 10px 26px rgba(217, 160, 255, .18);
+    }
+
+    .action-btn,
+    .import-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 11px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: rgba(17, 31, 39, .7);
+      color: var(--text-soft);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      cursor: pointer;
+      transition: .2s ease;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+    }
+
+    .action-btn:hover,
+    .import-btn:hover {
+      border-color: var(--line-strong);
+      transform: translateY(-1px);
+    }
+
+    .import-btn input {
+      display: none
+    }
+
+    .main {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      gap: 10px;
+    }
+
+    .map-panel,
+    .side-panel {
+      min-height: 0;
+      border: 1px solid var(--line);
+      border-radius: 26px;
+      background: rgba(10, 18, 24, .68);
+      backdrop-filter: blur(14px);
+      box-shadow: var(--shadow);
+    }
+
+    .map-panel {
+      display: flex;
+      flex-direction: column;
+      padding: 8px;
+      gap: 6px;
+      overflow: hidden;
+    }
+
+    .map-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) repeat(3, minmax(120px, 1fr));
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .headline {
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: linear-gradient(145deg, rgba(15, 29, 35, .95), rgba(12, 24, 30, .76));
+      border: 1px solid var(--line);
+    }
+
+    .headline .eyebrow {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .headline h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 28px;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .headline p {
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--text-soft);
+      max-width: 54ch;
+    }
+
+    .stat-chip {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: linear-gradient(145deg, rgba(17, 31, 39, .88), rgba(13, 23, 29, .74));
+    }
+
+    .stat-chip .k {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .stat-chip .v {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: -.02em;
+      margin-top: 12px;
+    }
+
+    .stat-chip .s {
+      font-size: 12px;
+      line-height: 1.45;
+      color: var(--text-soft);
+      margin-top: 8px;
+    }
+
+    .map-wrap {
+      position: relative;
+      flex: 1;
+      min-height: 520px;
+      overflow: hidden;
+      border-radius: 24px;
+      border: 1px solid var(--line);
+      background:
+        radial-gradient(circle at 30% 18%, rgba(108, 145, 179, .17), transparent 26%),
+        radial-gradient(circle at 71% 62%, rgba(35, 71, 88, .28), transparent 25%),
+        linear-gradient(180deg, var(--ocean-3) 0%, var(--ocean-2) 32%, var(--ocean-1) 100%);
+    }
+
+    .map-wrap.drag-ready {
+      cursor: grab
+    }
+
+    .map-wrap.dragging {
+      cursor: grabbing
+    }
+
+    .map-wrap::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        repeating-linear-gradient(0deg, transparent 0 43px, rgba(255, 255, 255, .035) 44px 45px),
+        repeating-linear-gradient(90deg, transparent 0 43px, rgba(255, 255, 255, .03) 44px 45px);
+      opacity: .32;
+      pointer-events: none;
+    }
+
+    .map-wrap::after {
+      content: "";
+      position: absolute;
+      inset: 12px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, .04);
+      pointer-events: none;
+    }
+
+    #mapSvg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      touch-action: none;
+    }
+
+    .map-tools {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 4;
+      align-items: flex-end;
+    }
+
+    .map-tool-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .zoom-pill,
+    .map-info-chip,
+    .map-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 36px;
+      padding: 0 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, .08);
+      background: rgba(9, 18, 24, .82);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 12px 34px rgba(0, 0, 0, .22);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--text-soft);
+    }
+
+    .zoom-pill {
+      min-width: 74px
+    }
+
+    .map-info-chip {
+      max-width: 220px;
+      text-align: right;
+      line-height: 1.35;
+      padding: 9px 12px;
+    }
+
+    .map-btn {
+      cursor: pointer;
+      transition: .2s ease;
+    }
+
+    .map-btn:hover {
+      transform: translateY(-1px);
+      border-color: rgba(255, 255, 255, .14);
+    }
+
+    .map-btn.square {
+      width: 36px;
+      padding: 0;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .map-btn.wide {
+      padding: 0 14px
+    }
+
+    .inset-stack {
+      position: absolute;
+      right: 18px;
+      bottom: 18px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 184px));
+      gap: 10px;
+      z-index: 4;
+    }
+
+    .inset-card {
+      padding: 10px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, .08);
+      background: rgba(9, 18, 24, .82);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 12px 34px rgba(0, 0, 0, .24);
+      transition: .2s ease;
+    }
+
+    .inset-card.dim {
+      opacity: .58;
+    }
+
+    .inset-card.active {
+      border-color: rgba(245, 192, 101, .28);
+    }
+
+    body.jm .inset-card.active {
+      border-color: rgba(236, 186, 217, .28);
+    }
+
+    .inset-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+
+    .inset-head strong {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--text-soft);
+    }
+
+    .inset-head span {
+      font-size: 10px;
+      color: var(--muted);
+      text-align: right;
+    }
+
+    .inset-svg {
+      width: 100%;
+      height: 120px;
+      display: block;
+      border-radius: 12px;
+      background: linear-gradient(180deg, rgba(22, 52, 68, .18), rgba(6, 15, 19, .06));
+    }
+
+    .inset-frame {
+      fill: rgba(255, 255, 255, .02);
+      stroke: rgba(255, 255, 255, .06);
+      stroke-width: 1;
+    }
+
+    .inset-province {
+      cursor: pointer;
+      stroke: rgba(255, 255, 255, .18);
+      stroke-width: .7;
+      stroke-linejoin: round;
+      transition: opacity .2s ease, stroke .2s ease, stroke-width .2s ease;
+    }
+
+    .inset-province:hover {
+      stroke: var(--white-acc);
+      stroke-width: 1.3;
+    }
+
+    body.jm .inset-province:hover {
+      stroke: var(--jasmine-acc)
+    }
+
+    .inset-province.sel {
+      stroke: var(--white-acc);
+      stroke-width: 1.6;
+    }
+
+    body.jm .inset-province.sel {
+      stroke: var(--jasmine-acc)
+    }
+
+    .inset-province.faded {
+      opacity: .22
+    }
+
+    .sea-label {
+      position: absolute;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+      color: rgba(217, 229, 239, .26);
+      pointer-events: none;
+    }
+
+    .sea-label.andaman {
+      left: 26px;
+      top: 44%;
+      transform: rotate(-90deg)
+    }
+
+    .sea-label.gulf {
+      right: 26px;
+      top: 47%;
+      transform: rotate(-90deg)
+    }
+
+    .map-badge {
+      position: absolute;
+      top: 18px;
+      left: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 12px;
+      border-radius: 999px;
+      background: rgba(10, 19, 24, .84);
+      border: 1px solid rgba(245, 213, 106, .34);
+      color: var(--warn);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      backdrop-filter: blur(10px);
+      opacity: 0;
+      transform: translateY(-4px);
+      transition: .25s ease;
+      pointer-events: none;
+    }
+
+    .map-badge.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .compass {
+      position: absolute;
+      right: 20px;
+      bottom: 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      color: rgba(245, 192, 101, .72);
+      font-family: 'IBM Plex Mono', monospace;
+      font-weight: 700;
+      font-size: 14px;
+      pointer-events: none;
+    }
+
+    body.jm .compass {
+      color: rgba(236, 186, 217, .82)
+    }
+
+    .compass i {
+      display: block;
+      width: 1px;
+      height: 28px;
+      background: currentColor;
+      opacity: .76;
+    }
+
+    .legend {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 18px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(13, 23, 29, .72);
+    }
+
+    .legend-bar-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .legend-bar {
+      width: min(280px, 42vw);
+      height: 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, .08);
+      overflow: hidden;
+    }
+
+    .legend-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: .08em;
+      color: var(--text-soft);
+      white-space: nowrap;
+    }
+
+    .legend-copy {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-align: right;
+    }
+
+    .legend-copy span {
+      color: var(--text-soft)
+    }
+
+    .side-panel {
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    .stat-row-panel {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      padding: 10px !important;
+    }
+
+    .stat-chip-mini {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 10px 10px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: linear-gradient(145deg, rgba(17, 31, 39, .88), rgba(13, 23, 29, .74));
+    }
+
+    .stat-chip-mini .k {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 8.5px;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      line-height: 1.3;
+    }
+
+    .stat-chip-mini .v {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -.02em;
+      margin-top: 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .stat-chip-mini .s {
+      font-size: 10px;
+      line-height: 1.35;
+      color: var(--text-soft);
+      margin-top: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .panel-block {
+      padding: 10px 12px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: var(--card-soft);
+    }
+
+    .panel-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9.5px;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .pill {
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(0, 0, 0, .14);
+      color: var(--text-soft);
+      font-family: 'Sarabun', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: .2s ease;
+    }
+
+    .pill:hover {
+      border-color: var(--line-strong);
+      transform: translateY(-1px);
+    }
+
+    .pill.on {
+      border-color: rgba(245, 192, 101, .4);
+      box-shadow: inset 0 0 0 1px rgba(245, 192, 101, .08);
+      background: rgba(245, 192, 101, .11);
+      color: #ffe8bf;
+    }
+
+    body.jm .pill.on {
+      border-color: rgba(236, 186, 217, .42);
+      box-shadow: inset 0 0 0 1px rgba(236, 186, 217, .08);
+      background: rgba(236, 186, 217, .11);
+      color: #ffe4fa;
+    }
+
+    .micro-copy {
+      font-size: 12px;
+      line-height: 1.55;
+      color: var(--text-soft);
+    }
+
+    .rank-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .rank-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 24px;
+      line-height: .95;
+    }
+
+    .rank-sub {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: .08em;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .rank-list {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .rank-row {
+      display: grid;
+      grid-template-columns: 36px minmax(0, 88px) minmax(0, 1fr) 70px;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 10px;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: .22s ease;
+    }
+
+    .rank-row:hover {
+      background: rgba(255, 255, 255, .03);
+      transform: translateX(2px);
+    }
+
+    .rank-index,
+    .rank-value {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .rank-name {
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .rank-track {
+      height: 16px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, .05);
+      border: 1px solid rgba(255, 255, 255, .04);
+    }
+
+    .rank-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width .75s cubic-bezier(.18, .9, .2, 1);
+    }
+
+    .detail-card {
+      display: none;
+      gap: 12px;
+    }
+
+    .detail-card.show {
+      display: grid;
+      animation: fadeUp .28s ease;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(10px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    .detail-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .detail-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 30px;
+      line-height: .92;
+    }
+
+    .detail-en {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      letter-spacing: .08em;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    .detail-rank {
+      padding: 8px 10px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, .03);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      color: var(--text-soft);
+      white-space: nowrap;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .rice-card {
+      padding: 12px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, .02);
+    }
+
+    .rice-card .t {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .rice-card.white .t {
+      color: #f6cf84
+    }
+
+    .rice-card.jasmine .t {
+      color: #f1c7ef
+    }
+
+    .metric {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 7px 0;
+      border-top: 1px dashed rgba(255, 255, 255, .08);
+    }
+
+    .metric:first-of-type {
+      border-top: none;
+      padding-top: 0
+    }
+
+    .metric .m-label {
+      font-size: 12px;
+      color: var(--text-soft);
+    }
+
+    .metric .m-value {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      color: var(--text);
+      text-align: right;
+    }
+
+    .spark {
+      padding: 12px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, .02);
+    }
+
+    .spark-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .spark-top strong {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .spark-top span {
+      font-size: 12px;
+      color: var(--text-soft);
+    }
+
+    #sparkSvg {
+      width: 100%;
+      height: 58px;
+      display: block;
+    }
+
+    .placeholder {
+      padding: 16px;
+      border-radius: 18px;
+      border: 1px dashed rgba(255, 255, 255, .1);
+      background: rgba(255, 255, 255, .02);
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--text-soft);
+    }
+
+    .province {
+      cursor: pointer;
+      stroke: rgba(255, 255, 255, .16);
+      stroke-width: .7;
+      stroke-linejoin: round;
+      transition: opacity .2s ease, stroke .2s ease, stroke-width .2s ease, filter .2s ease, fill .2s ease;
+    }
+
+    .province:hover {
+      stroke: var(--white-acc);
+      stroke-width: 1.4;
+      filter: url(#hoverGlowWhite);
+    }
+
+    body.jm .province:hover {
+      stroke: var(--jasmine-acc);
+      filter: url(#hoverGlowJasmine);
+    }
+
+    .province.sel {
+      stroke: var(--white-acc);
+      stroke-width: 2;
+      filter: url(#selectGlowWhite);
+    }
+
+    body.jm .province.sel {
+      stroke: var(--jasmine-acc);
+      filter: url(#selectGlowJasmine);
+    }
+
+    .province.faded {
+      opacity: .15;
+    }
+
+    .province-label text {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: .06em;
+      fill: rgba(244, 240, 231, .9);
+      paint-order: stroke;
+      stroke: rgba(6, 15, 19, .82);
+      stroke-width: 4;
+      stroke-linejoin: round;
+      pointer-events: none;
+    }
+
+    .province-label circle {
+      fill: rgba(255, 255, 255, .8);
+      stroke: rgba(8, 18, 24, .8);
+      stroke-width: 2;
+      pointer-events: none;
+    }
+
+    .tooltip {
+      position: fixed;
+      z-index: 20;
+      pointer-events: none;
+      min-width: 240px;
+      max-width: 290px;
+      padding: 14px 16px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(9, 17, 22, .95);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, .38);
+      opacity: 0;
+      transform: translateY(8px);
+      transition: .15s ease;
+    }
+
+    .tooltip.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .tooltip .th {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .tooltip .en {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: .08em;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .tooltip .type {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed rgba(255, 255, 255, .08);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: #f7d59a;
+    }
+
+    body.jm .tooltip .type {
+      color: #f0c9f1
+    }
+
+    .tooltip .metric-name {
+      font-size: 11px;
+      color: var(--text-soft);
+      margin-top: 8px;
+    }
+
+    .tooltip .value {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 24px;
+      line-height: 1.1;
+      margin-top: 4px;
+    }
+
+    .tooltip .rank {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    .tooltip .yoy {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      margin-top: 7px;
+    }
+
+    .tooltip .yoy.pos {
+      color: var(--pos)
+    }
+
+    .tooltip .yoy.neg {
+      color: var(--neg)
+    }
+
+    .tooltip .est-badge {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: rgba(245, 192, 101, .18);
+      border: 1px solid rgba(245, 192, 101, .35);
+      color: #f5c065;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9.5px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-top: 6px;
+    }
+
+    .rice-card .est-note {
+      font-size: 10px;
+      color: rgba(245, 192, 101, .75);
+      font-style: italic;
+      margin-top: 3px;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 26px;
+      transform: translateX(-50%) translateY(12px);
+      padding: 11px 14px;
+      border-radius: 999px;
+      background: rgba(9, 17, 22, .92);
+      border: 1px solid var(--line);
+      color: var(--text-soft);
+      font-size: 12px;
+      opacity: 0;
+      pointer-events: none;
+      transition: .2s ease;
+      z-index: 30;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .credit {
+      position: fixed;
+      bottom: 10px;
+      left: 16px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: .08em;
+      color: rgba(255, 255, 255, .22);
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    /* ── Live Price Widget ── */
+    .live-price-block {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .live-price-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 7px 10px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, .03);
+    }
+
+    .live-price-label {
+      font-size: 11px;
+      color: var(--text-soft);
+      line-height: 1.3;
+    }
+
+    .live-price-val {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: -.01em;
+      white-space: nowrap;
+    }
+
+    .live-price-val.up {
+      color: #86efac
+    }
+
+    .live-price-val.down {
+      color: #fca5a5
+    }
+
+    .live-price-updated {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      letter-spacing: .06em;
+      color: var(--muted);
+      text-align: right;
+      margin-top: 2px;
+    }
+
+    .live-dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #86efac;
+      margin-right: 5px;
+      vertical-align: middle;
+      animation: livePulse 2.4s ease-in-out infinite;
+    }
+
+    @keyframes livePulse {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1)
+      }
+
+      50% {
+        opacity: .35;
+        transform: scale(.75)
+      }
+    }
+
+    @media (max-width:1280px) {
+      .main {
+        grid-template-columns: minmax(0, 1fr) clamp(290px, 24vw, 340px)
+      }
+    }
+
+    @media (max-width:980px) {
+      body {
+        overflow-y: auto
+      }
+
+      .app {
+        height: auto;
+        min-height: 100vh;
+        padding: 12px
+      }
+
+      .top-bar {
+        flex-direction: column;
+        align-items: flex-start
+      }
+
+      .brand {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 10px
+      }
+
+      .top-actions {
+        width: 100%;
+        justify-content: flex-start
+      }
+
+      .main {
+        grid-template-columns: 1fr;
+        height: auto
+      }
+
+      .map-wrap {
+        min-height: 65vw
+      }
+
+      .stat-row-panel {
+        grid-template-columns: repeat(2, 1fr)
+      }
+
+      .legend {
+        flex-direction: column;
+        align-items: flex-start
+      }
+
+      .legend-copy {
+        text-align: left
+      }
+
+      .inset-stack {
+        grid-template-columns: repeat(2, minmax(0, 170px))
+      }
+    }
+
+    @media (max-width:700px) {
+      .app {
+        padding: 10px
+      }
+
+      .top-bar,
+      .map-panel,
+      .side-panel {
+        border-radius: 20px
+      }
+
+      .brand-copy h1 {
+        font-size: 28px
+      }
+
+      .stat-row-panel {
+        grid-template-columns: 1fr 1fr;
+        gap: 6px
+      }
+
+      .detail-grid {
+        grid-template-columns: 1fr
+      }
+
+      .rank-row {
+        grid-template-columns: 30px minmax(0, 80px) minmax(0, 1fr) 56px
+      }
+
+      .legend-bar {
+        width: min(200px, 48vw)
+      }
+
+      .sea-label {
+        display: none
+      }
+
+      .map-tools {
+        top: auto;
+        right: 12px;
+        bottom: 12px
+      }
+
+      .map-info-chip {
+        display: none
+      }
+
+      .inset-stack {
+        display: none
+      }
+    }
+
+    /* ── Language toggle ─────────────────────────────────────────── */
+    body:not(.lang-en) .en-t { display: none !important }
+    body.lang-en .th-t { display: none !important }
+
+    .lang-btn {
+      padding: 6px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--line-strong);
+      background: rgba(17, 31, 39, .7);
+      color: var(--text-soft);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: .2s ease;
+      letter-spacing: .06em;
+    }
+    .lang-btn:hover {
+      border-color: rgba(255,255,255,.28);
+      color: var(--text);
+      transform: translateY(-1px);
+    }
+  </style>
 </head>
 
 <body>
@@ -224,7 +1626,2049 @@
 
   <script src="./thailand-data.js"></script>
   <script src="./rice-data.js"></script>
-  <script src="./app.js"></script>
+  <script>
+    const NM = {
+      "Mae Hong Son": "แม่ฮ่องสอน", "Chumphon": "ชุมพร", "Nakhon Si Thammarat": "นครศรีธรรมราช",
+      "Phuket": "ภูเก็ต", "Phangnga": "พังงา", "Ranong": "ระนอง", "Surat Thani": "สุราษฎร์ธานี",
+      "Krabi": "กระบี่", "Phatthalung": "พัทลุง", "Satun": "สตูล", "Songkhla": "สงขลา",
+      "Trang": "ตรัง", "Yala": "ยะลา", "Chiang Rai": "เชียงราย", "Chiang Mai": "เชียงใหม่",
+      "Lampang": "ลำปาง", "Lamphun": "ลำพูน", "Nan": "น่าน", "Phayao": "พะเยา",
+      "Phrae": "แพร่", "Phitsanulok": "พิษณุโลก", "Sukhothai": "สุโขทัย", "Uttaradit": "อุตรดิตถ์",
+      "Kanchanaburi": "กาญจนบุรี", "Kamphaeng Phet": "กำแพงเพชร", "Phichit": "พิจิตร",
+      "Phetchabun": "เพชรบูรณ์", "Suphan Buri": "สุพรรณบุรี", "Tak": "ตาก",
+      "Uthai Thani": "อุทัยธานี", "Ang Thong": "อ่างทอง", "Chai Nat": "ชัยนาท",
+      "Lop Buri": "ลพบุรี", "Nakhon Nayok": "นครนายก", "Prachin Buri": "ปราจีนบุรี",
+      "Nakhon Sawan": "นครสวรรค์", "Phra Nakhon Si Ayutthaya": "พระนครศรีอยุธยา",
+      "Pathum Thani": "ปทุมธานี", "Sing Buri": "สิงห์บุรี", "Saraburi": "สระบุรี",
+      "Bangkok Metropolis": "กรุงเทพมหานคร", "Nonthaburi": "นนทบุรี",
+      "Nakhon Pathom": "นครปฐม", "Phetchaburi": "เพชรบุรี",
+      "Prachuap Khiri Khan": "ประจวบคีรีขันธ์", "Ratchaburi": "ราชบุรี",
+      "Samut Prakan": "สมุทรปราการ", "Samut Sakhon": "สมุทรสาคร",
+      "Samut Songkhram": "สมุทรสงคราม", "Si Sa Ket": "ศรีสะเกษ",
+      "Ubon Ratchathani": "อุบลราชธานี", "Amnat Charoen": "อำนาจเจริญ",
+      "Yasothon": "ยโสธร", "Chon Buri": "ชลบุรี", "Chachoengsao": "ฉะเชิงเทรา",
+      "Chanthaburi": "จันทบุรี", "Sa Kaeo": "สระแก้ว", "Rayong": "ระยอง",
+      "Trat": "ตราด", "Buri Ram": "บุรีรัมย์", "Chaiyaphum": "ชัยภูมิ",
+      "Khon Kaen": "ขอนแก่น", "Kalasin": "กาฬสินธุ์", "Maha Sarakham": "มหาสารคาม",
+      "Nakhon Ratchasima": "นครราชสีมา", "Roi Et": "ร้อยเอ็ด", "Surin": "สุรินทร์",
+      "Loei": "เลย", "Nong Khai": "หนองคาย", "Sakon Nakhon": "สกลนคร",
+      "Udon Thani": "อุดรธานี", "Nong Bua Lam Phu": "หนองบัวลำภู",
+      "Nakhon Phanom": "นครพนม", "Mukdahan": "มุกดาหาร",
+      "Narathiwat": "นราธิวาส", "Pattani": "ปัตตานี", "Bueng Kan": "บึงกาฬ"
+    };
+
+    // Dam name English lookup (keyed by RID dam ID — matches dam-water.json)
+    const DAM_NAME_EN = {
+      "100211": "Lam Nang Rong Dam",        "100502": "Khlong Si Yat Dam",
+      "200204": "Chulabhorn Dam",            "100104": "Mae Kuang Udom Thara Dam",
+      "200103": "Mae Ngat Somboon Chon Dam", "100503": "Bang Phra Dam",
+      "100206": "Lam Pao Dam",              "200401": "Srinakarin Dam",
+      "200402": "Vajiralongkorn Dam",        "200205": "Ubolratana Dam",
+      "100105": "Kiew Lom Dam",             "100106": "Kiew Kho Ma Dam",
+      "100108": "Mae Mok Dam",              "100501": "Khun Dan Prakan Chon Dam",
+      "100207": "Lam Takhong Dam",          "100208": "Lam Phra Phloeng Dam",
+      "100209": "Mun Bon Dam",              "100210": "Lam Chae Dam",
+      "200601": "Kaeng Krachan Dam",         "100107": "Khwae Noi Bamrung Dan Dam",
+      "100514": "Naruebodintharajinda Dam",  "100602": "Pran Buri Dam",
+      "100504": "Nong Pla Lai Dam",         "100505": "Prasae Dam",
+      "100202": "Nam Un Dam",               "200203": "Nam Pung Dam",
+      "100301": "Pa Sak Jolasid Dam",        "100303": "Krasiao Dam",
+      "200603": "Ratchaprapha Dam",          "200101": "Bhumibol Dam",
+      "200212": "Sirindhorn Dam",            "100201": "Huai Luang Dam",
+      "100302": "Thabsala Dam",             "200102": "Sirikit Dam",
+      "200604": "Bang Lang Dam",
+    };
+
+    const REG = {
+      north: ["Chiang Mai", "Chiang Rai", "Lamphun", "Lampang", "Phrae", "Nan", "Phayao", "Mae Hong Son", "Uttaradit", "Tak", "Sukhothai", "Phitsanulok", "Kamphaeng Phet", "Phichit", "Phetchabun", "Nakhon Sawan", "Uthai Thani"],
+      northeast: ["Nakhon Ratchasima", "Khon Kaen", "Udon Thani", "Ubon Ratchathani", "Buri Ram", "Surin", "Si Sa Ket", "Roi Et", "Maha Sarakham", "Kalasin", "Sakon Nakhon", "Nakhon Phanom", "Nong Khai", "Mukdahan", "Chaiyaphum", "Yasothon", "Amnat Charoen", "Loei", "Nong Bua Lam Phu", "Bueng Kan"],
+      central: ["Bangkok Metropolis", "Nonthaburi", "Pathum Thani", "Samut Prakan", "Samut Sakhon", "Samut Songkhram", "Nakhon Pathom", "Suphan Buri", "Chai Nat", "Sing Buri", "Ang Thong", "Lop Buri", "Saraburi", "Phra Nakhon Si Ayutthaya", "Nakhon Nayok", "Kanchanaburi", "Ratchaburi", "Phetchaburi", "Prachuap Khiri Khan"],
+      east: ["Chon Buri", "Rayong", "Chanthaburi", "Trat", "Chachoengsao", "Prachin Buri", "Sa Kaeo"],
+      south: ["Nakhon Si Thammarat", "Surat Thani", "Chumphon", "Ranong", "Phangnga", "Phuket", "Krabi", "Trang", "Phatthalung", "Songkhla", "Satun", "Pattani", "Yala", "Narathiwat"]
+    };
+
+    const PRODUCTION_YEARS = ["2565", "2566", "2567", "2568", "2569"];
+    const PRICE_YEARS = ["2568", "2569"];
+    const ALL_YEARS = [...new Set([...PRODUCTION_YEARS, ...PRICE_YEARS])];
+    const RICE_TYPES = ["white", "jasmine"];
+    const allEN = [...new Set(Object.values(REG).flat())];
+    const METRO_PROVS = ["Bangkok Metropolis", "Nonthaburi", "Pathum Thani", "Samut Prakan", "Samut Sakhon", "Samut Songkhram", "Nakhon Pathom", "Phra Nakhon Si Ayutthaya"];
+    const layerMeta = {
+      production: { th: "ผลผลิต", en: "Paddy Production", unit: "ตัน/ปี", unitEn: "tons/yr", unitShort: "ตัน", unitShortEn: "tons", summary: "ผลผลิตรวม", summaryMode: "sum" },
+      yield:      { th: "ผลผลิตต่อไร่", en: "Yield", unit: "กก./ไร่ (เก็บเกี่ยว)", unitEn: "kg/rai (harv.)", unitShort: "กก./ไร่", unitShortEn: "kg/rai", summary: "ผลผลิตเฉลี่ยต่อไร่", summaryMode: "weighted" },
+      area:       { th: "เนื้อที่เก็บเกี่ยว", en: "Harvested Area", unit: "ไร่", unitEn: "rai", unitShort: "ไร่", unitShortEn: "rai", summary: "เนื้อที่เก็บเกี่ยวรวม", summaryMode: "sum" },
+      price:      { th: "ราคาที่โรงสีรับซื้อ", en: "Mill Purchase Price", unit: "บาท/ตัน (ราคาโรงสี)", unitEn: "฿/ton (mill)", unitShort: "฿/ตัน", unitShortEn: "฿/ton", summary: "ราคาเฉลี่ยจังหวัดที่มีข้อมูล", summaryMode: "avg_nonzero" },
+      households: { th: "ครัวเรือนเกษตรกร", en: "Farmer Households", unit: "ครัวเรือน (ปี 2566)", unitEn: "HH (2566)", unitShort: "ครัวเรือน", unitShortEn: "HH", summary: "ครัวเรือนเกษตรกรรวม", summaryMode: "sum" },
+      fertilizer: { th: "ราคาปุ๋ยเคมีรายจังหวัด", en: "Fertilizer Price", unit: "บาท/กระสอบ 50 กก.", unitEn: "฿/50kg bag", unitShort: "฿/กระสอบ", unitShortEn: "฿/bag", summary: "ราคาปุ๋ยเฉลี่ย", summaryMode: "avg_nonzero" },
+      dam:        { th: "ระดับน้ำในเขื่อน", en: "Dam Water Level", unit: "% ความจุ (RID)", unitEn: "% capacity (RID)", unitShort: "%", unitShortEn: "%", summary: "ระดับน้ำเฉลี่ย", summaryMode: "avg_nonzero" },
+      rainfall:   { th: "ปริมาณฝน (นาปี)", en: "Season Rainfall", unit: "มม. (มิ.ย.–พ.ย.)", unitEn: "mm (Jun–Nov)", unitShort: "มม.", unitShortEn: "mm", summary: "ปริมาณฝนเฉลี่ย", summaryMode: "avg_nonzero" },
+      drought:    { th: "ฝนเบี่ยงเบนจากปกติ", en: "Rainfall Anomaly", unit: "% เทียบค่าปกติ 5 ปี", unitEn: "% vs 5-yr avg", unitShort: "%", unitShortEn: "%", summary: "% เบี่ยงเบนเฉลี่ย", summaryMode: "avg_signed" },
+      mills:      { th: "โรงสีข้าว", en: "Rice Mills", unit: "แห่ง/จังหวัด", unitEn: "mills/prov", unitShort: "แห่ง", unitShortEn: "mills", summary: "โรงสีข้าวรวม", summaryMode: "sum" },
+    };
+    const riceMeta = {
+      white:   { th: "ข้าวขาว",  en: "White Rice",   badge: "🌾" },
+      jasmine: { th: "หอมมะลิ", en: "Jasmine Rice", badge: "🌸" }
+    };
+
+    // OAE/สศก. · ThaiPBS · ThaiPublica · Krungsri Research · ปีเพาะปลูก 2566/67–2567/68
+    const COST_BASE = {
+      white:   { seed:400, fert:1200, chem:500, labor:2200, rent:1000, fuel:500, other:300,
+                 oaeTonCost:10167, oaeYield:600, oaeRaiCost:6100 },
+      jasmine: { seed:800, fert:900,  chem:400, labor:1800, rent:700,  fuel:300, other:250,
+                 oaeTonCost:12875, oaeYield:400, oaeRaiCost:5150 },
+    };
+    const COST_ROWS = [
+      { th:'ค่าเมล็ดพันธุ์',         en:'Seed',                 w:COST_BASE.white.seed,  j:COST_BASE.jasmine.seed  },
+      { th:'ค่าปุ๋ยเคมี',             en:'Fertilizer',           w:COST_BASE.white.fert,  j:COST_BASE.jasmine.fert  },
+      { th:'ค่าสารเคมี/ยาฆ่าแมลง',   en:'Chemicals / Pesticide',w:COST_BASE.white.chem,  j:COST_BASE.jasmine.chem  },
+      { th:'ค่าแรงงาน+เครื่องจักร',  en:'Labor + Machinery',    w:COST_BASE.white.labor, j:COST_BASE.jasmine.labor },
+      { th:'ค่าเช่านา (ผู้เช่า)',     en:'Land Rent (lessee)',   w:COST_BASE.white.rent,  j:COST_BASE.jasmine.rent },
+      { th:'ค่าน้ำมันเชื้อเพลิง',    en:'Fuel',                 w:COST_BASE.white.fuel,  j:COST_BASE.jasmine.fuel  },
+      { th:'ค่าขนส่ง/อื่นๆ',         en:'Transport / Other',    w:COST_BASE.white.other, j:COST_BASE.jasmine.other },
+    ];
+
+    // MOC / DIT official fertilizer price survey — 23 April 2569
+    const FERT_MOC = {
+      updated: { th: '23 เมษายน 2569', en: '23 April 2026' },
+      items: [
+        { formula:'46-0-0',      th:'ยูเรีย',              en:'Urea',               min:900,  max:1200, rice:true,  note:{ th:'พบมากที่สุดในการสำรวจ',     en:'Most commonly surveyed'        } },
+        { formula:'15-15-15',   th:'สูตรรวม',              en:'Compound',           min:1000, max:1225,             note:{ th:'ปุ๋ยสูตรรวมนิยมสูง',          en:'High-demand compound'          } },
+        { formula:'16-20-0',    th:'สำหรับข้าว/พืชไร่',   en:'For rice / field',   min:900,  max:980,  rice:true,  note:{ th:'ใช้กับข้าว/พืชไร่',           en:'Rice & field crop use'         } },
+        { formula:'21-0-0',     th:'แอมโมเนียมซัลเฟต',   en:'Ammonium Sulfate',   min:480,  max:600,             note:{ th:'ราคาต่ำสุดในกลุ่ม',           en:'Lowest price in group'         } },
+        { formula:'0-0-60',     th:'โพแทสเซียมคลอไรด์',   en:'Potassium Chloride', min:760,  max:900,             note:{ th:'โพแทสเซียมคลอไรด์',           en:'Potassium Chloride'            } },
+        { formula:'18-46-0',    th:'DAP',                  en:'DAP',                min:1450, max:1450,            note:{ th:'พบที่พัทลุง/ขอนแก่น',         en:'Phatthalung / Khon Kaen'       } },
+        { formula:'16-16-16',   th:'สูตรสมดุล',            en:'Balanced',           min:1380, max:1380,            note:{ th:'พบที่นครปฐม',                 en:'Nakhon Pathom'                 } },
+        { formula:'25-7-7',     th:'ออกฤทธิ์เร็ว',        en:'Fast Release',       min:1060, max:1060,            note:{ th:'พบที่นครปฐม',                 en:'Nakhon Pathom'                 } },
+      ],
+    };
+
+    const refs = {
+      mapWrap: document.getElementById("mapWrap"),
+      mapSvg: document.getElementById("mapSvg"),
+      tooltip: document.getElementById("tooltip"),
+      topList: document.getElementById("topList"),
+      yearButtons: document.getElementById("yearButtons"),
+      zoomValue: document.getElementById("zoomValue"),
+      dataStatus: document.getElementById("dataStatus"),
+      dataSourceNote: document.getElementById("dataSourceNote"),
+      metroInsetCard: document.getElementById("metroInsetCard"),
+      metroInsetSvg: document.getElementById("metroInsetSvg"),
+      southInsetCard: document.getElementById("southInsetCard"),
+      southInsetSvg: document.getElementById("southInsetSvg"),
+      detailCard: document.getElementById("detailCard"),
+      detailPlaceholder: document.getElementById("detailPlaceholder"),
+      detailName: document.getElementById("detailName"),
+      detailEn: document.getElementById("detailEn"),
+      detailRank: document.getElementById("detailRank"),
+      detailGrid: document.getElementById("detailGrid"),
+      detailDataNote: document.getElementById("detailDataNote"),
+      sparkSvg: document.getElementById("sparkSvg"),
+      sparkTitle: document.getElementById("sparkTitle"),
+      latestBadge: document.getElementById("latestBadge"),
+      legendBar: document.getElementById("legendBar"),
+      legendLow: document.getElementById("legendLow"),
+      legendHigh: document.getElementById("legendHigh"),
+      legendType: document.getElementById("legendType"),
+      legendLayer: document.getElementById("legendLayer"),
+      legendUnit: document.getElementById("legendUnit"),
+      headlineTitle: document.getElementById("headlineTitle"),
+      headlineDesc: document.getElementById("headlineDesc"),
+      scopeLabel: document.getElementById("scopeLabel"),
+      scopeValue: document.getElementById("scopeValue"),
+      scopeSub: document.getElementById("scopeSub"),
+      aggLabel: document.getElementById("aggLabel"),
+      aggValue: document.getElementById("aggValue"),
+      aggSub: document.getElementById("aggSub"),
+      topSub: document.getElementById("topSub"),
+      sparkHint: document.getElementById("sparkHint"),
+      toast: document.getElementById("toast"),
+      cost_summary_title: document.getElementById("costSummaryTitle"), // match the underscore in next edit or keep camelCase
+      costSummaryTitle: document.getElementById("costSummaryTitle"),
+      costSummaryBlock: document.getElementById("costSummaryBlock"),
+      nationalFertPanel: document.getElementById("nationalFertPanel"),
+      nationalFertTitle: document.getElementById("nationalFertTitle"),
+      nationalFertBlock: document.getElementById("nationalFertBlock")
+    };
+
+    let S = { rice: "white", layer: "production", year: "2567", reg: "all", sel: null };
+    let DATA = {};
+    let DATA_META = { mode: "loading", label: "กำลังโหลดข้อมูล CSV", detail: "กำลังอ่านไฟล์ชุดเริ่มต้น" };
+    let VIEW = {
+      width: 0,
+      height: 0,
+      scale: 1,
+      offsetX: 0,
+      offsetY: 0,
+      features: [],
+      featureMap: new Map(),
+      labelMap: new Map(),
+      camera: { k: 1, x: 0, y: 0, min: 1, max: 7 },
+      dragging: false,
+      didDrag: false,
+      draggedAt: 0,
+      dragStart: null
+    };
+    let toastTimer = null;
+    let mapInteractionsReady = false;
+
+    function hsh(str) {
+      let h = 0;
+      for (let i = 0; i < str.length; i += 1) { h = ((h << 5) - h) + str.charCodeAt(i); h |= 0 }
+      return Math.abs(h);
+    }
+
+    function srand(seed) {
+      const x = Math.sin(seed) * 10000;
+      return x - Math.floor(x);
+    }
+
+    function regionOf(en) {
+      for (const [region, list] of Object.entries(REG)) {
+        if (list.includes(en)) return region;
+      }
+      return "central";
+    }
+
+    function seedDataStructure() {
+      DATA = {};
+      for (const en of allEN) {
+        DATA[en] = {};
+        for (const rice of RICE_TYPES) {
+          DATA[en][rice] = {};
+          ALL_YEARS.forEach(year => {
+            DATA[en][rice][year] = {
+              production: 0,
+              yield: 0,
+              area: 0,
+              area_planted: 0,
+              yield_planted: 0,
+              price: 0,
+              price_low: "",
+              price_high: "",
+              price_low_alt: "",
+              price_high_alt: "",
+              price_basis: "",
+              source: "",
+              source_title: "",
+              source_url: "",
+              source_note: "",
+              source_date: ""
+            };
+          });
+        }
+      }
+    }
+
+    function buildFallbackData() {
+      if (Array.isArray(window.RICE_DATA_ROWS) && window.RICE_DATA_ROWS.length) {
+        ingestRows(window.RICE_DATA_ROWS, {
+          mode: "embedded",
+          label: "Embedded Mixed Official Dataset",
+          detail: `โหลดจาก rice-data.js จำนวน ${fmtNumber(window.RICE_DATA_ROWS.length)} แถว`
+        });
+        return;
+      }
+      seedDataStructure();
+      DATA_META = {
+        mode: "empty",
+        label: "Dataset unavailable",
+        detail: "โหลดทั้ง rice-data.csv และ rice-data.js ไม่สำเร็จ จึงยังไม่มีข้อมูลให้แสดง"
+      };
+    }
+
+    function applyRecord(record) {
+      const en = (record.province_en || record.province || record.en || "").trim();
+      const rawRice = (record.rice_type || "").trim().toLowerCase();
+      const rice = rawRice === "napi" ? "white" : (rawRice || "white");
+      const year = (record.year || "").trim();
+      if (!DATA[en] || !DATA[en][rice] || !DATA[en][rice][year]) return false;
+      const target = DATA[en][rice][year];
+      const normalizedRecord = {
+        ...record,
+        yield: record.yield,
+        area_planted: record.area_planted,
+        yield_planted: record.yield_planted
+      };
+      ["production", "yield", "area", "area_planted", "yield_planted", "price", "price_low", "price_high", "price_low_alt", "price_high_alt"].forEach(layer => {
+        const num = Number(normalizedRecord[layer]);
+        if (String(normalizedRecord[layer] ?? "").trim() !== "" && Number.isFinite(num)) target[layer] = num;
+      });
+      target.price_basis = (record.price_basis || "").trim();
+      target.source = (record.source || record.data_source || "csv_local").trim() || "csv_local";
+      target.source_title = (record.source_title || "").trim();
+      target.source_url = (record.source_url || "").trim();
+      target.source_note = (record.source_note || "").trim();
+      target.source_date = (record.source_date || "").trim();
+      return true;
+    }
+
+    function ingestRows(rows, meta = {}) {
+      seedDataStructure();
+      let applied = 0;
+      rows.forEach(record => {
+        if (applyRecord(record)) applied += 1;
+      });
+      DATA_META = {
+        mode: meta.mode || "csv",
+        label: meta.label || "Local CSV",
+        detail: meta.detail || `อ่านข้อมูลจาก CSV แล้ว ${fmtNumber(applied)} เรคคอร์ด`
+      };
+      return applied;
+    }
+
+    async function fetchDefaultCSV() {
+      try {
+        const response = await fetch("./rice-data.csv", { cache: "no-store" });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const text = await response.text();
+        const rows = parseCSV(text);
+        if (rows.length < 2) throw new Error("CSV empty");
+        const headers = rows[0].map(h => String(h).trim());
+        const records = rows.slice(1).map(row => {
+          const obj = {};
+          headers.forEach((header, idx) => obj[header] = String(row[idx] ?? "").trim());
+          return obj;
+        });
+        ingestRows(records, {
+          mode: "csv",
+          label: "OAE + Thai Rice Millers CSV",
+          detail: `โหลดจาก rice-data.csv จำนวน ${fmtNumber(records.length)} แถว`
+        });
+      } catch (error) {
+        buildFallbackData();
+        console.warn("rice-data.csv load failed; using embedded mixed dataset", error);
+      }
+    }
+
+    async function fetchHouseholds() {
+      try {
+        const res = await fetch("data/farmer_households.csv?_=" + Date.now(), { cache: "no-store" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const text = await res.text();
+        const rows = parseCSV(text);
+        if (rows.length < 2) throw new Error("empty");
+        const headers = rows[0].map(h => String(h).trim());
+        const idx = { year: headers.indexOf("year"), name: headers.indexOf("province_name"), amount: headers.indexOf("amount") };
+        // use latest available year (2566)
+        const latest = rows.slice(1)
+          .map(r => ({ year: String(r[idx.year] ?? "").trim(), name: String(r[idx.name] ?? "").trim(), amount: Number(r[idx.amount] || 0) }))
+          .filter(r => r.year === "2566" && r.name && r.amount > 0);
+        window.PROVINCE_HOUSEHOLDS = Object.fromEntries(latest.map(r => [r.name, r.amount]));
+        rerender();
+      } catch (e) {
+        console.warn("farmer_households.csv load failed", e);
+      }
+    }
+
+    function getVisibleProvinces() {
+      if (S.reg === "all") return allEN;
+      return REG[S.reg] || allEN;
+    }
+
+    function yearsForLayer(layer = S.layer) {
+      if (layer === "dam") return ["dam"];
+      if (layer === "rainfall" || layer === "drought") return ["weather"];
+      if (layer === "households") return ["2566"];
+      if (layer === "mills") return ["mills"];
+      return layer === "price" ? PRICE_YEARS : PRODUCTION_YEARS;
+    }
+
+function t(th, en) {
+      return document.body.classList.contains('lang-en') ? en : th;
+    }
+    // Unit label helpers — always language-aware
+    function usLabel(layer = S.layer) { const m = layerMeta[layer]; return t(m.unitShort, m.unitShortEn ?? m.unitShort); }
+    function uLabel(layer = S.layer)  { const m = layerMeta[layer]; return t(m.unit,      m.unitEn      ?? m.unit);      }
+    function toggleLang() {
+      document.body.classList.toggle('lang-en');
+      rerender();
+      renderLivePriceWidget();
+      updateNationalFert();
+    }
+    window.toggleLang = toggleLang;
+
+    function entryOf(en, rice = S.rice, year = S.year) {
+      return DATA[en]?.[rice]?.[year] || {};
+    }
+
+    function isEstimated(en, rice = S.rice, year = S.year) {
+      const src = entryOf(en, rice, year).source || '';
+      return src === 'estimated_trend';
+    }
+
+    function householdValueOf(en) {
+      const thName = NM[en];
+      if (!thName || !window.PROVINCE_HOUSEHOLDS) return 0;
+      return Number(window.PROVINCE_HOUSEHOLDS[thName] || 0);
+    }
+
+    function damValueOf(en) {
+      return window.DAM_DATA?.provinces?.[en]?.dam_level_pct ?? 0;
+    }
+
+    function millsValueOf(en) {
+      const thName = NM[en];
+      if (!thName || !RICE_MILLS_DATA) return 0;
+      return RICE_MILLS_DATA.provinces?.[thName]?.count ?? 0;
+    }
+
+    // Render a full mill name list, deduplicated — used by tooltip and detail card
+    const MILL_TYPE_EN = { "ใหญ่": "Large", "กลาง": "Medium", "เล็ก": "Small" };
+    function renderMillList(mills) {
+      const seen = new Set();
+      const unique = mills.filter(m => { if (seen.has(m.name)) return false; seen.add(m.name); return true; });
+      return unique.map(m => {
+        const typeLabel = t(m.type, MILL_TYPE_EN[m.type] || m.type);
+        const capLabel  = m.capacity ? `, ${fmtNumber(m.capacity)} ${t('ต./วัน','t/day')}` : '';
+        return `<div style="font-size:9px;color:var(--muted);margin-top:2px">· ${m.name} <span style="opacity:.6">(${typeLabel}${capLabel})</span></div>`;
+      }).join("");
+    }
+
+    function valueOf(en, rice = S.rice, year = S.year, layer = S.layer) {
+      if (layer === "households") return householdValueOf(en);
+      if (layer === "dam") return damValueOf(en);
+      if (layer === "rainfall" || layer === "drought") return weatherValueOf(en, layer) ?? 0;
+      if (layer === "mills") return millsValueOf(en);
+      return Number(entryOf(en, rice, year)[layer] || 0);
+    }
+
+    function hasLayerValue(en, rice = S.rice, year = S.year, layer = S.layer) {
+      if (layer === "dam") return window.DAM_DATA?.provinces?.[en] != null;
+      if (layer === "rainfall" || layer === "drought") return weatherValueOf(en, layer) != null;
+      if (layer === "mills") return millsValueOf(en) > 0;
+      return valueOf(en, rice, year, layer) > 0;
+    }
+
+    function priceRange(entry) {
+      const low = Number(entry.price_low || 0);
+      const high = Number(entry.price_high || 0);
+      if (!low || !high) return "—";
+      return `${fmtNumber(low)}-${fmtNumber(high)}`;
+    }
+
+    function priceAltRange(entry) {
+      const low = Number(entry.price_low_alt || 0);
+      const high = Number(entry.price_high_alt || 0);
+      if (!low || !high) return "";
+      return `${fmtNumber(low)}-${fmtNumber(high)}`;
+    }
+
+    function riceTypeDescription(rice = S.rice, layer = S.layer) {
+      if (rice === "white") {
+        return layer === "price"
+          ? t("ข้าวเปลือกเจ้า", "White Paddy")
+          : t("ข้าวเจ้าอื่นๆ", "Other White Rice");
+      }
+      return layer === "price"
+        ? t("ข้าวเปลือกเจ้าหอมมะลิ", "Hom Mali Paddy")
+        : t("ข้าวเจ้าหอมมะลิ (ในพื้นที่ + นอกพื้นที่)", "Hom Mali (in + outside area)");
+    }
+
+    function metricDisplay(en, rice = S.rice, year = S.year, layer = S.layer) {
+      if (layer === "price") return priceRange(entryOf(en, rice, year));
+      return fmtValue(valueOf(en, rice, year, layer), layer);
+    }
+
+    function getPalette() {
+      if (S.layer === "dam")      return { lo: [192, 57, 43], mid: [241, 196, 15], hi: [41, 128, 185], accent: "#3498db" };
+      if (S.layer === "rainfall") return { lo: [180, 90, 30],  mid: [235, 185, 55], hi: [30, 100, 195],  accent: "#3b82f6" };
+      if (S.layer === "drought")  return { lo: [192, 57, 43],  mid: [241, 196, 15], hi: [41, 128, 185],  accent: "#2ecc71" };
+      if (S.layer === "mills")    return { lo: [60, 40, 20],   mid: [160, 110, 40], hi: [230, 170, 60],  accent: "#e6aa3c" };
+      return S.rice === "white"
+        ? { lo: [36, 75, 54], mid: [154, 131, 73], hi: [245, 192, 101], accent: "#ff8f4d" }
+        : { lo: [42, 39, 77], mid: [134, 93, 178], hi: [236, 186, 217], accent: "#d9a0ff" };
+    }
+
+    function rgb(arr) { return `rgb(${arr[0]},${arr[1]},${arr[2]})` }
+
+    function lerp(a, b, t) {
+      return [
+        Math.round(a[0] + (b[0] - a[0]) * t),
+        Math.round(a[1] + (b[1] - a[1]) * t),
+        Math.round(a[2] + (b[2] - a[2]) * t)
+      ];
+    }
+
+    function scaleT(v, min, max) {
+      if (max <= min) return .5;
+      // drought: center palette at 0mm (balanced) — red=แล้ง yellow=สมดุล blue=ชุ่มชื้น
+      if (S.layer === "drought") {
+        const absMax = Math.max(Math.abs(min), Math.abs(max));
+        return absMax > 0 ? Math.max(0, Math.min(1, 0.5 + 0.5 * (v / absMax))) : 0.5;
+      }
+      const ratio = (v - min) / (max - min);
+      if (S.layer === "yield") return Math.pow(ratio, .88);
+      return Math.pow(ratio, .62);
+    }
+
+    function fmtNumber(n) {
+      if (!Number.isFinite(n)) return "—";
+      return n.toLocaleString("th-TH");
+    }
+
+    function fmtCompact(n) {
+      if (!Number.isFinite(n)) return "—";
+      if (S.layer === "dam")      return n.toFixed(1) + "%";
+      if (S.layer === "rainfall") return fmtNumber(Math.round(n)) + " mm";
+      if (S.layer === "drought")  return (n >= 0 ? "+" : "") + n.toFixed(1) + "%";
+      if (S.layer === "mills")    return fmtNumber(Math.round(n));
+      if (S.layer === "price") return fmtNumber(Math.round(n));
+      if (S.layer === "households") {
+        if (n >= 1e6) return `${(n / 1e6).toFixed(2)}M`;
+        if (n >= 1e4) return `${Math.round(n / 1e3)}K`;
+        return fmtNumber(Math.round(n));
+      }
+      if (S.layer === "fertilizer") return fmtNumber(Math.round(n));
+      if (n >= 1e6) return `${(n / 1e6).toFixed(1)}M`;
+      if (n >= 1e4) return `${Math.round(n / 1e3)}K`;
+      return fmtNumber(Math.round(n));
+    }
+
+    function fmtValue(n, layer = S.layer) {
+      if (!Number.isFinite(n)) return "—";
+      if (layer === "dam") return n.toFixed(1) + "%";
+      return fmtNumber(Math.round(n));
+    }
+
+    function sum(arr) { return arr.reduce((acc, v) => acc + v, 0) }
+    function average(arr) { return arr.length ? sum(arr) / arr.length : 0 }
+
+    function aggregateFor(provinces, rice, year, layer, mode) {
+      if (mode === "weighted") {
+        const production = sum(provinces.map(en => valueOf(en, rice, year, "production")));
+        const area = sum(provinces.map(en => valueOf(en, rice, year, "area")));
+        return area ? (production * 1000) / area : 0;
+      }
+      if (mode === "avg_nonzero") {
+        const values = provinces.map(en => valueOf(en, rice, year, layer)).filter(v => v > 0);
+        return values.length ? average(values) : 0;
+      }
+      if (mode === "avg_signed") {
+        // ใช้กับ drought — รวม negative (แล้ง) ด้วย ไม่กรองออก
+        const values = provinces.filter(en => hasLayerValue(en, rice, year, layer))
+          .map(en => valueOf(en, rice, year, layer));
+        return values.length ? average(values) : 0;
+      }
+      const values = provinces.map(en => valueOf(en, rice, year, layer));
+      return mode === "avg" ? average(values) : sum(values);
+    }
+
+    function yoyForProvinces(provinces, rice, year, layer, mode) {
+      const prevYear = previousYear(year);
+      if (!prevYear) return null;
+      if (mode === "avg_nonzero") {
+        const overlap = provinces.filter(en => valueOf(en, rice, year, layer) > 0 && valueOf(en, rice, prevYear, layer) > 0);
+        if (!overlap.length) return null;
+        const now = average(overlap.map(en => valueOf(en, rice, year, layer)));
+        const prev = average(overlap.map(en => valueOf(en, rice, prevYear, layer)));
+        return prev ? ((now - prev) / prev) * 100 : null;
+      }
+      const now = aggregateFor(provinces, rice, year, layer, mode);
+      const prev = aggregateFor(provinces, rice, prevYear, layer, mode);
+      if (!prev) return null;
+      return ((now - prev) / prev) * 100;
+    }
+
+    function toRad(deg) { return deg * Math.PI / 180 }
+
+    function mercatorRaw(lon, lat) {
+      const lambda = toRad(lon);
+      const safeLat = Math.max(-85, Math.min(85, lat));
+      const phi = toRad(safeLat);
+      return [lambda, -Math.log(Math.tan(Math.PI / 4 + phi / 2))];
+    }
+
+    function walkCoords(geometry, callback) {
+      if (geometry.type === "Polygon") {
+        geometry.coordinates.forEach(ring => ring.forEach(pt => callback(pt)));
+        return;
+      }
+      if (geometry.type === "MultiPolygon") {
+        geometry.coordinates.forEach(poly => poly.forEach(ring => ring.forEach(pt => callback(pt))));
+      }
+    }
+
+    function computeFitContext(features, width, height, pad) {
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      features.forEach(feature => {
+        walkCoords(feature.geometry, ([lon, lat]) => {
+          const [x, y] = mercatorRaw(lon, lat);
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+        });
+      });
+      const w = maxX - minX;
+      const h = maxY - minY;
+      const scale = Math.min((width - pad * 2) / w, (height - pad * 2) / h);
+      const offsetX = (width - w * scale) / 2 - minX * scale;
+      const offsetY = (height - h * scale) / 2 - minY * scale;
+      return { scale, offsetX, offsetY, width, height };
+    }
+
+    function fitFeatures(features, width, height) {
+      const pad = width < 700 ? 24 : 36;
+      const ctx = computeFitContext(features, width, height, pad);
+      VIEW.scale = ctx.scale;
+      VIEW.offsetX = ctx.offsetX;
+      VIEW.offsetY = ctx.offsetY;
+    }
+
+    function projectWithContext(ctx, pt) {
+      const [x, y] = mercatorRaw(pt[0], pt[1]);
+      return [x * ctx.scale + ctx.offsetX, y * ctx.scale + ctx.offsetY];
+    }
+
+    function project(pt) {
+      return projectWithContext(VIEW, pt);
+    }
+
+    function ringPath(ring) {
+      return ring.map((pt, idx) => {
+        const [x, y] = project(pt);
+        return `${idx === 0 ? "M" : "L"}${x.toFixed(2)},${y.toFixed(2)}`;
+      }).join(" ") + " Z";
+    }
+
+    function featurePath(feature) {
+      if (feature.geometry.type === "Polygon") {
+        return feature.geometry.coordinates.map(ringPath).join(" ");
+      }
+      return feature.geometry.coordinates.map(poly => poly.map(ringPath).join(" ")).join(" ");
+    }
+
+    function ringPathWithContext(ctx, ring) {
+      return ring.map((pt, idx) => {
+        const [x, y] = projectWithContext(ctx, pt);
+        return `${idx === 0 ? "M" : "L"}${x.toFixed(2)},${y.toFixed(2)}`;
+      }).join(" ") + " Z";
+    }
+
+    function featurePathWithContext(ctx, feature) {
+      if (feature.geometry.type === "Polygon") {
+        return feature.geometry.coordinates.map(ring => ringPathWithContext(ctx, ring)).join(" ");
+      }
+      return feature.geometry.coordinates.map(poly => poly.map(ring => ringPathWithContext(ctx, ring)).join(" ")).join(" ");
+    }
+
+    function projectedArea(points) {
+      let area = 0;
+      for (let i = 0; i < points.length; i += 1) {
+        const [x1, y1] = points[i];
+        const [x2, y2] = points[(i + 1) % points.length];
+        area += x1 * y2 - x2 * y1;
+      }
+      return area / 2;
+    }
+
+    function centroidOfRing(ring) {
+      const pts = ring.map(project);
+      let area = 0, cx = 0, cy = 0;
+      for (let i = 0; i < pts.length; i += 1) {
+        const [x1, y1] = pts[i];
+        const [x2, y2] = pts[(i + 1) % pts.length];
+        const cross = x1 * y2 - x2 * y1;
+        area += cross;
+        cx += (x1 + x2) * cross;
+        cy += (y1 + y2) * cross;
+      }
+      if (Math.abs(area) < 1e-6) {
+        const xs = pts.map(p => p[0]);
+        const ys = pts.map(p => p[1]);
+        return [average(xs), average(ys)];
+      }
+      return [cx / (3 * area), cy / (3 * area)];
+    }
+
+    function labelPoint(feature) {
+      const geom = feature.geometry;
+      let bestRing = null;
+      let bestArea = 0;
+      const polygons = geom.type === "Polygon" ? [geom.coordinates] : geom.coordinates;
+      polygons.forEach(poly => {
+        const ring = poly[0];
+        const area = Math.abs(projectedArea(ring.map(project)));
+        if (area > bestArea) {
+          bestArea = area;
+          bestRing = ring;
+        }
+      });
+      return bestRing ? centroidOfRing(bestRing) : [0, 0];
+    }
+
+    function mapDefs() {
+      const palette = getPalette();
+      return `
+  <defs>
+    <filter id="coastShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="rgba(0,0,0,.35)"/>
+    </filter>
+    <filter id="hoverGlowWhite" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="${palette.accent}" flood-opacity=".55"/>
+    </filter>
+    <filter id="hoverGlowJasmine" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#d9a0ff" flood-opacity=".55"/>
+    </filter>
+    <filter id="selectGlowWhite" x="-60%" y="-60%" width="220%" height="220%">
+      <feDropShadow dx="0" dy="0" stdDeviation="7" flood-color="#ff8f4d" flood-opacity=".72"/>
+    </filter>
+    <filter id="selectGlowJasmine" x="-60%" y="-60%" width="220%" height="220%">
+      <feDropShadow dx="0" dy="0" stdDeviation="7" flood-color="#d9a0ff" flood-opacity=".72"/>
+    </filter>
+    <linearGradient id="oceanTint" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="rgba(149,211,255,.14)"/>
+      <stop offset="100%" stop-color="rgba(7,17,22,0)"/>
+    </linearGradient>
+    <linearGradient id="coastStroke" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="rgba(255,255,255,.18)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,.03)"/>
+    </linearGradient>
+  </defs>`;
+    }
+
+    function featuredLabels() {
+      if (S.sel) return [S.sel];
+      if (VIEW.width < 980) return [];
+      const visible = getVisibleProvinces();
+      if (S.reg === "all") {
+        return Object.keys(REG).map(region => {
+          return REG[region]
+            .filter(en => visible.includes(en) && hasLayerValue(en))
+            .map(en => ({ en, v: valueOf(en) }))
+            .sort((a, b) => b.v - a.v)[0];
+        }).filter(Boolean).map(item => item.en);
+      }
+      return visible
+        .filter(en => hasLayerValue(en))
+        .map(en => ({ en, v: valueOf(en) }))
+        .sort((a, b) => b.v - a.v)
+        .slice(0, 3)
+        .map(item => item.en);
+    }
+
+    function renderMap() {
+      const featurePaths = [];
+      const silhouette = [];
+      VIEW.labelMap.clear();
+      VIEW.features.forEach(feature => {
+        const en = feature.properties.name;
+        const d = featurePath(feature);
+        featurePaths.push(`<path class="province" data-en="${en}" d="${d}"></path>`);
+        silhouette.push(`<path d="${d}"></path>`);
+        VIEW.labelMap.set(en, labelPoint(feature));
+      });
+      const labelMarkup = featuredLabels().map(en => {
+        const point = VIEW.labelMap.get(en);
+        if (!point) return "";
+        const [x, y] = point;
+        return `<g class="province-label" data-label="${en}" transform="translate(${x.toFixed(2)} ${y.toFixed(2)})">
+      <circle r="4.4"></circle>
+      <text x="8" y="-8">${t(NM[en] || en, en)}</text>
+    </g>`;
+      }).join("");
+
+      refs.mapSvg.setAttribute("viewBox", `0 0 ${VIEW.width} ${VIEW.height}`);
+      refs.mapSvg.innerHTML = `
+    ${mapDefs()}
+    <rect width="${VIEW.width}" height="${VIEW.height}" fill="url(#oceanTint)" opacity=".8"></rect>
+    <g id="viewportGroup">
+      <g filter="url(#coastShadow)" opacity=".9">
+        <g fill="rgba(246,236,220,.09)" stroke="url(#coastStroke)" stroke-width="1.6" stroke-linejoin="round">${silhouette.join("")}</g>
+      </g>
+      <g id="provinceLayer">${featurePaths.join("")}</g>
+      <g id="labelLayer">${labelMarkup}</g>
+    </g>
+  `;
+      VIEW.viewportGroup = refs.mapSvg.querySelector("#viewportGroup");
+      applyCameraTransform();
+
+      refs.mapSvg.querySelectorAll(".province").forEach(path => {
+        const en = path.dataset.en;
+        path.addEventListener("mouseenter", event => showTooltip(event, en));
+        path.addEventListener("mousemove", moveTooltip);
+        path.addEventListener("mouseleave", hideTooltip);
+        path.addEventListener("click", () => {
+          if (Date.now() - VIEW.draggedAt < 220) {
+            return;
+          }
+          selectProvince(en);
+        });
+      });
+      applyMapColors();
+      renderInsets();
+    }
+
+    function clampCamera() {
+      const extraX = Math.max(0, (VIEW.width * (VIEW.camera.k - 1)) / 2 + 80);
+      const extraY = Math.max(0, (VIEW.height * (VIEW.camera.k - 1)) / 2 + 60);
+      VIEW.camera.x = Math.max(-extraX, Math.min(extraX, VIEW.camera.x));
+      VIEW.camera.y = Math.max(-extraY, Math.min(extraY, VIEW.camera.y));
+    }
+
+    function applyCameraTransform() {
+      if (!VIEW.viewportGroup) return;
+      clampCamera();
+      VIEW.viewportGroup.setAttribute("transform", `translate(${VIEW.camera.x.toFixed(2)} ${VIEW.camera.y.toFixed(2)}) scale(${VIEW.camera.k.toFixed(3)})`);
+      refs.zoomValue.textContent = `${Math.round(VIEW.camera.k * 100)}%`;
+    }
+
+    function zoomBy(factor, cx = VIEW.width / 2, cy = VIEW.height / 2) {
+      const prev = VIEW.camera.k;
+      const next = Math.max(VIEW.camera.min, Math.min(VIEW.camera.max, prev * factor));
+      if (Math.abs(next - prev) < 0.001) return;
+      const ratio = next / prev;
+      VIEW.camera.x = cx - (cx - VIEW.camera.x) * ratio;
+      VIEW.camera.y = cy - (cy - VIEW.camera.y) * ratio;
+      VIEW.camera.k = next;
+      applyCameraTransform();
+    }
+
+    function zoomIn() { zoomBy(1.22) }
+    function zoomOut() { zoomBy(1 / 1.22) }
+
+    function resetCamera() {
+      VIEW.camera.x = 0;
+      VIEW.camera.y = 0;
+      VIEW.camera.k = 1;
+      applyCameraTransform();
+    }
+
+    function initMapInteractions() {
+      if (mapInteractionsReady) return;
+      mapInteractionsReady = true;
+      refs.mapWrap.classList.add("drag-ready");
+      refs.mapSvg.addEventListener("wheel", event => {
+        event.preventDefault();
+        const rect = refs.mapSvg.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        zoomBy(event.deltaY < 0 ? 1.16 : 1 / 1.16, x, y);
+      }, { passive: false });
+      refs.mapSvg.addEventListener("pointerdown", event => {
+        if (event.button !== 0) return;
+        VIEW.dragging = true;
+        VIEW.didDrag = false;
+        VIEW.dragStart = { x: event.clientX, y: event.clientY, tx: VIEW.camera.x, ty: VIEW.camera.y };
+        refs.mapWrap.classList.add("dragging");
+        refs.mapSvg.setPointerCapture(event.pointerId);
+      });
+      refs.mapSvg.addEventListener("pointermove", event => {
+        if (!VIEW.dragging || !VIEW.dragStart) return;
+        const dx = event.clientX - VIEW.dragStart.x;
+        const dy = event.clientY - VIEW.dragStart.y;
+        if (Math.abs(dx) > 3 || Math.abs(dy) > 3) VIEW.didDrag = true;
+        VIEW.camera.x = VIEW.dragStart.tx + dx;
+        VIEW.camera.y = VIEW.dragStart.ty + dy;
+        applyCameraTransform();
+      });
+      const stopDrag = event => {
+        if (event?.pointerId !== undefined && refs.mapSvg.hasPointerCapture(event.pointerId)) {
+          refs.mapSvg.releasePointerCapture(event.pointerId);
+        }
+        if (VIEW.didDrag) VIEW.draggedAt = Date.now();
+        VIEW.dragging = false;
+        VIEW.didDrag = false;
+        VIEW.dragStart = null;
+        refs.mapWrap.classList.remove("dragging");
+      };
+      refs.mapSvg.addEventListener("pointerup", stopDrag);
+      refs.mapSvg.addEventListener("pointercancel", stopDrag);
+      refs.mapSvg.addEventListener("dblclick", event => {
+        event.preventDefault();
+        resetCamera();
+      });
+    }
+
+    function renderInset(svgEl, cardEl, featureNames, active) {
+      const rect = svgEl.getBoundingClientRect();
+      const width = Math.round(rect.width || 184);
+      const height = Math.round(rect.height || 120);
+      if (!width || !height) return;
+      const features = featureNames
+        .map(name => VIEW.featureMap.get(name))
+        .filter(Boolean);
+      const ctx = computeFitContext(features, width, height, 12);
+      const visible = getVisibleProvinces();
+      const vals = featureNames.map(en => valueOf(en)).filter(v => v > 0);
+      const min = vals.length ? Math.min(...vals) : 0;
+      const max = vals.length ? Math.max(...vals) : 1;
+      const palette = getPalette();
+      svgEl.setAttribute("viewBox", `0 0 ${width} ${height}`);
+      svgEl.innerHTML = `
+    <rect class="inset-frame" x=".5" y=".5" width="${width - 1}" height="${height - 1}" rx="12" ry="12"></rect>
+    <g>
+      ${features.map(feature => {
+        const en = feature.properties.name;
+        const inside = visible.includes(en);
+        const hasData = hasLayerValue(en);
+        const t = scaleT(valueOf(en), min, max);
+        const tone = t < .55 ? lerp(palette.lo, palette.mid, t / .55) : lerp(palette.mid, palette.hi, (t - .55) / .45);
+        const cls = `inset-province${S.sel === en ? " sel" : ""}${inside && hasData ? "" : " faded"}`;
+        return `<path class="${cls}" data-en="${en}" fill="${inside && hasData ? rgb(tone) : "rgba(255,255,255,.04)"}" d="${featurePathWithContext(ctx, feature)}"></path>`;
+      }).join("")}
+    </g>
+  `;
+      svgEl.querySelectorAll(".inset-province").forEach(path => {
+        const en = path.dataset.en;
+        path.addEventListener("click", event => {
+          event.stopPropagation();
+          if (!getVisibleProvinces().includes(en)) {
+            S.reg = regionOf(en);
+            rerender();
+          }
+          selectProvince(en);
+        });
+      });
+      cardEl.classList.toggle("active", active);
+      cardEl.classList.toggle("dim", !active);
+    }
+
+    function renderInsets() {
+      const metroActive = S.reg === "all" || S.reg === "central" || METRO_PROVS.includes(S.sel);
+      const southActive = S.reg === "all" || S.reg === "south" || REG.south.includes(S.sel);
+      renderInset(refs.metroInsetSvg, refs.metroInsetCard, METRO_PROVS, metroActive);
+      renderInset(refs.southInsetSvg, refs.southInsetCard, REG.south, southActive);
+    }
+
+    function applyMapColors() {
+      const visible = getVisibleProvinces();
+      const vals = visible.filter(en => hasLayerValue(en)).map(en => valueOf(en));
+      const min = vals.length ? Math.min(...vals) : 0;
+      const max = vals.length ? Math.max(...vals) : 1;
+      const palette = getPalette();
+      refs.mapSvg.querySelectorAll(".province").forEach(path => {
+        const en = path.dataset.en;
+        const inside = visible.includes(en);
+        const hasData = hasLayerValue(en);
+        path.classList.toggle("faded", !inside || !hasData);
+        path.classList.toggle("sel", S.sel === en);
+        if (!inside) {
+          path.setAttribute("fill", "rgba(255,255,255,.05)");
+          return;
+        }
+        if (!hasData) {
+          path.setAttribute("fill", "rgba(255,255,255,.08)");
+          return;
+        }
+        const t = scaleT(valueOf(en), min, max);
+        const tone = t < .55
+          ? lerp(palette.lo, palette.mid, t / .55)
+          : lerp(palette.mid, palette.hi, (t - .55) / .45);
+        path.setAttribute("fill", rgb(tone));
+      });
+      renderMapLabels();
+      updateLegend(min, max);
+    }
+
+    function renderMapLabels() {
+      const layer = refs.mapSvg.querySelector("#labelLayer");
+      if (!layer) return;
+      const visible = getVisibleProvinces();
+      const labels = featuredLabels().filter(en => visible.includes(en));
+      layer.innerHTML = labels.map(en => {
+        const point = VIEW.labelMap.get(en);
+        if (!point) return "";
+        const [x, y] = point;
+        const yShift = S.sel === en ? -12 : -8;
+        return `<g class="province-label" transform="translate(${x.toFixed(2)} ${y.toFixed(2)})">
+      <circle r="${S.sel === en ? 5.5 : 4.4}"></circle>
+      <text x="9" y="${yShift}">${t(NM[en] || en, en)}</text>
+    </g>`;
+      }).join("");
+    }
+
+    function updateLegend(min, max) {
+      const palette = getPalette();
+      refs.legendBar.style.background = `linear-gradient(90deg,${rgb(palette.lo)} 0%,${rgb(palette.mid)} 52%,${rgb(palette.hi)} 100%)`;
+      refs.legendLow.textContent = `${fmtCompact(min)} ${usLabel()}`;
+      refs.legendHigh.textContent = `${fmtCompact(max)} ${usLabel()}`;
+      refs.legendType.textContent = S.layer === "dam" ? t("กรมชลประทาน", "RID")
+        : (S.layer === "rainfall" || S.layer === "drought") ? t("Open-Meteo", "Open-Meteo")
+        : S.layer === "mills" ? t("กรมการค้าภายใน", "DIT")
+        : t(riceMeta[S.rice].th, riceMeta[S.rice].en);
+      refs.legendLayer.textContent = t(layerMeta[S.layer].th, layerMeta[S.layer].en);
+      refs.legendUnit.textContent = uLabel();
+      refs.latestBadge.classList.add("show");
+      const isEstYear = S.layer !== "price" && S.layer !== "households" && S.layer !== "fertilizer" && S.layer !== "dam" && S.layer !== "rainfall" && S.layer !== "drought" && S.layer !== "mills" && S.year >= "2568";
+      refs.latestBadge.textContent = S.layer === "mills"
+        ? `🏭 ${t('โรงสีข้าว DIT','Rice Mills DIT')} ${RICE_MILLS_DATA?._meta?.updated || '2026-04-23'}`
+        : S.layer === "price"
+        ? `${t('ราคาอ้างอิง','Price Ref')}: ${entryOf(getVisibleProvinces().find(en => hasLayerValue(en)) || allEN[0]).source_date || S.year}`
+        : S.layer === "households"
+          ? `👨‍🌾 ${t('ครัวเรือนเกษตรกร','Farm Households')} OAE 2566`
+          : S.layer === "fertilizer"
+            ? `🌱 ${t('ราคาปุ๋ยเคมีรายจังหวัด','Fertilizer Price by Province')} MOC 2567`
+            : S.layer === "dam"
+              ? `💧 ${t('ระดับน้ำในเขื่อน','Dam Level')} RID ${window.DAM_DATA?._meta?.updated || ''}`
+              : S.layer === "rainfall"
+              ? `🌧 ${t('ปริมาณฝน นาปี','Season Rainfall')} ${WEATHER_DATA?._meta?.year ? toBE(WEATHER_DATA._meta.year) : '2568'}`
+              : S.layer === "drought"
+              ? `🌡 ${t('ฝนเบี่ยงเบนจากปกติ','Rainfall Anomaly')} ${WEATHER_DATA?._meta?.year ? toBE(WEATHER_DATA._meta.year) : '2568'} vs ${WEATHER_FORECAST?._meta?.base_years||'2020–2024'}`
+              : isEstYear
+                ? `📊 ${t('ประมาณการ','Estimate')} ${S.year}`
+                : `OAE ${t('ข้อมูลปี','Crop Year')} ${S.year}`;
+      refs.latestBadge.style.borderColor = isEstYear ? 'rgba(245,192,101,.55)' : '';
+    }
+
+    function updateDataSourceUI() {
+      refs.dataStatus.textContent = DATA_META.label;
+      const visible = getVisibleProvinces();
+      const covered = visible.filter(en => hasLayerValue(en)).length;
+      if (S.layer === "dam") {
+        const updated = window.DAM_DATA?._meta?.updated || "—";
+        refs.dataSourceNote.textContent = t(
+          `ข้อมูลระดับน้ำในเขื่อนขนาดใหญ่ 35 แห่ง จากกรมชลประทาน (RID) อัปเดต ${updated} ครอบคลุม ${covered} จังหวัด`,
+          `Large dam water levels (35 dams) from Royal Irrigation Dept. (RID). Updated ${updated}. Covers ${covered} provinces.`
+        );
+        return;
+      }
+      if (S.layer === "mills") {
+        const meta = RICE_MILLS_DATA?._meta;
+        const covered = getVisibleProvinces().filter(en => hasLayerValue(en)).length;
+        refs.dataSourceNote.textContent = t(
+          `ข้อมูลโรงสีข้าวจดทะเบียน กรมการค้าภายใน (DIT) อัปเดต ${meta?.updated || '23 เมษายน 2569'} ครอบคลุม ${covered} จังหวัด จากทั้งหมด ${meta?.total_mills || 903} แห่ง`,
+          `Registered rice mills, Dept. of Internal Trade (DIT). Updated ${meta?.updated || '23 Apr 2026'}. Covers ${covered} provinces, ${meta?.total_mills || 903} mills total.`
+        );
+        return;
+      }
+      if (S.layer === "rainfall" || S.layer === "drought") {
+        const meta = WEATHER_DATA?._meta;
+        const season = meta?.season_label?.split('·')[0]?.trim() || "นาปี 2568 (มิ.ย.–พ.ย.)";
+        const baseYrs = WEATHER_FORECAST?._meta?.base_years || "2020–2024";
+        const note = S.layer === "drought"
+          ? t(`% เบี่ยงเบนจากค่าปกติ 5 ปี (${baseYrs}) · บวก = ฝนมากกว่าปกติ · ลบ = ฝนน้อยกว่าปกติ (เสี่ยงแล้ง)`,
+              `% deviation from ${baseYrs} average · Positive = above normal · Negative = below normal (drought risk)`)
+          : t("ปริมาณฝนสะสมตลอดฤดูนาปี (มิ.ย.–พ.ย.)", "Total seasonal precipitation Jun–Nov");
+        refs.dataSourceNote.textContent = `${t(season, meta?.season_label?.split('·')[1]?.trim() || 'Jun–Nov 2025')} · ${note} · Open-Meteo Archive API · ${covered} ${t('จว.','prov.')}`;
+        return;
+      }
+      const isEstYear = S.layer !== "price" && S.year >= "2568";
+      if (isEstYear) {
+        refs.dataSourceNote.innerHTML = `<strong style="color:#f5c065">📊 ข้อมูลปี ${S.year} เป็นการประมาณการ / Estimated Data</strong><br>คำนวณจากค่าเฉลี่ย YoY Growth Rate ปี 2565–2567 รายจังหวัด (capped ±30%/ปี)<br>${S.year === '2568' ? 'เนื้อที่เพาะปลูกปรับด้วย scale factor จากข้อมูลกรมการข้าว ณ 2 มี.ค. 2569 (58.5 ล้านไร่ทั้งประเทศ)' : 'ประมาณการต่อเนื่องจากปี 2568'}<br><span style="color:var(--muted)">Trend estimation: avg 2-year YoY (2565→2566→2567) applied to ${S.year}. ${S.year === '2568' ? 'Area_planted calibrated using Department of Rice 2568 regional planted-area data (58.5M rai national).' : ''} Not official OAE data — replace via Import CSV when official data is released.</span>`;
+        return;
+      }
+      if (S.layer === "price") {
+        // ดึงวันที่จาก prices-live.json โดยตรง (แม่นยำกว่า source_date ใน CSV)
+        const liveDate = Object.values(LIVE_PRICES?.provincial_prices?.data || {})
+          .map(v => v.date).filter(Boolean).sort().pop();
+        const any = visible.map(en => entryOf(en)).find(item => Number(item.price || 0) > 0);
+        const dateText = liveDate || any?.source_note?.replace('PDF ','') || any?.source_date || S.year;
+        refs.dataSourceNote.textContent = t(
+          `ราคาใช้รายงานสมาคมโรงสีข้าวไทย อัปเดต ${dateText}. บันทึกความชื้น 15%. ครอบคลุม ${covered} จังหวัด`,
+          `Prices from Thai Rice Millers Association. Updated ${dateText}. 15% moisture basis. Covers ${covered} provinces.`);
+        return;
+      }
+      refs.dataSourceNote.textContent = t(
+        `ข้อมูล OAE ปี ${S.year} (รายงานสถิติการเกษตร 1.4).`,
+        `OAE Data ${S.year} (Agricultural Statistics Report 1.4).`);
+    }
+
+    function previousYear(year) {
+      const years = yearsForLayer();
+      const idx = years.indexOf(year);
+      return idx > 0 ? years[idx - 1] : null;
+    }
+
+    function updateSummary() {
+      const visible = getVisibleProvinces();
+      const covered = visible.filter(en => hasLayerValue(en));
+      const meta = layerMeta[S.layer];
+      const mode = meta.summaryMode;
+      const agg = aggregateFor(visible, S.rice, S.year, S.layer, mode);
+      const leader = covered
+        .map(en => ({ en, v: valueOf(en) }))
+        .sort((a, b) => b.v - a.v)[0];
+      const prevYear = previousYear(S.year);
+      let yoyText = t("ยังไม่มีฐานเทียบ", "No prior year");
+      if (prevYear) {
+        const yoy = yoyForProvinces(visible, S.rice, S.year, S.layer, mode);
+        if (Number.isFinite(yoy)) {
+          const dir = yoy >= 0 ? t("เพิ่มขึ้น ▲", "▲ up") : t("ลดลง ▼", "▼ down");
+          yoyText = `${dir} ${Math.abs(yoy).toFixed(1)}% ${t('เทียบ','vs')} ${prevYear}`;
+        }
+      }
+      refs.scopeLabel.textContent = t("ขอบเขต", "Scope");
+      refs.scopeValue.textContent = (S.layer === "price" || S.layer === "dam" || S.layer === "rainfall" || S.layer === "drought" || S.layer === "mills") ? `${covered.length}/${visible.length} ${t('จว.','Prov.')}` : `${visible.length} ${t('จว.','Prov.')}`;
+      refs.scopeSub.textContent = S.layer === "price"
+        ? t("จังหวัดที่มีราคา", "Provinces with price")
+        : (S.reg === "all" ? t("ทั้งประเทศ", "Nationwide") : t(`ภาค${thaiRegionName(S.reg)}`, `${S.reg.charAt(0).toUpperCase() + S.reg.slice(1)} Region`));
+      refs.aggLabel.textContent = t(meta.th, meta.en);
+      refs.aggValue.textContent = fmtCompact(agg);
+      refs.aggSub.textContent = `${uLabel()} · ${yoyText}`;
+      refs.headlineTitle.textContent = S.layer === "dam"
+        ? t("แผนที่ระดับน้ำในเขื่อนรายจังหวัด", "Dam Water Levels by Province")
+        : S.layer === "rainfall"
+        ? t("แผนที่ปริมาณฝนฤดูนาปีรายจังหวัด", "Season Rainfall Map by Province")
+        : S.layer === "drought"
+        ? t("แผนที่ฝนเบี่ยงเบนจากค่าปกติรายจังหวัด", "Rainfall Anomaly vs 5-Year Normal by Province")
+        : S.layer === "mills"
+        ? t("แผนที่โรงสีข้าวรายจังหวัด", "Rice Mills by Province")
+        : t(`แผนที่${riceMeta[S.rice].th}รายจังหวัด`, `${riceMeta[S.rice].en} Rice · Province Map`);
+      refs.headlineDesc.textContent = S.layer === "dam"
+        ? t("ระดับน้ำในเขื่อนขนาดใหญ่ 35 แห่ง จากกรมชลประทาน (RID) อัปเดตรายวัน", "Large dam water levels from Royal Irrigation Dept. (RID). 35 dams, daily update.")
+        : S.layer === "rainfall"
+        ? t("ปริมาณฝนสะสมฤดูนาปี (มิ.ย.–พ.ย.) รายจังหวัด จาก Open-Meteo Archive API อัปเดตรายเดือน", "Seasonal cumulative rainfall (Jun–Nov) by province via Open-Meteo Archive API, updated monthly.")
+        : S.layer === "drought"
+        ? t(`% เบี่ยงเบนของฝนนาปีเทียบกับค่าเฉลี่ย 5 ปี (${WEATHER_FORECAST?._meta?.base_years||'2020–2024'}) รายจังหวัด · สีแดง = แห้งกว่าปกติ · สีน้ำเงิน = ชุ่มชื้นกว่าปกติ`,
+           `Season rainfall % deviation from ${WEATHER_FORECAST?._meta?.base_years||'2020–2024'} average by province · Red = below normal · Blue = above normal`)
+        : S.layer === "mills"
+        ? t(`โรงสีข้าวจดทะเบียนกับกรมการค้าภายใน (DIT) จำนวน ${RICE_MILLS_DATA?._meta?.total_mills || 903} แห่ง ใน ${RICE_MILLS_DATA?._meta?.provinces_covered || 60} จังหวัด จำแนกตามขนาด (ใหญ่/กลาง/เล็ก) ข้อมูล ณ เม.ย. 2569`,
+           `Registered rice mills with Dept. of Internal Trade (DIT): ${RICE_MILLS_DATA?._meta?.total_mills || 903} mills in ${RICE_MILLS_DATA?._meta?.provinces_covered || 60} provinces, classified by size (large/medium/small). Data as of Apr 2026.`)
+        : S.layer === "price"
+        ? t(`แผนที่ fit ตามสัดส่วนประเทศไทยและใช้รายงานราคาข้าวเปลือกรายวันของสมาคมโรงสีข้าวไทย โดยไฮไลต์ราคาของ ${riceTypeDescription(S.rice, S.layer)} ปี ${S.year}`,
+           `Province-level paddy price map using Thai Rice Miller Association daily reports. ${riceTypeDescription(S.rice, S.layer)} · Crop year ${S.year}.`)
+        : t(`แผนที่ fit ตามสัดส่วนประเทศไทยและใช้ข้อมูลทางการ OAE ระดับจังหวัดสำหรับ ${riceTypeDescription(S.rice, S.layer)} โดยไฮไลต์ ${layerMeta[S.layer].th} ปี ${S.year} ในมุมมอง${S.reg === "all" ? "ทั้งประเทศ" : `ภาค${thaiRegionName(S.reg)}`}`,
+           `Province-level OAE data for ${riceTypeDescription(S.rice, S.layer)}. ${layerMeta[S.layer].en} · Crop year ${S.year}${S.reg === "all" ? " · Nationwide" : ` · ${S.reg.charAt(0).toUpperCase() + S.reg.slice(1)} Region`}.`);
+    }
+
+    function updateTopList() {
+      const visible = getVisibleProvinces();
+      const meta = layerMeta[S.layer];
+      const yearLabel = S.layer === "dam" ? t("ล่าสุด", "Latest") : t(`ปี ${S.year}`, `Year ${S.year}`);
+      const riceLabel = t(riceMeta[S.rice].th, riceMeta[S.rice].en);
+      const metaLabel = t(meta.th, meta.en);
+      refs.topSub.innerHTML = S.layer === "mills"
+        ? `${metaLabel}<br>${t('DIT 2569', 'DIT 2026')}`
+        : `${riceLabel} &nbsp;·&nbsp; ${metaLabel}<br>${yearLabel}`;
+      const items = visible
+        .filter(en => hasLayerValue(en))
+        .map(en => ({ en, v: valueOf(en) }))
+        .sort((a, b) => b.v - a.v)
+        .slice(0, 10);
+      const max = items[0]?.v || 1;
+      // drought: ใช้ absolute value เพราะมีค่าติดลบ — bar width และ scaleT ต้องอิงค่า abs
+      const maxAbs = (S.layer === "drought")
+        ? Math.max(...items.map(i => Math.abs(i.v)), 1)
+        : (max || 1);
+      const palette = getPalette();
+      refs.topList.innerHTML = items.map((item, idx) => {
+        const pct = Math.max(6, (Math.abs(item.v) / maxAbs) * 100);
+        const t01 = S.layer === "drought"
+          ? Math.max(0, Math.min(1, 0.5 + 0.5 * (item.v / maxAbs)))
+          : Math.max(.16, item.v / (max || 1));
+        const tone = lerp(palette.lo, palette.hi, t01);
+        return `<div class="rank-row" onclick="selectProvince('${item.en.replace(/'/g, "\\'")}')">
+      <div class="rank-index">#${idx + 1}</div>
+      <div class="rank-name">${t(NM[item.en] || item.en, item.en)}<br><small style="font-size:9px;opacity:.65">${item.en}</small></div>
+      <div class="rank-track"><div class="rank-fill" style="width:${pct.toFixed(1)}%;background:${rgb(tone)}"></div></div>
+      <div class="rank-value">${fmtCompact(item.v)}</div>
+    </div>`;
+      }).join("");
+    }
+
+    function currentRank(en) {
+      const visible = getVisibleProvinces();
+      const sorted = visible
+        .filter(name => hasLayerValue(name))
+        .map(name => ({ en: name, v: valueOf(name) }))
+        .sort((a, b) => b.v - a.v);
+      const idx = sorted.findIndex(item => item.en === en);
+      return idx >= 0 ? idx + 1 : null;
+    }
+
+    function selectProvince(en) {
+      S.sel = en;
+      hideTooltip();
+      refs.detailCard.classList.add("show");
+      refs.detailPlaceholder.style.display = "none";
+      refs.detailName.textContent = t(NM[en] || en, en);
+      refs.detailEn.textContent = en;
+      const covered = getVisibleProvinces().filter(name => hasLayerValue(name)).length;
+      const rank = currentRank(en);
+      refs.detailRank.textContent = rank ? t(`อันดับ #${rank} จาก ${covered || getVisibleProvinces().length} จังหวัด`, `Rank #${rank} of ${covered || getVisibleProvinces().length}`) : t("ไม่มีข้อมูล", "No data");
+
+      const metrics = ["production", "yield", "area", "price"];
+      const hhVal = householdValueOf(en);
+      const householdsHtml = (window.PROVINCE_HOUSEHOLDS && hhVal > 0) ? `
+    <div class="rice-card" style="grid-column:1/-1;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2)">
+      <div class="t">👨‍🌾 ${t('ครัวเรือนเกษตรกร (รวมทุกสินค้า)','Farm Households (All Crops)')}</div>
+      <div class="metric">
+        <div class="m-label">${t('จำนวนครัวเรือนเกษตรกร','Farmer Households')}</div>
+        <div class="m-value">${fmtNumber(hhVal)} <small>${usLabel('households')}</small></div>
+      </div>
+      <div style="font-size:9px;color:var(--muted);margin-top:4px">${t('ที่มา: สำนักงานเศรษฐกิจการเกษตร (OAE) · ปีอ้างอิง 2566 · ครอบคลุมทุกประเภทการเกษตร','Source: OAE 2566 · Covers all agricultural types')}</div>
+    </div>` : "";
+
+      let fertHtml = "";
+
+      // ── Weather detail card ──────────────────────────────────────────────
+      let weatherHtml = "";
+      if (WEATHER_DATA?.provinces?.[en]) {
+        const wp = WEATHER_DATA.provinces[en];
+        const seasonLabel = WEATHER_DATA._meta?.season_label?.split('·')[0]?.trim() || 'นาปี 2568';
+        const avgRain = WEATHER_FORECAST?.provinces?.[en]?.forecast_rainfall_mm;
+        const baseYrs = WEATHER_FORECAST?._meta?.base_years || "2020–2024";
+        const anomaly = weatherValueOf(en, "drought");  // reuse existing calculation
+        const anomColor = anomaly == null ? 'var(--muted)' : anomaly < -10 ? '#c0392b' : anomaly < 0 ? '#e67e22' : anomaly < 10 ? '#27ae60' : '#2980b9';
+        const anomLabel = anomaly == null ? '—'
+          : anomaly <= -20 ? t('แห้งแล้งรุนแรง ⚠️','Severe Drought ⚠️')
+          : anomaly <= -10 ? t('แห้งกว่าปกติ','Below Normal')
+          : anomaly < 10   ? t('ใกล้ค่าปกติ ✓','Near Normal ✓')
+          : t('ชุ่มชื้นกว่าปกติ 💧','Above Normal 💧');
+        weatherHtml = `
+          <div class="rice-card" style="grid-column:1/-1;background:rgba(30,100,195,.08);border:1px solid rgba(30,100,195,.2)">
+            <div class="t">🌧 ${t('สภาพภูมิอากาศ','Climate')} · <span style="font-size:9px;font-weight:400;opacity:.7">${t(seasonLabel,'Main Season 2025')}</span></div>
+            <div class="metric">
+              <div class="m-label">${t('ปริมาณฝนสะสม (มิ.ย.–พ.ย.)','Season Rainfall (Jun–Nov)')}</div>
+              <div class="m-value">${wp.season_rainfall_mm?.toFixed(0) ?? '—'} <small>mm</small>
+                ${avgRain ? `<div class="m-label" style="margin-top:2px">${t('ค่าปกติ','Normal')} ${baseYrs}: ${avgRain.toFixed(0)} mm</div>` : ''}
+              </div>
+            </div>
+            <div class="metric">
+              <div class="m-label">${t('เบี่ยงเบนจากค่าปกติ','Anomaly vs Normal')}</div>
+              <div class="m-value" style="color:${anomColor}">${anomaly != null ? (anomaly >= 0 ? '+' : '') + anomaly.toFixed(1) + '%' : '—'}</div>
+              <div class="m-label" style="color:${anomColor};margin-top:2px">${anomLabel}</div>
+            </div>
+            <div class="metric">
+              <div class="m-label">${t('อุณหภูมิเฉลี่ย','Mean Temp.')}</div>
+              <div class="m-value">${wp.season_temp_c?.toFixed(1) ?? '—'} <small>°C</small></div>
+            </div>
+            <div style="font-size:9px;color:var(--muted);margin-top:6px">${t(`ที่มา: Open-Meteo Archive API · ค่าปกติจากฤดูกาล ${baseYrs}`,`Source: Open-Meteo Archive API · Normal baseline ${baseYrs}`)}</div>
+          </div>`;
+      }
+      // ─────────────────────────────────────────────────────────────────────
+
+      let damHtml = "";
+      if (window.DAM_DATA?.provinces?.[en]) {
+        const dp = window.DAM_DATA.provinces[en];
+        const damColor = dp.dam_level_pct < 30 ? '#c0392b' : dp.dam_level_pct < 60 ? '#f39c12' : '#2980b9';
+        const damsDetail = dp.dams.map(d => `
+          <div class="metric">
+            <div class="m-label" style="font-size:10px">${t(d.name, DAM_NAME_EN[d.id] || d.name)}</div>
+            <div class="m-value" style="font-size:11px;color:${dp.dam_level_pct < 30 ? '#c0392b' : dp.dam_level_pct < 60 ? '#f39c12' : '#2980b9'}">${Number(d.pct || 0).toFixed(1)}%</div>
+          </div>`).join("");
+        damHtml = `
+          <div class="rice-card" style="grid-column:1/-1;background:rgba(41,128,185,.08);border:1px solid rgba(41,128,185,.2)">
+            <div class="t">💧 ${t('ระดับน้ำในเขื่อน (RID)','Dam Water Level (RID)')}</div>
+            <div class="metric">
+              <div class="m-label">${t('ระดับน้ำรวม (volume-weighted)','Total Level (volume-weighted)')}</div>
+              <div class="m-value" style="color:${damColor}">${dp.dam_level_pct != null ? dp.dam_level_pct.toFixed(1) : "—"}% <small>${t('ความจุ','capacity')}</small></div>
+            </div>
+            <div class="metric">
+              <div class="m-label">${t('ปริมาณน้ำ / ความจุ','Volume / Capacity')}</div>
+              <div class="m-value" style="font-size:11px">${dp.total_volume_mm3.toFixed(0)} / ${dp.total_storage_mm3.toFixed(0)} <small>${t('ล้าน ม.³','million m³')}</small></div>
+            </div>
+            ${damsDetail}
+            <div style="font-size:9px;color:var(--muted);margin-top:6px">${t('ที่มา: กรมชลประทาน (RID) · อัปเดตรายวัน','Source: Royal Irrigation Dept. (RID) · Daily update')} ${window.DAM_DATA._meta.updated}</div>
+          </div>`;
+      }
+
+      const cardHtml = RICE_TYPES.map(rice => {
+        const entryForRice = entryOf(en, rice, S.year);
+        const estNote = isEstimated(en, rice, S.year)
+          ? `<div class="est-note">📊 ${t('ประมาณการแนวโน้ม (avg YoY 2565–2567)','Trend Estimate (avg YoY 2565–2567)')}</div>`
+          : "";
+        return `<div class="rice-card ${rice}">
+      <div class="t">${riceMeta[rice].badge} ${t(riceMeta[rice].th, riceMeta[rice].en)}</div>
+      ${estNote}
+      ${metrics.map(layer => {
+          const entry = entryOf(en, rice, S.year);
+          const mainMoistLabel = layer === "price" && entry.price_basis === "moisture_15_pct"
+            ? `<div class="m-label" style="margin-top:1px;opacity:.6">${t('ความชื้น 15%','15% moisture')}</div>`
+            : "";
+          const mainValue = layer === "price"
+            ? `${priceRange(entry)} <small>${usLabel(layer)}</small>`
+            : `${fmtValue(valueOf(en, rice, S.year, layer), layer)} <small>${usLabel(layer)}</small>`;
+          const subValue = layer === "price" && priceAltRange(entry)
+            ? `<div class="m-label" style="margin-top:2px">${t('ความชื้น 25%','Moisture 25%')}: ${priceAltRange(entry)}</div>`
+            : "";
+          return `<div class="metric">
+          <div class="m-label">${t(layerMeta[layer].th, layerMeta[layer].en)}</div>
+          <div class="m-value">${mainValue}</div>
+          ${mainMoistLabel}${subValue}
+        </div>`;
+        }).join("")}
+    </div>`;
+      }).join("");
+      let millsHtml = "";
+      if (RICE_MILLS_DATA) {
+        const thName = NM[en];
+        const mp = RICE_MILLS_DATA.provinces?.[thName];
+        if (mp) {
+          const listHtml = mp.mills.length
+            ? renderMillList(mp.mills)
+            : `<div style="font-size:10px;color:var(--muted);margin-top:4px">${t('ไม่มีข้อมูลรายชื่อโรงสี — มีเฉพาะข้อมูลจำนวนรวมจากสำนักงานพาณิชย์จังหวัด','No individual mill records — aggregate count from provincial commerce office only')}</div>`;
+          millsHtml = `
+            <div class="rice-card" style="grid-column:1/-1;background:rgba(230,170,60,.07);border:1px solid rgba(230,170,60,.22)">
+              <div class="t">🏭 ${t('โรงสีข้าว (DIT 2569)', 'Rice Mills (DIT 2026)')}</div>
+              <div class="metric">
+                <div class="m-label">${t('จำนวนทั้งหมด', 'Total Mills')}</div>
+                <div class="m-value">${mp.count} <small>${t('แห่ง', 'mills')}</small></div>
+              </div>
+              <div class="metric">
+                <div class="m-label">${t('จำแนกตามขนาด', 'By Size')}</div>
+                <div class="m-value" style="font-size:12px">${t(`ใหญ่ ${mp.large} · กลาง ${mp.medium} · เล็ก ${mp.small}`, `L:${mp.large} · M:${mp.medium} · S:${mp.small}`)}</div>
+              </div>
+              ${listHtml}
+              <div style="font-size:9px;color:var(--muted);margin-top:6px">${t('ที่มา: กรมการค้าภายใน (DIT) 23 เม.ย. 2569', 'Source: Dept. of Internal Trade (DIT) 23 Apr 2026')}</div>
+            </div>`;
+        }
+      }
+      refs.detailGrid.innerHTML = weatherHtml + damHtml + millsHtml + householdsHtml + fertHtml + cardHtml;
+      if (refs.detailDataNote) {
+        refs.detailDataNote.innerHTML = `📌 ${t(
+          'ข้อมูลผลผลิต / ผลผลิตต่อไร่ / เนื้อที่เก็บเกี่ยว เป็นข้อมูลเฉพาะ<strong>นาปี</strong>เท่านั้น · ไม่รวมนาปรัง · ไม่รวม<strong>ข้าวเหนียว</strong>และ<strong>ข้าวเจ้าปทุม 1</strong>',
+          'Production / Yield / Harvested Area covers <strong>wet season (main crop)</strong> only · excludes dry season (2nd crop) · excludes <strong>glutinous rice</strong> and <strong>Pathum Thani 1</strong>'
+        )}`;
+        refs.detailDataNote.style.display = '';
+      }
+      refs.sparkHint.textContent = S.layer === "price"
+        ? t("ค่ากลางของช่วงราคา", "Midpoint of price range")
+        : t(layerMeta[S.layer].th, layerMeta[S.layer].en);
+      drawSpark(en);
+      applyMapColors();
+      refs.detailCard.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    function drawSpark(en) {
+      if (S.layer === "dam" || S.layer === "rainfall" || S.layer === "drought" || S.layer === "mills") {
+        refs.sparkSvg.innerHTML = "";
+        refs.sparkTitle.textContent = S.layer === "dam"
+          ? t("ไม่มีข้อมูลอนุกรมเวลา", "No time-series data")
+          : S.layer === "mills"
+          ? t("ข้อมูล ณ เม.ย. 2569 — ไม่มีอนุกรมเวลา", "Apr 2026 snapshot — no time series")
+          : t("ข้อมูลฤดูกาลเดียว — ไม่มีอนุกรมเวลา", "Single season — no time series");
+        return;
+      }
+      const years = yearsForLayer();
+      const values = years.map(year => valueOf(en, S.rice, year, S.layer));
+      const w = 320, h = 58, pad = 9;
+      const min = Math.min(...values) * .92;
+      const max = Math.max(...values) * 1.08;
+      const palette = getPalette();
+      const pts = values.map((val, idx) => {
+        const x = pad + (idx / (values.length - 1)) * (w - pad * 2);
+        const y = h - pad - ((val - min) / (max - min || 1)) * (h - pad * 2);
+        return [x, y];
+      });
+      const path = pts.map((pt, idx) => `${idx === 0 ? "M" : "L"}${pt[0].toFixed(2)},${pt[1].toFixed(2)}`).join(" ");
+      refs.sparkTitle.textContent = t(`แนวโน้ม ${years[0]}→${years[years.length - 1]}`, `Trend ${years[0]}→${years[years.length - 1]}`);
+      refs.sparkSvg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+      refs.sparkSvg.innerHTML = `
+    <path d="M${pad},${h - pad} L${w - pad},${h - pad}" stroke="rgba(255,255,255,.08)" stroke-width="1"/>
+    <path d="${path}" fill="none" stroke="${rgb(palette.hi)}" stroke-width="2.4" stroke-linecap="round"/>
+    ${pts.map((pt, idx) => `
+      <circle cx="${pt[0]}" cy="${pt[1]}" r="3" fill="${rgb(palette.hi)}"/>
+      <text x="${pt[0]}" y="${h - 2}" text-anchor="middle" fill="rgba(255,255,255,.42)" font-size="7" font-family="IBM Plex Mono">${years[idx]}</text>
+    `).join("")}
+  `;
+    }
+
+    function thaiRegionName(region) {
+      return ({
+        north: "เหนือ",
+        northeast: "อีสาน",
+        central: "กลาง",
+        east: "ตะวันออก",
+        south: "ใต้",
+        all: "ทั้งหมด"
+      })[region] || region;
+    }
+
+    function tooltipContent(en) {
+      if (S.layer === "dam") {
+        const prov = window.DAM_DATA?.provinces?.[en];
+        if (!prov) return `<div class="th">${t(NM[en] || en, en)}</div><div class="en">${en}</div><div style="color:var(--muted);font-size:11px;margin-top:6px">${t('ไม่มีข้อมูลเขื่อน','No dam data')}</div>`;
+        const rank = currentRank(en);
+        const visible = getVisibleProvinces().filter(name => hasLayerValue(name)).length;
+        const damsHtml = prov.dams.map(d => `<div style="font-size:9px;color:var(--muted);margin-top:2px">${t(d.name, DAM_NAME_EN[d.id] || d.name)}: ${Number(d.pct || 0).toFixed(1)}%</div>`).join("");
+        return `
+    <div class="th">${t(NM[en] || en, en)}</div>
+    <div class="en">${en}</div>
+    <div class="metric-name">${t('ระดับน้ำในเขื่อน','Dam Water Level')}</div>
+    <div class="value">${prov.dam_level_pct != null ? prov.dam_level_pct.toFixed(1) : "—"}% <small style="font-size:12px;color:var(--muted)">${t('ความจุ','capacity')}</small></div>
+    <div class="rank">${rank ? `${t('อันดับ','Rank')} #${rank} / ${visible}` : t('ไม่มีข้อมูล','No data')} · ${prov.n_dams} ${t('เขื่อน','dams')}</div>
+    <div style="font-size:10px;color:var(--muted);margin-top:4px">${prov.total_volume_mm3.toFixed(0)} / ${prov.total_storage_mm3.toFixed(0)} ${t('ล้าน ม.³','million m³')}</div>
+    ${damsHtml}
+  `;
+      }
+      if (S.layer === "mills") {
+        const thName = NM[en];
+        const prov = RICE_MILLS_DATA?.provinces?.[thName];
+        const rank = currentRank(en);
+        const total = getVisibleProvinces().filter(name => hasLayerValue(name)).length;
+        if (!prov) return `<div class="th">${t(NM[en] || en, en)}</div><div class="en">${en}</div><div style="color:var(--muted);font-size:11px;margin-top:6px">${t('ไม่มีโรงสีข้าวจดทะเบียน','No registered mills')}</div>`;
+        const millListHtml = prov.mills.length
+          ? renderMillList(prov.mills)
+          : `<div style="font-size:9px;color:var(--muted);margin-top:3px">${t('ไม่มีข้อมูลรายชื่อ (ข้อมูลรวมจากพาณิชย์จังหวัด)', 'Aggregate count only — no individual records')}</div>`;
+        const sourceNote = prov.source_note
+          ? `<div style="font-size:8px;color:var(--muted);margin-top:3px;opacity:.7">${prov.source_note}</div>`
+          : "";
+        return `
+    <div class="th">${t(NM[en] || en, en)}</div>
+    <div class="en">${en}</div>
+    <div class="type">${t('โรงสีข้าว · DIT 2569', 'Rice Mills · DIT 2026')}</div>
+    <div class="metric-name">${t('จำนวนโรงสีข้าว', 'Number of Rice Mills')}</div>
+    <div class="value">${prov.count} <small style="font-size:12px;color:var(--muted)">${t('แห่ง', 'mills')}</small></div>
+    <div class="rank">${rank ? `${t('อันดับ', 'Rank')} #${rank} / ${total}` : t('ไม่มีข้อมูล', 'No data')} &nbsp;·&nbsp; ${t(`ใหญ่ ${prov.large}  กลาง ${prov.medium}  เล็ก ${prov.small}`, `L:${prov.large} M:${prov.medium} S:${prov.small}`)}</div>
+    ${millListHtml}${sourceNote}
+  `;
+      }
+      const value = valueOf(en);
+      const rank = currentRank(en);
+      const prevYear = previousYear(S.year);
+      let yoyHTML = "";
+      if (prevYear) {
+        const prev = valueOf(en, S.rice, prevYear, S.layer);
+        if (prev) {
+          const yoy = ((value - prev) / prev) * 100;
+          const cls = yoy >= 0 ? "pos" : "neg";
+          const arrow = yoy >= 0 ? "▲" : "▼";
+          yoyHTML = `<div class="yoy ${cls}">${arrow} ${Math.abs(yoy).toFixed(1)}% YoY</div>`;
+        }
+      }
+      const entry = entryOf(en);
+      const est = S.layer !== "price" && isEstimated(en);
+      const estBadge = est ? `<div class="est-badge">${t('📊 ประมาณการ · Estimated (Trend)','📊 Estimated (Trend)')}</div>` : "";
+
+      const mainMoist = entry.price_basis === "moisture_15_pct" ? t('ความชื้น 15%','15% moisture') : "";
+      const valueHTML = S.layer === "price"
+        ? `${priceRange(entry)} <small style="font-size:12px;color:var(--muted)">${usLabel()}</small>${mainMoist ? `<div class="rank" style="margin-top:2px;font-size:10px;opacity:.7">${mainMoist}</div>` : ""}${priceAltRange(entry) ? `<div class="rank" style="margin-top:2px">${t('ความชื้น 25%','Moisture 25%')}: ${priceAltRange(entry)}</div>` : ""}`
+        : `${fmtValue(value)} <small style="font-size:12px;color:var(--muted)">${usLabel()}</small>`;
+      const householdsLine = S.layer !== "households" && window.PROVINCE_HOUSEHOLDS
+        ? `<div style="font-size:10px;color:var(--muted);margin-top:4px">👨‍🌾 ${t('ครัวเรือนเกษตรกร','Farm Households')}: ${fmtNumber(householdValueOf(en))} ${t('ครัวเรือน','HH')} (OAE 2566)</div>`
+        : "";
+      return `
+    <div class="th">${t(NM[en] || en, en)}</div>
+    <div class="en">${en}</div>
+    <div class="type">${S.layer === "households" ? t("ครัวเรือนเกษตรกร (OAE 2566)","Farmer Households (OAE 2566)")
+        : S.layer === "rainfall" ? t("ปริมาณฝนนาปี (มิ.ย.–พ.ย.)","Season Rainfall (Jun–Nov)")
+        : S.layer === "drought"  ? t("ฝนเบี่ยงเบนจากค่าปกติ 5 ปี","Rainfall Anomaly vs 5-yr Normal")
+        : riceTypeDescription(S.rice, S.layer)}</div>
+    <div class="metric-name">${t(layerMeta[S.layer].th, layerMeta[S.layer].en)}</div>
+    <div class="value">${valueHTML}</div>
+    <div class="rank">${rank ? `${t('อันดับ','Rank')} #${rank} / ${getVisibleProvinces().filter(name => hasLayerValue(name)).length || getVisibleProvinces().length}` : t("ไม่มีข้อมูล","No data")}</div>
+    ${yoyHTML}
+    ${estBadge}
+    ${householdsLine}
+  `;
+    }
+
+    function showTooltip(event, en) {
+      refs.tooltip.innerHTML = tooltipContent(en);
+      refs.tooltip.classList.add("show");
+      moveTooltip(event);
+    }
+
+    function moveTooltip(event) {
+      const pad = 18;
+      const rect = refs.tooltip.getBoundingClientRect();
+      let left = event.clientX + 18;
+      let top = event.clientY - 14;
+      if (left + rect.width > window.innerWidth - pad) left = event.clientX - rect.width - 18;
+      if (top + rect.height > window.innerHeight - pad) top = window.innerHeight - rect.height - pad;
+      if (top < pad) top = pad;
+      refs.tooltip.style.left = `${left}px`;
+      refs.tooltip.style.top = `${top}px`;
+    }
+
+    function hideTooltip() {
+      refs.tooltip.classList.remove("show");
+    }
+
+    function updateControls() {
+      document.body.classList.toggle("jm", S.rice === "jasmine");
+      renderYearButtons();
+      document.querySelectorAll("[data-rice]").forEach(btn => {
+        btn.className = "rice-btn";
+        if (btn.dataset.rice === S.rice) btn.classList.add(S.rice === "white" ? "aw" : "aj");
+      });
+      document.querySelectorAll("[data-layer]").forEach(btn => btn.classList.toggle("on", btn.dataset.layer === S.layer));
+      document.querySelectorAll("[data-year]").forEach(btn => btn.classList.toggle("on", btn.dataset.year === S.year));
+      document.querySelectorAll("[data-region]").forEach(btn => btn.classList.toggle("on", btn.dataset.region === S.reg));
+    }
+
+    function renderYearButtons() {
+      if (S.layer === "dam") {
+        const updated = window.DAM_DATA?._meta?.updated || "—";
+        refs.yearButtons.innerHTML = `<button class="pill on" data-year="dam">💧 ${t('ล่าสุด','Latest')} ${updated}</button>`;
+        return;
+      }
+      if (S.layer === "rainfall" || S.layer === "drought") {
+        const meta = WEATHER_DATA?._meta;
+        const seasonTh = meta ? `นาปี ${toBE(meta.year)}` : "นาปี 2568";
+        const seasonEn = meta ? `Main Season ${meta.year}` : "Main Season 2025";
+        refs.yearButtons.innerHTML = `<button class="pill on" data-year="weather">🌧 ${t(seasonTh, seasonEn)} (${t('มิ.ย.–พ.ย.','Jun–Nov')})</button>`;
+        return;
+      }
+      if (S.layer === "mills") {
+        const updated = RICE_MILLS_DATA?._meta?.updated || "2026-04-23";
+        refs.yearButtons.innerHTML = `<button class="pill on" data-year="mills">🏭 DIT ${t('อัปเดต','Updated')} ${updated}</button>`;
+        return;
+      }
+      const years = yearsForLayer();
+      refs.yearButtons.innerHTML = years.map((year, idx) => {
+        const suffix = idx === years.length - 1 ? " ล่าสุด" : "";
+        const isForecast = S.layer !== "price" && year >= "2568";
+        const note = isForecast ? " <small style='font-size:9px;opacity:.6'>f</small>" : "";
+        return `<button class="pill${year === S.year ? " on" : ""}" data-year="${year}" onclick="setYear('${year}')">${year}${suffix}${note}</button>`;
+      }).join("");
+    }
+
+    function updateCostSummary() {
+      if (refs.costSummaryTitle) {
+        refs.costSummaryTitle.innerHTML =
+          `📊 ${t('โครงสร้างต้นทุนการผลิตข้าว','Rice Production Cost Structure')}<br>` +
+          `<small style="font-size:9px;font-weight:400;opacity:.6">${t('หน่วย: บาท/ไร่/ฤดูกาล · OAE/สศก. 2566/67–2567/68','Unit: ฿/rai/season · OAE 2566/67–2567/68')}</small>`;
+      }
+
+      const sTh  = s => `style="text-align:left;padding:4px 0;${s||''}"`;
+      const sTd  = s => `style="text-align:right;font-family:'IBM Plex Mono';padding:3px 4px;${s||''}"`;
+      const sTdL = s => `style="padding:3px 0;color:var(--text-soft);font-size:10px;${s||''}"`;
+
+      refs.costSummaryBlock.innerHTML = `
+        <table style="width:100%;border-collapse:collapse;font-size:10px">
+          <thead>
+            <tr>
+              <th ${sTh('font-size:9px;color:var(--muted);font-weight:600;letter-spacing:.05em')}>${t('รายการ','Item')}</th>
+              <th ${sTd('font-size:9px;color:var(--white-hi);font-weight:700')}>🌾 ${t('ข้าวขาว','White')}</th>
+              <th ${sTd('font-size:9px;color:var(--jasmine-hi);font-weight:700')}>🌸 ${t('หอมมะลิ','Jasmine')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${COST_ROWS.map(r => `<tr>
+              <td ${sTdL()}>${t(r.th, r.en)}</td>
+              <td ${sTd()}>${fmtNumber(r.w)}</td>
+              <td ${sTd()}>${fmtNumber(r.j)}</td>
+            </tr>`).join('')}
+          </tbody>
+          <tfoot>
+            <tr style="border-top:1px solid rgba(255,255,255,.15)">
+              <td style="padding:6px 0;font-weight:700;font-size:11px">${t('รวมต้นทุน/ไร่','Total / rai')}</td>
+              <td ${sTd('font-weight:700;color:var(--white-hi);font-size:13px')}>${fmtNumber(COST_BASE.white.oaeRaiCost)} <small style="font-size:8px;font-weight:400">฿</small></td>
+              <td ${sTd('font-weight:700;color:var(--jasmine-hi);font-size:13px')}>${fmtNumber(COST_BASE.jasmine.oaeRaiCost)} <small style="font-size:8px;font-weight:400">฿</small></td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <div style="margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,.08)">
+          <div style="font-size:8.5px;font-weight:700;letter-spacing:.08em;color:var(--muted);margin-bottom:5px;text-transform:uppercase">
+            ${t('ต้นทุนและผลผลิต · ปีเพาะปลูก 2566/67–2567/68','Cost & Yield · Crop Year 2566/67–2567/68')}
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:10px">
+            <tbody>
+              <tr>
+                <td ${sTdL()}>${t('ต้นทุนการผลิต','Production Cost')}</td>
+                <td ${sTd()}>~${fmtNumber(COST_BASE.white.oaeTonCost)} <small style="font-size:8px;opacity:.7">฿/${t('ตัน','ton')}</small></td>
+                <td ${sTd()}>~${fmtNumber(COST_BASE.jasmine.oaeTonCost)} <small style="font-size:8px;opacity:.7">฿/${t('ตัน','ton')}</small></td>
+              </tr>
+              <tr>
+                <td ${sTdL()}>${t('ผลผลิตต่อไร่','Yield / rai')}</td>
+                <td ${sTd()}>${COST_BASE.white.oaeYield} <small style="font-size:8px;opacity:.7">${t('กก./ไร่','kg/rai')}</small></td>
+                <td ${sTd()}>${COST_BASE.jasmine.oaeYield} <small style="font-size:8px;opacity:.7">${t('กก./ไร่','kg/rai')}</small></td>
+              </tr>
+              <tr>
+                <td ${sTdL()}>${t('คิดเป็นต้นทุน/ไร่','Cost / rai')}</td>
+                <td ${sTd()}>${fmtNumber(COST_BASE.white.oaeRaiCost)} <small style="font-size:8px;opacity:.7">฿</small></td>
+                <td ${sTd()}>${fmtNumber(COST_BASE.jasmine.oaeRaiCost)} <small style="font-size:8px;opacity:.7">฿</small></td>
+              </tr>
+            </tbody>
+          </table>
+          <div style="font-size:8px;color:var(--muted);margin-top:6px;line-height:1.5">
+            ${t('แหล่งข้อมูล: OAE/สศก. · ThaiPBS · ThaiPublica · Krungsri Research',
+                 'Sources: OAE · ThaiPBS · ThaiPublica · Krungsri Research')}
+          </div>
+        </div>
+      `;
+    }
+
+    function rerender() {
+      updateControls();
+      applyMapColors();
+      updateCostSummary();
+      renderInsets();
+      updateSummary();
+      updateTopList();
+      updateDataSourceUI();
+      if (S.sel) {
+        if (!getVisibleProvinces().includes(S.sel)) {
+          S.sel = null;
+          refs.detailCard.classList.remove("show");
+          refs.detailPlaceholder.style.display = "";
+          if (refs.detailDataNote) refs.detailDataNote.style.display = "none";
+        } else {
+          selectProvince(S.sel);
+        }
+      } else {
+        renderMapLabels();
+      }
+    }
+
+    function resize() {
+      const rect = refs.mapWrap.getBoundingClientRect();
+      VIEW.width = Math.max(320, Math.round(rect.width));
+      VIEW.height = Math.max(320, Math.round(rect.height));
+      fitFeatures(VIEW.features, VIEW.width, VIEW.height);
+      renderMap();
+      updateCostSummary();
+      updateSummary();
+      updateTopList();
+      updateDataSourceUI();
+      applyCameraTransform();
+      if (S.sel) selectProvince(S.sel);
+    }
+
+    function setRice(rice) {
+      S.rice = rice;
+      rerender();
+    }
+
+    function setLayer(layer) {
+      S.layer = layer;
+      if (!yearsForLayer(layer).includes(S.year)) {
+        S.year = yearsForLayer(layer)[yearsForLayer(layer).length - 1];
+      }
+      if (layer === "mills" && !RICE_MILLS_DATA && !RICE_MILLS_LOADING) fetchMillsData();
+      rerender();
+    }
+
+    function setYear(year) {
+      S.year = year;
+      rerender();
+    }
+
+    function setReg(region) {
+      S.reg = region;
+      if (S.sel && !getVisibleProvinces().includes(S.sel)) S.sel = null;
+      rerender();
+    }
+
+    function parseCSV(text) {
+      const rows = [];
+      let row = [], cell = "", inside = false;
+      for (let i = 0; i < text.length; i += 1) {
+        const ch = text[i];
+        const next = text[i + 1];
+        if (ch === '"') {
+          if (inside && next === '"') { cell += '"'; i += 1 }
+          else inside = !inside;
+          continue;
+        }
+        if (ch === ',' && !inside) {
+          row.push(cell);
+          cell = "";
+          continue;
+        }
+        if ((ch === '\n' || ch === '\r') && !inside) {
+          if (ch === '\r' && next === '\n') i += 1;
+          if (cell.length || row.length) {
+            row.push(cell);
+            rows.push(row);
+          }
+          row = [];
+          cell = "";
+          continue;
+        }
+        cell += ch;
+      }
+      if (cell.length || row.length) {
+        row.push(cell);
+        rows.push(row);
+      }
+      return rows.filter(r => r.some(v => String(v).trim() !== ""));
+    }
+
+    function csvUp(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const rows = parseCSV(String(ev.target?.result || ""));
+        if (rows.length < 2) {
+          toast("ไม่พบข้อมูลในไฟล์ CSV");
+          return;
+        }
+        const headers = rows[0].map(h => String(h).trim());
+        let applied = 0;
+        for (let i = 1; i < rows.length; i += 1) {
+          const record = {};
+          headers.forEach((header, idx) => record[header] = String(rows[i][idx] ?? "").trim());
+          if (record.production || record.yield || record.price || record.area) {
+            if (applyRecord(record)) applied += 1;
+            continue;
+          }
+          const en = (record.province_en || record.province || record.en || "").trim();
+          const rawRice = (record.rice_type || S.rice).trim().toLowerCase();
+          const rice = rawRice === "napi" ? "white" : rawRice;
+          const year = (record.year || S.year).trim();
+          const layer = (record.layer || S.layer).trim().toLowerCase();
+          const num = Number(record.value);
+          if (DATA[en]?.[rice]?.[year] && ["production", "yield", "area", "price"].includes(layer) && String(record.value ?? "").trim() !== "" && Number.isFinite(num)) {
+            DATA[en][rice][year][layer] = num;
+            DATA[en][rice][year].source = "import_csv";
+            applied += 1;
+          }
+        }
+        if (applied) {
+          DATA_META = {
+            mode: "import",
+            label: "Imported CSV Merge",
+            detail: `ผสานข้อมูลจากไฟล์ ${file.name} แล้ว ${fmtNumber(applied)} แถว/ค่า`
+          };
+          rerender();
+          toast(`อัปเดตข้อมูล ${applied} ค่าเรียบร้อย`);
+        } else {
+          toast("รูปแบบ CSV ยังไม่ตรงกับคอลัมน์ที่รองรับ");
+        }
+        event.target.value = "";
+      };
+      reader.readAsText(file);
+    }
+
+    function csvDl() {
+      const visible = getVisibleProvinces();
+      const rows = [
+        ["province_th", "province_en", "region", "rice_type", "year", "production", "yield", "area", "area_planted", "yield_planted", "price", "price_low", "price_high", "price_low_alt", "price_high_alt", "price_basis", "source", "source_title", "source_url", "source_note", "source_date"]
+      ];
+      visible.forEach(en => {
+        const entry = entryOf(en, S.rice, S.year);
+        rows.push([
+          NM[en] || en,
+          en,
+          regionOf(en),
+          S.rice,
+          S.year,
+          valueOf(en, S.rice, S.year, "production"),
+          valueOf(en, S.rice, S.year, "yield"),
+          valueOf(en, S.rice, S.year, "area"),
+          entry.area_planted || 0,
+          entry.yield_planted || 0,
+          entry.price || 0,
+          entry.price_low || "",
+          entry.price_high || "",
+          entry.price_low_alt || "",
+          entry.price_high_alt || "",
+          entry.price_basis || "",
+          entry.source || DATA_META.mode,
+          entry.source_title || "",
+          entry.source_url || "",
+          entry.source_note || "",
+          entry.source_date || ""
+        ]);
+      });
+      const csv = rows.map(row => row.map(cell => {
+        const value = String(cell ?? "");
+        return /[",\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
+      }).join(",")).join("\n");
+      const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `rice-map_${S.rice}_${S.year}_${S.reg}.csv`;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(link.href), 500);
+    }
+
+    function toast(message) {
+      refs.toast.textContent = message;
+      refs.toast.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => refs.toast.classList.remove("show"), 2200);
+    }
+
+    async function fetchDamData() {
+      try {
+        const res = await fetch('data/dam-water.json?_=' + Date.now(), { cache: 'no-store' });
+        if (res.ok) window.DAM_DATA = await res.json();
+      } catch (e) {
+        console.info('dam-water.json not available (local mode)');
+      }
+      if (S.layer === "dam") rerender();
+      if (S.sel) selectProvince(S.sel);
+    }
+
+    async function init() {
+      if (!window.THAILAND_GEO?.features?.length) {
+        toast("โหลดข้อมูลแผนที่ไม่สำเร็จ");
+        return;
+      }
+      await fetchDefaultCSV();
+      fetchLivePrices();
+      fetchDamData();
+      fetchWeatherData();
+      fetchMillsData();
+      fetchHouseholds();
+      updateNationalFert();
+
+      VIEW.features = window.THAILAND_GEO.features.filter(feature => allEN.includes(feature.properties.name));
+      VIEW.featureMap = new Map(VIEW.features.map(feature => [feature.properties.name, feature]));
+      updateControls();
+      initMapInteractions();
+      resize();
+      window.addEventListener("resize", resize);
+    }
+
+    window.setRice = setRice;
+    window.setLayer = setLayer;
+    window.setYear = setYear;
+    window.setReg = setReg;
+    window.zoomIn = zoomIn;
+    window.zoomOut = zoomOut;
+    window.resetCamera = resetCamera;
+    window.csvUp = csvUp;
+    window.csvDl = csvDl;
+
+/* ── Rice Mills Loader ── */
+    let RICE_MILLS_DATA = null;
+    let RICE_MILLS_LOADING = false;
+
+    async function fetchMillsData() {
+      RICE_MILLS_LOADING = true;
+      try {
+        const res = await fetch('data/rice-mills.json');
+        if (res.ok) RICE_MILLS_DATA = await res.json();
+      } catch (e) {
+        console.info('rice-mills.json not available');
+      }
+      RICE_MILLS_LOADING = false;
+      if (S.layer === "mills") rerender();
+    }
+
+/* ── Live Prices Loader ── */
+    let LIVE_PRICES = null;
+    // Hardcoded FOB fallback (matches data/trea-fob.json) — used when file:// CORS blocks fetch
+    let FOB_PRICES = {
+      "date": "25 Mar 2026",
+      "unit": "USD/MT",
+      "prices": { "jasmine_fob": 1202, "white_fob": 423 },
+      "source": "Thai Rice Exporters Association (TREA)"
+    };
+
+    async function fetchLivePrices() {
+      try {
+        const res = await fetch('data/prices-live.json?_=' + Date.now(), { cache: 'no-store' });
+        if (res.ok) LIVE_PRICES = await res.json();
+      } catch (e) {
+        console.info('prices-live.json not found (local dev mode)');
+      }
+      try {
+        const res2 = await fetch('data/trea-fob.json?_=' + Date.now(), { cache: 'no-store' });
+        if (res2.ok) FOB_PRICES = await res2.json(); // override fallback with latest data
+      } catch (e) {
+        console.info('trea-fob.json using cached fallback');
+      }
+
+      const overlayChanged = applyLivePriceOverlay();
+      renderLivePriceWidget();   // always render — FOB_PRICES is never null
+      if (overlayChanged && typeof rerender === 'function') rerender();
+    }
+
+    // Overlay actual mill PDF prices onto DATA[en][rice][currentYear]. The CSV
+    // entries for the current year are "estimated_trend" placeholders — we
+    // replace them with real min/max from the latest mill report when available.
+    function applyLivePriceOverlay() {
+      const prov = LIVE_PRICES?.provincial_prices?.data;
+      if (!prov || !DATA) return;
+
+      // Latest year present in DATA — usually the "current" year (e.g. 2569)
+      let latestYear = 0;
+      for (const en of Object.keys(DATA)) {
+        for (const rice of Object.keys(DATA[en] || {})) {
+          for (const y of Object.keys(DATA[en][rice] || {})) {
+            const yn = Number(y);
+            if (yn > latestYear) latestYear = yn;
+          }
+        }
+        if (latestYear) break;  // sample one province
+      }
+      if (!latestYear) return;
+
+      const date = Object.values(prov)[0]?.date || '';
+      let patched = 0;
+      for (const en of Object.keys(DATA)) {
+        const thName = NM[en];
+        const live = thName ? prov[thName] : null;
+        if (!live) continue;
+
+        for (const rice of ['white', 'jasmine']) {
+          const lo = live[`${rice}_low`];
+          const hi = live[`${rice}_high`];
+          if (!lo || !hi) continue;
+          const entry = DATA[en]?.[rice]?.[latestYear];
+          if (!entry) continue;
+          entry.price_low = lo;
+          entry.price_high = hi;
+          entry.price_basis = 'moisture_15_pct';
+          entry.source = 'mill_pdf';
+          entry.source_title = LIVE_PRICES?.provincial_prices?.source_th || 'สมาคมโรงสีข้าวไทย';
+          entry.source_url = LIVE_PRICES?.provincial_prices?.source_url || '';
+          entry.source_note = date ? `PDF ${date}` : '';
+          patched++;
+        }
+      }
+      if (patched) console.info(`[live-prices] overlaid ${patched} entries for year ${latestYear}`);
+      return patched > 0;
+    }
+
+    function renderLivePriceWidget() {
+      const panel = document.getElementById('livePricePanel');
+      const block = document.getElementById('livePriceBlock');
+      const updEl = document.getElementById('livePriceUpdated');
+      if (!panel || !block) return;
+
+      const rows = [];
+
+      // 1) FOB Prices (Global Export Price)
+      if (FOB_PRICES && FOB_PRICES.prices) {
+        const w = FOB_PRICES.prices.white_fob;
+        const j = FOB_PRICES.prices.jasmine_fob;
+        rows.push(`
+      <div class="live-price-row">
+        <div class="live-price-label"><strong style="color:#60a5fa">🚢 ${t('ราคาส่งออกหน้าท่าเรือ','Export Price')} (F.O.B.)</strong><br>
+          <span style="font-size:9px;color:var(--muted)">TREA · ${FOB_PRICES.date}</span><br>
+          <span style="font-size:9px;color:var(--muted)">${t('ข้าวขาว','White')} 5%: $${w}${FOB_PRICES.usd_thb ? ` (~${fmtNumber(Math.round(w*FOB_PRICES.usd_thb))} ฿)` : ''} &nbsp;|&nbsp; ${t('หอมมะลิ','Jasmine')}: $${j}${FOB_PRICES.usd_thb ? ` (~${fmtNumber(Math.round(j*FOB_PRICES.usd_thb))} ฿)` : ''}</span>
+        </div>
+        <div class="live-price-val" style="display:none"></div>
+      </div>`);
+      }
+
+      // 2) OAE national price
+      const oae = LIVE_PRICES?.oae_national || {};
+      if (oae.white?.latest?.value_thb_per_ton) {
+        const v = oae.white.latest;
+        const monthNames = ['', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+        const mLabel = monthNames[v.month] || v.month;
+        const pyear = v.year > 2500 ? v.year : v.year + 543;
+        const wh = Number(v.value_thb_per_ton).toLocaleString() + ' ฿';
+        rows.push(`
+      <div class="live-price-row">
+        <div class="live-price-label"><strong style="color:#86efac">🌾 ${t('ราคาที่ไร่นาเฉลี่ย','Farm-gate Price')}</strong><br>
+          <span style="font-size:9px;color:var(--muted)">OAE · ${t('ระดับประเทศ','National')} · ${mLabel} ${pyear}</span><br>
+          <span style="font-size:9px;color:var(--muted)">${t('ข้าวเจ้า','White')} 15%: ${wh}/${t('ตัน','ton')}</span>
+        </div>
+        <div class="live-price-val" style="display:none"></div>
+      </div>`);
+      }
+
+      // 3) Provincial prices (PDF) – แสดงตัวอย่าง 3 จังหวัด
+      const prov = LIVE_PRICES?.provincial_prices?.data || {};
+      const provEntries = Object.entries(prov).filter(([, v]) => v.white || v.jasmine).slice(0, 3);
+      if (provEntries.length) {
+        const srcDate = Object.values(prov)[0]?.date || '';
+        provEntries.forEach(([name, vals]) => {
+          const w = vals.white ? Number(vals.white).toLocaleString() + ' ฿' : '-';
+          const j = vals.jasmine ? Number(vals.jasmine).toLocaleString() + ' ฿' : '-';
+          rows.push(`
+        <div class="live-price-row">
+          <div class="live-price-label"><strong style="color:#fbbf24">🏭 ${t('ราคาที่โรงสีรับซื้อ','Mill Purchase Price')}</strong> (${srcDate})<br>
+            <span style="font-size:9px;color:var(--muted)">📍 ${name} · ${t('สมาคมโรงสีข้าวไทย','Thai Rice Millers Assoc.')}</span><br>
+            <span style="font-size:9px;color:var(--muted)">${t('ข้าวเจ้า','White')}: ${w} &nbsp;|&nbsp; ${t('หอมมะลิ','Jasmine')}: ${j}</span></div>
+          <div class="live-price-val" style="display:none"></div>
+        </div>`);
+        });
+        if (Object.keys(prov).length > 3) {
+          rows.push(`<div style="font-size:9px;color:var(--muted);text-align:center;padding:2px 0">
+        + ${Object.keys(prov).length - 3} ${t('จังหวัดอื่น','more provinces')}</div>`);
+        }
+      }
+
+      if (rows.length === 0) {
+        panel.style.display = 'none';
+        return;
+      }
+
+      block.innerHTML = rows.join('');
+
+      // อัพเดตเวลา
+      const updatedAt = LIVE_PRICES?.meta?.updated_at || LIVE_PRICES?.oae_national?.white?.latest?.year || FOB_PRICES?.date || '';
+      if (updatedAt) {
+        try {
+          const d = new Date(updatedAt);
+          if (!isNaN(d)) {
+            updEl.textContent = t('อัปเดต', 'Updated') + ' ' + d.toLocaleDateString(t('th-TH','en-GB'), { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+          }
+        } catch (_) { updEl.textContent = ''; }
+      }
+
+      panel.style.display = '';
+    }
+
+    function updateNationalFert() {
+      if (!refs.nationalFertBlock) return;
+
+      const sFh  = s => `style="text-align:left;padding:3px 0;${s||''}"`;
+      const sFd  = s => `style="text-align:right;font-family:'IBM Plex Mono';font-size:10px;padding:2px 3px;${s||''}"`;
+      const sFdL = s => `style="padding:2px 0;color:var(--text-soft);font-size:10px;${s||''}"`;
+
+      refs.nationalFertBlock.innerHTML = `
+        <table style="width:100%;border-collapse:collapse;font-size:10px;margin-top:4px">
+          <thead>
+            <tr>
+              <th ${sFh('font-size:9px;color:var(--muted);font-weight:600;letter-spacing:.04em')}>${t('สูตรปุ๋ย','Formula')}</th>
+              <th ${sFd('font-size:9px;color:var(--muted);font-weight:600')}>${t('ต่ำสุด','Min')}</th>
+              <th ${sFd('font-size:9px;color:var(--muted);font-weight:600')}>${t('สูงสุด','Max')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${FERT_MOC.items.map(r => {
+              const isRange = r.min !== r.max;
+              const accent  = r.rice ? 'color:#86efac' : '';
+              return `<tr>
+                <td ${sFdL()}>
+                  <span style="font-weight:700;${accent}">${r.formula}</span>
+                  <span style="font-size:8.5px;color:var(--text-soft)"> · ${t(r.note.th, r.note.en)}</span>
+                </td>
+                <td ${sFd(accent)}>${fmtNumber(r.min)}</td>
+                <td ${sFd(accent)}>${isRange ? fmtNumber(r.max) : '—'}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+        <div style="margin-top:7px;padding-top:6px;border-top:1px solid rgba(255,255,255,.08);font-size:8px;color:var(--muted);line-height:1.55">
+          <div style="margin-bottom:2px">
+            <span style="font-weight:600;color:var(--text-soft)">${t('หน่วย','Unit')}: ฿/${t('กระสอบ 50 กก.','50kg bag')}</span>
+            &nbsp;·&nbsp;
+            ${t('อัปเดต','Updated')}: ${t(FERT_MOC.updated.th, FERT_MOC.updated.en)}
+          </div>
+          <div style="margin-bottom:3px">
+            ${t('ที่มา: กระทรวงพาณิชย์ (MOC) และกรมการค้าภายใน (DIT)',
+                'Source: Ministry of Commerce (MOC) & Dept. of Internal Trade (DIT)')}
+          </div>
+          <div style="color:var(--muted);font-style:italic">
+            ⚠️ ${t('ราคา ณ วันที่สำรวจ จากร้านค้าในเครือข่ายพาณิชย์จังหวัด ไม่ใช่ราคากลางบังคับ',
+                    'Survey prices from provincial commerce network shops — not a nationally mandated price')}
+          </div>
+        </div>
+      `;
+    }
+
+    // ── Weather Data Loader ───────────────────────────────────────────────────
+    let WEATHER_DATA = null;
+    let WEATHER_FORECAST = null;
+
+    const toBE = y => y + 543;   // ค.ศ. → พ.ศ.
+
+    async function fetchWeatherData() {
+      try {
+        const [r1, r2] = await Promise.all([
+          fetch('data/weather-province.json?_='  + Date.now(), { cache: 'no-store' }),
+          fetch('data/weather-forecast.json?_=' + Date.now(), { cache: 'no-store' }),
+        ]);
+        if (r1.ok) WEATHER_DATA     = await r1.json();
+        if (r2.ok) WEATHER_FORECAST = await r2.json();
+      } catch (e) {
+        console.info('weather JSON not available');
+      }
+      // rerender ถ้าผู้ใช้กด weather layer ก่อนที่ข้อมูลจะโหลดเสร็จ
+      if (S.layer === "rainfall" || S.layer === "drought") rerender();
+    }
+
+    function weatherValueOf(en, layer) {
+      const p = WEATHER_DATA?.provinces?.[en];
+      if (!p) return null;
+      if (layer === "rainfall") return p.season_rainfall_mm ?? null;
+      if (layer === "drought") {
+        // % เบี่ยงเบนจากค่าปกติ 5 ปี (2020–2024)
+        const avg = WEATHER_FORECAST?.provinces?.[en]?.forecast_rainfall_mm;
+        if (avg == null || !p.season_rainfall_mm) return null;
+        return Math.round((p.season_rainfall_mm - avg) / avg * 100 * 10) / 10;
+      }
+      return null;
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
+    init();
+  </script>
   <div class="credit">Created by Sponlapat</div>
 </body>
 
