@@ -1528,6 +1528,7 @@
             <button class="pill" data-layer="rainfall" onclick="setLayer('rainfall')"><span class="th-t">ปริมาณฝน (มม.)</span><span class="en-t">Season Rainfall</span></button>
             <button class="pill" data-layer="drought" onclick="setLayer('drought')"><span class="th-t">ฝนเบี่ยงเบนจากปกติ</span><span class="en-t">Rainfall Anomaly</span></button>
             <button class="pill" data-layer="mills" onclick="setLayer('mills')"><span class="th-t">🏭 โรงสีข้าว</span><span class="en-t">🏭 Rice Mills</span></button>
+            <button class="pill" data-layer="profit" onclick="setLayer('profit')"><span class="th-t">💰 กำไร/ขาดทุน</span><span class="en-t">💰 Profit/Loss</span></button>
           </div>
         </section>
 
@@ -1704,6 +1705,7 @@
       rainfall:   { th: "ปริมาณฝน (นาปี)", en: "Season Rainfall", unit: "มม. (มิ.ย.–พ.ย.)", unitEn: "mm (Jun–Nov)", unitShort: "มม.", unitShortEn: "mm", summary: "ปริมาณฝนเฉลี่ย", summaryMode: "avg_nonzero" },
       drought:    { th: "ฝนเบี่ยงเบนจากปกติ", en: "Rainfall Anomaly", unit: "% เทียบค่าปกติ 5 ปี", unitEn: "% vs 5-yr avg", unitShort: "%", unitShortEn: "%", summary: "% เบี่ยงเบนเฉลี่ย", summaryMode: "avg_signed" },
       mills:      { th: "โรงสีข้าว", en: "Rice Mills", unit: "แห่ง/จังหวัด", unitEn: "mills/prov", unitShort: "แห่ง", unitShortEn: "mills", summary: "โรงสีข้าวรวม", summaryMode: "sum" },
+      profit:     { th: "กำไร/ขาดทุนต่อไร่", en: "Est. Profit/Loss per Rai", unit: "บาท/ไร่ (ประมาณการ)", unitEn: "฿/rai (est.)", unitShort: "฿/ไร่", unitShortEn: "฿/rai", summary: "กำไร/ขาดทุนเฉลี่ย", summaryMode: "avg_signed" },
     };
     const riceMeta = {
       white:   { th: "ข้าวขาว",  en: "White Rice",   badge: "🌾" },
@@ -1727,6 +1729,15 @@
       { th:'ค่าขนส่ง/อื่นๆ',         en:'Transport / Other',    w:COST_BASE.white.other, j:COST_BASE.jasmine.other },
     ];
 
+    // อัตราการใช้ปุ๋ยแนะนำสำหรับข้าว — กรมการข้าว (Rice Department)
+    // หน่วย: กก./ไร่/ฤดูกาล  (กระสอบ 50 กก. → หาร 50)
+    // ที่มา: คำแนะนำการใช้ปุ๋ยข้าวนาปีไวต่อช่วงแสง กรมการข้าว 2567
+    // หมายเหตุ: ข้าวขาวนาปี และ ข้าวหอมมะลิ ใช้อัตราเดียวกัน (ทั้งคู่เป็นนาปีไวแสง)
+    const FERT_DOA_RATES = {
+      "46-0-0":  10,  // ยูเรีย: 10 กก./ไร่ ครั้งเดียว (ระยะกำเนิดช่อดอก) — นาปีไวแสง
+      "16-20-0": 25,  // สูตรข้าว: รองพื้น 20–25 กก./ไร่ (ใช้ 25 เป็นค่ากลาง ดินเหนียวภาคกลาง)
+      "15-15-15": 25, // สูตรรวม: ไม่มีอัตราทางการจากกรมการข้าว — ใช้ 25 กก./ไร่ เป็นค่าประมาณ
+    };
     // MOC / DIT official fertilizer price survey — 23 April 2569
     const FERT_MOC = {
       updated: { th: '23 เมษายน 2569', en: '23 April 2026' },
@@ -1970,6 +1981,7 @@
       if (layer === "rainfall" || layer === "drought") return ["weather"];
       if (layer === "households") return ["2566"];
       if (layer === "mills") return ["mills"];
+      if (layer === "profit") return PRICE_YEARS;
       return layer === "price" ? PRICE_YEARS : PRODUCTION_YEARS;
     }
 
@@ -2006,6 +2018,18 @@ function t(th, en) {
       return window.DAM_DATA?.provinces?.[en]?.dam_level_pct ?? 0;
     }
 
+    // ── ความต้องการปุ๋ยโดยประมาณ (กระสอบ 50 กก./ฤดูกาล) ────────────────────────
+    // ── กำไร/ขาดทุนต่อไร่ (ประมาณการ) ──────────────────────────────────────────
+    // Formula: (ราคา ฿/ตัน × ผลผลิต กก./ไร่ / 1000) − ต้นทุน ฿/ไร่ (OAE benchmark)
+    function profitValueOf(en, rice = S.rice, year = S.year) {
+      const entry = entryOf(en, rice, year);
+      const price = Number(entry.price || 0);
+      const yld   = valueOf(en, rice, year, "yield");
+      if (!price || !yld) return null;
+      const cost = COST_BASE[rice]?.oaeRaiCost ?? (rice === "jasmine" ? 5150 : 6100);
+      return Math.round(price * yld / 1000 - cost);
+    }
+
     function millsValueOf(en) {
       const thName = NM[en];
       if (!thName || !RICE_MILLS_DATA) return 0;
@@ -2028,14 +2052,16 @@ function t(th, en) {
       if (layer === "households") return householdValueOf(en);
       if (layer === "dam") return damValueOf(en);
       if (layer === "rainfall" || layer === "drought") return weatherValueOf(en, layer) ?? 0;
-      if (layer === "mills") return millsValueOf(en);
+      if (layer === "mills")      return millsValueOf(en);
+      if (layer === "profit")     return profitValueOf(en, rice, year) ?? 0;
       return Number(entryOf(en, rice, year)[layer] || 0);
     }
 
     function hasLayerValue(en, rice = S.rice, year = S.year, layer = S.layer) {
       if (layer === "dam") return window.DAM_DATA?.provinces?.[en] != null;
       if (layer === "rainfall" || layer === "drought") return weatherValueOf(en, layer) != null;
-      if (layer === "mills") return millsValueOf(en) > 0;
+      if (layer === "mills")      return millsValueOf(en) > 0;
+      if (layer === "profit")     return profitValueOf(en, rice, year) !== null;
       return valueOf(en, rice, year, layer) > 0;
     }
 
@@ -2074,6 +2100,7 @@ function t(th, en) {
       if (S.layer === "rainfall") return { lo: [180, 90, 30],  mid: [235, 185, 55], hi: [30, 100, 195],  accent: "#3b82f6" };
       if (S.layer === "drought")  return { lo: [192, 57, 43],  mid: [241, 196, 15], hi: [41, 128, 185],  accent: "#2ecc71" };
       if (S.layer === "mills")    return { lo: [60, 40, 20],   mid: [160, 110, 40], hi: [230, 170, 60],  accent: "#e6aa3c" };
+      if (S.layer === "profit")     return { lo: [192, 57, 43],  mid: [241, 196, 15], hi: [39, 174, 96],   accent: "#27ae60" };
       return S.rice === "white"
         ? { lo: [36, 75, 54], mid: [154, 131, 73], hi: [245, 192, 101], accent: "#ff8f4d" }
         : { lo: [42, 39, 77], mid: [134, 93, 178], hi: [236, 186, 217], accent: "#d9a0ff" };
@@ -2092,7 +2119,7 @@ function t(th, en) {
     function scaleT(v, min, max) {
       if (max <= min) return .5;
       // drought: center palette at 0mm (balanced) — red=แล้ง yellow=สมดุล blue=ชุ่มชื้น
-      if (S.layer === "drought") {
+      if (S.layer === "drought" || S.layer === "profit") {
         const absMax = Math.max(Math.abs(min), Math.abs(max));
         return absMax > 0 ? Math.max(0, Math.min(1, 0.5 + 0.5 * (v / absMax))) : 0.5;
       }
@@ -2112,6 +2139,7 @@ function t(th, en) {
       if (S.layer === "rainfall") return fmtNumber(Math.round(n)) + " mm";
       if (S.layer === "drought")  return (n >= 0 ? "+" : "") + n.toFixed(1) + "%";
       if (S.layer === "mills")    return fmtNumber(Math.round(n));
+      if (S.layer === "profit")     return (n >= 0 ? "+" : "") + fmtNumber(Math.round(n));
       if (S.layer === "price") return fmtNumber(Math.round(n));
       if (S.layer === "households") {
         if (n >= 1e6) return `${(n / 1e6).toFixed(2)}M`;
@@ -2586,13 +2614,16 @@ function t(th, en) {
       refs.legendType.textContent = S.layer === "dam" ? t("กรมชลประทาน", "RID")
         : (S.layer === "rainfall" || S.layer === "drought") ? t("Open-Meteo", "Open-Meteo")
         : S.layer === "mills" ? t("กรมการค้าภายใน", "DIT")
+        : S.layer === "profit" ? t("OAE+สมาคมโรงสีฯ", "OAE+TRMAB")
         : t(riceMeta[S.rice].th, riceMeta[S.rice].en);
       refs.legendLayer.textContent = t(layerMeta[S.layer].th, layerMeta[S.layer].en);
       refs.legendUnit.textContent = uLabel();
       refs.latestBadge.classList.add("show");
-      const isEstYear = S.layer !== "price" && S.layer !== "households" && S.layer !== "fertilizer" && S.layer !== "dam" && S.layer !== "rainfall" && S.layer !== "drought" && S.layer !== "mills" && S.year >= "2568";
+      const isEstYear = S.layer !== "price" && S.layer !== "households" && S.layer !== "fertilizer" && S.layer !== "dam" && S.layer !== "rainfall" && S.layer !== "drought" && S.layer !== "mills" && S.layer !== "profit" && S.year >= "2568";
       refs.latestBadge.textContent = S.layer === "mills"
         ? `🏭 ${t('โรงสีข้าว DIT','Rice Mills DIT')} ${RICE_MILLS_DATA?._meta?.updated || '2026-04-23'}`
+        : S.layer === "profit"
+        ? `💰 ${t('กำไร/ขาดทุนประมาณการ','Est. Profit/Loss')} · ${t('ราคา × ผลผลิต − ต้นทุน OAE','Price × Yield − OAE Cost')}`
         : S.layer === "price"
         ? `${t('ราคาอ้างอิง','Price Ref')}: ${entryOf(getVisibleProvinces().find(en => hasLayerValue(en)) || allEN[0]).source_date || S.year}`
         : S.layer === "households"
@@ -2620,6 +2651,16 @@ function t(th, en) {
         refs.dataSourceNote.textContent = t(
           `ข้อมูลระดับน้ำในเขื่อนขนาดใหญ่ 35 แห่ง จากกรมชลประทาน (RID) อัปเดต ${updated} ครอบคลุม ${covered} จังหวัด`,
           `Large dam water levels (35 dams) from Royal Irrigation Dept. (RID). Updated ${updated}. Covers ${covered} provinces.`
+        );
+        return;
+      }
+      if (S.layer === "profit") {
+        const covered = getVisibleProvinces().filter(en => hasLayerValue(en)).length;
+        const rice = t(riceMeta[S.rice].th, riceMeta[S.rice].en);
+        const cost = fmtNumber(COST_BASE[S.rice]?.oaeRaiCost);
+        refs.dataSourceNote.textContent = t(
+          `ประมาณการกำไร/ขาดทุนต่อไร่ = (ราคาโรงสี × ผลผลิต/ตัน) − ต้นทุน OAE ${cost} ฿/ไร่ (${rice}) · ครอบคลุม ${covered} จังหวัดที่มีข้อมูลราคา`,
+          `Est. profit/loss per rai = (mill price × yield/ton) − OAE cost ${cost} ฿/rai (${rice}) · ${covered} provinces with price data`
         );
         return;
       }
@@ -2689,7 +2730,7 @@ function t(th, en) {
         }
       }
       refs.scopeLabel.textContent = t("ขอบเขต", "Scope");
-      refs.scopeValue.textContent = (S.layer === "price" || S.layer === "dam" || S.layer === "rainfall" || S.layer === "drought" || S.layer === "mills") ? `${covered.length}/${visible.length} ${t('จว.','Prov.')}` : `${visible.length} ${t('จว.','Prov.')}`;
+      refs.scopeValue.textContent = (S.layer === "price" || S.layer === "dam" || S.layer === "rainfall" || S.layer === "drought" || S.layer === "mills" || S.layer === "profit") ? `${covered.length}/${visible.length} ${t('จว.','Prov.')}` : `${visible.length} ${t('จว.','Prov.')}`;
       refs.scopeSub.textContent = S.layer === "price"
         ? t("จังหวัดที่มีราคา", "Provinces with price")
         : (S.reg === "all" ? t("ทั้งประเทศ", "Nationwide") : t(`ภาค${thaiRegionName(S.reg)}`, `${S.reg.charAt(0).toUpperCase() + S.reg.slice(1)} Region`));
@@ -2704,6 +2745,8 @@ function t(th, en) {
         ? t("แผนที่ฝนเบี่ยงเบนจากค่าปกติรายจังหวัด", "Rainfall Anomaly vs 5-Year Normal by Province")
         : S.layer === "mills"
         ? t("แผนที่โรงสีข้าวรายจังหวัด", "Rice Mills by Province")
+        : S.layer === "profit"
+        ? t("แผนที่กำไร/ขาดทุนประมาณการต่อไร่", "Estimated Profit/Loss per Rai by Province")
         : t(`แผนที่${riceMeta[S.rice].th}รายจังหวัด`, `${riceMeta[S.rice].en} Rice · Province Map`);
       refs.headlineDesc.textContent = S.layer === "dam"
         ? t("ระดับน้ำในเขื่อนขนาดใหญ่ 35 แห่ง จากกรมชลประทาน (RID) อัปเดตรายวัน", "Large dam water levels from Royal Irrigation Dept. (RID). 35 dams, daily update.")
@@ -2715,6 +2758,9 @@ function t(th, en) {
         : S.layer === "mills"
         ? t(`โรงสีข้าวจดทะเบียนกับกรมการค้าภายใน (DIT) จำนวน ${RICE_MILLS_DATA?._meta?.total_mills || 903} แห่ง ใน ${RICE_MILLS_DATA?._meta?.provinces_covered || 60} จังหวัด จำแนกตามขนาด (ใหญ่/กลาง/เล็ก) ข้อมูล ณ เม.ย. 2569`,
            `Registered rice mills with Dept. of Internal Trade (DIT): ${RICE_MILLS_DATA?._meta?.total_mills || 903} mills in ${RICE_MILLS_DATA?._meta?.provinces_covered || 60} provinces, classified by size (large/medium/small). Data as of Apr 2026.`)
+        : S.layer === "profit"
+        ? t(`ประมาณการกำไร/ขาดทุนต่อไร่ = ราคาโรงสี × ผลผลิต − ต้นทุน OAE · สีเขียว = กำไร · สีแดง = ขาดทุน · ใช้ต้นทุนอ้างอิงระดับประเทศ (ข้าวขาว ${fmtNumber(COST_BASE.white.oaeRaiCost)} / หอมมะลิ ${fmtNumber(COST_BASE.jasmine.oaeRaiCost)} ฿/ไร่)`,
+           `Est. profit/loss per rai = mill price × yield − OAE cost benchmark · Green = profit · Red = loss · National cost reference (white ${fmtNumber(COST_BASE.white.oaeRaiCost)} / jasmine ${fmtNumber(COST_BASE.jasmine.oaeRaiCost)} ฿/rai)`)
         : S.layer === "price"
         ? t(`แผนที่ fit ตามสัดส่วนประเทศไทยและใช้รายงานราคาข้าวเปลือกรายวันของสมาคมโรงสีข้าวไทย โดยไฮไลต์ราคาของ ${riceTypeDescription(S.rice, S.layer)} ปี ${S.year}`,
            `Province-level paddy price map using Thai Rice Miller Association daily reports. ${riceTypeDescription(S.rice, S.layer)} · Crop year ${S.year}.`)
@@ -2730,6 +2776,8 @@ function t(th, en) {
       const metaLabel = t(meta.th, meta.en);
       refs.topSub.innerHTML = S.layer === "mills"
         ? `${metaLabel}<br>${t('DIT 2569', 'DIT 2026')}`
+        : S.layer === "profit"
+        ? `${riceLabel} &nbsp;·&nbsp; ${metaLabel}<br>${yearLabel} · ${t('ประมาณการ','Est.')}`
         : `${riceLabel} &nbsp;·&nbsp; ${metaLabel}<br>${yearLabel}`;
       const items = visible
         .filter(en => hasLayerValue(en))
@@ -2737,14 +2785,14 @@ function t(th, en) {
         .sort((a, b) => b.v - a.v)
         .slice(0, 10);
       const max = items[0]?.v || 1;
-      // drought: ใช้ absolute value เพราะมีค่าติดลบ — bar width และ scaleT ต้องอิงค่า abs
-      const maxAbs = (S.layer === "drought")
+      // drought/profit: ใช้ absolute value เพราะมีค่าติดลบ — bar width และ scaleT ต้องอิงค่า abs
+      const maxAbs = (S.layer === "drought" || S.layer === "profit")
         ? Math.max(...items.map(i => Math.abs(i.v)), 1)
         : (max || 1);
       const palette = getPalette();
       refs.topList.innerHTML = items.map((item, idx) => {
         const pct = Math.max(6, (Math.abs(item.v) / maxAbs) * 100);
-        const t01 = S.layer === "drought"
+        const t01 = (S.layer === "drought" || S.layer === "profit")
           ? Math.max(0, Math.min(1, 0.5 + 0.5 * (item.v / maxAbs)))
           : Math.max(.16, item.v / (max || 1));
         const tone = lerp(palette.lo, palette.hi, t01);
@@ -2881,6 +2929,83 @@ function t(th, en) {
         }).join("")}
     </div>`;
       }).join("");
+      // ── Fertilizer:Rice Ratio card ───────────────────────────────────────
+      let fertRatioHtml = "";
+      {
+        // ดึงราคาจากปีล่าสุดที่มีข้อมูล (ไม่ขึ้นกับ S.year — card ขึ้นทุก layer)
+        const priceYear = [...PRICE_YEARS].reverse().find(yr => Number(entryOf(en, S.rice, yr).price || 0) > 0);
+        const price = priceYear ? Number(entryOf(en, S.rice, priceYear).price) : 0;
+        const area  = valueOf(en, S.rice, S.year, "area");        // ไร่
+        if (price > 0 && area > 0) {
+          // ยูเรีย 46-0-0: midpoint of FERT_MOC survey
+          const ureaItem = FERT_MOC.items.find(i => i.formula === "46-0-0");
+          const ureaMid  = ureaItem ? Math.round((ureaItem.min + ureaItem.max) / 2) : 1050;
+          // กี่กระสอบยูเรีย/ตันข้าว (มากกว่า = ชาวนาได้ประโยชน์มากกว่า)
+          const bagsPerTon = price / ureaMid;
+          // ความต้องการยูเรียโดยประมาณ — ใช้อัตราแนะนำกรมการข้าว (10 กก./ไร่ = 0.2 กระสอบ — นาปีไวแสง)
+          const bagsPerRai = (FERT_DOA_RATES["46-0-0"] ?? 25) / 50;
+          const totalBags  = Math.round(area * bagsPerRai);
+          const ratioColor = bagsPerTon >= 8 ? '#27ae60' : bagsPerTon >= 5 ? '#f39c12' : '#c0392b';
+          const ratioLabel = bagsPerTon >= 8
+            ? t('สูง — ชาวนาได้เปรียบ 🟢', 'High — Favorable for farmers 🟢')
+            : bagsPerTon >= 5
+            ? t('ปานกลาง 🟡', 'Moderate 🟡')
+            : t('ต่ำ — ปุ๋ยแพงเทียบข้าว 🔴', 'Low — Fertilizer costly vs rice 🔴');
+
+          fertRatioHtml = `
+            <div class="rice-card" style="grid-column:1/-1;background:rgba(255,193,7,.07);border:1px solid rgba(255,193,7,.2)">
+              <div class="t">🌱 ${t('อัตราส่วนปุ๋ย:ข้าว','Fertilizer:Rice Ratio')} · ${t(riceMeta[S.rice].th, riceMeta[S.rice].en)} ${priceYear}</div>
+              <div class="metric">
+                <div class="m-label">${t('ขายข้าว 1 ตัน ซื้อยูเรีย (46-0-0) ได้','Sell 1 ton paddy → buy Urea (46-0-0)')}</div>
+                <div class="m-value" style="color:${ratioColor}">${bagsPerTon.toFixed(1)} <small>${t('กระสอบ','bags')}</small></div>
+                <div class="m-label" style="color:${ratioColor};margin-top:2px">${ratioLabel}</div>
+              </div>
+              <div class="metric">
+                <div class="m-label">${t('ความต้องการยูเรียโดยประมาณ (จังหวัด)','Est. Provincial Urea Demand')}</div>
+                <div class="m-value" style="font-size:12px">${fmtNumber(totalBags)} <small>${t('กระสอบ/ฤดูกาล','bags/season')}</small></div>
+                <div class="m-label" style="margin-top:2px">${fmtNumber(area)} ${t('ไร่','rai')} × ${bagsPerRai} ${t('กระสอบ/ไร่','bags/rai')} ${t('(อัตราแนะนำ DOA)','(DOA rec. rate)')}</div>
+              </div>
+              <div style="font-size:9px;color:var(--muted);margin-top:6px">${t(`ราคายูเรียอ้างอิง MOC: ${fmtNumber(ureaMid)} ฿/กระสอบ 50 กก. (${ureaItem?.min}–${ureaItem?.max}) · อัปเดต ${FERT_MOC.updated.th}`,`Urea ref. MOC: ${fmtNumber(ureaMid)} ฿/50kg bag (${ureaItem?.min}–${ureaItem?.max}) · Updated ${FERT_MOC.updated.en}`)}</div>
+            </div>`;
+        }
+      }
+      // ─────────────────────────────────────────────────────────────────────
+
+      // ── Profit/Loss detail card ──────────────────────────────────────────
+      let profitHtml = "";
+      {
+        const pval = profitValueOf(en, S.rice, S.year);
+        if (pval !== null) {
+          const entry = entryOf(en, S.rice, S.year);
+          const price = Number(entry.price || 0);
+          const yld   = valueOf(en, S.rice, S.year, "yield");
+          const cost  = COST_BASE[S.rice]?.oaeRaiCost ?? 6100;
+          const revenue = Math.round(price * yld / 1000);
+          const col = pval >= 0 ? '#27ae60' : '#c0392b';
+          const label = pval >= 500 ? t('กำไร ✅','Profit ✅') : pval >= 0 ? t('ใกล้คุ้มทุน ⚠️','Near Breakeven ⚠️') : t('ขาดทุน ❌','Loss ❌');
+          profitHtml = `
+            <div class="rice-card" style="grid-column:1/-1;background:rgba(39,174,96,.07);border:1px solid rgba(39,174,96,.2)">
+              <div class="t">💰 ${t('กำไร/ขาดทุนประมาณการ','Est. Profit/Loss')} · ${t(riceMeta[S.rice].th, riceMeta[S.rice].en)} ${S.year}</div>
+              <div class="metric">
+                <div class="m-label">${t('กำไร/ขาดทุนต่อไร่','Profit/Loss per Rai')}</div>
+                <div class="m-value" style="color:${col}">${pval >= 0 ? '+' : ''}${fmtNumber(pval)} <small>฿/ไร่</small></div>
+                <div class="m-label" style="color:${col};margin-top:2px">${label}</div>
+              </div>
+              <div class="metric">
+                <div class="m-label">${t('รายได้ต่อไร่','Revenue/Rai')}</div>
+                <div class="m-value" style="font-size:12px">${fmtNumber(revenue)} <small>฿/ไร่</small></div>
+                <div class="m-label" style="margin-top:2px">${fmtNumber(price)} ฿/ตัน × ${fmtNumber(yld)} กก./ไร่</div>
+              </div>
+              <div class="metric">
+                <div class="m-label">${t('ต้นทุนอ้างอิง OAE','OAE Cost Benchmark')}</div>
+                <div class="m-value" style="font-size:12px">${fmtNumber(cost)} <small>฿/ไร่</small></div>
+              </div>
+              <div style="font-size:9px;color:var(--muted);margin-top:6px">${t('⚠️ ประมาณการ ใช้ต้นทุนอ้างอิงระดับประเทศ (OAE 2566/67) ไม่รวมค่าเช่านา','⚠️ Estimate using national OAE cost benchmark (2566/67), excludes land rent for landowners')}</div>
+            </div>`;
+        }
+      }
+      // ─────────────────────────────────────────────────────────────────────
+
       let millsHtml = "";
       if (RICE_MILLS_DATA) {
         const thName = NM[en];
@@ -2905,7 +3030,7 @@ function t(th, en) {
             </div>`;
         }
       }
-      refs.detailGrid.innerHTML = weatherHtml + damHtml + millsHtml + householdsHtml + fertHtml + cardHtml;
+      refs.detailGrid.innerHTML = weatherHtml + damHtml + profitHtml + fertRatioHtml + millsHtml + householdsHtml + fertHtml + cardHtml;
       if (refs.detailDataNote) {
         refs.detailDataNote.innerHTML = `📌 ${t(
           'ข้อมูลผลผลิต / ผลผลิตต่อไร่ / เนื้อที่เก็บเกี่ยว เป็นข้อมูลเฉพาะ<strong>นาปี</strong>เท่านั้น · ไม่รวมนาปรัง · ไม่รวม<strong>ข้าวเหนียว</strong>และ<strong>ข้าวเจ้าปทุม 1</strong>',
@@ -2922,12 +3047,14 @@ function t(th, en) {
     }
 
     function drawSpark(en) {
-      if (S.layer === "dam" || S.layer === "rainfall" || S.layer === "drought" || S.layer === "mills") {
+      if (S.layer === "dam" || S.layer === "rainfall" || S.layer === "drought" || S.layer === "mills" || S.layer === "profit") {
         refs.sparkSvg.innerHTML = "";
         refs.sparkTitle.textContent = S.layer === "dam"
           ? t("ไม่มีข้อมูลอนุกรมเวลา", "No time-series data")
           : S.layer === "mills"
           ? t("ข้อมูล ณ เม.ย. 2569 — ไม่มีอนุกรมเวลา", "Apr 2026 snapshot — no time series")
+          : S.layer === "profit"
+          ? t("ใช้ราคาปีปัจจุบัน — ไม่มีอนุกรมเวลาที่สมบูรณ์", "Uses current year price — no complete time series")
           : t("ข้อมูลฤดูกาลเดียว — ไม่มีอนุกรมเวลา", "Single season — no time series");
         return;
       }
@@ -3003,6 +3130,30 @@ function t(th, en) {
     <div class="value">${prov.count} <small style="font-size:12px;color:var(--muted)">${t('แห่ง', 'mills')}</small></div>
     <div class="rank">${rank ? `${t('อันดับ', 'Rank')} #${rank} / ${total}` : t('ไม่มีข้อมูล', 'No data')} &nbsp;·&nbsp; ${t(`ใหญ่ ${prov.large}  กลาง ${prov.medium}  เล็ก ${prov.small}`, `L:${prov.large} M:${prov.medium} S:${prov.small}`)}</div>
     ${millListHtml}${sourceNote}
+  `;
+      }
+      if (S.layer === "profit") {
+        const pval = profitValueOf(en, S.rice, S.year);
+        const rank = currentRank(en);
+        const total = getVisibleProvinces().filter(n => hasLayerValue(n)).length;
+        if (pval === null) return `<div class="th">${t(NM[en]||en,en)}</div><div class="en">${en}</div><div style="color:var(--muted);font-size:11px;margin-top:6px">${t('ไม่มีข้อมูลราคา — คำนวณกำไรไม่ได้','No price data — cannot estimate profit')}</div>`;
+        const col = pval >= 0 ? '#27ae60' : '#c0392b';
+        const entry = entryOf(en, S.rice, S.year);
+        const price = Number(entry.price || 0);
+        const yld   = valueOf(en, S.rice, S.year, "yield");
+        const cost  = COST_BASE[S.rice]?.oaeRaiCost ?? 6100;
+        const revenue = Math.round(price * yld / 1000);
+        return `
+    <div class="th">${t(NM[en]||en,en)}</div>
+    <div class="en">${en}</div>
+    <div class="type">${t('กำไร/ขาดทุนประมาณการ','Est. Profit/Loss')} · ${S.year}</div>
+    <div class="metric-name">${t('กำไร/ขาดทุนต่อไร่','Profit/Loss per Rai')}</div>
+    <div class="value" style="color:${col}">${pval >= 0 ? '+' : ''}${fmtNumber(pval)} <small style="font-size:12px;color:var(--muted)">฿/ไร่</small></div>
+    <div class="rank">${rank ? `${t('อันดับ','Rank')} #${rank} / ${total}` : t('ไม่มีข้อมูล','No data')}</div>
+    <div style="font-size:9px;color:var(--muted);margin-top:4px">
+      ${t('รายได้','Revenue')}: ${fmtNumber(price)} × ${fmtNumber(yld)} ÷ 1000 = <strong>${fmtNumber(revenue)} ฿/ไร่</strong><br>
+      ${t('ต้นทุน OAE','OAE Cost')}: <strong>${fmtNumber(cost)} ฿/ไร่</strong>
+    </div>
   `;
       }
       const value = valueOf(en);
@@ -3095,6 +3246,12 @@ function t(th, en) {
       if (S.layer === "mills") {
         const updated = RICE_MILLS_DATA?._meta?.updated || "2026-04-23";
         refs.yearButtons.innerHTML = `<button class="pill on" data-year="mills">🏭 DIT ${t('อัปเดต','Updated')} ${updated}</button>`;
+        return;
+      }
+      if (S.layer === "profit") {
+        refs.yearButtons.innerHTML = PRICE_YEARS.map(yr =>
+          `<button class="pill${yr === S.year ? ' on' : ''}" data-year="${yr}" onclick="setYear('${yr}')">💰 ${yr}</button>`
+        ).join("");
         return;
       }
       const years = yearsForLayer();
