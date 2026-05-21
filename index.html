@@ -894,6 +894,50 @@
       gap: 12px;
       align-items: flex-start;
     }
+    .detail-tabs {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      margin-bottom: 4px;
+      justify-content: center;
+    }
+    .detail-tab {
+      font-size: 10px;
+      padding: 3px 9px;
+      border-radius: 20px;
+      cursor: pointer;
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.13);
+      color: var(--muted);
+      transition: all .15s;
+      white-space: nowrap;
+    }
+    .detail-tab:hover { background: rgba(255,255,255,.13); color: #ddd; }
+    .detail-tab.active { background: rgba(255,255,255,.18); color: #fff; border-color: rgba(255,255,255,.3); font-weight: 600; }
+    .detail-tab.has-data::after { content: ''; display:inline-block; width:5px; height:5px; border-radius:50%; background:var(--accent); margin-left:4px; vertical-align:middle; opacity:.7; }
+
+    /* ── Horizontal scroll carousel for detail panes ── */
+    .detail-carousel {
+      display: flex;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;        /* Firefox */
+      gap: 0;
+    }
+    .detail-carousel::-webkit-scrollbar { display: none; }
+    .detail-carousel .detail-pane {
+      flex: 0 0 100%;
+      width: 100%;
+      overflow: hidden;
+      scroll-snap-align: start;
+      box-sizing: border-box;
+    }
+    .detail-pane .detail-grid-inner {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
 
     .detail-name {
       font-family: 'Cormorant Garamond', serif;
@@ -920,11 +964,7 @@
       white-space: nowrap;
     }
 
-    .detail-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-    }
+    /* detail-grid is now detail-carousel — grid is inside each pane */
 
     .rice-card {
       padding: 12px;
@@ -1361,7 +1401,7 @@
         gap: 6px
       }
 
-      .detail-grid {
+      .detail-pane .detail-grid-inner {
         grid-template-columns: 1fr
       }
 
@@ -1529,6 +1569,7 @@
             <button class="pill" data-layer="drought" onclick="setLayer('drought')"><span class="th-t">ฝนเบี่ยงเบนจากปกติ</span><span class="en-t">Rainfall Anomaly</span></button>
             <button class="pill" data-layer="mills" onclick="setLayer('mills')"><span class="th-t">🏭 โรงสีข้าว</span><span class="en-t">🏭 Rice Mills</span></button>
             <button class="pill" data-layer="profit" onclick="setLayer('profit')"><span class="th-t">💰 กำไร/ขาดทุน</span><span class="en-t">💰 Profit/Loss</span></button>
+            <button class="pill" data-layer="flood" onclick="setLayer('flood')"><span class="th-t">🌊 ความเสี่ยงน้ำท่วม</span><span class="en-t">🌊 Flood Risk</span></button>
           </div>
         </section>
 
@@ -1586,7 +1627,7 @@
         <section class="panel-block">
           <div class="rank-head">
             <div>
-              <div class="rank-title">Top 10 <span class="th-t">จังหวัด</span><span class="en-t">Provinces</span></div>
+              <div class="rank-title" id="rankTitle">Top 10 <span class="th-t">จังหวัด</span><span class="en-t">Provinces</span></div>
               <div class="rank-sub" id="topSub"></div>
             </div>
           </div>
@@ -1601,7 +1642,13 @@
             </div>
             <div class="detail-rank" id="detailRank">#-</div>
           </div>
-          <div class="detail-grid" id="detailGrid"></div>
+          <div class="detail-tabs" id="detailTabs" style="display:none">
+            <button class="detail-tab" data-tab="rice"    onclick="switchDetailTab('rice')">🌾 <span class="th-t">ข้าว</span><span class="en-t">Rice</span></button>
+            <button class="detail-tab" data-tab="env"     onclick="switchDetailTab('env')">🌦️ <span class="th-t">สภาพแวดล้อม</span><span class="en-t">Environment</span></button>
+            <button class="detail-tab" data-tab="econ"    onclick="switchDetailTab('econ')">💰 <span class="th-t">เศรษฐกิจ</span><span class="en-t">Economics</span></button>
+            <button class="detail-tab" data-tab="people"  onclick="switchDetailTab('people')">👨‍🌾 <span class="th-t">เกษตรกร</span><span class="en-t">Farmers</span></button>
+          </div>
+          <div class="detail-carousel" id="detailGrid"></div>
           <div id="detailDataNote" style="font-size:8.5px;color:var(--muted);padding:6px 2px 0;border-top:1px solid rgba(255,255,255,.1);line-height:1.6;display:none"></div>
           <div class="spark">
             <div class="spark-top">
@@ -1706,6 +1753,7 @@
       drought:    { th: "ฝนเบี่ยงเบนจากปกติ", en: "Rainfall Anomaly", unit: "% เทียบค่าปกติ 5 ปี", unitEn: "% vs 5-yr avg", unitShort: "%", unitShortEn: "%", summary: "% เบี่ยงเบนเฉลี่ย", summaryMode: "avg_signed" },
       mills:      { th: "โรงสีข้าว", en: "Rice Mills", unit: "แห่ง/จังหวัด", unitEn: "mills/prov", unitShort: "แห่ง", unitShortEn: "mills", summary: "โรงสีข้าวรวม", summaryMode: "sum" },
       profit:     { th: "กำไร/ขาดทุนต่อไร่", en: "Est. Profit/Loss per Rai", unit: "บาท/ไร่ (ประมาณการ)", unitEn: "฿/rai (est.)", unitShort: "฿/ไร่", unitShortEn: "฿/rai", summary: "กำไร/ขาดทุนเฉลี่ย", summaryMode: "avg_signed" },
+      flood:      { th: "ความเสี่ยงน้ำท่วม", en: "Flood Risk Zone", unit: "% พื้นที่ (ประมาณการจากสถิติ GISTDA 2554–2566)", unitEn: "% area (est. from GISTDA data 2011–2023)", unitShort: "%~", unitShortEn: "%~", summary: "พื้นที่เสี่ยงน้ำท่วมเฉลี่ย", summaryMode: "avg_nonzero" },
     };
     const riceMeta = {
       white:   { th: "ข้าวขาว",  en: "White Rice",   badge: "🌾" },
@@ -1757,7 +1805,9 @@
       mapWrap: document.getElementById("mapWrap"),
       mapSvg: document.getElementById("mapSvg"),
       tooltip: document.getElementById("tooltip"),
-      topList: document.getElementById("topList"),
+      topList:    document.getElementById("topList"),
+      rankTitle:  document.getElementById("rankTitle"),
+      detailTabs: document.getElementById("detailTabs"),
       yearButtons: document.getElementById("yearButtons"),
       zoomValue: document.getElementById("zoomValue"),
       dataStatus: document.getElementById("dataStatus"),
@@ -2030,6 +2080,10 @@ function t(th, en) {
       return Math.round(price * yld / 1000 - cost);
     }
 
+    function floodValueOf(en) {
+      return window.FLOOD_DATA?.provinces?.[en]?.pct ?? null;
+    }
+
     function millsValueOf(en) {
       const thName = NM[en];
       if (!thName || !RICE_MILLS_DATA) return 0;
@@ -2054,6 +2108,7 @@ function t(th, en) {
       if (layer === "rainfall" || layer === "drought") return weatherValueOf(en, layer) ?? 0;
       if (layer === "mills")      return millsValueOf(en);
       if (layer === "profit")     return profitValueOf(en, rice, year) ?? 0;
+      if (layer === "flood")      return floodValueOf(en) ?? 0;
       return Number(entryOf(en, rice, year)[layer] || 0);
     }
 
@@ -2062,6 +2117,7 @@ function t(th, en) {
       if (layer === "rainfall" || layer === "drought") return weatherValueOf(en, layer) != null;
       if (layer === "mills")      return millsValueOf(en) > 0;
       if (layer === "profit")     return profitValueOf(en, rice, year) !== null;
+      if (layer === "flood")      return window.FLOOD_DATA?.provinces?.[en] != null;
       return valueOf(en, rice, year, layer) > 0;
     }
 
@@ -2101,6 +2157,7 @@ function t(th, en) {
       if (S.layer === "drought")  return { lo: [192, 57, 43],  mid: [241, 196, 15], hi: [41, 128, 185],  accent: "#2ecc71" };
       if (S.layer === "mills")    return { lo: [60, 40, 20],   mid: [160, 110, 40], hi: [230, 170, 60],  accent: "#e6aa3c" };
       if (S.layer === "profit")     return { lo: [192, 57, 43],  mid: [241, 196, 15], hi: [39, 174, 96],   accent: "#27ae60" };
+      if (S.layer === "flood")      return { lo: [227, 242, 253], mid: [30, 136, 229], hi: [13, 71, 161],  accent: "#1e88e5" };
       return S.rice === "white"
         ? { lo: [36, 75, 54], mid: [154, 131, 73], hi: [245, 192, 101], accent: "#ff8f4d" }
         : { lo: [42, 39, 77], mid: [134, 93, 178], hi: [236, 186, 217], accent: "#d9a0ff" };
@@ -2140,6 +2197,7 @@ function t(th, en) {
       if (S.layer === "drought")  return (n >= 0 ? "+" : "") + n.toFixed(1) + "%";
       if (S.layer === "mills")    return fmtNumber(Math.round(n));
       if (S.layer === "profit")     return (n >= 0 ? "+" : "") + fmtNumber(Math.round(n));
+      if (S.layer === "flood")      return n.toFixed(1) + "%";
       if (S.layer === "price") return fmtNumber(Math.round(n));
       if (S.layer === "households") {
         if (n >= 1e6) return `${(n / 1e6).toFixed(2)}M`;
@@ -2664,6 +2722,13 @@ function t(th, en) {
         );
         return;
       }
+      if (S.layer === "flood") {
+        refs.dataSourceNote.textContent = t(
+          `📊 ประมาณการจากสถิติดาวเทียม GISTDA 2554–2566 (Monte Carlo sampling) · ครอบคลุม ${covered} จังหวัด · ค่าจริงอาจต่างกันได้`,
+          `📊 Estimated from GISTDA satellite flood statistics 2011–2023 (Monte Carlo sampling) · ${covered} provinces · actual values may differ`
+        );
+        return;
+      }
       if (S.layer === "mills") {
         const meta = RICE_MILLS_DATA?._meta;
         const covered = getVisibleProvinces().filter(en => hasLayerValue(en)).length;
@@ -2684,7 +2749,7 @@ function t(th, en) {
         refs.dataSourceNote.textContent = `${t(season, meta?.season_label?.split('·')[1]?.trim() || 'Jun–Nov 2025')} · ${note} · Open-Meteo Archive API · ${covered} ${t('จว.','prov.')}`;
         return;
       }
-      const isEstYear = S.layer !== "price" && S.year >= "2568";
+      const isEstYear = S.layer !== "price" && S.layer !== "flood" && S.year >= "2568";
       if (isEstYear) {
         refs.dataSourceNote.innerHTML = `<strong style="color:#f5c065">📊 ข้อมูลปี ${S.year} เป็นการประมาณการ / Estimated Data</strong><br>คำนวณจากค่าเฉลี่ย YoY Growth Rate ปี 2565–2567 รายจังหวัด (capped ±30%/ปี)<br>${S.year === '2568' ? 'เนื้อที่เพาะปลูกปรับด้วย scale factor จากข้อมูลกรมการข้าว ณ 2 มี.ค. 2569 (58.5 ล้านไร่ทั้งประเทศ)' : 'ประมาณการต่อเนื่องจากปี 2568'}<br><span style="color:var(--muted)">Trend estimation: avg 2-year YoY (2565→2566→2567) applied to ${S.year}. ${S.year === '2568' ? 'Area_planted calibrated using Department of Rice 2568 regional planted-area data (58.5M rai national).' : ''} Not official OAE data — replace via Import CSV when official data is released.</span>`;
         return;
@@ -2747,6 +2812,8 @@ function t(th, en) {
         ? t("แผนที่โรงสีข้าวรายจังหวัด", "Rice Mills by Province")
         : S.layer === "profit"
         ? t("แผนที่กำไร/ขาดทุนประมาณการต่อไร่", "Estimated Profit/Loss per Rai by Province")
+        : S.layer === "flood"
+        ? t("แผนที่ความเสี่ยงน้ำท่วมซ้ำซากรายจังหวัด", "Recurring Flood Risk by Province")
         : t(`แผนที่${riceMeta[S.rice].th}รายจังหวัด`, `${riceMeta[S.rice].en} Rice · Province Map`);
       refs.headlineDesc.textContent = S.layer === "dam"
         ? t("ระดับน้ำในเขื่อนขนาดใหญ่ 35 แห่ง จากกรมชลประทาน (RID) อัปเดตรายวัน", "Large dam water levels from Royal Irrigation Dept. (RID). 35 dams, daily update.")
@@ -2761,6 +2828,9 @@ function t(th, en) {
         : S.layer === "profit"
         ? t(`ประมาณการกำไร/ขาดทุนต่อไร่ = ราคาโรงสี × ผลผลิต − ต้นทุน OAE · สีเขียว = กำไร · สีแดง = ขาดทุน · ใช้ต้นทุนอ้างอิงระดับประเทศ (ข้าวขาว ${fmtNumber(COST_BASE.white.oaeRaiCost)} / หอมมะลิ ${fmtNumber(COST_BASE.jasmine.oaeRaiCost)} ฿/ไร่)`,
            `Est. profit/loss per rai = mill price × yield − OAE cost benchmark · Green = profit · Red = loss · National cost reference (white ${fmtNumber(COST_BASE.white.oaeRaiCost)} / jasmine ${fmtNumber(COST_BASE.jasmine.oaeRaiCost)} ฿/rai)`)
+        : S.layer === "flood"
+        ? t(`ประมาณการ % พื้นที่เสี่ยงน้ำท่วมซ้ำซาก จากสถิติดาวเทียม GISTDA 13 ปี (2554–2566) · คำนวณด้วยวิธีสุ่มตัวอย่าง (Monte Carlo) · สีน้ำเงินเข้ม = เสี่ยงสูงกว่า`,
+           `Estimated % of flood-prone area · based on actual GISTDA satellite flood records (2011–2023) · Monte Carlo point sampling · Dark blue = higher risk`)
         : S.layer === "price"
         ? t(`แผนที่ fit ตามสัดส่วนประเทศไทยและใช้รายงานราคาข้าวเปลือกรายวันของสมาคมโรงสีข้าวไทย โดยไฮไลต์ราคาของ ${riceTypeDescription(S.rice, S.layer)} ปี ${S.year}`,
            `Province-level paddy price map using Thai Rice Miller Association daily reports. ${riceTypeDescription(S.rice, S.layer)} · Crop year ${S.year}.`)
@@ -2778,31 +2848,96 @@ function t(th, en) {
         ? `${metaLabel}<br>${t('DIT 2569', 'DIT 2026')}`
         : S.layer === "profit"
         ? `${riceLabel} &nbsp;·&nbsp; ${metaLabel}<br>${yearLabel} · ${t('ประมาณการ','Est.')}`
+        : S.layer === "flood"
+        ? `${metaLabel}<br>${t('GISTDA 2554–2566', 'GISTDA 2011–2023')}`
         : `${riceLabel} &nbsp;·&nbsp; ${metaLabel}<br>${yearLabel}`;
-      const items = visible
+      const isFlood = S.layer === "flood";
+      const allSorted = visible
         .filter(en => hasLayerValue(en))
         .map(en => ({ en, v: valueOf(en) }))
-        .sort((a, b) => b.v - a.v)
-        .slice(0, 10);
-      const max = items[0]?.v || 1;
-      // drought/profit: ใช้ absolute value เพราะมีค่าติดลบ — bar width และ scaleT ต้องอิงค่า abs
+        .sort((a, b) => b.v - a.v);
+      const items = isFlood ? allSorted : allSorted.slice(0, 10);
+
+      // Update rank title
+      if (refs.rankTitle) {
+        refs.rankTitle.innerHTML = isFlood
+          ? `<span class="th-t">ทุกจังหวัด เรียงตามความเสี่ยง</span><span class="en-t">All Provinces by Risk</span>`
+          : `Top 10 <span class="th-t">จังหวัด</span><span class="en-t">Provinces</span>`;
+      }
+
+      const max = allSorted[0]?.v || 1;
+      // drought/profit: ใช้ absolute value เพราะมีค่าติดลบ
       const maxAbs = (S.layer === "drought" || S.layer === "profit")
         ? Math.max(...items.map(i => Math.abs(i.v)), 1)
         : (max || 1);
       const palette = getPalette();
-      refs.topList.innerHTML = items.map((item, idx) => {
-        const pct = Math.max(6, (Math.abs(item.v) / maxAbs) * 100);
-        const t01 = (S.layer === "drought" || S.layer === "profit")
-          ? Math.max(0, Math.min(1, 0.5 + 0.5 * (item.v / maxAbs)))
-          : Math.max(.16, item.v / (max || 1));
-        const tone = lerp(palette.lo, palette.hi, t01);
-        return `<div class="rank-row" onclick="selectProvince('${item.en.replace(/'/g, "\\'")}')">
-      <div class="rank-index">#${idx + 1}</div>
-      <div class="rank-name">${t(NM[item.en] || item.en, item.en)}<br><small style="font-size:9px;opacity:.65">${item.en}</small></div>
-      <div class="rank-track"><div class="rank-fill" style="width:${pct.toFixed(1)}%;background:${rgb(tone)}"></div></div>
-      <div class="rank-value">${fmtCompact(item.v)}</div>
-    </div>`;
-      }).join("");
+
+      // flood: แบ่งกลุ่ม High / Medium / Low / None
+      const FLOOD_TIERS = [
+        { label: () => t('🔴 เสี่ยงสูง (≥30%)','🔴 High Risk (≥30%)'), min: 30, color: '#1565c0' },
+        { label: () => t('🟡 เสี่ยงปานกลาง (10–29%)','🟡 Medium Risk (10–29%)'), min: 10, color: '#1e88e5' },
+        { label: () => t('🟢 เสี่ยงต่ำ (1–9%)','🟢 Low Risk (1–9%)'), min: 1, color: '#64b5f6' },
+        { label: () => t('⚪ เสี่ยงน้อยมาก (<1%)','⚪ Very Low (<1%)'), min: 0, color: 'var(--muted)' },
+      ];
+
+      if (isFlood) {
+        // จังหวัดที่ไม่มีข้อมูล (pct=0 แต่ไม่อยู่ใน flood data) ใส่กลุ่มสุดท้ายด้วย
+        const noData = visible.filter(en => !hasLayerValue(en));
+        let html = '';
+        let globalIdx = 0;
+        const tierGroups = FLOOD_TIERS.map((tier, ti) => {
+          const nextMin = FLOOD_TIERS[ti - 1]?.min ?? Infinity;
+          return { tier, group: items.filter(i => i.v >= tier.min && i.v < nextMin) };
+        }).filter(({ tier, group }) => group.length > 0 || (tier.min === 0 && noData.length > 0));
+
+        tierGroups.forEach(({ tier, group }, gi) => {
+          const isOpen = gi === 0; // เปิดแค่ group แรก (เสี่ยงสูง) อัตโนมัติ
+          const tid = `flood-tier-${gi}`;
+          html += `<div style="font-size:9px;font-weight:700;color:var(--muted);padding:6px 4px 2px;cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center"
+            onclick="(function(el){var b=document.getElementById('${tid}');var open=b.style.display!=='none';b.style.display=open?'none':'';el.querySelector('.tier-arrow').textContent=open?'▶':'▼';})(this)">
+            <span>${tier.label()} · ${group.length}${tier.min === 0 && noData.length > 0 ? '+' + noData.length : ''} ${t('จว.','prov.')}</span>
+            <span class="tier-arrow" style="font-size:8px">${isOpen ? '▼' : '▶'}</span>
+          </div>`;
+          html += `<div id="${tid}" style="display:${isOpen ? '' : 'none'}">`;
+          group.forEach(item => {
+            globalIdx++;
+            const barPct = Math.max(4, (item.v / maxAbs) * 100);
+            const tone = lerp(palette.lo, palette.hi, Math.max(.16, item.v / maxAbs));
+            html += `<div class="rank-row" onclick="selectProvince('${item.en.replace(/'/g, "\\'")}')">
+              <div class="rank-index">#${globalIdx}</div>
+              <div class="rank-name">${t(NM[item.en] || item.en, item.en)}<br><small style="font-size:9px;opacity:.65">${item.en}</small></div>
+              <div class="rank-track"><div class="rank-fill" style="width:${barPct.toFixed(1)}%;background:${rgb(tone)}"></div></div>
+              <div class="rank-value">~${item.v.toFixed(1)}%</div>
+            </div>`;
+          });
+          if (tier.min === 0 && noData.length > 0) {
+            noData.forEach(en => {
+              html += `<div class="rank-row faded" onclick="selectProvince('${en.replace(/'/g, "\\'")}')">
+                <div class="rank-index">–</div>
+                <div class="rank-name">${t(NM[en] || en, en)}<br><small style="font-size:9px;opacity:.65">${en}</small></div>
+                <div class="rank-track"></div>
+                <div class="rank-value" style="color:var(--muted)">–</div>
+              </div>`;
+            });
+          }
+          html += `</div>`;
+        });
+        refs.topList.innerHTML = html;
+      } else {
+        refs.topList.innerHTML = items.map((item, idx) => {
+          const pct = Math.max(6, (Math.abs(item.v) / maxAbs) * 100);
+          const t01 = (S.layer === "drought" || S.layer === "profit")
+            ? Math.max(0, Math.min(1, 0.5 + 0.5 * (item.v / maxAbs)))
+            : Math.max(.16, item.v / (max || 1));
+          const tone = lerp(palette.lo, palette.hi, t01);
+          return `<div class="rank-row" onclick="selectProvince('${item.en.replace(/'/g, "\\'")}')">
+        <div class="rank-index">#${idx + 1}</div>
+        <div class="rank-name">${t(NM[item.en] || item.en, item.en)}<br><small style="font-size:9px;opacity:.65">${item.en}</small></div>
+        <div class="rank-track"><div class="rank-fill" style="width:${pct.toFixed(1)}%;background:${rgb(tone)}"></div></div>
+        <div class="rank-value">${fmtCompact(item.v)}</div>
+      </div>`;
+        }).join("");
+      }
     }
 
     function currentRank(en) {
@@ -2814,6 +2949,48 @@ function t(th, en) {
       const idx = sorted.findIndex(item => item.en === en);
       return idx >= 0 ? idx + 1 : null;
     }
+
+    function switchDetailTab(tab) {
+      if (!refs.detailGrid || !refs.detailTabs) return;
+      // scroll carousel to the target pane (index × container width)
+      const panes = refs.detailGrid.querySelectorAll(".detail-pane");
+      const idx = Array.from(panes).findIndex(p => p.dataset.pane === tab);
+      if (idx >= 0) {
+        refs.detailGrid.scrollTo({ left: idx * refs.detailGrid.offsetWidth, behavior: "smooth" });
+      }
+      // highlight active tab button
+      refs.detailTabs.querySelectorAll(".detail-tab").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.tab === tab);
+      });
+    }
+
+    // ── sync tab indicators when user scrolls carousel ──
+    (function() {
+      let scrollTimer;
+      const grid = document.getElementById("detailGrid");
+      if (!grid) return;
+      grid.addEventListener("scroll", function() {
+        clearTimeout(scrollTimer);
+        scrollTimer = setTimeout(function() {
+          const tabs = document.getElementById("detailTabs");
+          if (!tabs) return;
+          const panes = grid.querySelectorAll(".detail-pane");
+          const scrollLeft = grid.scrollLeft;
+          const w = grid.offsetWidth;
+          let closest = panes[0];
+          let minDist = Infinity;
+          panes.forEach(p => {
+            const d = Math.abs((p.offsetLeft - grid.offsetLeft) - scrollLeft);
+            if (d < minDist) { minDist = d; closest = p; }
+          });
+          if (closest) {
+            tabs.querySelectorAll(".detail-tab").forEach(btn => {
+              btn.classList.toggle("active", btn.dataset.tab === closest.dataset.pane);
+            });
+          }
+        }, 60);
+      });
+    })();
 
     function selectProvince(en) {
       S.sel = en;
@@ -2901,6 +3078,39 @@ function t(th, en) {
             <div style="font-size:9px;color:var(--muted);margin-top:6px">${t('ที่มา: กรมชลประทาน (RID) · อัปเดตรายวัน','Source: Royal Irrigation Dept. (RID) · Daily update')} ${window.DAM_DATA._meta.updated}</div>
           </div>`;
       }
+
+      // ── Flood Risk detail card ────────────────────────────────────────────
+      let floodHtml = "";
+      const fd = window.FLOOD_DATA?.provinces?.[en];
+      if (fd != null) {
+        const pct = fd.pct ?? 0;
+        const floodRai = fd.flood_rai ?? 0;
+        const provRai  = fd.province_rai ?? 0;
+        const riskLabel = pct >= 30 ? t('เสี่ยงสูง ⚠️','High Risk ⚠️')
+                        : pct >= 10 ? t('เสี่ยงปานกลาง','Medium Risk')
+                        : pct >= 1  ? t('เสี่ยงต่ำ','Low Risk')
+                        : t('เสี่ยงน้อยมาก ✓','Very Low Risk ✓');
+        const riskColor = pct >= 30 ? '#1565c0' : pct >= 10 ? '#1e88e5' : pct >= 1 ? '#64b5f6' : 'var(--muted)';
+        floodHtml = `
+          <div class="rice-card" style="grid-column:1/-1;background:rgba(30,136,229,.08);border:1px solid rgba(30,136,229,.25)">
+            <div class="t">🌊 ${t('ความเสี่ยงน้ำท่วมซ้ำซาก (GISTDA 2554–2566)','Recurring Flood Risk (GISTDA 2011–2023)')}</div>
+            <div class="metric">
+              <div class="m-label">${t('% พื้นที่จังหวัดที่เคยถูกน้ำท่วม (ประมาณการ)','% Province Area Flooded (est.)')}</div>
+              <div class="m-value" style="color:${riskColor}">~${pct.toFixed(1)}% <small style="color:${riskColor}">${riskLabel}</small></div>
+            </div>
+            <div class="metric">
+              <div class="m-label">${t('พื้นที่น้ำท่วมซ้ำซาก (ประมาณการ)','Recurring Flood Area (est.)')}</div>
+              <div class="m-value">~${fmtNumber(Math.round(floodRai))} <small>${t('ไร่','rai')}</small></div>
+            </div>
+            ${provRai > 0 ? `<div class="metric">
+              <div class="m-label">${t('พื้นที่จังหวัดทั้งหมด','Total Province Area')}</div>
+              <div class="m-value">${fmtNumber(Math.round(provRai))} <small>${t('ไร่','rai')}</small></div>
+            </div>` : ''}
+            <div style="font-size:9px;color:var(--muted);margin-top:4px">📊 ${t('ประมาณการจากการสุ่มตัวอย่าง (Monte Carlo) บนข้อมูลดาวเทียมจริง GISTDA · ค่าจริงอาจต่างกันได้','Estimated via Monte Carlo sampling on actual GISTDA satellite data · actual values may differ')}</div>
+            <div style="font-size:9px;color:var(--muted);margin-top:2px">${t('ที่มา: GISTDA — พื้นที่น้ำท่วมซ้ำซาก 2554–2566 (ข้อมูลเปิด)','Source: GISTDA — Recurring Flood Areas 2011–2023 (Open Data)')}</div>
+          </div>`;
+      }
+      // ─────────────────────────────────────────────────────────────────────
 
       const cardHtml = RICE_TYPES.map(rice => {
         const entryForRice = entryOf(en, rice, S.year);
@@ -3030,7 +3240,33 @@ function t(th, en) {
             </div>`;
         }
       }
-      refs.detailGrid.innerHTML = weatherHtml + damHtml + profitHtml + fertRatioHtml + millsHtml + householdsHtml + fertHtml + cardHtml;
+      // ── Carousel panes — แต่ละ pane เป็น 100% width, scroll ซ้าย-ขวา
+      const envContent   = weatherHtml + damHtml + floodHtml;
+      const econContent  = profitHtml + fertRatioHtml + millsHtml + fertHtml;
+      const peopleContent = householdsHtml;
+      const riceContent  = cardHtml;
+      refs.detailGrid.innerHTML =
+        `<div class="detail-pane" data-pane="rice"><div class="detail-grid-inner">${riceContent}</div></div>` +
+        `<div class="detail-pane" data-pane="env"><div class="detail-grid-inner">${envContent}</div></div>` +
+        `<div class="detail-pane" data-pane="econ"><div class="detail-grid-inner">${econContent}</div></div>` +
+        `<div class="detail-pane" data-pane="people"><div class="detail-grid-inner">${peopleContent}</div></div>`;
+
+      // ── แสดง tabs + เลือก default tab ──────────────────────────────────────
+      if (refs.detailTabs) {
+        refs.detailTabs.style.display = "";
+        // ทำ dot indicator บน tab ที่มีข้อมูล
+        refs.detailTabs.querySelectorAll(".detail-tab").forEach(btn => {
+          const tab = btn.dataset.tab;
+          const pane = refs.detailGrid.querySelector(`[data-pane="${tab}"]`);
+          const hasContent = pane && pane.innerHTML.trim().length > 0;
+          btn.classList.toggle("has-data", hasContent);
+          btn.style.opacity = hasContent ? "1" : "0.4";
+        });
+        // default: flood layer → env, อื่น → rice
+        const defaultTab = (S.layer === "flood" || S.layer === "dam" || S.layer === "rainfall" || S.layer === "drought")
+          ? "env" : "rice";
+        switchDetailTab(defaultTab);
+      }
       if (refs.detailDataNote) {
         refs.detailDataNote.innerHTML = `📌 ${t(
           'ข้อมูลผลผลิต / ผลผลิตต่อไร่ / เนื้อที่เก็บเกี่ยว เป็นข้อมูลเฉพาะ<strong>นาปี</strong>เท่านั้น · ไม่รวมนาปรัง · ไม่รวม<strong>ข้าวเหนียว</strong>และ<strong>ข้าวเจ้าปทุม 1</strong>',
@@ -3047,9 +3283,11 @@ function t(th, en) {
     }
 
     function drawSpark(en) {
-      if (S.layer === "dam" || S.layer === "rainfall" || S.layer === "drought" || S.layer === "mills" || S.layer === "profit") {
+      if (S.layer === "dam" || S.layer === "rainfall" || S.layer === "drought" || S.layer === "mills" || S.layer === "profit" || S.layer === "flood") {
         refs.sparkSvg.innerHTML = "";
-        refs.sparkTitle.textContent = S.layer === "dam"
+        refs.sparkTitle.textContent = S.layer === "flood"
+          ? t("ข้อมูล GISTDA 2554–2566 — ไม่มีอนุกรมเวลา", "GISTDA 2011–2023 snapshot — no time series")
+          : S.layer === "dam"
           ? t("ไม่มีข้อมูลอนุกรมเวลา", "No time-series data")
           : S.layer === "mills"
           ? t("ข้อมูล ณ เม.ย. 2569 — ไม่มีอนุกรมเวลา", "Apr 2026 snapshot — no time series")
@@ -3170,7 +3408,7 @@ function t(th, en) {
         }
       }
       const entry = entryOf(en);
-      const est = S.layer !== "price" && isEstimated(en);
+      const est = S.layer !== "price" && S.layer !== "flood" && isEstimated(en);
       const estBadge = est ? `<div class="est-badge">${t('📊 ประมาณการ · Estimated (Trend)','📊 Estimated (Trend)')}</div>` : "";
 
       const mainMoist = entry.price_basis === "moisture_15_pct" ? t('ความชื้น 15%','15% moisture') : "";
@@ -3344,6 +3582,7 @@ function t(th, en) {
           refs.detailCard.classList.remove("show");
           refs.detailPlaceholder.style.display = "";
           if (refs.detailDataNote) refs.detailDataNote.style.display = "none";
+          if (refs.detailTabs) refs.detailTabs.style.display = "none";
         } else {
           selectProvince(S.sel);
         }
@@ -3534,6 +3773,18 @@ function t(th, en) {
       if (S.sel) selectProvince(S.sel);
     }
 
+    async function fetchFloodData() {
+      try {
+        const r = await fetch("data/flood-risk.json");
+        if (!r.ok) return;
+        window.FLOOD_DATA = await r.json();
+        if (S.layer === "flood") rerender();
+        if (S.sel) selectProvince(S.sel);
+      } catch (e) {
+        console.info("flood-risk.json not available");
+      }
+    }
+
     async function init() {
       if (!window.THAILAND_GEO?.features?.length) {
         toast("โหลดข้อมูลแผนที่ไม่สำเร็จ");
@@ -3545,6 +3796,7 @@ function t(th, en) {
       fetchWeatherData();
       fetchMillsData();
       fetchHouseholds();
+      fetchFloodData();
       updateNationalFert();
 
       VIEW.features = window.THAILAND_GEO.features.filter(feature => allEN.includes(feature.properties.name));
