@@ -1570,6 +1570,7 @@
             <button class="pill" data-layer="mills" onclick="setLayer('mills')"><span class="th-t">🏭 โรงสีข้าว</span><span class="en-t">🏭 Rice Mills</span></button>
             <button class="pill" data-layer="profit" onclick="setLayer('profit')"><span class="th-t">💰 กำไร/ขาดทุน</span><span class="en-t">💰 Profit/Loss</span></button>
             <button class="pill" data-layer="flood" onclick="setLayer('flood')"><span class="th-t">🌊 ความเสี่ยงน้ำท่วม</span><span class="en-t">🌊 Flood Risk</span></button>
+            <button class="pill" data-layer="ndvi"  onclick="setLayer('ndvi')"><span class="th-t">🌿 ดัชนีพืชพรรณ</span><span class="en-t">🌿 Vegetation (NDVI)</span></button>
           </div>
         </section>
 
@@ -1754,6 +1755,7 @@
       mills:      { th: "โรงสีข้าว", en: "Rice Mills", unit: "แห่ง/จังหวัด", unitEn: "mills/prov", unitShort: "แห่ง", unitShortEn: "mills", summary: "โรงสีข้าวรวม", summaryMode: "sum" },
       profit:     { th: "กำไร/ขาดทุนต่อไร่", en: "Est. Profit/Loss per Rai", unit: "บาท/ไร่ (ประมาณการ)", unitEn: "฿/rai (est.)", unitShort: "฿/ไร่", unitShortEn: "฿/rai", summary: "กำไร/ขาดทุนเฉลี่ย", summaryMode: "avg_signed" },
       flood:      { th: "ความเสี่ยงน้ำท่วม", en: "Flood Risk Zone", unit: "% พื้นที่ (ประมาณการจากสถิติ GISTDA 2554–2566)", unitEn: "% area (est. from GISTDA data 2011–2023)", unitShort: "%~", unitShortEn: "%~", summary: "พื้นที่เสี่ยงน้ำท่วมเฉลี่ย", summaryMode: "avg_nonzero" },
+      ndvi:       { th: "ดัชนีพืชพรรณ (NDVI)", en: "Vegetation Index (NDVI)", unit: "ค่า NDVI เฉลี่ยรายจังหวัด (0–1)", unitEn: "Mean NDVI per province (0–1)", unitShort: "NDVI", unitShortEn: "NDVI", summary: "NDVI เฉลี่ยทั้งประเทศ", summaryMode: "avg" },
     };
     const riceMeta = {
       white:   { th: "ข้าวขาว",  en: "White Rice",   badge: "🌾" },
@@ -2084,6 +2086,10 @@ function t(th, en) {
       return window.FLOOD_DATA?.provinces?.[en]?.pct ?? null;
     }
 
+    function ndviValueOf(en) {
+      return window.NDVI_DATA?.provinces?.[en] ?? null;
+    }
+
     function millsValueOf(en) {
       const thName = NM[en];
       if (!thName || !RICE_MILLS_DATA) return 0;
@@ -2109,6 +2115,7 @@ function t(th, en) {
       if (layer === "mills")      return millsValueOf(en);
       if (layer === "profit")     return profitValueOf(en, rice, year) ?? 0;
       if (layer === "flood")      return floodValueOf(en) ?? 0;
+      if (layer === "ndvi")       return ndviValueOf(en) ?? 0;
       return Number(entryOf(en, rice, year)[layer] || 0);
     }
 
@@ -2118,6 +2125,7 @@ function t(th, en) {
       if (layer === "mills")      return millsValueOf(en) > 0;
       if (layer === "profit")     return profitValueOf(en, rice, year) !== null;
       if (layer === "flood")      return window.FLOOD_DATA?.provinces?.[en] != null;
+      if (layer === "ndvi")       return window.NDVI_DATA?.provinces?.[en] != null;
       return valueOf(en, rice, year, layer) > 0;
     }
 
@@ -2158,6 +2166,7 @@ function t(th, en) {
       if (S.layer === "mills")    return { lo: [60, 40, 20],   mid: [160, 110, 40], hi: [230, 170, 60],  accent: "#e6aa3c" };
       if (S.layer === "profit")     return { lo: [192, 57, 43],  mid: [241, 196, 15], hi: [39, 174, 96],   accent: "#27ae60" };
       if (S.layer === "flood")      return { lo: [227, 242, 253], mid: [30, 136, 229], hi: [13, 71, 161],  accent: "#1e88e5" };
+      if (S.layer === "ndvi")       return { lo: [255, 251, 230], mid: [139, 195, 74],  hi: [27, 94, 32],   accent: "#4caf50" };
       return S.rice === "white"
         ? { lo: [36, 75, 54], mid: [154, 131, 73], hi: [245, 192, 101], accent: "#ff8f4d" }
         : { lo: [42, 39, 77], mid: [134, 93, 178], hi: [236, 186, 217], accent: "#d9a0ff" };
@@ -2198,6 +2207,7 @@ function t(th, en) {
       if (S.layer === "mills")    return fmtNumber(Math.round(n));
       if (S.layer === "profit")     return (n >= 0 ? "+" : "") + fmtNumber(Math.round(n));
       if (S.layer === "flood")      return n.toFixed(1) + "%";
+      if (S.layer === "ndvi")       return n.toFixed(3);
       if (S.layer === "price") return fmtNumber(Math.round(n));
       if (S.layer === "households") {
         if (n >= 1e6) return `${(n / 1e6).toFixed(2)}M`;
@@ -2677,7 +2687,7 @@ function t(th, en) {
       refs.legendLayer.textContent = t(layerMeta[S.layer].th, layerMeta[S.layer].en);
       refs.legendUnit.textContent = uLabel();
       refs.latestBadge.classList.add("show");
-      const isEstYear = S.layer !== "price" && S.layer !== "households" && S.layer !== "fertilizer" && S.layer !== "dam" && S.layer !== "rainfall" && S.layer !== "drought" && S.layer !== "mills" && S.layer !== "profit" && S.year >= "2568";
+      const isEstYear = S.layer !== "price" && S.layer !== "households" && S.layer !== "fertilizer" && S.layer !== "dam" && S.layer !== "rainfall" && S.layer !== "drought" && S.layer !== "mills" && S.layer !== "profit" && S.layer !== "flood" && S.layer !== "ndvi" && S.year >= "2568";
       refs.latestBadge.textContent = S.layer === "mills"
         ? `🏭 ${t('โรงสีข้าว DIT','Rice Mills DIT')} ${RICE_MILLS_DATA?._meta?.updated || '2026-04-23'}`
         : S.layer === "profit"
@@ -2729,6 +2739,14 @@ function t(th, en) {
         );
         return;
       }
+      if (S.layer === "ndvi") {
+        const meta = window.NDVI_DATA?._meta;
+        refs.dataSourceNote.textContent = t(
+          `🛰️ NASA MODIS MOD13A3 · ความละเอียด 1km · ${meta?.month || window.NDVI_DATA?.month || '—'} · ครอบคลุม ${covered} จังหวัด · อัปเดตทุกเดือน`,
+          `🛰️ NASA MODIS MOD13A3 · 1km resolution · ${meta?.month || window.NDVI_DATA?.month || '—'} · ${covered} provinces · monthly update`
+        );
+        return;
+      }
       if (S.layer === "mills") {
         const meta = RICE_MILLS_DATA?._meta;
         const covered = getVisibleProvinces().filter(en => hasLayerValue(en)).length;
@@ -2749,7 +2767,7 @@ function t(th, en) {
         refs.dataSourceNote.textContent = `${t(season, meta?.season_label?.split('·')[1]?.trim() || 'Jun–Nov 2025')} · ${note} · Open-Meteo Archive API · ${covered} ${t('จว.','prov.')}`;
         return;
       }
-      const isEstYear = S.layer !== "price" && S.layer !== "flood" && S.year >= "2568";
+      const isEstYear = S.layer !== "price" && S.layer !== "flood" && S.layer !== "ndvi" && S.year >= "2568";
       if (isEstYear) {
         refs.dataSourceNote.innerHTML = `<strong style="color:#f5c065">📊 ข้อมูลปี ${S.year} เป็นการประมาณการ / Estimated Data</strong><br>คำนวณจากค่าเฉลี่ย YoY Growth Rate ปี 2565–2567 รายจังหวัด (capped ±30%/ปี)<br>${S.year === '2568' ? 'เนื้อที่เพาะปลูกปรับด้วย scale factor จากข้อมูลกรมการข้าว ณ 2 มี.ค. 2569 (58.5 ล้านไร่ทั้งประเทศ)' : 'ประมาณการต่อเนื่องจากปี 2568'}<br><span style="color:var(--muted)">Trend estimation: avg 2-year YoY (2565→2566→2567) applied to ${S.year}. ${S.year === '2568' ? 'Area_planted calibrated using Department of Rice 2568 regional planted-area data (58.5M rai national).' : ''} Not official OAE data — replace via Import CSV when official data is released.</span>`;
         return;
@@ -2814,6 +2832,8 @@ function t(th, en) {
         ? t("แผนที่กำไร/ขาดทุนประมาณการต่อไร่", "Estimated Profit/Loss per Rai by Province")
         : S.layer === "flood"
         ? t("แผนที่ความเสี่ยงน้ำท่วมซ้ำซากรายจังหวัด", "Recurring Flood Risk by Province")
+        : S.layer === "ndvi"
+        ? t("แผนที่ดัชนีพืชพรรณ (NDVI) รายจังหวัด", "Vegetation Index (NDVI) by Province")
         : t(`แผนที่${riceMeta[S.rice].th}รายจังหวัด`, `${riceMeta[S.rice].en} Rice · Province Map`);
       refs.headlineDesc.textContent = S.layer === "dam"
         ? t("ระดับน้ำในเขื่อนขนาดใหญ่ 35 แห่ง จากกรมชลประทาน (RID) อัปเดตรายวัน", "Large dam water levels from Royal Irrigation Dept. (RID). 35 dams, daily update.")
@@ -2831,6 +2851,9 @@ function t(th, en) {
         : S.layer === "flood"
         ? t(`ประมาณการ % พื้นที่เสี่ยงน้ำท่วมซ้ำซาก จากสถิติดาวเทียม GISTDA 13 ปี (2554–2566) · คำนวณด้วยวิธีสุ่มตัวอย่าง (Monte Carlo) · สีน้ำเงินเข้ม = เสี่ยงสูงกว่า`,
            `Estimated % of flood-prone area · based on actual GISTDA satellite flood records (2011–2023) · Monte Carlo point sampling · Dark blue = higher risk`)
+        : S.layer === "ndvi"
+        ? t(`ค่าเฉลี่ย NDVI รายจังหวัด เดือน ${window.NDVI_DATA?.month || '—'} · จากดาวเทียม NASA MODIS (1km) · สีเขียวเข้ม = พืชพรรณหนาแน่น · อัปเดตทุกเดือน`,
+           `Mean NDVI by province for ${window.NDVI_DATA?.month || '—'} · NASA MODIS satellite 1km · Dark green = dense vegetation · Monthly update`)
         : S.layer === "price"
         ? t(`แผนที่ fit ตามสัดส่วนประเทศไทยและใช้รายงานราคาข้าวเปลือกรายวันของสมาคมโรงสีข้าวไทย โดยไฮไลต์ราคาของ ${riceTypeDescription(S.rice, S.layer)} ปี ${S.year}`,
            `Province-level paddy price map using Thai Rice Miller Association daily reports. ${riceTypeDescription(S.rice, S.layer)} · Crop year ${S.year}.`)
@@ -3110,6 +3133,26 @@ function t(th, en) {
             <div style="font-size:9px;color:var(--muted);margin-top:2px">${t('ที่มา: GISTDA — พื้นที่น้ำท่วมซ้ำซาก 2554–2566 (ข้อมูลเปิด)','Source: GISTDA — Recurring Flood Areas 2011–2023 (Open Data)')}</div>
           </div>`;
       }
+      // ── NDVI detail card ──────────────────────────────────────────────────
+      let ndviHtml = "";
+      const ndviVal = window.NDVI_DATA?.provinces?.[en];
+      if (ndviVal != null) {
+        const ndviMonth = window.NDVI_DATA?.month || "—";
+        const ndviColor = ndviVal >= 0.6 ? '#2e7d32' : ndviVal >= 0.4 ? '#558b2f' : ndviVal >= 0.2 ? '#f9a825' : '#bf360c';
+        const ndviLabel = ndviVal >= 0.6 ? t('พืชพรรณหนาแน่น 🌳','Dense Vegetation 🌳')
+                        : ndviVal >= 0.4 ? t('พืชเกษตร / ป่าบาง 🌾','Cropland / Light Forest 🌾')
+                        : ndviVal >= 0.2 ? t('พืชเบาบาง 🌱','Sparse Vegetation 🌱')
+                        : t('พื้นที่แห้ง / เมือง 🏙️','Dry / Urban 🏙️');
+        ndviHtml = `
+          <div class="rice-card" style="grid-column:1/-1;background:rgba(76,175,80,.08);border:1px solid rgba(76,175,80,.25)">
+            <div class="t">🌿 ${t(`ดัชนีพืชพรรณ NDVI · ${ndviMonth}`,`Vegetation Index NDVI · ${ndviMonth}`)}</div>
+            <div class="metric">
+              <div class="m-label">${t('ค่า NDVI เฉลี่ย (0 = ไม่มีพืช, 1 = พืชหนาแน่น)','Mean NDVI (0 = bare, 1 = dense vegetation)')}</div>
+              <div class="m-value" style="color:${ndviColor}">${ndviVal.toFixed(3)} <small style="color:${ndviColor}">${ndviLabel}</small></div>
+            </div>
+            <div style="font-size:9px;color:var(--muted);margin-top:4px">🛰️ ${t('ที่มา: NASA MODIS MOD13A3 (ดาวเทียม Terra) · ความละเอียด 1km · อัปเดตรายเดือน','Source: NASA MODIS MOD13A3 (Terra satellite) · 1km resolution · monthly update')}</div>
+          </div>`;
+      }
       // ─────────────────────────────────────────────────────────────────────
 
       const cardHtml = RICE_TYPES.map(rice => {
@@ -3241,7 +3284,7 @@ function t(th, en) {
         }
       }
       // ── Carousel panes — แต่ละ pane เป็น 100% width, scroll ซ้าย-ขวา
-      const envContent   = weatherHtml + damHtml + floodHtml;
+      const envContent   = weatherHtml + damHtml + floodHtml + ndviHtml;
       const econContent  = profitHtml + fertRatioHtml + millsHtml + fertHtml;
       const peopleContent = householdsHtml;
       const riceContent  = cardHtml;
@@ -3263,7 +3306,7 @@ function t(th, en) {
           btn.style.opacity = hasContent ? "1" : "0.4";
         });
         // default: flood layer → env, อื่น → rice
-        const defaultTab = (S.layer === "flood" || S.layer === "dam" || S.layer === "rainfall" || S.layer === "drought")
+        const defaultTab = (S.layer === "flood" || S.layer === "dam" || S.layer === "rainfall" || S.layer === "drought" || S.layer === "ndvi")
           ? "env" : "rice";
         switchDetailTab(defaultTab);
       }
@@ -3283,10 +3326,12 @@ function t(th, en) {
     }
 
     function drawSpark(en) {
-      if (S.layer === "dam" || S.layer === "rainfall" || S.layer === "drought" || S.layer === "mills" || S.layer === "profit" || S.layer === "flood") {
+      if (S.layer === "dam" || S.layer === "rainfall" || S.layer === "drought" || S.layer === "mills" || S.layer === "profit" || S.layer === "flood" || S.layer === "ndvi") {
         refs.sparkSvg.innerHTML = "";
         refs.sparkTitle.textContent = S.layer === "flood"
           ? t("ข้อมูล GISTDA 2554–2566 — ไม่มีอนุกรมเวลา", "GISTDA 2011–2023 snapshot — no time series")
+          : S.layer === "ndvi"
+          ? t(`NDVI ${window.NDVI_DATA?.month || ''} — อัปเดตรายเดือน (NASA MODIS)`, `NDVI ${window.NDVI_DATA?.month || ''} — monthly update (NASA MODIS)`)
           : S.layer === "dam"
           ? t("ไม่มีข้อมูลอนุกรมเวลา", "No time-series data")
           : S.layer === "mills"
@@ -3785,6 +3830,18 @@ function t(th, en) {
       }
     }
 
+    async function fetchNdviData() {
+      try {
+        const r = await fetch("data/ndvi.json");
+        if (!r.ok) return;
+        window.NDVI_DATA = await r.json();
+        if (S.layer === "ndvi") rerender();
+        if (S.sel) selectProvince(S.sel);
+      } catch (e) {
+        console.info("ndvi.json not available");
+      }
+    }
+
     async function init() {
       if (!window.THAILAND_GEO?.features?.length) {
         toast("โหลดข้อมูลแผนที่ไม่สำเร็จ");
@@ -3797,6 +3854,7 @@ function t(th, en) {
       fetchMillsData();
       fetchHouseholds();
       fetchFloodData();
+      fetchNdviData();
       updateNationalFert();
 
       VIEW.features = window.THAILAND_GEO.features.filter(feature => allEN.includes(feature.properties.name));
