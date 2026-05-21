@@ -2222,7 +2222,9 @@ function t(th, en) {
 
     function fmtValue(n, layer = S.layer) {
       if (!Number.isFinite(n)) return "—";
-      if (layer === "dam") return n.toFixed(1) + "%";
+      if (layer === "dam")   return n.toFixed(1) + "%";
+      if (layer === "flood") return n.toFixed(1) + "%";
+      if (layer === "ndvi")  return n.toFixed(3);
       return fmtNumber(Math.round(n));
     }
 
@@ -3510,7 +3512,7 @@ function t(th, en) {
         }
       }
       const entry = entryOf(en);
-      const est = S.layer !== "price" && S.layer !== "flood" && isEstimated(en);
+      const est = S.layer !== "price" && S.layer !== "flood" && S.layer !== "ndvi" && isEstimated(en);
       const estBadge = est ? `<div class="est-badge">${t('📊 ประมาณการ · Estimated (Trend)','📊 Estimated (Trend)')}</div>` : "";
 
       const mainMoist = entry.price_basis === "moisture_15_pct" ? t('ความชื้น 15%','15% moisture') : "";
