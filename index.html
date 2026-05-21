@@ -2875,16 +2875,19 @@ function t(th, en) {
         ? `${metaLabel}<br>${t('GISTDA 2554–2566', 'GISTDA 2011–2023')}`
         : `${riceLabel} &nbsp;·&nbsp; ${metaLabel}<br>${yearLabel}`;
       const isFlood = S.layer === "flood";
+      const isNdvi  = S.layer === "ndvi";
       const allSorted = visible
         .filter(en => hasLayerValue(en))
         .map(en => ({ en, v: valueOf(en) }))
         .sort((a, b) => b.v - a.v);
-      const items = isFlood ? allSorted : allSorted.slice(0, 10);
+      const items = (isFlood || isNdvi) ? allSorted : allSorted.slice(0, 10);
 
       // Update rank title
       if (refs.rankTitle) {
         refs.rankTitle.innerHTML = isFlood
           ? `<span class="th-t">ทุกจังหวัด เรียงตามความเสี่ยง</span><span class="en-t">All Provinces by Risk</span>`
+          : isNdvi
+          ? `<span class="th-t">ทุกจังหวัด เรียงตาม NDVI</span><span class="en-t">All Provinces by NDVI</span>`
           : `Top 10 <span class="th-t">จังหวัด</span><span class="en-t">Provinces</span>`;
       }
 
@@ -2946,6 +2949,60 @@ function t(th, en) {
           html += `</div>`;
         });
         refs.topList.innerHTML = html;
+      } else if (isNdvi) {
+        // ── NDVI: legend explainer + tier grouping ──────────────────────────
+        const NDVI_TIERS = [
+          { label: () => t('🌳 ป่าไม้หนาแน่น (≥0.6)','🌳 Dense Forest (≥0.6)'),     min: 0.6, color: '#2e7d32',
+            desc: () => t('ป่าไม้ พืชคลุมดินหนา ความชุ่มชื้นสูง','Forest, dense cover, high moisture') },
+          { label: () => t('🌾 พืชเกษตร / ป่าบาง (0.4–0.6)','🌾 Cropland / Light Forest (0.4–0.6)'), min: 0.4, color: '#558b2f',
+            desc: () => t('นาข้าว ไร่อ้อย พืชไร่ ป่าโปร่ง','Rice paddy, sugarcane, field crops') },
+          { label: () => t('🌱 พืชเบาบาง (0.2–0.4)','🌱 Sparse Vegetation (0.2–0.4)'),  min: 0.2, color: '#f9a825',
+            desc: () => t('พืชน้อย ดินโล่ง หน้าแล้ง','Low vegetation, bare soil, dry season') },
+          { label: () => t('🏙️ แห้ง / เมือง / น้ำ (<0.2)','🏙️ Dry / Urban / Water (<0.2)'),  min: 0.0, color: '#bf360c',
+            desc: () => t('พื้นที่เมือง ดินเปล่า แหล่งน้ำ','Urban area, bare land, water body') },
+        ];
+        // legend explainer
+        let ndviLegendHtml = `<div style="background:rgba(255,255,255,.04);border-radius:10px;padding:8px 10px;margin-bottom:6px;font-size:9px;line-height:1.7;color:var(--muted)">
+          <div style="font-weight:700;color:#ccc;margin-bottom:4px">📊 ${t('ค่า NDVI คืออะไร?','What is NDVI?')}</div>
+          <div>${t('ดัชนีพืชพรรณ (0–1) จากดาวเทียม NASA MODIS ยิ่งเขียวเข้ม = พืชพรรณหนาแน่นและสุขภาพดี','Vegetation index (0–1) from NASA MODIS satellite. Darker green = denser, healthier vegetation.')}</div>
+          <div style="margin-top:5px;display:grid;grid-template-columns:1fr 1fr;gap:3px">
+            <div style="color:#2e7d32">● ≥0.6 ${t('ป่าไม้ / ชุ่มชื้นมาก','Forest / Very wet')}</div>
+            <div style="color:#558b2f">● 0.4–0.6 ${t('นาข้าว / เกษตร','Rice / Crops')}</div>
+            <div style="color:#f9a825">● 0.2–0.4 ${t('พืชเบาบาง / แล้ง','Sparse / Dry')}</div>
+            <div style="color:#bf360c">● <0.2 ${t('เมือง / ดินเปล่า','Urban / Bare')}</div>
+          </div>
+          <div style="margin-top:4px;opacity:.7">${t(`ข้อมูลเดือน ${window.NDVI_DATA?.month||'—'} · อัปเดตทุกวันที่ 8 ของเดือน`,`Data: ${window.NDVI_DATA?.month||'—'} · Updated 8th of each month`)}</div>
+        </div>`;
+        let html2 = ndviLegendHtml;
+        let globalIdx2 = 0;
+        const ndviTierGroups = NDVI_TIERS.map((tier, ti) => {
+          const nextMin = NDVI_TIERS[ti - 1]?.min ?? Infinity;
+          return { tier, group: items.filter(i => i.v >= tier.min && i.v < nextMin) };
+        }).filter(({ group }) => group.length > 0);
+        ndviTierGroups.forEach(({ tier, group }, gi) => {
+          const isOpen = gi <= 1; // เปิด 2 tier แรก
+          const tid = `ndvi-tier-${gi}`;
+          html2 += `<div style="font-size:9px;font-weight:700;color:var(--muted);padding:6px 4px 2px;cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center"
+            onclick="(function(el){var b=document.getElementById('${tid}');var open=b.style.display!=='none';b.style.display=open?'none':'';el.querySelector('.tier-arrow').textContent=open?'▶':'▼';})(this)">
+            <span style="color:${tier.color}">${tier.label()} · ${group.length} ${t('จว.','prov.')}</span>
+            <span class="tier-arrow" style="font-size:8px">${isOpen ? '▼' : '▶'}</span>
+          </div>
+          <div style="font-size:8.5px;color:var(--muted);opacity:.7;padding:0 4px 3px">${tier.desc()}</div>`;
+          html2 += `<div id="${tid}" style="display:${isOpen ? '' : 'none'}">`;
+          group.forEach(item => {
+            globalIdx2++;
+            const barPct = Math.max(4, (item.v / 0.85) * 100);
+            const tone = lerp(palette.lo, palette.hi, Math.max(.1, item.v / 0.85));
+            html2 += `<div class="rank-row" onclick="selectProvince('${item.en.replace(/'/g, "\\'")}')">
+              <div class="rank-index">#${globalIdx2}</div>
+              <div class="rank-name">${t(NM[item.en] || item.en, item.en)}<br><small style="font-size:9px;opacity:.65">${item.en}</small></div>
+              <div class="rank-track"><div class="rank-fill" style="width:${barPct.toFixed(1)}%;background:${rgb(tone)}"></div></div>
+              <div class="rank-value">${item.v.toFixed(3)}</div>
+            </div>`;
+          });
+          html2 += `</div>`;
+        });
+        refs.topList.innerHTML = html2;
       } else {
         refs.topList.innerHTML = items.map((item, idx) => {
           const pct = Math.max(6, (Math.abs(item.v) / maxAbs) * 100);
