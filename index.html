@@ -1284,7 +1284,22 @@
       letter-spacing: .08em;
       color: rgba(255, 255, 255, .22);
       pointer-events: none;
-      z-index: 5;
+      z-index: 9999;
+      user-select: none;
+    }
+    /* ── Signature layer 2: CSS pseudo-element (ลบจาก HTML ไม่ได้) ── */
+    body::after {
+      content: "Created by Sponlapat";
+      position: fixed;
+      bottom: 10px;
+      left: 16px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: .08em;
+      color: rgba(255, 255, 255, .22);
+      pointer-events: none;
+      z-index: 9998;
+      user-select: none;
     }
 
     /* ── Live Price Widget ── */
@@ -4797,6 +4812,23 @@ function t(th, en) {
     init();
   </script>
   <div class="credit">Created by Sponlapat</div>
+  <!-- Signature layer 3: MutationObserver guard (re-injects if removed) -->
+  <script>(function(){
+    var _txt = ['C','r','e','a','t','e','d',' ','b','y',' ','S','p','o','n','l','a','p','a','t'].join('');
+    var _sty = 'position:fixed;bottom:10px;left:16px;font-family:IBM Plex Mono,monospace;font-size:10px;letter-spacing:.08em;color:rgba(255,255,255,.22);pointer-events:none;z-index:9999;user-select:none';
+    function _g() {
+      var el = document.querySelector('.credit');
+      if (!el) {
+        el = document.createElement('div');
+        el.className = 'credit';
+        document.body.appendChild(el);
+      }
+      if (el.textContent !== _txt) el.textContent = _txt;
+      el.setAttribute('style', _sty);
+    }
+    _g();
+    new MutationObserver(_g).observe(document.body, { childList: true, subtree: true, characterData: true });
+  })();</script>
 </body>
 
 </html>
