@@ -2858,9 +2858,37 @@ function t(th, en) {
       }
       if (S.layer === "riceEvi") {
         const meta = window.RICE_EVI_DATA?._meta;
-        refs.dataSourceNote.textContent = t(
-          `🌾 MODIS EVI + GLAD Rice Mask + Phenology (LSWI>EVI) · เฉพาะนาข้าว · ${meta?.month || '—'} · ครอบคลุม ${covered} จังหวัด · อัปเดตทุกเดือน`,
-          `🌾 MODIS EVI + GLAD Rice Mask + Phenology (LSWI>EVI) · rice paddies only · ${meta?.month || '—'} · ${covered} provinces · monthly update`
+        const monthNum = meta?.month ? parseInt(meta.month.split('-')[1], 10) : new Date().getMonth() + 1;
+        const TIMELINE = [
+          { m:[1,2],  th:'เก็บเกี่ยวนาปรัง / เตรียมดิน',   en:'Off-season harvest / land prep',   icon:'🌾' },
+          { m:[3,4],  th:'นาปรังกำลังโต–เก็บเกี่ยว',         en:'Off-season growing–harvest',        icon:'🌾' },
+          { m:[5,6],  th:'นาว่าง รอฝน / เตรียมปักดำนาปี',    en:'Fallow / awaiting rain, main prep', icon:'🟫' },
+          { m:[7,8],  th:'ปักดำนาปี / ต้นกล้าตั้งตัว',       en:'Main crop transplanting',           icon:'🌱' },
+          { m:[9,10], th:'แตกกอ / เจริญเติบโต (นาปี)',        en:'Main crop tillering / growth',      icon:'🌿' },
+          { m:[11,12],th:'ออกรวง–เก็บเกี่ยวนาปี',             en:'Main crop heading–harvest',         icon:'✨' },
+        ];
+        const timelineRows = TIMELINE.map(row => {
+          const active = row.m.includes(monthNum);
+          const style = active
+            ? 'font-weight:700;color:#fff;background:rgba(102,187,106,.18);border-radius:4px;padding:1px 4px'
+            : 'opacity:.55';
+          return `<tr><td style="${style}">${row.icon} ${t(row.th, row.en)}</td><td style="${style};text-align:right;padding-left:8px">${row.m.map(m=>['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'][m]).join('–')}</td></tr>`;
+        }).join('');
+        refs.dataSourceNote.innerHTML = t(
+          `🌾 MODIS EVI + GLAD + Phenology · ${meta?.month || '—'} · ${covered} จังหวัด · อัปเดตทุกเดือน<br>
+<table style="width:100%;font-size:9px;margin-top:5px;border-collapse:collapse;line-height:1.7">${timelineRows}</table>
+<div style="margin-top:5px;padding:4px 6px;background:rgba(255,193,7,.08);border:1px solid rgba(255,193,7,.25);border-radius:5px;font-size:9px;line-height:1.6">
+  🌧️ <strong style="color:#ffd54f">ภาคใต้สวนทางภาคอื่น</strong><br>
+  ช่วง พ.ค.–ส.ค. ที่ภาคอื่นนาว่าง ภาคใต้กลับ<strong>เขียวสุด</strong><br>
+  เพราะรับมรสุมตะวันออกเฉียงเหนือ → ปลูก ก.ย.–พ.ย. เก็บเกี่ยว มี.ค.–พ.ค.
+</div>`,
+          `🌾 MODIS EVI + GLAD + Phenology · ${meta?.month || '—'} · ${covered} provinces · monthly update<br>
+<table style="width:100%;font-size:9px;margin-top:5px;border-collapse:collapse;line-height:1.7">${timelineRows}</table>
+<div style="margin-top:5px;padding:4px 6px;background:rgba(255,193,7,.08);border:1px solid rgba(255,193,7,.25);border-radius:5px;font-size:9px;line-height:1.6">
+  🌧️ <strong style="color:#ffd54f">South opposite to other regions</strong><br>
+  May–Aug (when others are fallow) South is <strong>greenest</strong><br>
+  Follows NE monsoon → plants Sep–Nov, harvests Mar–May
+</div>`
         );
         return;
       }
