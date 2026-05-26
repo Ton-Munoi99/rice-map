@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import sys, io
-if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 """
 scripts/fetch_ndvi.py
 ดึงข้อมูล NDVI รายจังหวัด ประเทศไทย จาก NASA MODIS via Google Earth Engine
@@ -11,10 +8,13 @@ scripts/fetch_ndvi.py
 Source: MODIS/061/MOD13A3 — Monthly NDVI Composite (1km)
 Auth:   GEE Service Account (GEE_SERVICE_ACCOUNT_KEY env var)
 """
+import sys, io
+if sys.platform == "win32":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+
 import ee
 import json
 import os
-import sys
 from datetime import date, timedelta
 
 # ── Province name mapping: GAUL → rice-map ─────────────────────────────────
@@ -97,11 +97,33 @@ def main():
 
     modis = collection.first().multiply(0.0001)  # scale factor
 
-    # ── Thailand provinces (FAO GAUL 2015) ──────────────────────────────────
-    provinces = (
+    # ── Thailand provinces (FAO GAUL 2015 + Bueng Kan supplement) ──────────
+    # FAO GAUL 2015 มีแค่ 76 จังหวัด — ไม่มีบึงกาฬ (แยกจากหนองคายปี 2554)
+    gaul_provinces = (
         ee.FeatureCollection("FAO/GAUL/2015/level1")
         .filter(ee.Filter.eq("ADM0_NAME", "Thailand"))
     )
+
+    # บึงกาฬ — approximate boundary (ใช้ได้กับ MODIS 1km resolution)
+    # พิกัดจาก GADM 4.1 / OpenStreetMap boundary (ตัดทอนให้กระชับ)
+    bueng_kan_poly = ee.Geometry.Polygon([[
+        [103.378, 17.979], [103.380, 18.121], [103.416, 18.215],
+        [103.453, 18.319], [103.498, 18.416], [103.558, 18.502],
+        [103.594, 18.582], [103.640, 18.643], [103.723, 18.693],
+        [103.810, 18.681], [103.875, 18.640], [103.952, 18.620],
+        [104.030, 18.598], [104.113, 18.562], [104.193, 18.507],
+        [104.230, 18.438], [104.218, 18.350], [104.170, 18.263],
+        [104.082, 18.210], [103.990, 18.174], [103.900, 18.110],
+        [103.840, 18.035], [103.760, 17.970], [103.680, 17.952],
+        [103.590, 17.960], [103.500, 17.960], [103.420, 17.970],
+        [103.378, 17.979],
+    ]])
+    bueng_kan_feat = ee.Feature(bueng_kan_poly, {
+        "ADM1_NAME": "Bung Kan",
+        "ADM0_NAME": "Thailand",
+    })
+    provinces = gaul_provinces.merge(ee.FeatureCollection([bueng_kan_feat]))
+    print("✓ Provinces: GAUL 76 + Bueng Kan = 77 total")
 
     # ── Compute mean NDVI per province ──────────────────────────────────────
     result = modis.reduceRegions(

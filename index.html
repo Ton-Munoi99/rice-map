@@ -929,7 +929,9 @@
     .detail-carousel .detail-pane {
       flex: 0 0 100%;
       width: 100%;
-      overflow: hidden;
+      overflow-x: hidden;
+      overflow-y: auto;
+      max-height: 60vh;
       scroll-snap-align: start;
       box-sizing: border-box;
     }
@@ -1571,6 +1573,7 @@
             <button class="pill" data-layer="profit" onclick="setLayer('profit')"><span class="th-t">💰 กำไร/ขาดทุน</span><span class="en-t">💰 Profit/Loss</span></button>
             <button class="pill" data-layer="flood" onclick="setLayer('flood')"><span class="th-t">🌊 ความเสี่ยงน้ำท่วม</span><span class="en-t">🌊 Flood Risk</span></button>
             <button class="pill" data-layer="ndvi"  onclick="setLayer('ndvi')"><span class="th-t">🌿 ดัชนีพืชพรรณ</span><span class="en-t">🌿 Vegetation (NDVI)</span></button>
+            <button class="pill" data-layer="riceEvi" onclick="setLayer('riceEvi')"><span class="th-t">🌾 สุขภาพข้าว</span><span class="en-t">🌾 Rice Health (EVI)</span></button>
           </div>
         </section>
 
@@ -1742,6 +1745,101 @@
     const RICE_TYPES = ["white", "jasmine"];
     const allEN = [...new Set(Object.values(REG).flat())];
     const METRO_PROVS = ["Bangkok Metropolis", "Nonthaburi", "Pathum Thani", "Samut Prakan", "Samut Sakhon", "Samut Songkhram", "Nakhon Pathom", "Phra Nakhon Si Ayutthaya"];
+
+    // ── Static province sets (hoisted — never changes at runtime) ─────────────
+    const SOUTH_PROVINCES = new Set([
+      'Ranong','Chumphon','Surat Thani','Phangnga','Krabi',
+      'Nakhon Si Thammarat','Trang','Phatthalung','Songkhla',
+      'Pattani','Yala','Narathiwat','Satun','Phuket',
+    ]);
+    // จังหวัดที่ GLAD เดิมครอบคลุมน้อย — hybrid mask ช่วยเพิ่ม coverage
+    const GLAD_BOOSTED = new Set([
+      'Pathum Thani','Ang Thong','Sing Buri','Phra Nakhon Si Ayutthaya',
+    ]);
+
+    // ── Rice EVI stage lookup (mirrors classify_evi() in fetch_rice_evi.py) ──
+    const STAGE_MAP = {
+      fallow:  { th: 'นาว่าง / เตรียมดิน',   en: 'Fallow / Land Prep',         icon: '🟫', color: '#8d6e63' },
+      early:   { th: 'เพิ่งปักดำ / ต้นกล้า', en: 'Transplanted / Seedling',    icon: '🌱', color: '#ff9800' },
+      growing: { th: 'แตกกอ / เจริญเติบโต',  en: 'Tillering / Growing',        icon: '🌿', color: '#8bc34a' },
+      heading: { th: 'ออกรวง / สร้างเมล็ด',  en: 'Heading / Grain Fill',       icon: '🌾', color: '#4caf50' },
+      peak:    { th: 'สมบูรณ์เต็มที่',        en: 'Full Maturity',              icon: '✨', color: '#2e7d32' },
+    };
+
+    // ── Rice season calendar by region ───────────────────────────────────────
+    // ใช้ประกอบ tooltip + detail card: อธิบายว่า EVI ระยะนี้ = กำลังทำอะไร
+    // แต่ละภาคมีปฏิทินต่างกัน + แยกนาปี (main) / นาปรัง (off-season)
+    function riceSeasonContext(en) {
+      const isSouth = SOUTH_PROVINCES.has(en);
+      const reg = regionOf(en);
+      // currentMonth from RICE_EVI_DATA (e.g. "2026-04") → extract month number
+      const monthStr = window.RICE_EVI_DATA?.month || '';
+      const mon = monthStr ? parseInt(monthStr.split('-')[1], 10) : new Date().getMonth() + 1;
+
+      if (isSouth) {
+        // ภาคใต้: นาปี ปลูก ก.ย.–พ.ย. เก็บ มี.ค.–พ.ค. | นาปรังน้อย
+        const calendar = {
+          th: '🌧️ ภาคใต้ · นาปี: ปลูก ก.ย.–พ.ย. → เก็บ มี.ค.–พ.ค. (มรสุม ต.อ.น.)',
+          en: '🌧️ South · Main: plant Sep–Nov → harvest Mar–May (NE monsoon)',
+        };
+        let situation;
+        if (mon >= 3 && mon <= 5) {
+          situation = { th: 'ช่วงเก็บเกี่ยวนาปี', en: 'Main crop harvest season' };
+        } else if (mon >= 9 && mon <= 11) {
+          situation = { th: 'ช่วงปลูกนาปี', en: 'Main crop planting season' };
+        } else if (mon >= 6 && mon <= 8) {
+          situation = { th: 'เตรียมดิน / รอฝนมรสุม', en: 'Land prep / awaiting monsoon' };
+        } else {
+          situation = { th: 'ข้าวกำลังเจริญเติบโต (นาปี)', en: 'Rice growing (main crop)' };
+        }
+        return { calendar, situation, cropType: { th: 'นาปี (rain-fed)', en: 'Main season (rain-fed)' } };
+      }
+
+      // ภาคเหนือ / อีสาน / กลาง / ตะวันออก / ตะวันตก
+      // นาปี: ปลูก พ.ค.–ส.ค. เก็บ พ.ย.–ม.ค.
+      // นาปรัง: ปลูก ธ.ค.–ก.พ. เก็บ มี.ค.–พ.ค. (เฉพาะพื้นที่มีชลประทาน)
+      const regNameTh = reg === 'north' ? 'เหนือ' : reg === 'northeast' ? 'อีสาน' : reg === 'central' ? 'กลาง' : reg === 'east' ? 'ตะวันออก' : 'ตะวันตก';
+      const calendar = {
+        th: `🗓️ ภาค${regNameTh} · นาปี: ปลูก พ.ค.–ส.ค. → เก็บ พ.ย.–ม.ค. · นาปรัง: ปลูก ธ.ค.–ก.พ. → เก็บ มี.ค.–พ.ค.`,
+        en: `🗓️ ${reg.charAt(0).toUpperCase()+reg.slice(1)} · Main: plant May–Aug → harvest Nov–Jan · Off-season: plant Dec–Feb → harvest Mar–May`,
+      };
+      let situation, cropType;
+      if (mon >= 5 && mon <= 8) {
+        situation = { th: 'ช่วงปลูกนาปี (rain-fed)', en: 'Main crop planting season' };
+        cropType  = { th: 'นาปี (rain-fed)', en: 'Main season (rain-fed)' };
+      } else if (mon >= 11 || mon <= 1) {
+        situation = { th: 'เก็บเกี่ยวนาปี / เริ่มนาปรัง', en: 'Main harvest / off-season start' };
+        cropType  = { th: 'นาปี→นาปรัง', en: 'Main→Off-season' };
+      } else if (mon >= 2 && mon <= 4) {
+        situation = { th: 'นาปรังกำลังโต / เก็บเกี่ยว', en: 'Off-season growing / harvest' };
+        cropType  = { th: 'นาปรัง (irrigated)', en: 'Off-season (irrigated)' };
+      } else {
+        situation = { th: 'ข้าวนาปีกำลังเจริญเติบโต', en: 'Main crop growing' };
+        cropType  = { th: 'นาปี (rain-fed)', en: 'Main season (rain-fed)' };
+      }
+      return { calendar, situation, cropType };
+    }
+
+    // ── Rice EVI tier thresholds (mirrors STAGE_MAP above) ───────────────────
+    // labelTh/labelEn are static strings; call t(tier.labelTh, tier.labelEn) at render time
+    const RICE_EVI_TIERS = [
+      { labelTh: '✨ สมบูรณ์เต็มที่ (≥0.55)', labelEn: '✨ Full Maturity (≥0.55)',   min: 0.55, color: '#2e7d32',
+        descTh: 'ข้าวเจริญเติบโตสมบูรณ์ ใกล้เก็บเกี่ยว',    descEn: 'Fully grown rice, near harvest' },
+      { labelTh: '🌾 ออกรวง (0.40–0.55)',      labelEn: '🌾 Heading (0.40–0.55)',    min: 0.40, color: '#4caf50',
+        descTh: 'ข้าวออกรวง สร้างเมล็ด',                    descEn: 'Rice heading, grain filling' },
+      { labelTh: '🌿 แตกกอ (0.25–0.40)',       labelEn: '🌿 Tillering (0.25–0.40)', min: 0.25, color: '#8bc34a',
+        descTh: 'ข้าวกำลังเจริญเติบโต แตกกอ',              descEn: 'Tillering, active growth phase' },
+      { labelTh: '🌱 ต้นกล้า (0.15–0.25)',     labelEn: '🌱 Seedling (0.15–0.25)',  min: 0.15, color: '#ff9800',
+        descTh: 'เพิ่งปักดำ ต้นกล้าเริ่มตั้งตัว',          descEn: 'Just transplanted, seedlings establishing' },
+      { labelTh: '🟫 นาว่าง (<0.15)',           labelEn: '🟫 Fallow (<0.15)',        min: 0.0,  color: '#8d6e63',
+        descTh: 'นาว่าง เตรียมดิน หรือน้ำท่วมขัง',         descEn: 'Fallow, land prep, or flooded' },
+    ];
+
+    // ── Layers that have no year-based time series (no spark chart, no est-year badge) ──
+    const LAYER_NO_TIMESERIES = new Set([
+      "dam","rainfall","drought","mills","profit","flood","ndvi","riceEvi",
+    ]);
+
     const layerMeta = {
       production: { th: "ผลผลิต", en: "Paddy Production", unit: "ตัน/ปี", unitEn: "tons/yr", unitShort: "ตัน", unitShortEn: "tons", summary: "ผลผลิตรวม", summaryMode: "sum" },
       yield:      { th: "ผลผลิตต่อไร่", en: "Yield", unit: "กก./ไร่ (เก็บเกี่ยว)", unitEn: "kg/rai (harv.)", unitShort: "กก./ไร่", unitShortEn: "kg/rai", summary: "ผลผลิตเฉลี่ยต่อไร่", summaryMode: "weighted" },
@@ -1756,6 +1854,7 @@
       profit:     { th: "กำไร/ขาดทุนต่อไร่", en: "Est. Profit/Loss per Rai", unit: "บาท/ไร่ (ประมาณการ)", unitEn: "฿/rai (est.)", unitShort: "฿/ไร่", unitShortEn: "฿/rai", summary: "กำไร/ขาดทุนเฉลี่ย", summaryMode: "avg_signed" },
       flood:      { th: "ความเสี่ยงน้ำท่วม", en: "Flood Risk Zone", unit: "% พื้นที่ (ประมาณการจากสถิติ GISTDA 2554–2566)", unitEn: "% area (est. from GISTDA data 2011–2023)", unitShort: "%~", unitShortEn: "%~", summary: "พื้นที่เสี่ยงน้ำท่วมเฉลี่ย", summaryMode: "avg_nonzero" },
       ndvi:       { th: "ดัชนีพืชพรรณ (NDVI)", en: "Vegetation Index (NDVI)", unit: "ค่า NDVI เฉลี่ยรายจังหวัด (0–1)", unitEn: "Mean NDVI per province (0–1)", unitShort: "NDVI", unitShortEn: "NDVI", summary: "NDVI เฉลี่ยทั้งประเทศ", summaryMode: "avg" },
+      riceEvi:    { th: "สุขภาพข้าว (EVI)", en: "Rice Health (EVI)", unit: "EVI เฉพาะนาข้าว (0–1)", unitEn: "Rice paddy EVI (0–1)", unitShort: "EVI", unitShortEn: "EVI", summary: "EVI เฉลี่ยนาข้าวทั้งประเทศ", summaryMode: "avg" },
     };
     const riceMeta = {
       white:   { th: "ข้าวขาว",  en: "White Rice",   badge: "🌾" },
@@ -2090,6 +2189,10 @@ function t(th, en) {
       return window.NDVI_DATA?.provinces?.[en] ?? null;
     }
 
+    function riceEviValueOf(en) {
+      return window.RICE_EVI_DATA?.provinces?.[en]?.evi ?? null;
+    }
+
     function millsValueOf(en) {
       const thName = NM[en];
       if (!thName || !RICE_MILLS_DATA) return 0;
@@ -2116,6 +2219,7 @@ function t(th, en) {
       if (layer === "profit")     return profitValueOf(en, rice, year) ?? 0;
       if (layer === "flood")      return floodValueOf(en) ?? 0;
       if (layer === "ndvi")       return ndviValueOf(en) ?? 0;
+      if (layer === "riceEvi")    return riceEviValueOf(en) ?? 0;
       return Number(entryOf(en, rice, year)[layer] || 0);
     }
 
@@ -2126,6 +2230,7 @@ function t(th, en) {
       if (layer === "profit")     return profitValueOf(en, rice, year) !== null;
       if (layer === "flood")      return window.FLOOD_DATA?.provinces?.[en] != null;
       if (layer === "ndvi")       return window.NDVI_DATA?.provinces?.[en] != null;
+      if (layer === "riceEvi")    return window.RICE_EVI_DATA?.provinces?.[en]?.evi != null;
       return valueOf(en, rice, year, layer) > 0;
     }
 
@@ -2167,6 +2272,7 @@ function t(th, en) {
       if (S.layer === "profit")     return { lo: [192, 57, 43],  mid: [241, 196, 15], hi: [39, 174, 96],   accent: "#27ae60" };
       if (S.layer === "flood")      return { lo: [227, 242, 253], mid: [30, 136, 229], hi: [13, 71, 161],  accent: "#1e88e5" };
       if (S.layer === "ndvi")       return { lo: [255, 251, 230], mid: [139, 195, 74],  hi: [27, 94, 32],   accent: "#4caf50" };
+      if (S.layer === "riceEvi")    return { lo: [255, 243, 224], mid: [255, 183, 77],  hi: [46, 125, 50],   accent: "#66bb6a" };
       return S.rice === "white"
         ? { lo: [36, 75, 54], mid: [154, 131, 73], hi: [245, 192, 101], accent: "#ff8f4d" }
         : { lo: [42, 39, 77], mid: [134, 93, 178], hi: [236, 186, 217], accent: "#d9a0ff" };
@@ -2208,6 +2314,7 @@ function t(th, en) {
       if (S.layer === "profit")     return (n >= 0 ? "+" : "") + fmtNumber(Math.round(n));
       if (S.layer === "flood")      return n.toFixed(1) + "%";
       if (S.layer === "ndvi")       return n.toFixed(3);
+      if (S.layer === "riceEvi")    return n.toFixed(3);
       if (S.layer === "price") return fmtNumber(Math.round(n));
       if (S.layer === "households") {
         if (n >= 1e6) return `${(n / 1e6).toFixed(2)}M`;
@@ -2225,6 +2332,7 @@ function t(th, en) {
       if (layer === "dam")   return n.toFixed(1) + "%";
       if (layer === "flood") return n.toFixed(1) + "%";
       if (layer === "ndvi")  return n.toFixed(3);
+      if (layer === "riceEvi") return n.toFixed(3);
       return fmtNumber(Math.round(n));
     }
 
@@ -2689,7 +2797,7 @@ function t(th, en) {
       refs.legendLayer.textContent = t(layerMeta[S.layer].th, layerMeta[S.layer].en);
       refs.legendUnit.textContent = uLabel();
       refs.latestBadge.classList.add("show");
-      const isEstYear = S.layer !== "price" && S.layer !== "households" && S.layer !== "fertilizer" && S.layer !== "dam" && S.layer !== "rainfall" && S.layer !== "drought" && S.layer !== "mills" && S.layer !== "profit" && S.layer !== "flood" && S.layer !== "ndvi" && S.year >= "2568";
+      const isEstYear = !LAYER_NO_TIMESERIES.has(S.layer) && S.layer !== "price" && S.layer !== "households" && S.layer !== "fertilizer" && S.year >= "2568";
       refs.latestBadge.textContent = S.layer === "mills"
         ? `🏭 ${t('โรงสีข้าว DIT','Rice Mills DIT')} ${RICE_MILLS_DATA?._meta?.updated || '2026-04-23'}`
         : S.layer === "profit"
@@ -2725,7 +2833,6 @@ function t(th, en) {
         return;
       }
       if (S.layer === "profit") {
-        const covered = getVisibleProvinces().filter(en => hasLayerValue(en)).length;
         const rice = t(riceMeta[S.rice].th, riceMeta[S.rice].en);
         const cost = fmtNumber(COST_BASE[S.rice]?.oaeRaiCost);
         refs.dataSourceNote.textContent = t(
@@ -2749,9 +2856,16 @@ function t(th, en) {
         );
         return;
       }
+      if (S.layer === "riceEvi") {
+        const meta = window.RICE_EVI_DATA?._meta;
+        refs.dataSourceNote.textContent = t(
+          `🌾 MODIS EVI + GLAD Rice Mask + Phenology (LSWI>EVI) · เฉพาะนาข้าว · ${meta?.month || '—'} · ครอบคลุม ${covered} จังหวัด · อัปเดตทุกเดือน`,
+          `🌾 MODIS EVI + GLAD Rice Mask + Phenology (LSWI>EVI) · rice paddies only · ${meta?.month || '—'} · ${covered} provinces · monthly update`
+        );
+        return;
+      }
       if (S.layer === "mills") {
         const meta = RICE_MILLS_DATA?._meta;
-        const covered = getVisibleProvinces().filter(en => hasLayerValue(en)).length;
         refs.dataSourceNote.textContent = t(
           `ข้อมูลโรงสีข้าวจดทะเบียน กรมการค้าภายใน (DIT) อัปเดต ${meta?.updated || '23 เมษายน 2569'} ครอบคลุม ${covered} จังหวัด จากทั้งหมด ${meta?.total_mills || 903} แห่ง`,
           `Registered rice mills, Dept. of Internal Trade (DIT). Updated ${meta?.updated || '23 Apr 2026'}. Covers ${covered} provinces, ${meta?.total_mills || 903} mills total.`
@@ -2769,8 +2883,8 @@ function t(th, en) {
         refs.dataSourceNote.textContent = `${t(season, meta?.season_label?.split('·')[1]?.trim() || 'Jun–Nov 2025')} · ${note} · Open-Meteo Archive API · ${covered} ${t('จว.','prov.')}`;
         return;
       }
-      const isEstYear = S.layer !== "price" && S.layer !== "flood" && S.layer !== "ndvi" && S.year >= "2568";
-      if (isEstYear) {
+      const isEstYearNote = !LAYER_NO_TIMESERIES.has(S.layer) && S.layer !== "price" && S.year >= "2568";
+      if (isEstYearNote) {
         refs.dataSourceNote.innerHTML = `<strong style="color:#f5c065">📊 ข้อมูลปี ${S.year} เป็นการประมาณการ / Estimated Data</strong><br>คำนวณจากค่าเฉลี่ย YoY Growth Rate ปี 2565–2567 รายจังหวัด (capped ±30%/ปี)<br>${S.year === '2568' ? 'เนื้อที่เพาะปลูกปรับด้วย scale factor จากข้อมูลกรมการข้าว ณ 2 มี.ค. 2569 (58.5 ล้านไร่ทั้งประเทศ)' : 'ประมาณการต่อเนื่องจากปี 2568'}<br><span style="color:var(--muted)">Trend estimation: avg 2-year YoY (2565→2566→2567) applied to ${S.year}. ${S.year === '2568' ? 'Area_planted calibrated using Department of Rice 2568 regional planted-area data (58.5M rai national).' : ''} Not official OAE data — replace via Import CSV when official data is released.</span>`;
         return;
       }
@@ -2836,6 +2950,8 @@ function t(th, en) {
         ? t("แผนที่ความเสี่ยงน้ำท่วมซ้ำซากรายจังหวัด", "Recurring Flood Risk by Province")
         : S.layer === "ndvi"
         ? t("แผนที่ดัชนีพืชพรรณ (NDVI) รายจังหวัด", "Vegetation Index (NDVI) by Province")
+        : S.layer === "riceEvi"
+        ? t("แผนที่สุขภาพข้าว (Rice EVI) รายจังหวัด", "Rice Paddy Health (EVI) by Province")
         : t(`แผนที่${riceMeta[S.rice].th}รายจังหวัด`, `${riceMeta[S.rice].en} Rice · Province Map`);
       refs.headlineDesc.textContent = S.layer === "dam"
         ? t("ระดับน้ำในเขื่อนขนาดใหญ่ 35 แห่ง จากกรมชลประทาน (RID) อัปเดตรายวัน", "Large dam water levels from Royal Irrigation Dept. (RID). 35 dams, daily update.")
@@ -2856,6 +2972,9 @@ function t(th, en) {
         : S.layer === "ndvi"
         ? t(`ค่าเฉลี่ย NDVI รายจังหวัด เดือน ${window.NDVI_DATA?.month || '—'} · จากดาวเทียม NASA MODIS (1km) · สีเขียวเข้ม = พืชพรรณหนาแน่น · อัปเดตทุกเดือน`,
            `Mean NDVI by province for ${window.NDVI_DATA?.month || '—'} · NASA MODIS satellite 1km · Dark green = dense vegetation · Monthly update`)
+        : S.layer === "riceEvi"
+        ? t(`EVI เฉพาะนาข้าว เดือน ${window.RICE_EVI_DATA?.month || '—'} · MODIS + GLAD + Phenology · ส้ม = นาว่าง · เขียวเข้ม = ข้าวสมบูรณ์ · หมายเหตุ: ภาคใต้ปลูก ก.ย.–พ.ย. เก็บ มี.ค.–พ.ค. (นาปี) ต่างจากภาคอื่น`,
+           `Rice paddy EVI for ${window.RICE_EVI_DATA?.month || '—'} · MODIS + GLAD + Phenology (LSWI>EVI) · Orange = fallow · Dark green = healthy rice · Note: South harvests Mar–May (main season, different calendar)`)
         : S.layer === "price"
         ? t(`แผนที่ fit ตามสัดส่วนประเทศไทยและใช้รายงานราคาข้าวเปลือกรายวันของสมาคมโรงสีข้าวไทย โดยไฮไลต์ราคาของ ${riceTypeDescription(S.rice, S.layer)} ปี ${S.year}`,
            `Province-level paddy price map using Thai Rice Miller Association daily reports. ${riceTypeDescription(S.rice, S.layer)} · Crop year ${S.year}.`)
@@ -2875,14 +2994,17 @@ function t(th, en) {
         ? `${riceLabel} &nbsp;·&nbsp; ${metaLabel}<br>${yearLabel} · ${t('ประมาณการ','Est.')}`
         : S.layer === "flood"
         ? `${metaLabel}<br>${t('GISTDA 2554–2566', 'GISTDA 2011–2023')}`
+        : S.layer === "riceEvi"
+        ? `${metaLabel}<br>${t(`MODIS + GLAD + Phenology · ${window.RICE_EVI_DATA?.month || '—'}`, `MODIS + GLAD + Phenology · ${window.RICE_EVI_DATA?.month || '—'}`)}`
         : `${riceLabel} &nbsp;·&nbsp; ${metaLabel}<br>${yearLabel}`;
       const isFlood = S.layer === "flood";
       const isNdvi  = S.layer === "ndvi";
+      const isRiceEvi = S.layer === "riceEvi";
       const allSorted = visible
         .filter(en => hasLayerValue(en))
         .map(en => ({ en, v: valueOf(en) }))
         .sort((a, b) => b.v - a.v);
-      const items = (isFlood || isNdvi) ? allSorted : allSorted.slice(0, 10);
+      const items = (isFlood || isNdvi || isRiceEvi) ? allSorted : allSorted.slice(0, 10);
 
       // Update rank title
       if (refs.rankTitle) {
@@ -2890,6 +3012,8 @@ function t(th, en) {
           ? `<span class="th-t">ทุกจังหวัด เรียงตามความเสี่ยง</span><span class="en-t">All Provinces by Risk</span>`
           : isNdvi
           ? `<span class="th-t">ทุกจังหวัด เรียงตาม NDVI</span><span class="en-t">All Provinces by NDVI</span>`
+          : isRiceEvi
+          ? `<span class="th-t">ทุกจังหวัด เรียงตาม Rice EVI</span><span class="en-t">All Provinces by Rice EVI</span>`
           : `Top 10 <span class="th-t">จังหวัด</span><span class="en-t">Provinces</span>`;
       }
 
@@ -3005,6 +3129,57 @@ function t(th, en) {
           html2 += `</div>`;
         });
         refs.topList.innerHTML = html2;
+      } else if (isRiceEvi) {
+        // ── Rice EVI: stage-based tier grouping (uses module-level RICE_EVI_TIERS) ──
+        let riceEviLegend = `<div style="background:rgba(255,255,255,.04);border-radius:10px;padding:8px 10px;margin-bottom:6px;font-size:9px;line-height:1.7;color:var(--muted)">
+          <div style="font-weight:700;color:#ccc;margin-bottom:4px">🌾 ${t('Rice EVI คืออะไร?','What is Rice EVI?')}</div>
+          <div>${t('ค่า EVI เฉพาะพื้นที่นาข้าว จากดาวเทียม MODIS + GLAD Rice Mask + Phenology (LSWI>EVI) · บอกสถานะการเจริญเติบโตของข้าว','EVI for rice paddies only · MODIS + GLAD + Phenology (LSWI>EVI) · indicates rice growth stage.')}</div>
+          <div style="margin-top:5px;display:grid;grid-template-columns:1fr 1fr;gap:3px">
+            <div style="color:#2e7d32">● ≥0.55 ${t('สมบูรณ์','Peak')}</div>
+            <div style="color:#4caf50">● 0.40–0.55 ${t('ออกรวง','Heading')}</div>
+            <div style="color:#8bc34a">● 0.25–0.40 ${t('แตกกอ','Tillering')}</div>
+            <div style="color:#ff9800">● 0.15–0.25 ${t('ต้นกล้า','Seedling')}</div>
+          </div>
+          <div style="margin-top:6px;padding-top:5px;border-top:1px solid rgba(255,255,255,.08)">
+            <div style="font-weight:700;color:#aaa;margin-bottom:3px">🗓️ ${t('ปฏิทินข้าวรายภาค','Regional Rice Calendar')}</div>
+            <div style="display:grid;grid-template-columns:auto 1fr;gap:2px 6px;line-height:1.5">
+              <span style="color:#ffd54f">ใต้</span><span>${t('ปลูก ก.ย.–พ.ย. · เก็บ มี.ค.–พ.ค. (นาปี มรสุม NE)','Plant Sep–Nov · Harvest Mar–May (main, NE monsoon)')}</span>
+              <span style="color:#81c784">เหนือ/อีสาน</span><span>${t('ปลูก พ.ค.–ก.ค. · เก็บ พ.ย.–ธ.ค. (นาปี มรสุม SW)','Plant May–Jul · Harvest Nov–Dec (main, SW monsoon)')}</span>
+              <span style="color:#64b5f6">กลาง/ตาก-พิษ</span><span>${t('นาปรัง ปลูก ธ.ค.–ก.พ. · เก็บ พ.ค.–มิ.ย. (ชลประทาน)','Dry season: Plant Dec–Feb · Harvest May–Jun (irrigated)')}</span>
+            </div>
+          </div>
+          <div style="margin-top:4px;opacity:.7">${t(`ข้อมูลเดือน ${window.RICE_EVI_DATA?.month||'—'} · GLAD + Phenology`,`Data: ${window.RICE_EVI_DATA?.month||'—'} · GLAD + Phenology`)}</div>
+        </div>`;
+        let riceEviList = riceEviLegend;
+        let riceEviIdx = 0;
+        const riceEviTierGroups = RICE_EVI_TIERS.map((tier, ti) => {
+          const nextMin = RICE_EVI_TIERS[ti - 1]?.min ?? Infinity;
+          return { tier, group: items.filter(i => i.v >= tier.min && i.v < nextMin) };
+        }).filter(({ group }) => group.length > 0);
+        riceEviTierGroups.forEach(({ tier, group }, gi) => {
+          const isOpen = gi <= 1;
+          const tid = `riceevi-tier-${gi}`;
+          riceEviList += `<div style="font-size:9px;font-weight:700;color:var(--muted);padding:6px 4px 2px;cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center"
+            onclick="(function(el){var b=document.getElementById('${tid}');var open=b.style.display!=='none';b.style.display=open?'none':'';el.querySelector('.tier-arrow').textContent=open?'▶':'▼';})(this)">
+            <span style="color:${tier.color}">${t(tier.labelTh, tier.labelEn)} · ${group.length} ${t('จว.','prov.')}</span>
+            <span class="tier-arrow" style="font-size:8px">${isOpen ? '▼' : '▶'}</span>
+          </div>
+          <div style="font-size:8.5px;color:var(--muted);opacity:.7;padding:0 4px 3px">${t(tier.descTh, tier.descEn)}</div>`;
+          riceEviList += `<div id="${tid}" style="display:${isOpen ? '' : 'none'}">`;
+          group.forEach(item => {
+            riceEviIdx++;
+            const barPct = Math.max(4, (item.v / 0.60) * 100);
+            const tone = lerp(palette.lo, palette.hi, Math.max(.1, item.v / 0.60));
+            riceEviList += `<div class="rank-row" onclick="selectProvince('${item.en.replace(/'/g, "\\'")}')">
+              <div class="rank-index">#${riceEviIdx}</div>
+              <div class="rank-name">${t(NM[item.en] || item.en, item.en)}<br><small style="font-size:9px;opacity:.65">${item.en}</small></div>
+              <div class="rank-track"><div class="rank-fill" style="width:${barPct.toFixed(1)}%;background:${rgb(tone)}"></div></div>
+              <div class="rank-value">${item.v.toFixed(3)}</div>
+            </div>`;
+          });
+          riceEviList += `</div>`;
+        });
+        refs.topList.innerHTML = riceEviList;
       } else {
         refs.topList.innerHTML = items.map((item, idx) => {
           const pct = Math.max(6, (Math.abs(item.v) / maxAbs) * 100);
@@ -3212,6 +3387,81 @@ function t(th, en) {
             <div style="font-size:9px;color:var(--muted);margin-top:4px">🛰️ ${t('ที่มา: NASA MODIS MOD13A3 (ดาวเทียม Terra) · ความละเอียด 1km · อัปเดตรายเดือน','Source: NASA MODIS MOD13A3 (Terra satellite) · 1km resolution · monthly update')}</div>
           </div>`;
       }
+      // ── Rice EVI detail card ─────────────────────────────────────────────
+      let riceEviHtml = "";
+      const riceEviProv = window.RICE_EVI_DATA?.provinces?.[en];
+      if (riceEviProv && riceEviProv.evi != null) {
+        const eviVal      = riceEviProv.evi;
+        const eviMonth    = window.RICE_EVI_DATA?.month || "—";
+        const stage       = riceEviProv.stage;
+        const riceRai     = riceEviProv.rice_rai   || 0;
+        const confidence  = riceEviProv.confidence ?? null;
+        const phenoWindow = window.RICE_EVI_DATA?._meta?.phenology_window || "";
+        const stg = STAGE_MAP[stage] || STAGE_MAP.growing;
+        // ── confidence color: เขียว ≥90%, เหลือง 70-90%, แดง <70%
+        const confColor = confidence == null ? 'var(--muted)'
+          : confidence >= 0.90 ? '#66bb6a'
+          : confidence >= 0.70 ? '#ffa726'
+          : '#ef5350';
+        const confPct   = confidence != null ? Math.round(confidence * 100) : null;
+        const confBar   = confidence != null
+          ? `<div style="height:4px;border-radius:2px;background:rgba(255,255,255,.12);margin-top:4px">
+               <div style="height:4px;border-radius:2px;width:${confPct}%;background:${confColor};transition:width .4s"></div>
+             </div>`
+          : '';
+        riceEviHtml = `
+          <div class="rice-card" style="grid-column:1/-1;background:rgba(102,187,106,.08);border:1px solid rgba(102,187,106,.25)">
+            <div class="t">🌾 ${t(`สุขภาพข้าว (EVI) · ${eviMonth}`,`Rice Health (EVI) · ${eviMonth}`)}</div>
+            <div class="metric">
+              <div class="m-label">${t('EVI เฉลี่ยเฉพาะนาข้าว','Mean EVI (rice paddies only)')}</div>
+              <div class="m-value" style="color:${stg.color}">${eviVal.toFixed(3)} ${stg.icon} <small style="color:${stg.color}">${t(stg.th, stg.en)}</small></div>
+            </div>
+            ${riceRai > 0 ? `<div class="metric">
+              <div class="m-label">${t('พื้นที่นาข้าวยืนยัน (Phenology-gated)','Confirmed Rice Area (Phenology-gated)')}</div>
+              <div class="m-value">${fmtNumber(riceRai)} <small>${t('ไร่','rai')}</small></div>
+            </div>` : ''}
+            ${confidence != null ? `<div class="metric">
+              <div class="m-label">🔬 ${t('Phenology ยืนยัน (LSWI > EVI)','Phenology Confirmed (LSWI > EVI)')}</div>
+              <div class="m-value" style="color:${confColor}">${confPct}%
+                <small style="color:var(--muted);font-weight:400">${riceRai > 0 ? `· ${fmtNumber(riceRai)} ${t('ไร่','rai')}` : ''}</small>
+              </div>
+              ${confBar}
+            </div>` : ''}
+            ${(() => {
+              const ctx = riceSeasonContext(en);
+              const borderCol = SOUTH_PROVINCES.has(en) ? 'rgba(255,193,7,.30)' : 'rgba(100,181,246,.25)';
+              const bgCol     = SOUTH_PROVINCES.has(en) ? 'rgba(255,193,7,.10)' : 'rgba(100,181,246,.06)';
+              const accentCol = SOUTH_PROVINCES.has(en) ? '#ffd54f' : '#90caf9';
+              return `
+            <div style="background:${bgCol};border:1px solid ${borderCol};border-radius:7px;padding:6px 8px;margin-top:6px;font-size:9px;line-height:1.6">
+              <span style="font-weight:700;color:${accentCol}">📅 ${t('ปฏิทินฤดูกาล','Season Calendar')}</span>
+              <span style="float:right;font-weight:600;color:#ffd54f">${t(ctx.cropType.th, ctx.cropType.en)}</span><br>
+              <div style="margin:3px 0;color:#fff;font-weight:600">${stg.icon} ${t(stg.th, stg.en)} → <span style="color:${accentCol}">${t(ctx.situation.th, ctx.situation.en)}</span></div>
+              <div style="opacity:.8">${t(ctx.calendar.th, ctx.calendar.en)}</div>
+            </div>`;
+            })()}
+            ${(riceEviProv.bonus_pixels || 0) > 0 ? `
+            <div style="background:rgba(30,136,229,.08);border:1px solid rgba(30,136,229,.25);border-radius:7px;padding:6px 8px;margin-top:6px;font-size:9px;line-height:1.6">
+              <span style="font-weight:700;color:#64b5f6">📈 ${t('Hybrid Mask เพิ่มความแม่นยำ','Hybrid Mask Improved Coverage')}</span><br>
+              ${t(
+                `GLAD ตรวจจับได้ ${riceEviProv.glad_pixels || 0} pixel · MCD12Q1 Cropland + Phenology ช่วยยืนยันเพิ่มอีก <strong>+${riceEviProv.bonus_pixels} pixel</strong> (+${fmtNumber((riceEviProv.bonus_pixels || 0) * 625)} ไร่)`,
+                `GLAD detected ${riceEviProv.glad_pixels || 0} px · MCD12Q1 Cropland + Phenology added <strong>+${riceEviProv.bonus_pixels} px</strong> (+${fmtNumber((riceEviProv.bonus_pixels || 0) * 625)} rai)`
+              )}
+            </div>` : ''}
+            ${GLAD_BOOSTED.has(en) && (riceEviProv.bonus_pixels || 0) === 0 ? `
+            <div style="background:rgba(255,152,0,.08);border:1px solid rgba(255,152,0,.25);border-radius:7px;padding:6px 8px;margin-top:6px;font-size:9px;line-height:1.6">
+              <span style="font-weight:700;color:#ffb74d">⚠️ ${t('จังหวัดเป้าหมาย Hybrid Mask','Hybrid Mask Target Province')}</span><br>
+              ${t(
+                'จังหวัดนี้เป็นแหล่งข้าวสำคัญ แต่ GLAD ครอบคลุมน้อย — Hybrid mask (GLAD ∪ MCD12Q1) กำลังช่วยขยาย coverage',
+                'This is a major rice province with low GLAD coverage — Hybrid mask (GLAD ∪ MCD12Q1) is expanding detection'
+              )}
+            </div>` : ''}
+            <div style="font-size:9px;color:var(--muted);margin-top:6px;line-height:1.5">
+              🛰️ ${t('MODIS EVI + Hybrid Mask (GLAD∪MCD12Q1) + Phenology (LSWI>EVI)','MODIS EVI + Hybrid Mask (GLAD∪MCD12Q1) + Phenology (LSWI>EVI)')}
+              ${phenoWindow ? `· ${t(`ตรวจ ${phenoWindow}`,`window: ${phenoWindow}`)}` : ''}
+            </div>
+          </div>`;
+      }
       // ─────────────────────────────────────────────────────────────────────
 
       const cardHtml = RICE_TYPES.map(rice => {
@@ -3343,7 +3593,7 @@ function t(th, en) {
         }
       }
       // ── Carousel panes — แต่ละ pane เป็น 100% width, scroll ซ้าย-ขวา
-      const envContent   = weatherHtml + damHtml + floodHtml + ndviHtml;
+      const envContent   = weatherHtml + damHtml + floodHtml + ndviHtml + riceEviHtml;
       const econContent  = profitHtml + fertRatioHtml + millsHtml + fertHtml;
       const peopleContent = householdsHtml;
       const riceContent  = cardHtml;
@@ -3365,7 +3615,7 @@ function t(th, en) {
           btn.style.opacity = hasContent ? "1" : "0.4";
         });
         // default: flood layer → env, อื่น → rice
-        const defaultTab = (S.layer === "flood" || S.layer === "dam" || S.layer === "rainfall" || S.layer === "drought" || S.layer === "ndvi")
+        const defaultTab = (S.layer === "flood" || S.layer === "dam" || S.layer === "rainfall" || S.layer === "drought" || S.layer === "ndvi" || S.layer === "riceEvi")
           ? "env" : "rice";
         switchDetailTab(defaultTab);
       }
@@ -3385,12 +3635,14 @@ function t(th, en) {
     }
 
     function drawSpark(en) {
-      if (S.layer === "dam" || S.layer === "rainfall" || S.layer === "drought" || S.layer === "mills" || S.layer === "profit" || S.layer === "flood" || S.layer === "ndvi") {
+      if (LAYER_NO_TIMESERIES.has(S.layer)) {
         refs.sparkSvg.innerHTML = "";
         refs.sparkTitle.textContent = S.layer === "flood"
           ? t("ข้อมูล GISTDA 2554–2566 — ไม่มีอนุกรมเวลา", "GISTDA 2011–2023 snapshot — no time series")
           : S.layer === "ndvi"
           ? t(`NDVI ${window.NDVI_DATA?.month || ''} — อัปเดตรายเดือน (NASA MODIS)`, `NDVI ${window.NDVI_DATA?.month || ''} — monthly update (NASA MODIS)`)
+          : S.layer === "riceEvi"
+          ? t(`Rice EVI ${window.RICE_EVI_DATA?.month || ''} — เฉพาะนาข้าว (MODIS + GLAD)`, `Rice EVI ${window.RICE_EVI_DATA?.month || ''} — rice paddies only (MODIS + GLAD)`)
           : S.layer === "dam"
           ? t("ไม่มีข้อมูลอนุกรมเวลา", "No time-series data")
           : S.layer === "mills"
@@ -3498,6 +3750,50 @@ function t(th, en) {
     </div>
   `;
       }
+      // ── Rice EVI tooltip: แสดงระยะข้าว + ปฏิทินฤดูกาล ──────────────────
+      if (S.layer === "riceEvi") {
+        const rp = window.RICE_EVI_DATA?.provinces?.[en];
+        const rank = currentRank(en);
+        const total = getVisibleProvinces().filter(n => hasLayerValue(n)).length;
+        if (!rp || rp.evi == null) return `<div class="th">${t(NM[en]||en,en)}</div><div class="en">${en}</div><div style="color:var(--muted);font-size:11px;margin-top:6px">${t('ไม่มีข้อมูล Rice EVI','No Rice EVI data')}</div>`;
+        const stg = STAGE_MAP[rp.stage] || STAGE_MAP.growing;
+        const ctx = riceSeasonContext(en);
+        const confPct = rp.confidence != null ? Math.round(rp.confidence * 100) : null;
+        const confColor = confPct == null ? 'var(--muted)' : confPct >= 90 ? '#66bb6a' : confPct >= 70 ? '#ffa726' : '#ef5350';
+        return `
+    <div class="th">${t(NM[en]||en,en)}</div>
+    <div class="en">${en}</div>
+    <div class="type">${t('สุขภาพข้าว (Rice EVI)','Rice Health (EVI)')} · ${window.RICE_EVI_DATA?.month || '—'}</div>
+    <div class="value" style="color:${stg.color}">${rp.evi.toFixed(3)} EVI ${stg.icon}</div>
+    <div style="font-size:11px;font-weight:700;color:${stg.color};margin:2px 0">${t(stg.th, stg.en)}</div>
+    <div class="rank">${rank ? `${t('อันดับ','Rank')} #${rank} / ${total}` : t('ไม่มีข้อมูล','No data')}</div>
+    ${confPct != null ? `<div style="font-size:10px;margin-top:3px"><span style="color:${confColor}">🔬 Phenology ${confPct}%</span> · ${fmtNumber(rp.rice_rai || 0)} ${t('ไร่','rai')}</div>` : ''}
+    <div style="font-size:9px;color:var(--muted);margin-top:5px;line-height:1.5;border-top:1px solid rgba(255,255,255,.1);padding-top:4px">
+      <div style="margin-bottom:2px"><strong style="color:#ffd54f">${t(ctx.situation.th, ctx.situation.en)}</strong> · ${t(ctx.cropType.th, ctx.cropType.en)}</div>
+      <div>${t(ctx.calendar.th, ctx.calendar.en)}</div>
+    </div>
+  `;
+      }
+      // ── NDVI tooltip ──
+      if (S.layer === "ndvi") {
+        const np = window.NDVI_DATA?.provinces?.[en];  // number (0–1) or null
+        const rank = currentRank(en);
+        const total = getVisibleProvinces().filter(n => hasLayerValue(n)).length;
+        if (np == null) return `<div class="th">${t(NM[en]||en,en)}</div><div class="en">${en}</div><div style="color:var(--muted);font-size:11px;margin-top:6px">${t('ไม่มีข้อมูล NDVI','No NDVI data')}</div>`;
+        const ndviColor = np >= 0.6 ? '#2e7d32' : np >= 0.4 ? '#558b2f' : np >= 0.2 ? '#f9a825' : '#bf360c';
+        const ndviLabel = np >= 0.6 ? t('ป่าไม้ / ชุ่มชื้นมาก 🌳','Forest / Very Lush 🌳')
+                        : np >= 0.4 ? t('นาข้าว / เกษตร 🌾','Cropland / Agriculture 🌾')
+                        : np >= 0.2 ? t('พืชเบาบาง / แล้ง 🌱','Sparse Vegetation / Dry 🌱')
+                        : t('เมือง / ดินเปล่า 🏙️','Urban / Bare Soil 🏙️');
+        return `
+    <div class="th">${t(NM[en]||en,en)}</div>
+    <div class="en">${en}</div>
+    <div class="type">NDVI · ${window.NDVI_DATA?.month || '—'}</div>
+    <div class="value" style="color:${ndviColor}">${np.toFixed(3)} NDVI</div>
+    <div style="font-size:11px;font-weight:700;color:${ndviColor};margin:2px 0">${ndviLabel}</div>
+    <div class="rank">${rank ? `${t('อันดับ','Rank')} #${rank} / ${total}` : t('ไม่มีข้อมูล','No data')}</div>
+  `;
+      }
       const value = valueOf(en);
       const rank = currentRank(en);
       const prevYear = previousYear(S.year);
@@ -3512,7 +3808,7 @@ function t(th, en) {
         }
       }
       const entry = entryOf(en);
-      const est = S.layer !== "price" && S.layer !== "flood" && S.layer !== "ndvi" && isEstimated(en);
+      const est = S.layer !== "price" && !LAYER_NO_TIMESERIES.has(S.layer) && isEstimated(en);
       const estBadge = est ? `<div class="est-badge">${t('📊 ประมาณการ · Estimated (Trend)','📊 Estimated (Trend)')}</div>` : "";
 
       const mainMoist = entry.price_basis === "moisture_15_pct" ? t('ความชื้น 15%','15% moisture') : "";
@@ -3883,7 +4179,7 @@ function t(th, en) {
         if (!r.ok) return;
         window.FLOOD_DATA = await r.json();
         if (S.layer === "flood") rerender();
-        if (S.sel) selectProvince(S.sel);
+        else if (S.sel) selectProvince(S.sel);
       } catch (e) {
         console.info("flood-risk.json not available");
       }
@@ -3891,13 +4187,26 @@ function t(th, en) {
 
     async function fetchNdviData() {
       try {
-        const r = await fetch("data/ndvi.json");
+        const r = await fetch("data/ndvi.json?_=" + Date.now(), { cache: "no-store" });
         if (!r.ok) return;
         window.NDVI_DATA = await r.json();
         if (S.layer === "ndvi") rerender();
-        if (S.sel) selectProvince(S.sel);
+        else if (S.sel) selectProvince(S.sel);
       } catch (e) {
         console.info("ndvi.json not available");
+      }
+    }
+
+    async function fetchRiceEviData() {
+      try {
+        const r = await fetch("data/rice-evi.json?_=" + Date.now(), { cache: "no-store" });
+        if (!r.ok) return;
+        window.RICE_EVI_DATA = await r.json();
+        // rerender() already calls selectProvince(S.sel) internally
+        if (S.layer === "riceEvi") rerender();
+        else if (S.sel) selectProvince(S.sel);  // update detail card without full rerender
+      } catch (e) {
+        console.info("rice-evi.json not available");
       }
     }
 
@@ -3914,6 +4223,7 @@ function t(th, en) {
       fetchHouseholds();
       fetchFloodData();
       fetchNdviData();
+      fetchRiceEviData();
       updateNationalFert();
 
       VIEW.features = window.THAILAND_GEO.features.filter(feature => allEN.includes(feature.properties.name));
