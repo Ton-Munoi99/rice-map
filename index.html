@@ -1023,6 +1023,43 @@
       background: rgba(255, 255, 255, .02);
     }
 
+    /* ── District drill-down panel ─────────────────────────────────────── */
+    .district-toggle-btn {
+      display: flex; align-items: center; justify-content: space-between;
+      width: 100%; padding: 7px 10px; margin-top: 8px;
+      background: rgba(102,187,106,.10); border: 1px solid rgba(102,187,106,.30);
+      border-radius: 8px; cursor: pointer; font-size: 10px; font-weight: 600;
+      color: #a5d6a7; transition: background .15s;
+    }
+    .district-toggle-btn:hover { background: rgba(102,187,106,.18); }
+    .district-toggle-btn .dtb-arrow { font-size: 9px; transition: transform .2s; }
+    .district-toggle-btn.open .dtb-arrow { transform: rotate(90deg); }
+    .district-panel {
+      display: none; margin-top: 6px;
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 10px; overflow: hidden;
+    }
+    .district-panel.open { display: block; }
+    .district-minimap {
+      width: 100%; background: rgba(0,0,0,.25);
+    }
+    .district-list {
+      max-height: 220px; overflow-y: auto;
+      padding: 4px 0;
+    }
+    .district-row {
+      display: grid; grid-template-columns: 1fr 60px 36px;
+      align-items: center; gap: 4px;
+      padding: 4px 10px; font-size: 9px; cursor: pointer;
+      transition: background .12s;
+    }
+    .district-row:hover { background: rgba(255,255,255,.06); }
+    .district-row .dr-name { color: #ddd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .district-row .dr-bar-wrap { height: 5px; border-radius: 3px; background: rgba(255,255,255,.08); }
+    .district-row .dr-bar { height: 5px; border-radius: 3px; }
+    .district-row .dr-val { text-align: right; color: var(--muted); font-size: 8.5px; }
+    .district-no-data { font-size: 9px; color: var(--muted); padding: 8px 10px; text-align: center; }
+
     .spark-top {
       display: flex;
       justify-content: space-between;
@@ -3282,6 +3319,16 @@ function t(th, en) {
       hideTooltip();
       refs.detailCard.classList.add("show");
       refs.detailPlaceholder.style.display = "none";
+      // lazy-load district data when NDVI or riceEvi layer is active
+      if (S.layer === 'ndvi' || S.layer === 'riceEvi') {
+        loadDistrictData().then(() => {
+          // re-render district toggle button after data loads (only if still same province)
+          if (S.sel === en) {
+            const btn = document.getElementById(`dtb-${en}-${S.layer}`);
+            if (!btn) selectProvince(en);  // re-render once data is ready
+          }
+        });
+      }
       refs.detailName.textContent = t(NM[en] || en, en);
       refs.detailEn.textContent = en;
       const covered = getVisibleProvinces().filter(name => hasLayerValue(name)).length;
@@ -3413,6 +3460,7 @@ function t(th, en) {
               <div class="m-value" style="color:${ndviColor}">${ndviVal.toFixed(3)} <small style="color:${ndviColor}">${ndviLabel}</small></div>
             </div>
             <div style="font-size:9px;color:var(--muted);margin-top:4px">🛰️ ${t('ที่มา: NASA MODIS MOD13A3 (ดาวเทียม Terra) · ความละเอียด 1km · อัปเดตรายเดือน','Source: NASA MODIS MOD13A3 (Terra satellite) · 1km resolution · monthly update')}</div>
+            ${districtDrilldownHtml(en, 'ndvi')}
           </div>`;
       }
       // ── Rice EVI detail card ─────────────────────────────────────────────
@@ -3488,6 +3536,7 @@ function t(th, en) {
               🛰️ ${t('MODIS EVI + Hybrid Mask (GLAD∪MCD12Q1) + Phenology (LSWI>EVI)','MODIS EVI + Hybrid Mask (GLAD∪MCD12Q1) + Phenology (LSWI>EVI)')}
               ${phenoWindow ? `· ${t(`ตรวจ ${phenoWindow}`,`window: ${phenoWindow}`)}` : ''}
             </div>
+            ${districtDrilldownHtml(en, 'riceEvi')}
           </div>`;
       }
       // ─────────────────────────────────────────────────────────────────────
@@ -4236,6 +4285,174 @@ function t(th, en) {
       } catch (e) {
         console.info("rice-evi.json not available");
       }
+    }
+
+    // ── District drill-down: lazy loaders ────────────────────────────────────
+    let _districtGeoLoading = false;
+    async function loadDistrictData() {
+      // โหลด 3 ไฟล์พร้อมกัน (ถ้ายังไม่ได้โหลด)
+      const loads = [];
+      if (!window.NDVI_DISTRICT && !_districtGeoLoading) {
+        _districtGeoLoading = true;
+        loads.push(
+          fetch("data/ndvi-district.json").then(r => r.ok ? r.json() : null)
+            .then(d => { window.NDVI_DISTRICT = d; }),
+          fetch("data/rice-evi-district.json").then(r => r.ok ? r.json() : null)
+            .then(d => { window.RICE_EVI_DISTRICT = d; }),
+          fetch("data/districts-geo.json").then(r => r.ok ? r.json() : null)
+            .then(d => { window.DISTRICTS_GEO = d; })
+        );
+        await Promise.all(loads);
+        _districtGeoLoading = false;
+      }
+    }
+
+    // ── Mini SVG choropleth ───────────────────────────────────────────────────
+    function renderDistrictMinimap(en, layer) {
+      const geo = window.DISTRICTS_GEO?.provinces?.[en];
+      if (!geo || !geo.bbox || !geo.districts || Object.keys(geo.districts).length === 0) {
+        return '';  // ไม่มี geometry → ไม่วาด
+      }
+      const [lngMin, latMin, lngMax, latMax] = geo.bbox;
+      const lngSpan = lngMax - lngMin || 1;
+      const latSpan = latMax - latMin || 1;
+      const W = 220, H = Math.round(W * (latSpan / lngSpan) * 1.1);
+      const pad = 6;
+
+      // Project lat/lng → SVG x,y
+      const proj = ([lng, lat]) => [
+        pad + (lng - lngMin) / lngSpan * (W - 2 * pad),
+        (H - pad) - (lat - latMin) / latSpan * (H - 2 * pad),
+      ];
+
+      // ดึงค่า NDVI/EVI ต่ออำเภอ
+      const vals = {};
+      if (layer === "ndvi" && window.NDVI_DISTRICT?.provinces?.[en]) {
+        Object.assign(vals, window.NDVI_DISTRICT.provinces[en]);
+      } else if (layer === "riceEvi" && window.RICE_EVI_DISTRICT?.provinces?.[en]) {
+        for (const [d, v] of Object.entries(window.RICE_EVI_DISTRICT.provinces[en])) {
+          vals[d] = v?.evi ?? null;
+        }
+      }
+
+      // Color scale
+      const palette = getPalette();
+      const allV = Object.values(vals).filter(v => v != null);
+      const vMin = allV.length ? Math.min(...allV) : 0;
+      const vMax = allV.length ? Math.max(...allV) : 1;
+      const colorFor = v => {
+        if (v == null) return 'rgba(255,255,255,.08)';
+        const t = vMax > vMin ? (v - vMin) / (vMax - vMin) : 0.5;
+        return rgb(lerp(palette.lo, palette.hi, t));
+      };
+
+      // Build SVG paths
+      let paths = '';
+      for (const [dName, rings] of Object.entries(geo.districts)) {
+        const fill = colorFor(vals[dName] ?? null);
+        for (const ring of rings) {
+          if (ring.length < 3) continue;
+          const pts = ring.map(pt => proj(pt).map(v => v.toFixed(1)).join(',')).join(' ');
+          paths += `<polygon points="${pts}" fill="${fill}" stroke="rgba(0,0,0,.35)" stroke-width=".5"/>`;
+        }
+      }
+      return `<svg class="district-minimap" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${paths}</svg>`;
+    }
+
+    // ── District ranked list ──────────────────────────────────────────────────
+    function renderDistrictList(en, layer) {
+      let entries = [];
+
+      if (layer === "ndvi" && window.NDVI_DISTRICT?.provinces?.[en]) {
+        entries = Object.entries(window.NDVI_DISTRICT.provinces[en])
+          .filter(([, v]) => v != null)
+          .sort((a, b) => b[1] - a[1])
+          .map(([name, val]) => ({ name, val, label: val.toFixed(3), sub: null }));
+
+      } else if (layer === "riceEvi" && window.RICE_EVI_DISTRICT?.provinces?.[en]) {
+        entries = Object.entries(window.RICE_EVI_DISTRICT.provinces[en])
+          .filter(([, v]) => v?.evi != null)
+          .sort((a, b) => (b[1].evi || 0) - (a[1].evi || 0))
+          .map(([name, v]) => {
+            const stg = STAGE_MAP[v.stage] || STAGE_MAP.growing;
+            return {
+              name, val: v.evi,
+              label: v.evi.toFixed(3),
+              sub: `${stg.icon} ${t(stg.th, stg.en)}`,
+              rai: v.rice_rai > 0 ? fmtNumber(v.rice_rai) + (t(' ไร่',' rai')) : null,
+            };
+          });
+      }
+
+      if (!entries.length) {
+        return `<div class="district-no-data">${t('ไม่มีข้อมูลอำเภอ','No district data')}</div>`;
+      }
+
+      const palette = getPalette();
+      const vMax = entries[0].val;
+      const rows = entries.map(e => {
+        const barPct = vMax > 0 ? Math.max(4, (e.val / vMax) * 100) : 4;
+        const t_ = vMax > 0 ? e.val / vMax : 0.5;
+        const color = rgb(lerp(palette.lo, palette.hi, t_));
+        const subHtml = e.sub ? `<span style="opacity:.6;margin-left:4px">${e.sub}</span>` : '';
+        const raiHtml = e.rai ? `<span style="opacity:.5;font-size:8px;margin-left:4px">${e.rai}</span>` : '';
+        return `<div class="district-row">
+          <div class="dr-name">${e.name}${subHtml}${raiHtml}</div>
+          <div class="dr-bar-wrap"><div class="dr-bar" style="width:${barPct.toFixed(1)}%;background:${color}"></div></div>
+          <div class="dr-val" style="color:${color}">${e.label}</div>
+        </div>`;
+      }).join('');
+
+      return `<div class="district-list">${rows}</div>`;
+    }
+
+    // ── Toggle district panel open/close ─────────────────────────────────────
+    function toggleDistrictPanel(en, layer) {
+      const id    = `${en}-${layer}`;
+      const btn   = document.getElementById(`dtb-${id}`);
+      const panel = document.getElementById(`dtp-${id}`);
+      if (!btn || !panel) return;
+      const isOpen = panel.classList.contains('open');
+      if (isOpen) {
+        panel.classList.remove('open');
+        btn.classList.remove('open');
+        return;
+      }
+      // เปิดครั้งแรก: render content
+      if (!panel.dataset.loaded) {
+        panel.innerHTML =
+          renderDistrictMinimap(en, layer) +
+          renderDistrictList(en, layer);
+        panel.dataset.loaded = '1';
+      }
+      panel.classList.add('open');
+      btn.classList.add('open');
+    }
+
+    // ── Build district toggle button HTML (ใช้ใน selectProvince) ─────────────
+    function districtDrilldownHtml(en, layer) {
+      if (layer !== 'ndvi' && layer !== 'riceEvi') return '';
+      let count = 0;
+      if (layer === 'ndvi' && window.NDVI_DISTRICT?.provinces?.[en]) {
+        count = Object.values(window.NDVI_DISTRICT.provinces[en]).filter(v => v != null).length;
+      } else if (layer === 'riceEvi' && window.RICE_EVI_DISTRICT?.provinces?.[en]) {
+        count = Object.values(window.RICE_EVI_DISTRICT.provinces[en]).filter(v => v?.evi != null).length;
+      }
+      if (!count) return '';
+      const id    = `${en}-${layer}`;
+      const label = layer === 'ndvi'
+        ? t(`🗺️ ดูรายอำเภอ NDVI (${count} อำเภอ)`, `🗺️ View by District NDVI (${count})`)
+        : t(`🗺️ ดูรายอำเภอ Rice EVI (${count} อำเภอ)`, `🗺️ View by District EVI (${count})`);
+      return `
+      <button id="dtb-${id}" class="district-toggle-btn"
+        onclick="toggleDistrictPanel('${en.replace(/'/g, "\\'")}','${layer}')"
+        aria-expanded="false">
+        <span>${label}</span>
+        <span class="dtb-arrow">▶</span>
+      </button>
+      <div id="dtp-${id}" class="district-panel">
+        <div class="district-no-data">⏳ ${t('กำลังโหลด...','Loading...')}</div>
+      </div>`;
     }
 
     async function init() {
