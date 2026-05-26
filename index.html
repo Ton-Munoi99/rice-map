@@ -2169,6 +2169,9 @@
       if (layer === "rainfall" || layer === "drought") return ["weather"];
       if (layer === "households") return ["2566"];
       if (layer === "mills") return ["mills"];
+      if (layer === "flood") return ["flood"];
+      if (layer === "ndvi") return ["ndvi"];
+      if (layer === "riceEvi") return ["riceEvi"];
       if (layer === "profit") return PRICE_YEARS;
       return layer === "price" ? PRICE_YEARS : PRODUCTION_YEARS;
     }
@@ -2830,6 +2833,9 @@ function t(th, en) {
         : (S.layer === "rainfall" || S.layer === "drought") ? t("Open-Meteo", "Open-Meteo")
         : S.layer === "mills" ? t("กรมการค้าภายใน", "DIT")
         : S.layer === "profit" ? t("OAE+สมาคมโรงสีฯ", "OAE+TRMAB")
+        : S.layer === "flood" ? t("GISTDA", "GISTDA")
+        : S.layer === "ndvi" ? t("NASA MODIS", "NASA MODIS")
+        : S.layer === "riceEvi" ? t("MODIS+GLAD", "MODIS+GLAD")
         : t(riceMeta[S.rice].th, riceMeta[S.rice].en);
       refs.legendLayer.textContent = t(layerMeta[S.layer].th, layerMeta[S.layer].en);
       refs.legendUnit.textContent = uLabel();
@@ -2851,6 +2857,12 @@ function t(th, en) {
               ? `🌧 ${t('ปริมาณฝน นาปี','Season Rainfall')} ${WEATHER_DATA?._meta?.year ? toBE(WEATHER_DATA._meta.year) : '2568'}`
               : S.layer === "drought"
               ? `🌡 ${t('ฝนเบี่ยงเบนจากปกติ','Rainfall Anomaly')} ${WEATHER_DATA?._meta?.year ? toBE(WEATHER_DATA._meta.year) : '2568'} vs ${WEATHER_FORECAST?._meta?.base_years||'2020–2024'}`
+              : S.layer === "flood"
+              ? `🌊 ${t('ความเสี่ยงน้ำท่วมซ้ำซาก','Flood Risk')} GISTDA 2554–2566`
+              : S.layer === "ndvi"
+              ? `🌿 NDVI ${window.NDVI_DATA?.month || ''} · NASA MODIS`
+              : S.layer === "riceEvi"
+              ? `🌾 Rice EVI ${window.RICE_EVI_DATA?.month || ''} · MODIS+GLAD`
               : isEstYear
                 ? `📊 ${t('ประมาณการ','Estimate')} ${S.year}`
                 : `OAE ${t('ข้อมูลปี','Crop Year')} ${S.year}`;
@@ -3321,13 +3333,12 @@ function t(th, en) {
       refs.detailPlaceholder.style.display = "none";
       // lazy-load district data when NDVI or riceEvi layer is active
       if (S.layer === 'ndvi' || S.layer === 'riceEvi') {
-        loadDistrictData().then(() => {
-          // re-render district toggle button after data loads (only if still same province)
-          if (S.sel === en) {
-            const btn = document.getElementById(`dtb-${en}-${S.layer}`);
-            if (!btn) selectProvince(en);  // re-render once data is ready
-          }
-        });
+        if (!window.NDVI_DISTRICT) {
+          loadDistrictData().then(() => {
+            // re-render once data arrives (only if still same province selected)
+            if (S.sel === en) selectProvince(en);
+          });
+        }
       }
       refs.detailName.textContent = t(NM[en] || en, en);
       refs.detailEn.textContent = en;
@@ -3827,6 +3838,28 @@ function t(th, en) {
     </div>
   `;
       }
+      // ── Flood tooltip ──────────────────────────────────────────────────
+      if (S.layer === "flood") {
+        const fp = window.FLOOD_DATA?.provinces?.[en];
+        const rank = currentRank(en);
+        const total = getVisibleProvinces().filter(n => hasLayerValue(n)).length;
+        if (!fp) return `<div class="th">${t(NM[en]||en,en)}</div><div class="en">${en}</div><div style="color:var(--muted);font-size:11px;margin-top:6px">${t('ไม่มีข้อมูลน้ำท่วม','No flood data')}</div>`;
+        const pct = fp.pct ?? 0;
+        const riskLabel = pct >= 30 ? t('เสี่ยงสูง ⚠️','High Risk ⚠️')
+                        : pct >= 10 ? t('เสี่ยงปานกลาง','Medium Risk')
+                        : pct >= 1  ? t('เสี่ยงต่ำ','Low Risk')
+                        : t('เสี่ยงน้อยมาก ✓','Very Low Risk ✓');
+        const riskColor = pct >= 30 ? '#1565c0' : pct >= 10 ? '#1e88e5' : pct >= 1 ? '#64b5f6' : 'var(--muted)';
+        return `
+    <div class="th">${t(NM[en]||en,en)}</div>
+    <div class="en">${en}</div>
+    <div class="type">${t('ความเสี่ยงน้ำท่วมซ้ำซาก (GISTDA 2554–2566)','Recurring Flood Risk (GISTDA 2011–2023)')}</div>
+    <div class="value" style="color:${riskColor}">~${pct.toFixed(1)}% <small style="font-size:12px;color:var(--muted)">${t('ของพื้นที่จังหวัด','of province area')}</small></div>
+    <div style="font-size:11px;font-weight:700;color:${riskColor};margin:2px 0">${riskLabel}</div>
+    <div class="rank">${rank ? `${t('อันดับ','Rank')} #${rank} / ${total}` : t('ไม่มีข้อมูล','No data')}</div>
+    ${fp.flood_rai ? `<div style="font-size:10px;color:var(--muted);margin-top:3px">🌊 ~${fmtNumber(Math.round(fp.flood_rai))} ${t('ไร่','rai')}</div>` : ''}
+  `;
+      }
       // ── Rice EVI tooltip: แสดงระยะข้าว + ปฏิทินฤดูกาล ──────────────────
       if (S.layer === "riceEvi") {
         const rp = window.RICE_EVI_DATA?.provinces?.[en];
@@ -3961,6 +3994,18 @@ function t(th, en) {
       if (S.layer === "mills") {
         const updated = RICE_MILLS_DATA?._meta?.updated || "2026-04-23";
         refs.yearButtons.innerHTML = `<button class="pill on" data-year="mills">🏭 DIT ${t('อัปเดต','Updated')} ${updated}</button>`;
+        return;
+      }
+      if (S.layer === "flood") {
+        refs.yearButtons.innerHTML = `<button class="pill on" data-year="flood">🌊 GISTDA 2554–2566</button>`;
+        return;
+      }
+      if (S.layer === "ndvi") {
+        refs.yearButtons.innerHTML = `<button class="pill on" data-year="ndvi">🌿 ${window.NDVI_DATA?.month || t('ล่าสุด','Latest')} · NASA MODIS</button>`;
+        return;
+      }
+      if (S.layer === "riceEvi") {
+        refs.yearButtons.innerHTML = `<button class="pill on" data-year="riceEvi">🌾 ${window.RICE_EVI_DATA?.month || t('ล่าสุด','Latest')} · MODIS+GLAD</button>`;
         return;
       }
       if (S.layer === "profit") {
@@ -4488,6 +4533,7 @@ function t(th, en) {
     window.resetCamera = resetCamera;
     window.csvUp = csvUp;
     window.csvDl = csvDl;
+    window.toggleDistrictPanel = toggleDistrictPanel;
 
 /* ── Rice Mills Loader ── */
     let RICE_MILLS_DATA = null;
