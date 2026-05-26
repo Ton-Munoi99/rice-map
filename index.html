@@ -1023,30 +1023,6 @@
       background: rgba(255, 255, 255, .02);
     }
 
-    /* ── District zoom (Option C) ──────────────────────────────────────── */
-    #viewportGroup { transition: transform 0.45s cubic-bezier(.4,0,.2,1); }
-    #viewportGroup.no-transition { transition: none; }
-    #districtOverlay { transition: opacity .3s; }
-    #districtOverlay.hidden { opacity: 0; pointer-events: none; }
-    #districtOverlay .d-label {
-      font-size: 8px; fill: rgba(255,255,255,.9);
-      text-shadow: 0 1px 3px rgba(0,0,0,.95), 0 0 6px rgba(0,0,0,.7);
-      pointer-events: none; dominant-baseline: middle; text-anchor: middle;
-      font-family: 'IBM Plex Sans Thai', sans-serif;
-    }
-    #districtZoomBack {
-      position: absolute; top: 8px; left: 8px; z-index: 20;
-      display: none;
-      align-items: center; gap: 6px;
-      padding: 5px 10px 5px 8px;
-      background: rgba(20,24,32,.88); border: 1px solid rgba(255,255,255,.18);
-      border-radius: 8px; cursor: pointer; font-size: 10px; font-weight: 600;
-      color: #e0e0e0; backdrop-filter: blur(8px);
-      transition: background .15s;
-    }
-    #districtZoomBack:hover { background: rgba(40,50,70,.95); }
-    #districtZoomBack.show { display: flex; }
-
     /* ── District drill-down panel ─────────────────────────────────────── */
     .district-toggle-btn {
       display: flex; align-items: center; justify-content: space-between;
@@ -1557,10 +1533,7 @@
 
     <main class="main">
       <section class="map-panel">
-        <div class="map-wrap" id="mapWrap" style="position:relative">
-          <button id="districtZoomBack" onclick="exitDistrictZoom()" title="กลับมุมมองจังหวัด">
-            ↩ <span class="th-t">กลับ</span><span class="en-t">Back</span>
-          </button>
+        <div class="map-wrap" id="mapWrap">
           <div class="map-badge show" id="latestBadge">OAE จังหวัดล่าสุด 2567 / Latest</div>
           <div class="map-tools">
             <div class="map-tool-row">
@@ -2647,7 +2620,6 @@ function t(th, en) {
         <g fill="rgba(246,236,220,.09)" stroke="url(#coastStroke)" stroke-width="1.6" stroke-linejoin="round">${silhouette.join("")}</g>
       </g>
       <g id="provinceLayer">${featurePaths.join("")}</g>
-      <g id="districtOverlay" class="hidden" style="pointer-events:none"></g>
       <g id="labelLayer">${labelMarkup}</g>
     </g>
   `;
@@ -3347,24 +3319,15 @@ function t(th, en) {
       hideTooltip();
       refs.detailCard.classList.add("show");
       refs.detailPlaceholder.style.display = "none";
-      // lazy-load + zoom into district view for NDVI/riceEvi layer
+      // lazy-load district data when NDVI or riceEvi layer is active
       if (S.layer === 'ndvi' || S.layer === 'riceEvi') {
         loadDistrictData().then(() => {
-          if (S.sel !== en) return;
-          if (_dzEn !== en) {
-            // new province → zoom in + show districts
-            enterDistrictZoom(en, S.layer);
-          } else {
-            // already zoomed → just refresh overlay (no re-zoom)
-            const g = document.getElementById('districtOverlay');
-            if (g && !g.innerHTML) renderDistrictOverlay(en, S.layer);
+          // re-render district toggle button after data loads (only if still same province)
+          if (S.sel === en) {
+            const btn = document.getElementById(`dtb-${en}-${S.layer}`);
+            if (!btn) selectProvince(en);  // re-render once data is ready
           }
-          // re-render detail card if district button not shown yet
-          const btn = document.getElementById(`dtb-${en}-${S.layer}`);
-          if (!btn) selectProvince(en);
         });
-      } else {
-        exitDistrictZoom();
       }
       refs.detailName.textContent = t(NM[en] || en, en);
       refs.detailEn.textContent = en;
@@ -4130,7 +4093,6 @@ function t(th, en) {
         S.year = yearsForLayer(layer)[yearsForLayer(layer).length - 1];
       }
       if (layer === "mills" && !RICE_MILLS_DATA && !RICE_MILLS_LOADING) fetchMillsData();
-      if (layer !== 'ndvi' && layer !== 'riceEvi') exitDistrictZoom();
       rerender();
     }
 
@@ -4345,170 +4307,6 @@ function t(th, en) {
       }
     }
 
-    // ── District zoom state ───────────────────────────────────────────────────
-    let _dzEn    = null;   // province currently zoomed in
-    let _dzLayer = null;   // layer when zoom was triggered
-    let _prevCam = null;   // saved camera before zoom (for back button)
-
-    // ── fitToBbox: คำนวณ camera ให้ province bbox พอดีหน้าจอ ─────────────────
-    function fitToBbox(bbox, padPct = 0.12) {
-      const [lngMin, latMin, lngMax, latMax] = bbox;
-      // Project 4 corners to get screen bbox
-      const corners = [
-        [lngMin, latMin], [lngMax, latMin],
-        [lngMin, latMax], [lngMax, latMax],
-      ].map(pt => project(pt));  // project() uses VIEW.scale/offsetX/Y (base map coords)
-      const xs = corners.map(c => c[0]);
-      const ys = corners.map(c => c[1]);
-      const bx0 = Math.min(...xs), bx1 = Math.max(...xs);
-      const by0 = Math.min(...ys), by1 = Math.max(...ys);
-      const bW = bx1 - bx0, bH = by1 - by0;
-
-      // available viewport (leave room for detail card on right)
-      const vpW = VIEW.width * 0.60;
-      const vpH = VIEW.height * 0.82;
-      const k = Math.min(vpW / bW, vpH / bH) * (1 - padPct);
-      const targetK = Math.max(VIEW.camera.min, Math.min(VIEW.camera.max * 0.9, k));
-
-      // center of bbox in screen space, then offset so it fits viewport
-      const bcx = (bx0 + bx1) / 2;
-      const bcy = (by0 + by1) / 2;
-      const targetX = vpW / 2 - bcx * targetK;
-      const targetY = VIEW.height / 2 - bcy * targetK;
-      return { k: targetK, x: targetX, y: targetY };
-    }
-
-    // ── animateCameraTo: smooth camera transition ─────────────────────────────
-    function animateCameraTo(target, onDone) {
-      const vg = VIEW.viewportGroup;
-      if (!vg) return;
-      vg.classList.remove('no-transition');
-      VIEW.camera.x = target.x;
-      VIEW.camera.y = target.y;
-      VIEW.camera.k = target.k;
-      applyCameraTransform();
-      // wait for CSS transition to finish (~450ms) then callback
-      setTimeout(() => onDone?.(), 480);
-    }
-
-    // ── renderDistrictOverlay: draw districts on SVG using main map projection ─
-    function renderDistrictOverlay(en, layer) {
-      const g = document.getElementById('districtOverlay');
-      if (!g) return;
-
-      const geo = window.DISTRICTS_GEO?.provinces?.[en];
-      if (!geo?.districts || Object.keys(geo.districts).length === 0) return;
-
-      // ดึงค่า NDVI/EVI ต่ออำเภอ
-      const vals = {};
-      if (layer === 'ndvi' && window.NDVI_DISTRICT?.provinces?.[en]) {
-        Object.assign(vals, window.NDVI_DISTRICT.provinces[en]);
-      } else if (layer === 'riceEvi' && window.RICE_EVI_DISTRICT?.provinces?.[en]) {
-        for (const [d, v] of Object.entries(window.RICE_EVI_DISTRICT.provinces[en])) {
-          vals[d] = v?.evi ?? null;
-        }
-      }
-
-      const palette = getPalette();
-      const allV = Object.values(vals).filter(v => v != null);
-      const vMin = allV.length ? Math.min(...allV) : 0;
-      const vMax = allV.length ? Math.max(...allV) : 1;
-      const colorFor = v => {
-        if (v == null) return 'rgba(255,255,255,.07)';
-        const t_ = vMax > vMin ? (v - vMin) / (vMax - vMin) : 0.5;
-        return rgb(lerp(palette.lo, palette.hi, t_));
-      };
-
-      let markup = '';
-      const centroids = {};
-
-      for (const [dName, rings] of Object.entries(geo.districts)) {
-        const fill = colorFor(vals[dName] ?? null);
-        const val  = vals[dName];
-        let path = '', cxS = 0, cyS = 0, ptN = 0;
-        for (const ring of rings) {
-          if (ring.length < 3) continue;
-          const proj = ring.map(pt => {
-            const [x, y] = project(pt);
-            cxS += x; cyS += y; ptN++;
-            return `${x.toFixed(1)},${y.toFixed(1)}`;
-          });
-          path += `M${proj.join('L')}Z `;
-        }
-        if (!path) continue;
-        if (ptN > 0) centroids[dName] = [cxS / ptN, cyS / ptN, val];
-        markup += `<path d="${path.trim()}"
-          fill="${fill}" fill-opacity=".85"
-          stroke="rgba(0,0,0,.6)" stroke-width=".6" stroke-linejoin="round"/>`;
-      }
-
-      // Labels — top districts sorted by value
-      const topD = Object.entries(vals)
-        .filter(([, v]) => v != null).sort((a, b) => (b[1] || 0) - (a[1] || 0))
-        .slice(0, 14).map(([d]) => d);
-      for (const dName of topD) {
-        const c = centroids[dName];
-        if (!c) continue;
-        const [cx, cy, val] = c;
-        const short = dName.replace(/^Mueang\s*/i, '').replace(/^Amphoe\s*/i, '');
-        const valTxt = val != null ? ` ${val.toFixed(2)}` : '';
-        markup += `<text class="d-label" x="${cx.toFixed(1)}" y="${cy.toFixed(1)}">${short}${valTxt}</text>`;
-      }
-
-      g.innerHTML = markup;
-      g.classList.remove('hidden');
-    }
-
-    // ── enterDistrictZoom: zoom in + show districts ───────────────────────────
-    function enterDistrictZoom(en, layer) {
-      const geo = window.DISTRICTS_GEO?.provinces?.[en];
-      if (!geo?.bbox) return;
-
-      // save current camera
-      _prevCam = { ...VIEW.camera };
-      _dzEn    = en;
-      _dzLayer = layer;
-
-      // fade out province labels during zoom
-      const lbl = document.getElementById('labelLayer');
-      if (lbl) lbl.style.opacity = '0';
-
-      // compute target camera
-      const target = fitToBbox(geo.bbox);
-
-      // zoom animate → then show districts
-      animateCameraTo(target, () => {
-        renderDistrictOverlay(en, layer);
-        if (lbl) lbl.style.opacity = '';
-      });
-
-      // show back button
-      const btn = document.getElementById('districtZoomBack');
-      if (btn) btn.classList.add('show');
-    }
-
-    // ── exitDistrictZoom: zoom back + clear overlay ───────────────────────────
-    function exitDistrictZoom() {
-      // hide districts immediately with fade
-      const g = document.getElementById('districtOverlay');
-      if (g) { g.classList.add('hidden'); setTimeout(() => { g.innerHTML = ''; }, 320); }
-
-      // hide back button
-      const btn = document.getElementById('districtZoomBack');
-      if (btn) btn.classList.remove('show');
-
-      // restore previous camera
-      if (_prevCam) {
-        const vg = VIEW.viewportGroup;
-        if (vg) vg.classList.remove('no-transition');
-        VIEW.camera.x = _prevCam.x;
-        VIEW.camera.y = _prevCam.y;
-        VIEW.camera.k = _prevCam.k;
-        applyCameraTransform();
-      }
-      _dzEn = null; _dzLayer = null; _prevCam = null;
-    }
-
     // ── Mini SVG choropleth ───────────────────────────────────────────────────
     function renderDistrictMinimap(en, layer) {
       const geo = window.DISTRICTS_GEO?.provinces?.[en];
@@ -4688,7 +4486,6 @@ function t(th, en) {
     window.zoomIn = zoomIn;
     window.zoomOut = zoomOut;
     window.resetCamera = resetCamera;
-    window.exitDistrictZoom = exitDistrictZoom;
     window.csvUp = csvUp;
     window.csvDl = csvDl;
 
