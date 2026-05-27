@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-scripts/fetch_rain_imerg.py
-ดึงข้อมูลฝนสะสม 7 วัน รายจังหวัด จาก NASA GPM IMERG V07 via Google Earth Engine
+scripts/fetch_rain_gsmap.py
+ดึงข้อมูลฝนสะสม 7 วัน รายจังหวัด จาก JAXA GSMaP v8 Operational via Google Earth Engine
 ใช้ spatial average ทั้งพื้นที่จังหวัด (ดีกว่า centroid point)
 
-Source: NASA/GPM_L3/IMERG_V07 (Late Run, ~0.1° = 11 km)
+Source: JAXA/GPM_L3/GSMaP/v8/operational (Near Real-Time, ~4hr lag, ~0.1° = 11 km)
 Auth:   GEE Service Account (GEE_SERVICE_ACCOUNT_KEY env var)
-Output: data/rain-imerg.json
+Output: data/rain-gsmap.json
 """
 import sys, io
 if sys.platform == "win32":
@@ -41,10 +41,12 @@ NAME_MAP = {
     "Changwat Bueng Kan":       "Bueng Kan",
 }
 
-SCALE = 11132   # IMERG native resolution: 0.1° ≈ 11.132 km at equator
+COLLECTION = "JAXA/GPM_L3/GSMaP/v8/operational"
+BAND       = "hourlyPrecipRate"   # mm/hr, 1-hour cadence
+SCALE      = 11132                # GSMaP native resolution: 0.1° ≈ 11.132 km at equator
 
 
-# ── GEE Auth (same pattern as fetch_ndvi.py) ────────────────────────────────
+# ── GEE Auth ─────────────────────────────────────────────────────────────────
 def init_gee():
     key_data = os.environ.get("GEE_SERVICE_ACCOUNT_KEY")
     if key_data:
@@ -60,7 +62,7 @@ def init_gee():
         print("✓ Authenticated via default credentials")
 
 
-# ── Province polygons (same as fetch_ndvi.py: GAUL 76 + Bueng Kan) ──────────
+# ── Province polygons (GAUL 76 + Bueng Kan) ──────────────────────────────────
 def build_provinces():
     gaul_provinces = (
         ee.FeatureCollection("FAO/GAUL/2015/level1")
@@ -85,16 +87,16 @@ def build_provinces():
     return gaul_provinces.merge(ee.FeatureCollection([bueng_kan_feat]))
 
 
-# ── Find latest available date in IMERG catalog ──────────────────────────────
-def get_imerg_window(imerg_col):
+# ── Find latest available date in GSMaP catalog ──────────────────────────────
+def get_gsmap_window(gsmap_col):
     """
     Find the most recent complete 7-day window available in GEE.
-    IMERG Late Run lag: ~14 hr + GEE ingestion ~1–3 days = ~2–4 day total lag.
+    GSMaP Operational lag: ~4 hours + GEE ingestion ~0–12 hr ≈ < 1 day total.
     Returns (start_str, end_str, dates_list) — all ISO date strings.
     end_str = exclusive upper bound for filterDate.
     """
     latest_ts = (
-        imerg_col.sort("system:time_start", False)
+        gsmap_col.sort("system:time_start", False)
         .first()
         .get("system:time_start")
         .getInfo()
@@ -104,7 +106,7 @@ def get_imerg_window(imerg_col):
     start_day = end_day - timedelta(days=7)
 
     dates = [(start_day + timedelta(days=i)).isoformat() for i in range(7)]
-    print(f"IMERG window: {start_day} → {end_day}  (latest image: {latest_dt.strftime('%Y-%m-%d %H:%M UTC')})")
+    print(f"GSMaP window: {start_day} → {end_day}  (latest image: {latest_dt.strftime('%Y-%m-%d %H:%M UTC')})")
     return start_day.isoformat(), end_day.isoformat(), dates
 
 
@@ -112,26 +114,25 @@ def get_imerg_window(imerg_col):
 def main():
     init_gee()
 
-    # IMERG V07: precipitation band (mm/hr), 30-minute cadence
-    imerg = ee.ImageCollection("NASA/GPM_L3/IMERG_V07").select("precipitation")
+    # GSMaP v8: hourlyPrecipRate band (mm/hr), 1-hour cadence
+    gsmap = ee.ImageCollection(COLLECTION).select(BAND)
 
-    start_str, end_str, dates = get_imerg_window(imerg)
+    start_str, end_str, dates = get_gsmap_window(gsmap)
 
     provinces = build_provinces()
     print(f"✓ Provinces: GAUL 76 + Bueng Kan = 77 total")
 
     # ── Build 7-band image: one band per day ─────────────────────────────────
-    # Daily total mm = sum of 48 half-hourly images × 0.5 hr
-    # Each image: mm/hr × 0.5 hr = mm per 30-min interval
+    # Daily total mm = sum of 24 hourly images
+    # Each image: mm/hr × 1 hr = mm per 1-hour interval → sum 24 = daily mm
     print("Building daily rainfall bands (7 bands)...")
     bands = []
     for i, day_str in enumerate(dates):
         day_end = (date.fromisoformat(day_str) + timedelta(days=1)).isoformat()
         daily_mm = (
-            imerg
+            gsmap
             .filterDate(day_str, day_end)
-            .map(lambda img: img.multiply(0.5))   # mm/hr → mm per 30-min
-            .sum()
+            .sum()          # mm/hr × 1hr = mm; sum 24 hourly images → daily total mm
             .rename(f"d{i}")
         )
         bands.append(daily_mm)
@@ -150,7 +151,7 @@ def main():
         scale=SCALE,
     )
 
-    # ── Get raw features (no .select() filter — lets us inspect actual property names)
+    # Get raw features (no .select() filter — avoids silent property name mismatches)
     features = result.getInfo()["features"]
     print(f"  Got {len(features)} provinces from GEE")
 
@@ -194,24 +195,25 @@ def main():
 
     output = {
         "_meta": {
-            "source":       "NASA GPM IMERG V07 (Late Run) via Google Earth Engine",
-            "dataset":      "NASA/GPM_L3/IMERG_V07",
+            "source":       "JAXA GSMaP v8 Operational via Google Earth Engine",
+            "dataset":      COLLECTION,
             "resolution":   "~0.1° (11 km) — spatial average per province polygon",
+            "lag_hours":    "~4",
             "period_start": start_str,
             "period_end":   end_str,
             "updated":      date.today().isoformat(),
             "days":         7,
             "dates":        dates,
             "note": (
-                f"ฝนสะสม 7 วัน (spatial average ทั้งจังหวัด) จาก NASA GPM IMERG V07 "
-                "Late Run ผ่าน Google Earth Engine · แม่นกว่า centroid เพราะครอบคลุมทั้งพื้นที่จังหวัด"
+                f"ฝนสะสม 7 วัน (spatial average ทั้งจังหวัด) จาก JAXA GSMaP v8 Operational "
+                "ผ่าน Google Earth Engine · Near Real-Time (~4 ชม.) · ดีกว่า centroid เพราะครอบคลุมทั้งพื้นที่จังหวัด"
             ),
         },
         "provinces": dict(sorted(provinces_out.items())),
     }
 
     os.makedirs("data", exist_ok=True)
-    out_path = "data/rain-imerg.json"
+    out_path = "data/rain-gsmap.json"
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(output, f, ensure_ascii=False, indent=2)
 
