@@ -1654,11 +1654,7 @@
 
         <section class="panel-block">
           <div class="panel-label"><span class="th-t">หมายเหตุแผนที่</span><span class="en-t">Map Notes</span></div>
-          <p class="micro-copy" id="dataSourceNote">กำลังโหลดชุดข้อมูลจริงแบบผสม
-            โดยผลผลิต/ผลผลิตต่อไร่/เนื้อที่เก็บเกี่ยวใช้ OAE ระดับจังหวัดปี 2565-2567
-            และราคาข้าวเปลือกใช้รายงานสมาคมโรงสีข้าวไทยปี 2568-2569 เท่าที่มีรายจังหวัด<br><span
-              style="color:var(--muted)">Loading mixed dataset. Production/yield/area: OAE 2565–2569 where available.
-              Price: Thai Rice Millers Association reports 2568–2569.</span></p>
+          <p class="micro-copy" id="dataSourceNote">กำลังโหลดข้อมูล…<br><span style="color:var(--muted)">Loading data…</span></p>
         </section>
 
         <!-- Live Prices Widget (auto-populated from data/prices-live.json) -->
@@ -2905,6 +2901,8 @@ function t(th, en) {
               ? `🌾 Rice EVI ${window.RICE_EVI_DATA?.month || ''} · MODIS+GLAD`
               : S.layer === "rain"
               ? `🌧 ${t('ฝนสะสม 7 วันล่าสุด','7-Day Rainfall')} · Open-Meteo ${window.RAIN_DATA?._meta?.updated || ''}`
+              : S.layer === "gsmap"
+              ? `🛰 ${t('ฝนสะสม 7 วัน (ดาวเทียม)','7-Day Satellite Rainfall')} · ${window.GSMAP_DATA?._meta?.period_end || 'JAXA GSMaP'}`
               : isEstYear
                 ? `📊 ${t('ประมาณการ','Estimate')} ${S.year}`
                 : `OAE ${t('ข้อมูลปี','Crop Year')} ${S.year}`;
@@ -2961,8 +2959,8 @@ function t(th, en) {
         const meta = window.GSMAP_DATA?._meta;
         const period = meta ? `${meta.period_start} – ${meta.period_end}` : "7 วัน";
         refs.dataSourceNote.textContent = t(
-          `🛰 JAXA GSMaP v8 Operational · Google Earth Engine · Spatial average ทั้งพื้นที่จังหวัด · ครอบคลุม ${covered} จังหวัด · ช่วง: ${period}`,
-          `🛰 JAXA GSMaP v8 Operational · Google Earth Engine · Spatial average per province · ${covered} provinces · Period: ${period}`
+          `🛰 ข้อมูลฝนจากดาวเทียม JAXA GSMaP — คำนวณฝนสะสม 7 วัน โดยเฉลี่ยทั้งพื้นที่จังหวัด (ไม่ใช่แค่จุดเดียว) · อัปเดตทุก ~4 ชม. · ช่วง: ${period}`,
+          `🛰 Satellite rainfall from JAXA GSMaP — 7-day cumulative, averaged over full province area (not a single point) · Updated every ~4 hrs · Period: ${period}`
         );
         return;
       }
@@ -4223,7 +4221,7 @@ function t(th, en) {
       if (S.layer === "gsmap") {
         const gsmapMeta = window.GSMAP_DATA?._meta;
         const period = gsmapMeta ? `${gsmapMeta.period_start} → ${gsmapMeta.period_end}` : t('ล่าสุด','Latest');
-        refs.yearButtons.innerHTML = `<button class="pill on" data-year="gsmap">🛰 ${t('7 วัน (GSMaP JAXA)','7-day (GSMaP JAXA)')} · ${period}</button>`;
+        refs.yearButtons.innerHTML = `<button class="pill on" data-year="gsmap">🛰 ${t('ฝน 7 วัน (ดาวเทียม)','7-Day Satellite Rain')} · ${period}</button>`;
         return;
       }
       if (S.layer === "profit") {
