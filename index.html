@@ -2261,8 +2261,7 @@ function t(th, en) {
       return window.GSMAP_DATA?.provinces?.[en]?.rain_7d ?? null;
     }
     function forecastValueOf(en) {
-      const thName = NM[en];
-      return window.FORECAST_DATA?.provinces?.[thName]?.rain_7d ?? null;
+      return window.FORECAST_DATA?.provinces?.[en]?.rain_7d ?? null;
     }
 
     function millsValueOf(en) {
@@ -3882,8 +3881,7 @@ function t(th, en) {
         </div>`;
       }
       let forecastHtml = "";
-      const forecastThName = NM[en];
-      const forecastProv = window.FORECAST_DATA?.provinces?.[forecastThName];
+      const forecastProv = window.FORECAST_DATA?.provinces?.[en];
       if (forecastProv) {
         const rain7d     = forecastProv.rain_7d ?? 0;
         const rainVals   = forecastProv.values || [];
@@ -4148,8 +4146,7 @@ function t(th, en) {
       }
       // ── Forecast tooltip ──────────────────────────────────────────────────
       if (S.layer === "forecast") {
-        const thName = NM[en];
-        const rp = window.FORECAST_DATA?.provinces?.[thName];
+        const rp = window.FORECAST_DATA?.provinces?.[en];
         const rank = currentRank(en);
         const total = getVisibleProvinces().filter(n => hasLayerValue(n)).length;
         if (!rp) return `<div class="th">${t(NM[en]||en,en)}</div><div class="en">${en}</div><div style="color:var(--muted);font-size:11px;margin-top:6px">${t('กำลังโหลดข้อมูลพยากรณ์…','Loading forecast data…')}</div>`;
