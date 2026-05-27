@@ -1627,6 +1627,7 @@
             <button class="pill" data-layer="ndvi"  onclick="setLayer('ndvi')"><span class="th-t">🌿 ดัชนีพืชพรรณ</span><span class="en-t">🌿 Vegetation (NDVI)</span></button>
             <button class="pill" data-layer="riceEvi" onclick="setLayer('riceEvi')"><span class="th-t">🌾 สุขภาพข้าว</span><span class="en-t">🌾 Rice Health (EVI)</span></button>
             <button class="pill" data-layer="rain" onclick="setLayer('rain')"><span class="th-t">🌧 ฝน 7 วันล่าสุด</span><span class="en-t">🌧 Rain (7-Day)</span></button>
+      <button class="pill" data-layer="imerg" onclick="setLayer('imerg')"><span class="th-t">🛰 ฝน IMERG (NASA)</span><span class="en-t">🛰 Rain IMERG (NASA)</span></button>
           </div>
         </section>
 
@@ -1890,7 +1891,7 @@
 
     // ── Layers that have no year-based time series (no spark chart, no est-year badge) ──
     const LAYER_NO_TIMESERIES = new Set([
-      "dam","rainfall","drought","mills","profit","flood","ndvi","riceEvi","rain",
+      "dam","rainfall","drought","mills","profit","flood","ndvi","riceEvi","rain","imerg",
     ]);
 
     const layerMeta = {
@@ -1909,6 +1910,7 @@
       ndvi:       { th: "ดัชนีพืชพรรณ (NDVI)", en: "Vegetation Index (NDVI)", unit: "ค่า NDVI เฉลี่ยรายจังหวัด (0–1)", unitEn: "Mean NDVI per province (0–1)", unitShort: "NDVI", unitShortEn: "NDVI", summary: "NDVI เฉลี่ยทั้งประเทศ", summaryMode: "avg" },
       riceEvi:    { th: "สุขภาพข้าว (EVI)", en: "Rice Health (EVI)", unit: "EVI เฉพาะนาข้าว (0–1)", unitEn: "Rice paddy EVI (0–1)", unitShort: "EVI", unitShortEn: "EVI", summary: "EVI เฉลี่ยนาข้าวทั้งประเทศ", summaryMode: "avg" },
       rain:       { th: "ฝนสะสม 7 วัน", en: "7-Day Rainfall", unit: "มม. (7 วันล่าสุด)", unitEn: "mm (last 7 days)", unitShort: "มม.", unitShortEn: "mm", summary: "ฝนสะสมเฉลี่ยต่อจังหวัด", summaryMode: "avg" },
+      imerg:      { th: "ฝน IMERG (NASA)", en: "Rain IMERG (NASA)", unit: "มม. (7 วัน ดาวเทียม)", unitEn: "mm (7-day satellite)", unitShort: "มม.", unitShortEn: "mm", summary: "ฝน IMERG เฉลี่ยต่อจังหวัด", summaryMode: "avg" },
     };
     const riceMeta = {
       white:   { th: "ข้าวขาว",  en: "White Rice",   badge: "🌾" },
@@ -2190,6 +2192,7 @@
       if (layer === "ndvi")    return ["ndvi"];
       if (layer === "riceEvi") return ["riceEvi"];
       if (layer === "rain")    return ["rain"];
+      if (layer === "imerg")   return ["imerg"];
       if (layer === "profit") return PRICE_YEARS;
       return layer === "price" ? PRICE_YEARS : PRODUCTION_YEARS;
     }
@@ -2254,6 +2257,9 @@ function t(th, en) {
     function rainValueOf(en) {
       return window.RAIN_DATA?.provinces?.[en]?.rain_7d ?? null;
     }
+    function imergValueOf(en) {
+      return window.IMERG_DATA?.provinces?.[en]?.rain_7d ?? null;
+    }
 
     function millsValueOf(en) {
       const thName = NM[en];
@@ -2283,6 +2289,7 @@ function t(th, en) {
       if (layer === "ndvi")       return ndviValueOf(en) ?? 0;
       if (layer === "riceEvi")    return riceEviValueOf(en) ?? 0;
       if (layer === "rain")       return rainValueOf(en) ?? 0;
+      if (layer === "imerg")      return imergValueOf(en) ?? 0;
       return Number(entryOf(en, rice, year)[layer] || 0);
     }
 
@@ -2295,6 +2302,7 @@ function t(th, en) {
       if (layer === "ndvi")       return window.NDVI_DATA?.provinces?.[en] != null;
       if (layer === "riceEvi")    return window.RICE_EVI_DATA?.provinces?.[en]?.evi != null;
       if (layer === "rain")       return window.RAIN_DATA?.provinces?.[en] != null;
+      if (layer === "imerg")      return window.IMERG_DATA?.provinces?.[en] != null;
       return valueOf(en, rice, year, layer) > 0;
     }
 
@@ -2338,6 +2346,7 @@ function t(th, en) {
       if (S.layer === "ndvi")       return { lo: [255, 251, 230], mid: [139, 195, 74],  hi: [27, 94, 32],   accent: "#4caf50" };
       if (S.layer === "riceEvi")    return { lo: [255, 243, 224], mid: [255, 183, 77],  hi: [46, 125, 50],   accent: "#66bb6a" };
       if (S.layer === "rain")       return { lo: [224, 247, 250], mid: [0, 188, 212],   hi: [0, 77, 103],   accent: "#00bcd4" };
+      if (S.layer === "imerg")      return { lo: [237, 231, 246], mid: [126, 87, 194],  hi: [49, 27, 146],  accent: "#7c4dff" };
       return S.rice === "white"
         ? { lo: [36, 75, 54], mid: [154, 131, 73], hi: [245, 192, 101], accent: "#ff8f4d" }
         : { lo: [42, 39, 77], mid: [134, 93, 178], hi: [236, 186, 217], accent: "#d9a0ff" };
@@ -2381,6 +2390,7 @@ function t(th, en) {
       if (S.layer === "ndvi")       return n.toFixed(3);
       if (S.layer === "riceEvi")    return n.toFixed(3);
       if (S.layer === "rain")       return fmtNumber(Math.round(n)) + " mm";
+      if (S.layer === "imerg")      return fmtNumber(Math.round(n)) + " mm";
       if (S.layer === "price") return fmtNumber(Math.round(n));
       if (S.layer === "households") {
         if (n >= 1e6) return `${(n / 1e6).toFixed(2)}M`;
@@ -2400,6 +2410,7 @@ function t(th, en) {
       if (layer === "ndvi")    return n.toFixed(3);
       if (layer === "riceEvi") return n.toFixed(3);
       if (layer === "rain")    return fmtNumber(Math.round(n)) + " mm";
+      if (layer === "imerg")   return fmtNumber(Math.round(n)) + " mm";
       return fmtNumber(Math.round(n));
     }
 
@@ -2863,7 +2874,8 @@ function t(th, en) {
         : S.layer === "flood" ? t("GISTDA", "GISTDA")
         : S.layer === "ndvi" ? t("NASA MODIS", "NASA MODIS")
         : S.layer === "riceEvi" ? t("MODIS+GLAD", "MODIS+GLAD")
-        : S.layer === "rain" ? t("Open-Meteo", "Open-Meteo")
+        : S.layer === "rain"  ? t("Open-Meteo", "Open-Meteo")
+        : S.layer === "imerg" ? t("NASA IMERG (GEE)", "NASA IMERG (GEE)")
         : t(riceMeta[S.rice].th, riceMeta[S.rice].en);
       refs.legendLayer.textContent = t(layerMeta[S.layer].th, layerMeta[S.layer].en);
       refs.legendUnit.textContent = uLabel();
@@ -2942,6 +2954,15 @@ function t(th, en) {
         refs.dataSourceNote.textContent = t(
           `🌧 Open-Meteo Forecast API · ฟรี ไม่ต้อง API key · อัปเดตทุกวัน · ครอบคลุม ${covered} จังหวัด · centroid จังหวัด (ไม่ใช่ค่าเฉลี่ยทั้งจังหวัด) · ช่วง: ${period}`,
           `🌧 Open-Meteo Forecast API · Free, no API key · Daily update · ${covered} provinces · Province centroid (not province-wide average) · Period: ${period}`
+        );
+        return;
+      }
+      if (S.layer === "imerg") {
+        const meta = window.IMERG_DATA?._meta;
+        const period = meta ? `${meta.period_start} – ${meta.period_end}` : "7 วัน";
+        refs.dataSourceNote.textContent = t(
+          `🛰 NASA GPM IMERG V07 · Google Earth Engine · Spatial average ทั้งพื้นที่จังหวัด · ครอบคลุม ${covered} จังหวัด · ช่วง: ${period}`,
+          `🛰 NASA GPM IMERG V07 · Google Earth Engine · Spatial average per province · ${covered} provinces · Period: ${period}`
         );
         return;
       }
@@ -3037,10 +3058,10 @@ function t(th, en) {
         .map(en => ({ en, v: valueOf(en) }))
         .sort((a, b) => b.v - a.v)[0];
       const prevYear = previousYear(S.year);
-      let yoyText = S.layer === "rain"
-        ? t(`อัปเดต ${window.RAIN_DATA?._meta?.updated || '—'}`, `Updated ${window.RAIN_DATA?._meta?.updated || '—'}`)
+      let yoyText = (S.layer === "rain" || S.layer === "imerg")
+        ? t(`อัปเดต ${window.IMERG_DATA?._meta?.period_end || window.RAIN_DATA?._meta?.updated || '—'}`, `Updated ${window.IMERG_DATA?._meta?.period_end || window.RAIN_DATA?._meta?.updated || '—'}`)
         : t("ยังไม่มีฐานเทียบ", "No prior year");
-      if (S.layer !== "rain" && prevYear) {
+      if (S.layer !== "rain" && S.layer !== "imerg" && prevYear) {
         const yoy = yoyForProvinces(visible, S.rice, S.year, S.layer, mode);
         if (Number.isFinite(yoy)) {
           const dir = yoy >= 0 ? t("เพิ่มขึ้น ▲", "▲ up") : t("ลดลง ▼", "▼ down");
@@ -3048,7 +3069,7 @@ function t(th, en) {
         }
       }
       refs.scopeLabel.textContent = t("ขอบเขต", "Scope");
-      refs.scopeValue.textContent = (S.layer === "price" || S.layer === "dam" || S.layer === "rainfall" || S.layer === "drought" || S.layer === "mills" || S.layer === "profit" || S.layer === "rain") ? `${covered.length}/${visible.length} ${t('จว.','Prov.')}` : `${visible.length} ${t('จว.','Prov.')}`;
+      refs.scopeValue.textContent = (S.layer === "price" || S.layer === "dam" || S.layer === "rainfall" || S.layer === "drought" || S.layer === "mills" || S.layer === "profit" || S.layer === "rain" || S.layer === "imerg") ? `${covered.length}/${visible.length} ${t('จว.','Prov.')}` : `${visible.length} ${t('จว.','Prov.')}`;
       refs.scopeSub.textContent = S.layer === "price"
         ? t("จังหวัดที่มีราคา", "Provinces with price")
         : (S.reg === "all" ? t("ทั้งประเทศ", "Nationwide") : t(`ภาค${thaiRegionName(S.reg)}`, `${S.reg.charAt(0).toUpperCase() + S.reg.slice(1)} Region`));
@@ -3073,6 +3094,8 @@ function t(th, en) {
         ? t("แผนที่สุขภาพข้าว (Rice EVI) รายจังหวัด", "Rice Paddy Health (EVI) by Province")
         : S.layer === "rain"
         ? t("แผนที่ฝนสะสม 7 วันล่าสุดรายจังหวัด", "7-Day Cumulative Rainfall by Province")
+        : S.layer === "imerg"
+        ? t("แผนที่ฝน IMERG 7 วันรายจังหวัด (NASA Satellite)", "7-Day IMERG Rainfall by Province (NASA Satellite)")
         : t(`แผนที่${riceMeta[S.rice].th}รายจังหวัด`, `${riceMeta[S.rice].en} Rice · Province Map`);
       refs.headlineDesc.textContent = S.layer === "dam"
         ? t("ระดับน้ำในเขื่อนขนาดใหญ่ 35 แห่ง จากกรมชลประทาน (RID) อัปเดตรายวัน", "Large dam water levels from Royal Irrigation Dept. (RID). 35 dams, daily update.")
@@ -3099,6 +3122,9 @@ function t(th, en) {
         : S.layer === "rain"
         ? t(`ปริมาณฝนสะสม 7 วันล่าสุดรายจังหวัด จาก Open-Meteo · อัปเดตทุกวัน · ใช้ centroid จังหวัด · สีเข้ม = ฝนมาก · ข้อมูลล่าสุด ${window.RAIN_DATA?._meta?.updated || '—'}`,
            `7-day cumulative rainfall by province via Open-Meteo · Daily update · Province centroid · Dark = heavy rain · Latest: ${window.RAIN_DATA?._meta?.updated || '—'}`)
+        : S.layer === "imerg"
+        ? t(`ฝนสะสม 7 วัน จากดาวเทียม NASA GPM IMERG · Spatial average ทั้งพื้นที่จังหวัด (แม่นกว่า centroid) · ข้อมูลถึง ${window.IMERG_DATA?._meta?.period_end||'—'}`,
+           `7-day satellite rainfall from NASA GPM IMERG · Spatial avg per province (more accurate than centroid) · Through ${window.IMERG_DATA?._meta?.period_end||'—'}`)
         : S.layer === "price"
         ? t(`แผนที่ fit ตามสัดส่วนประเทศไทยและใช้รายงานราคาข้าวเปลือกรายวันของสมาคมโรงสีข้าวไทย โดยไฮไลต์ราคาของ ${riceTypeDescription(S.rice, S.layer)} ปี ${S.year}`,
            `Province-level paddy price map using Thai Rice Miller Association daily reports. ${riceTypeDescription(S.rice, S.layer)} · Crop year ${S.year}.`)
@@ -3127,11 +3153,12 @@ function t(th, en) {
       const isNdvi    = S.layer === "ndvi";
       const isRiceEvi = S.layer === "riceEvi";
       const isRain    = S.layer === "rain";
+      const isImerg   = S.layer === "imerg";
       const allSorted = visible
         .filter(en => hasLayerValue(en))
         .map(en => ({ en, v: valueOf(en) }))
         .sort((a, b) => b.v - a.v);
-      const items = (isFlood || isNdvi || isRiceEvi || isRain) ? allSorted : allSorted.slice(0, 10);
+      const items = (isFlood || isNdvi || isRiceEvi || isRain || isImerg) ? allSorted : allSorted.slice(0, 10);
 
       // Update rank title
       if (refs.rankTitle) {
@@ -3143,6 +3170,8 @@ function t(th, en) {
           ? `<span class="th-t">ทุกจังหวัด เรียงตาม Rice EVI</span><span class="en-t">All Provinces by Rice EVI</span>`
           : isRain
           ? `<span class="th-t">ทุกจังหวัด เรียงตามฝน 7 วัน</span><span class="en-t">All Provinces by 7-Day Rain</span>`
+          : isImerg
+          ? `<span class="th-t">ทุกจังหวัด เรียงตาม IMERG</span><span class="en-t">All Provinces by IMERG Rain</span>`
           : `Top 10 <span class="th-t">จังหวัด</span><span class="en-t">Provinces</span>`;
       }
 
@@ -3778,8 +3807,41 @@ function t(th, en) {
             <div style="font-size:8px;color:var(--muted);margin-top:2px;opacity:.7">${t('⚠️ ค่าจากจุดเดียว (centroid) ไม่ใช่ค่าเฉลี่ยทั้งจังหวัด','⚠️ Single centroid point — not province-wide average')}</div>
           </div>`;
       }
+      let imergHtml = "";
+      const imergProv = window.IMERG_DATA?.provinces?.[en];
+      if (imergProv) {
+        const rain7d     = imergProv.rain_7d ?? 0;
+        const rainVals   = imergProv.values || [];
+        const rainDates  = window.IMERG_DATA?._meta?.dates || [];
+        const periodEnd  = window.IMERG_DATA?._meta?.period_end || window.IMERG_DATA?._meta?.updated || '—';
+        const maxRainVal = Math.max(...rainVals, 1);
+        const cW = 220, cH = 44, lblH = 16;
+        const nBars  = rainVals.length;
+        const barGap = nBars > 1 ? 3 : 0;
+        const barW   = Math.max(4, Math.floor((cW - barGap * (nBars - 1)) / nBars));
+        const svgBars = rainVals.map((v, i) => {
+          const x  = i * (barW + barGap);
+          const bH = Math.max(v > 0 ? 2 : 0, Math.round((v / maxRainVal) * cH));
+          const y  = cH - bH;
+          const bc = v > 50 ? '#311b92' : v > 15 ? '#7c4dff' : v > 0 ? '#b39ddb' : 'rgba(255,255,255,.1)';
+          const day = rainDates[i] ? rainDates[i].slice(8) : String(i + 1);
+          return `<rect x="${x}" y="${y}" width="${barW}" height="${bH}" rx="1" fill="${bc}"/>`
+            + (v >= 1 ? `<text x="${x+barW/2}" y="${y-2}" text-anchor="middle" font-size="8" fill="#ce93d8">${Math.round(v)}</text>` : '')
+            + `<text x="${x+barW/2}" y="${cH+lblH-2}" text-anchor="middle" font-size="8" fill="rgba(255,255,255,.5)">${day}</text>`;
+        }).join('');
+        const svgChart = nBars > 0
+          ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${cW} ${cH+lblH}" style="width:100%;max-width:${cW}px;display:block;margin:6px auto 0;overflow:visible">${svgBars}</svg>`
+          : '';
+        imergHtml = `<div class="rice-card" style="grid-column:1/-1;background:rgba(124,77,255,.07);border:1px solid rgba(124,77,255,.25)">
+          <div class="t">🛰 ${t('ฝนสะสม 7 วัน · NASA IMERG (ดาวเทียม)','7-Day Rainfall · NASA IMERG (Satellite)')}</div>
+          <div class="metric"><span class="val" style="color:#7c4dff">${rain7d.toFixed(1)}</span><span class="unit"> มม. (7 วัน)</span></div>
+          ${svgChart}
+          <div style="font-size:9px;color:var(--muted);margin-top:8px">${t(`ที่มา: NASA GPM IMERG V07 · GEE · Spatial avg · ข้อมูลถึง ${periodEnd}`, `Source: NASA GPM IMERG V07 via GEE · Spatial avg · Through ${periodEnd}`)}</div>
+          <div style="font-size:9px;color:rgba(124,77,255,.7);margin-top:2px">📡 ${t('Spatial average ทั้งพื้นที่จังหวัด — แม่นกว่า centroid','Spatial average over full province area — more accurate than centroid')}</div>
+        </div>`;
+      }
       // ── Carousel panes — แต่ละ pane เป็น 100% width, scroll ซ้าย-ขวา
-      const envContent   = weatherHtml + damHtml + floodHtml + ndviHtml + riceEviHtml + rainHtml;
+      const envContent   = weatherHtml + damHtml + floodHtml + ndviHtml + riceEviHtml + rainHtml + imergHtml;
       const econContent  = profitHtml + fertRatioHtml + millsHtml + fertHtml;
       const peopleContent = householdsHtml;
       const riceContent  = cardHtml;
@@ -3801,7 +3863,7 @@ function t(th, en) {
           btn.style.opacity = hasContent ? "1" : "0.4";
         });
         // default: flood layer → env, อื่น → rice
-        const defaultTab = (S.layer === "flood" || S.layer === "dam" || S.layer === "rainfall" || S.layer === "drought" || S.layer === "ndvi" || S.layer === "riceEvi" || S.layer === "rain")
+        const defaultTab = (S.layer === "flood" || S.layer === "dam" || S.layer === "rainfall" || S.layer === "drought" || S.layer === "ndvi" || S.layer === "riceEvi" || S.layer === "rain" || S.layer === "imerg")
           ? "env" : "rice";
         switchDetailTab(defaultTab);
       }
@@ -3983,6 +4045,28 @@ function t(th, en) {
     <div class="rank">${rank ? `${t('อันดับ','Rank')} #${rank} / ${total}` : t('ไม่มีข้อมูล','No data')}</div>
   `;
       }
+      if (S.layer === "imerg") {
+        const rp = window.IMERG_DATA?.provinces?.[en];
+        const rank = currentRank(en);
+        const total = getVisibleProvinces().filter(n => hasLayerValue(n)).length;
+        if (!rp) return `<div class="th">${t(NM[en]||en,en)}</div><div style="padding:4px 8px;color:var(--muted)">${t('กำลังโหลด IMERG…','Loading IMERG…')}</div>`;
+        const rain = rp.rain_7d ?? 0;
+        const rainCol = rain > 100 ? '#311b92' : rain > 50 ? '#512da8' : rain > 15 ? '#7c4dff' : rain > 0 ? '#b39ddb' : 'var(--muted)';
+        const rainLabel = rain > 100 ? t('ฝนหนักมาก 🌧','Heavy Rain 🌧')
+                        : rain > 50  ? t('ฝนปานกลาง-หนัก 🌧','Moderate-Heavy 🌧')
+                        : rain > 15  ? t('ฝนปานกลาง 🌦','Moderate 🌦')
+                        : rain > 0   ? t('ฝนเล็กน้อย 🌤','Light Rain 🌤')
+                        :              t('แห้ง / ไม่มีฝน ☀️','Dry / No Rain ☀️');
+        return `
+<div class="th">${t(NM[en]||en,en)}</div>
+<div class="en">${en}</div>
+<div class="type">${t('ฝนสะสม 7 วัน · NASA IMERG (ดาวเทียม)','7-Day Rainfall · NASA IMERG (Satellite)')}</div>
+<div class="metric-name">${t('ปริมาณฝนสะสม (Spatial Avg)','Cumulative Rainfall (Spatial Avg)')}</div>
+<div class="value" style="color:${rainCol}">${fmtNumber(Math.round(rain))} <small style="font-size:12px;color:var(--muted)">มม.</small></div>
+<div style="font-size:11px;font-weight:700;color:${rainCol};margin:2px 0">${rainLabel}</div>
+<div class="rank">${rank ? `${t('อันดับ','Rank')} #${rank} / ${total}` : t('ไม่มีข้อมูล','No data')}</div>
+`;
+      }
       // ── Rice EVI tooltip: แสดงระยะข้าว + ปฏิทินฤดูกาล ──────────────────
       if (S.layer === "riceEvi") {
         const rp = window.RICE_EVI_DATA?.provinces?.[en];
@@ -4134,6 +4218,12 @@ function t(th, en) {
       if (S.layer === "rain") {
         const updated = window.RAIN_DATA?._meta?.updated || t('ล่าสุด','Latest');
         refs.yearButtons.innerHTML = `<button class="pill on" data-year="rain">🌧 ${t('7 วันล่าสุด','Last 7 days')} · Open-Meteo · ${updated}</button>`;
+        return;
+      }
+      if (S.layer === "imerg") {
+        const imergMeta = window.IMERG_DATA?._meta;
+        const period = imergMeta ? `${imergMeta.period_start} → ${imergMeta.period_end}` : t('ล่าสุด','Latest');
+        refs.yearButtons.innerHTML = `<button class="pill on" data-year="imerg">🛰 ${t('7 วัน (NASA IMERG)','7-day (NASA IMERG)')} · ${period}</button>`;
         return;
       }
       if (S.layer === "profit") {
@@ -4471,6 +4561,17 @@ function t(th, en) {
         console.info("rain-daily.json not available");
       }
     }
+    async function fetchImergData() {
+      try {
+        const r = await fetch("data/rain-imerg.json?_=" + Date.now(), { cache: "no-store" });
+        if (!r.ok) return;
+        window.IMERG_DATA = await r.json();
+        if (S.layer === "imerg") rerender();
+        else if (S.sel) selectProvince(S.sel);
+      } catch (e) {
+        console.info("rain-imerg.json not available");
+      }
+    }
 
     // ── District drill-down: lazy loaders ────────────────────────────────────
     let _districtGeoLoading = false;
@@ -4655,6 +4756,7 @@ function t(th, en) {
       fetchNdviData();
       fetchRiceEviData();
       fetchRainData();
+      fetchImergData();
       updateNationalFert();
 
       VIEW.features = window.THAILAND_GEO.features.filter(feature => allEN.includes(feature.properties.name));
