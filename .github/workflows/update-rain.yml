@@ -1,4 +1,4 @@
-name: Update Rain Daily Data (Open-Meteo)
+name: Update Rain Data (Open-Meteo + GSMaP)
 
 on:
   schedule:
@@ -28,16 +28,16 @@ jobs:
       - name: Fetch 7-day rainfall data from Open-Meteo
         run: python scripts/fetch_rain_daily.py
 
-      - name: Fetch 7-day rainfall data from NASA IMERG (GEE)
+      - name: Fetch 7-day rainfall data from JAXA GSMaP (GEE)
         env:
           GEE_SERVICE_ACCOUNT_KEY: ${{ secrets.GEE_SERVICE_ACCOUNT_KEY }}
-        run: python scripts/fetch_rain_imerg.py
+        run: python scripts/fetch_rain_gsmap.py
 
       - name: Commit and push
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/rain-daily.json data/rain-imerg.json
+          git add data/rain-daily.json data/rain-gsmap.json
           git diff --quiet && git diff --staged --quiet || \
             (git commit -m "auto: update rain-daily $(date +'%Y-%m-%d')" && \
              git pull --rebase origin main && git push)
