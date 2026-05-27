@@ -1,0 +1,38 @@
+name: Update Rain Daily Data (Open-Meteo)
+
+on:
+  schedule:
+    # ทุกวัน เวลา 07:00 UTC (14:00 BKK) — รอให้ฝนช่วงเช้าตกก่อนแล้วค่อยดึง
+    - cron: '0 7 * * *'
+  workflow_dispatch:  # กด trigger manual ได้
+
+jobs:
+  update-rain:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Fetch 7-day rainfall data from Open-Meteo
+        run: python scripts/fetch_rain_daily.py
+
+      - name: Commit and push
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/rain-daily.json
+          git diff --quiet && git diff --staged --quiet || \
+            (git commit -m "auto: update rain-daily $(date +'%Y-%m-%d')" && \
+             git pull --rebase origin main && git push)
