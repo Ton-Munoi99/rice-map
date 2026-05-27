@@ -1623,7 +1623,7 @@
             <button class="pill" data-layer="dam" onclick="setLayer('dam')"><span class="th-t">ระดับน้ำในเขื่อน</span><span class="en-t">Dam Level</span></button>
             <button class="pill" data-layer="flood" onclick="setLayer('flood')"><span class="th-t">🌊 ความเสี่ยงน้ำท่วม</span><span class="en-t">🌊 Flood Risk</span></button>
             <button class="pill" data-layer="gsmap" onclick="setLayer('gsmap')"><span class="th-t">🛰 ปริมาณฝนรวม 7 วันล่าสุด</span><span class="en-t">🛰 7-Day Total Rainfall</span></button>
-            <button class="pill" data-layer="riceEvi" onclick="setLayer('riceEvi')"><span class="th-t">🌾 สุขภาพข้าว</span><span class="en-t">🌾 Rice Health (EVI)</span></button>
+            <button class="pill" data-layer="riceEvi" onclick="setLayer('riceEvi')"><span class="th-t">🌾 สภาพนาข้าว</span><span class="en-t">🌾 Rice Paddy Status</span></button>
             <!-- Hidden layers: code retained, buttons removed for cleaner UI -->
             <!-- <button class="pill" data-layer="rainfall" onclick="setLayer('rainfall')"><span class="th-t">ปริมาณฝน (มม.)</span><span class="en-t">Season Rainfall</span></button> -->
             <!-- <button class="pill" data-layer="drought" onclick="setLayer('drought')"><span class="th-t">ฝนเบี่ยงเบนจากปกติ</span><span class="en-t">Rainfall Anomaly</span></button> -->
@@ -1905,7 +1905,7 @@
       profit:     { th: "กำไร/ขาดทุนต่อไร่", en: "Est. Profit/Loss per Rai", unit: "บาท/ไร่ (ประมาณการ)", unitEn: "฿/rai (est.)", unitShort: "฿/ไร่", unitShortEn: "฿/rai", summary: "กำไร/ขาดทุนเฉลี่ย", summaryMode: "avg_signed" },
       flood:      { th: "ความเสี่ยงน้ำท่วม", en: "Flood Risk Zone", unit: "% พื้นที่ (ประมาณการจากสถิติ GISTDA 2554–2566)", unitEn: "% area (est. from GISTDA data 2011–2023)", unitShort: "%~", unitShortEn: "%~", summary: "พื้นที่เสี่ยงน้ำท่วมเฉลี่ย", summaryMode: "avg_nonzero" },
       ndvi:       { th: "ดัชนีพืชพรรณ (NDVI)", en: "Vegetation Index (NDVI)", unit: "ค่า NDVI เฉลี่ยรายจังหวัด (0–1)", unitEn: "Mean NDVI per province (0–1)", unitShort: "NDVI", unitShortEn: "NDVI", summary: "NDVI เฉลี่ยทั้งประเทศ", summaryMode: "avg" },
-      riceEvi:    { th: "สุขภาพข้าว (EVI)", en: "Rice Health (EVI)", unit: "EVI เฉพาะนาข้าว (0–1)", unitEn: "Rice paddy EVI (0–1)", unitShort: "EVI", unitShortEn: "EVI", summary: "EVI เฉลี่ยนาข้าวทั้งประเทศ", summaryMode: "avg" },
+      riceEvi:    { th: "สภาพนาข้าว", en: "Rice Paddy Status", unit: "EVI เฉพาะนาข้าว (0–1)", unitEn: "Rice paddy EVI (0–1)", unitShort: "EVI", unitShortEn: "EVI", summary: "EVI เฉลี่ยนาข้าวทั้งประเทศ", summaryMode: "avg" },
       rain:       { th: "ฝนสะสม 7 วัน", en: "7-Day Rainfall", unit: "มม. (7 วันล่าสุด)", unitEn: "mm (last 7 days)", unitShort: "มม.", unitShortEn: "mm", summary: "ฝนสะสมเฉลี่ยต่อจังหวัด", summaryMode: "avg" },
       gsmap:      { th: "ปริมาณฝนรวม 7 วัน (ดาวเทียม)", en: "7-Day Total Rainfall (Satellite)", unit: "มม. (รวม 7 วัน)", unitEn: "mm (7-day total)", unitShort: "มม.", unitShortEn: "mm", summary: "ปริมาณฝนรวมเฉลี่ยต่อจังหวัด", summaryMode: "avg" },
     };
@@ -3093,7 +3093,7 @@ function t(th, en) {
         : S.layer === "ndvi"
         ? t("แผนที่ดัชนีพืชพรรณ (NDVI) รายจังหวัด", "Vegetation Index (NDVI) by Province")
         : S.layer === "riceEvi"
-        ? t("แผนที่สุขภาพข้าว (Rice EVI) รายจังหวัด", "Rice Paddy Health (EVI) by Province")
+        ? t("แผนที่สภาพนาข้าวรายจังหวัด", "Rice Paddy Status by Province")
         : S.layer === "rain"
         ? t("แผนที่ฝนสะสม 7 วันล่าสุดรายจังหวัด", "7-Day Cumulative Rainfall by Province")
         : S.layer === "gsmap"
@@ -3583,7 +3583,7 @@ function t(th, en) {
           : '';
         riceEviHtml = `
           <div class="rice-card" style="grid-column:1/-1;background:rgba(102,187,106,.08);border:1px solid rgba(102,187,106,.25)">
-            <div class="t">🌾 ${t(`สุขภาพข้าว (EVI) · ${eviMonth}`,`Rice Health (EVI) · ${eviMonth}`)}</div>
+            <div class="t">🌾 ${t(`สภาพนาข้าว · ${eviMonth}`,`Rice Paddy Status · ${eviMonth}`)}</div>
             <div class="metric">
               <div class="m-label">${t('EVI เฉลี่ยเฉพาะนาข้าว','Mean EVI (rice paddies only)')}</div>
               <div class="m-value" style="color:${stg.color}">${eviVal.toFixed(3)} ${stg.icon} <small style="color:${stg.color}">${t(stg.th, stg.en)}</small></div>
@@ -4086,7 +4086,7 @@ function t(th, en) {
         return `
     <div class="th">${t(NM[en]||en,en)}</div>
     <div class="en">${en}</div>
-    <div class="type">${t('สุขภาพข้าว (Rice EVI)','Rice Health (EVI)')} · ${window.RICE_EVI_DATA?.month || '—'}</div>
+    <div class="type">${t('สภาพนาข้าว','Rice Paddy Status')} · ${window.RICE_EVI_DATA?.month || '—'}</div>
     <div class="value" style="color:${stg.color}">${rp.evi.toFixed(3)} EVI ${stg.icon}</div>
     <div style="font-size:11px;font-weight:700;color:${stg.color};margin:2px 0">${t(stg.th, stg.en)}</div>
     <div class="rank">${rank ? `${t('อันดับ','Rank')} #${rank} / ${total}` : t('ไม่มีข้อมูล','No data')}</div>
