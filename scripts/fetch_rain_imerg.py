@@ -150,9 +150,14 @@ def main():
         scale=SCALE,
     )
 
-    select_props = ["ADM1_NAME"] + [f"d{i}_mean" for i in range(7)]
-    features = result.select(select_props).getInfo()["features"]
+    # ── Get raw features (no .select() filter — lets us inspect actual property names)
+    features = result.getInfo()["features"]
     print(f"  Got {len(features)} provinces from GEE")
+
+    # Debug: show actual GEE output property keys (from first feature)
+    if features:
+        sample = {k: v for k, v in features[0]["properties"].items() if k != "ADM1_NAME"}
+        print(f"  GEE property sample: { {k: sample[k] for k in list(sample)[:4]} }")
 
     # ── Build output ─────────────────────────────────────────────────────────
     provinces_out = {}
@@ -165,7 +170,9 @@ def main():
 
         values = []
         for i in range(7):
-            v = props.get(f"d{i}_mean")
+            # GEE multi-band mean reducer → try "{band}_mean" first, then "{band}"
+            v = props.get(f"d{i}_mean") if props.get(f"d{i}_mean") is not None \
+                else props.get(f"d{i}")
             values.append(round(float(v), 1) if v is not None else 0.0)
 
         rain_7d = round(sum(values), 1)
