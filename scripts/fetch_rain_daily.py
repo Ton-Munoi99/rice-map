@@ -17,7 +17,9 @@ if sys.platform == "win32":
 DAYS       = 7           # past N days + today (7 total)
 OUTPUT     = "data/rain-daily.json"
 API_URL    = "https://api.open-meteo.com/v1/forecast"
-RATE_SLEEP = 0.12        # seconds between requests (~8 req/s)
+RATE_SLEEP = 0.5         # seconds between requests (~2 req/s — avoid 429)
+MAX_RETRY  = 3           # retry attempts per province
+TIMEOUT    = 45          # request timeout seconds
 
 
 # ── Load province centroids from thailand-data.js GeoJSON ───────────────────
@@ -52,20 +54,37 @@ def load_centroids():
 # ── Fetch one province: past 6 days + today = 7 values ──────────────────────
 def fetch_rain(lat, lon):
     params = {
-        "latitude":     lat,
-        "longitude":    lon,
-        "daily":        "rain_sum",
-        "past_days":    DAYS - 1,   # 6 past days
-        "forecast_days": 1,          # + today = 7 total
-        "timezone":     "Asia/Bangkok",
+        "latitude":      lat,
+        "longitude":     lon,
+        "daily":         "rain_sum",
+        "past_days":     DAYS - 1,   # 6 past days
+        "forecast_days": 1,           # + today = 7 total
+        "timezone":      "Asia/Bangkok",
     }
-    r = requests.get(API_URL, params=params, timeout=30)
-    r.raise_for_status()
-    daily  = r.json()["daily"]
-    dates  = daily["time"][:DAYS]
-    values = [round(v, 1) if v is not None else 0.0
-              for v in daily["rain_sum"][:DAYS]]
-    return dates, values
+    for attempt in range(MAX_RETRY):
+        try:
+            r = requests.get(API_URL, params=params, timeout=TIMEOUT)
+            if r.status_code == 429:
+                wait = 60 * (attempt + 1)  # 60s, 120s, 180s
+                print(f"    429 rate-limit → wait {wait}s ...", flush=True)
+                time.sleep(wait)
+                continue
+            r.raise_for_status()
+            daily  = r.json()["daily"]
+            dates  = daily["time"][:DAYS]
+            values = [round(v, 1) if v is not None else 0.0
+                      for v in daily["rain_sum"][:DAYS]]
+            return dates, values
+        except requests.exceptions.Timeout:
+            wait = 10 * (attempt + 1)  # 10s, 20s, 30s
+            print(f"    timeout (attempt {attempt+1}/{MAX_RETRY}) → retry in {wait}s ...", flush=True)
+            time.sleep(wait)
+        except Exception:
+            if attempt < MAX_RETRY - 1:
+                time.sleep(5)
+            else:
+                raise
+    raise RuntimeError(f"failed after {MAX_RETRY} attempts")
 
 
 # ── Main ─────────────────────────────────────────────────────────────────────
@@ -93,6 +112,7 @@ def main():
             errors.append(name)
         time.sleep(RATE_SLEEP)
 
+
     if not provinces_out:
         print("ERROR: No data fetched!", file=sys.stderr)
         sys.exit(1)
@@ -115,10 +135,14 @@ def main():
     with open(OUTPUT, "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=2)
 
-    print(f"\n✅ Saved {len(provinces_out)} provinces → {OUTPUT}")
+    ok  = len(provinces_out)
+    err = len(errors)
+    print(f"\n✅ Saved {ok} provinces → {OUTPUT}")
     if errors:
-        print(f"⚠️  Failed ({len(errors)}): {', '.join(errors)}", file=sys.stderr)
-        sys.exit(1)
+        print(f"⚠️  Failed ({err}): {', '.join(errors)}", file=sys.stderr)
+        # exit 1 only when majority failed — partial success still commits
+        if err > ok:
+            sys.exit(1)
 
 
 if __name__ == "__main__":
