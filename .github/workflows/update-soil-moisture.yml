@@ -1,0 +1,47 @@
+name: Update Soil Moisture Data (NASA SMAP)
+
+on:
+  schedule:
+    # ทุกวันจันทร์ 05:00 UTC (12:00 BKK) — SMAP lag ~2-3 วัน จึงดึงข้อมูลรายสัปดาห์
+    - cron: '0 5 * * 1'
+  workflow_dispatch:  # กด trigger manual ได้
+
+jobs:
+  update-soil-moisture:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install earthengine-api
+
+      - name: Fetch Soil Moisture from NASA SMAP (GEE)
+        env:
+          GEE_SERVICE_ACCOUNT_KEY: ${{ secrets.GEE_SERVICE_ACCOUNT_KEY }}
+        run: python scripts/fetch_soil_moisture.py
+
+      - name: Commit and push
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/soil-moisture.json
+          if git diff --quiet && git diff --staged --quiet; then
+            echo "No changes."
+          else
+            git commit -m "auto: update soil moisture (NASA SMAP) $(date +'%Y-%m-%d')"
+            for i in 1 2 3; do
+              git pull --rebase origin main && git push && break
+              echo "Push attempt $i failed, retrying in 10s..."
+              sleep 10
+            done
+          fi
