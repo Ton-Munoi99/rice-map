@@ -4000,13 +4000,40 @@ function t(th, en) {
       let soilMoistureHtml = "";
       const soilProv = window.SOIL_DATA?.provinces?.[en];
       if (soilProv?.smp != null) {
-        const pct = soilProv.smp.toFixed(1);
-        const label = soilProv.smp >= 60 ? t("ดินชื้นมาก","Very Moist") : soilProv.smp >= 40 ? t("ชื้นปานกลาง","Moderate") : soilProv.smp >= 20 ? t("ดินแห้ง","Dry") : t("ดินแห้งมาก","Very Dry");
+        const sm2 = soilProv.smp;
+        const pct = sm2.toFixed(1);
+        let smIcon2, smLabel2, smCrops2_th, smCrops2_en, smColor2, smBarColor;
+        if (sm2 >= 65) {
+          smIcon2="💧"; smColor2="#0097a7"; smBarColor="#00bcd4";
+          smLabel2=t("ชื้นมาก","Very Moist");
+          smCrops2_th="🌾 เหมาะปักดำข้าว · ระวังน้ำขังพืชไร่"; smCrops2_en="🌾 Rice transplanting · Watch for waterlogging";
+        } else if (sm2 >= 50) {
+          smIcon2="🟢"; smColor2="#00897b"; smBarColor="#26c6da";
+          smLabel2=t("ชื้นดี","Moist");
+          smCrops2_th="🌾 เหมาะข้าวนาปี (เตรียมแปลง) · ข้าวโพด"; smCrops2_en="🌾 Good for rice (land prep) · Corn";
+        } else if (sm2 >= 35) {
+          smIcon2="🟡"; smColor2="#f9a825"; smBarColor="#ffca28";
+          smLabel2=t("ปานกลาง","Moderate");
+          smCrops2_th="🌽 ข้าวโพด, อ้อย · ข้าวต้องการน้ำเพิ่ม"; smCrops2_en="🌽 Corn, Sugarcane · Rice needs irrigation";
+        } else if (sm2 >= 20) {
+          smIcon2="🟠"; smColor2="#e65100"; smBarColor="#ffa726";
+          smLabel2=t("แห้ง","Dry");
+          smCrops2_th="🌿 มันสำปะหลัง, อ้อย · ต้องเพิ่มน้ำก่อนปลูกข้าว"; smCrops2_en="🌿 Cassava, Sugarcane · Irrigate before rice";
+        } else {
+          smIcon2="🔴"; smColor2="#c62828"; smBarColor="#ef5350";
+          smLabel2=t("แห้งมาก","Very Dry");
+          smCrops2_th="⚠️ ไม่ควรปลูก — ต้องการชลประทานก่อน"; smCrops2_en="⚠️ Avoid planting — irrigation required first";
+        }
+        const barWidth = Math.min(100, Math.max(2, sm2)).toFixed(0);
         soilMoistureHtml = `<div class="rice-card" style="grid-column:1/-1;background:rgba(0,188,212,.07);border:1px solid rgba(0,188,212,.25)">
           <div class="t">💧 ${t('ความชื้นในดิน (SMAP)','Soil Moisture (SMAP)')}</div>
-          <div class="metric"><span class="val" style="color:#00bcd4">${pct}%</span></div>
-          <div class="m-label">${label}</div>
-          <div style="font-size:9px;color:var(--muted);margin-top:6px">${t(`ที่มา: NASA SMAP 10km · อัปเดต ${window.SOIL_DATA?._meta?.updated||'—'}`, `Source: NASA SMAP 10km · Updated ${window.SOIL_DATA?._meta?.updated||'—'}`)}</div>
+          <div class="metric"><span class="val" style="color:${smColor2}">${pct}%</span></div>
+          <div style="margin:6px 0 4px;height:6px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden">
+            <div style="width:${barWidth}%;height:100%;background:${smBarColor};border-radius:3px;transition:width .4s"></div>
+          </div>
+          <div class="m-label" style="color:${smColor2};font-weight:600">${smIcon2} ${smLabel2}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:5px;line-height:1.5">${t(smCrops2_th, smCrops2_en)}</div>
+          <div style="font-size:9px;color:var(--muted);margin-top:6px;opacity:.7">${t(`ที่มา: NASA SMAP 10km · อัปเดต ${window.SOIL_DATA?._meta?.updated||'—'}`, `Source: NASA SMAP 10km · Updated ${window.SOIL_DATA?._meta?.updated||'—'}`)}</div>
         </div>`;
       }
       // ── Agri Alerts detail card ──────────────────────────────────────────
@@ -4288,12 +4315,30 @@ function t(th, en) {
         const sp = window.SOIL_DATA?.provinces?.[en];
         if (!sp) return `<div class="th">${t(NM[en]||en,en)}</div><div class="en">${en}</div><div style="color:var(--muted);font-size:11px;margin-top:6px">ไม่มีข้อมูล</div>`;
         const pct = sp.smp?.toFixed(1) ?? "—";
-        const label = sp.smp >= 60 ? t("ดินชื้นมาก","Very Moist") : sp.smp >= 40 ? t("ชื้นปานกลาง","Moderate") : sp.smp >= 20 ? t("ดินแห้ง","Dry") : t("ดินแห้งมาก","Very Dry");
+        const sm = sp.smp ?? 0;
+        let smIcon, smLabel, smCrops_th, smCrops_en, smColor;
+        if (sm >= 65) {
+          smIcon="💧"; smColor="#0097a7"; smLabel=t("ชื้นมาก","Very Moist");
+          smCrops_th="เหมาะ: ปักดำข้าว"; smCrops_en="Best: Rice transplanting";
+        } else if (sm >= 50) {
+          smIcon="🟢"; smColor="#00897b"; smLabel=t("ชื้นดี","Moist");
+          smCrops_th="เหมาะ: ข้าวนาปี (เตรียมดิน)"; smCrops_en="Good: Rice (land prep)";
+        } else if (sm >= 35) {
+          smIcon="🟡"; smColor="#f9a825"; smLabel=t("ปานกลาง","Moderate");
+          smCrops_th="เหมาะ: ข้าวโพด, อ้อย · ข้าวต้องการน้ำเพิ่ม"; smCrops_en="OK: Corn, Sugarcane · Rice needs irrigation";
+        } else if (sm >= 20) {
+          smIcon="🟠"; smColor="#e65100"; smLabel=t("แห้ง","Dry");
+          smCrops_th="เหมาะ: มันสำปะหลัง, อ้อย · ข้าวต้องชลประทาน"; smCrops_en="OK: Cassava, Sugarcane · Rice needs irrigation";
+        } else {
+          smIcon="🔴"; smColor="#c62828"; smLabel=t("แห้งมาก","Very Dry");
+          smCrops_th="ไม่ควรปลูก — ต้องการชลประทานก่อน"; smCrops_en="Avoid planting — irrigation required first";
+        }
         return `<div class="th">${t(NM[en]||en,en)}</div>
 <div class="en">${en}</div>
 <div class="type">${t('ความชื้นในดิน','Soil Moisture')} · NASA SMAP</div>
-<div class="value" style="color:#00bcd4">${pct}<small style="font-size:14px">%</small></div>
-<div style="font-size:11px;font-weight:700;color:#00bcd4;margin:2px 0">${label}</div>`;
+<div class="value" style="color:${smColor}">${pct}<small style="font-size:14px">%</small></div>
+<div style="font-size:11px;font-weight:700;color:${smColor};margin:2px 0">${smIcon} ${smLabel}</div>
+<div style="font-size:10px;color:var(--muted);margin-top:4px;line-height:1.5">${t(smCrops_th,smCrops_en)}</div>`;
       }
       // ── Alerts tooltip ──────────────────────────────────────────────────
       if (S.layer === "alerts") {
