@@ -2282,6 +2282,15 @@ function t(th, en) {
       return window.SOIL_DATA?.provinces?.[en]?.smp ?? null;
     }
 
+    function blastRisk(d)  { return d >= 5 ? "high" : d >= 3 ? "medium" : d >= 1 ? "low" : "none"; }
+    function bphRisk(d)    { return d >= 6 ? "high" : d >= 4 ? "medium" : d >= 2 ? "low" : "none"; }
+    function sheathRisk(d) { return d >= 5 ? "high" : d >= 3 ? "medium" : d >= 1 ? "low" : "none"; }
+    function blightRisk(w, level) {
+      if (w >= 2 && (level === "high" || level === "medium")) return "high";
+      if (w >= 1 && level !== "none") return "low";
+      return "none";
+    }
+
     function millsValueOf(en) {
       const thName = NM[en];
       if (!thName || !RICE_MILLS_DATA) return 0;
@@ -4054,8 +4063,41 @@ function t(th, en) {
           <div style="font-size:9px;color:var(--muted);margin-top:8px">${t(`ที่มา: ${(window.ALERTS_DATA?._meta?.sources||[]).join(' + ')} · อัปเดต ${window.ALERTS_DATA?._meta?.updated||'—'}`, `Source: ${(window.ALERTS_DATA?._meta?.sources||[]).join(' + ')} · Updated ${window.ALERTS_DATA?._meta?.updated||'—'}`)}</div>
         </div>`;
       }
+      // ── Disease risk card ────────────────────────────────────────────────────
+      let diseaseHtml = "";
+      const dp_disease = window.DISEASE_DATA?.provinces?.[en];
+      if (dp_disease) {
+        const alertLevel = window.ALERTS_DATA?.provinces?.[en]?.level ?? "none";
+        const riskColor = r => r === "high" ? "#c62828" : r === "medium" ? "#e65100" : r === "low" ? "#f9a825" : "rgba(255,255,255,.3)";
+        const riskLabel = r => r === "high" ? t("สูง","High") : r === "medium" ? t("ปานกลาง","Med") : r === "low" ? t("ต่ำ","Low") : t("ปกติ","—");
+        const rBlast  = blastRisk(dp_disease.days_blast ?? 0);
+        const rBph    = bphRisk(dp_disease.days_bph ?? 0);
+        const rSheath = sheathRisk(dp_disease.days_sheath ?? 0);
+        const rBlight = blightRisk(dp_disease.days_strong_wind ?? 0, alertLevel);
+        const dBar = (days, risk) => `<div style="flex:1;height:4px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden"><div style="width:${Math.round(days/7*100)}%;height:100%;background:${riskColor(risk)};border-radius:2px"></div></div>`;
+        const dRow = (icon, th_name, en_name, days, risk) =>
+          `<div style="display:flex;align-items:center;gap:6px;margin-top:5px">
+            <span style="font-size:13px">${icon}</span>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:10px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><strong>${th_name}</strong> <span style="color:var(--muted);font-size:9px">${en_name}</span></div>
+              <div style="display:flex;align-items:center;gap:4px;margin-top:2px">
+                ${dBar(days, risk)}
+                <span style="font-size:9px;color:${riskColor(risk)};font-weight:600;min-width:26px">${riskLabel(risk)}</span>
+                <span style="font-size:9px;color:var(--muted)">${days}/7${t('วัน','d')}</span>
+              </div>
+            </div>
+          </div>`;
+        diseaseHtml = `<div class="rice-card" style="grid-column:1/-1;background:rgba(180,60,60,.07);border:1px solid rgba(180,60,60,.2)">
+          <div class="t">🔬 ${t('ความเสี่ยงโรค/แมลง','Disease & Pest Risk')} <span style="font-weight:400;font-size:9px;color:var(--muted)">(${t('7 วันที่ผ่านมา','Past 7 Days')})</span></div>
+          ${dRow('🌾','โรคไหม้คอรวง','Rice Blast',dp_disease.days_blast??0,rBlast)}
+          ${dRow('🦗','เพลี้ยกระโดดสีน้ำตาล','Brown Planthopper',dp_disease.days_bph??0,rBph)}
+          ${dRow('🍂','โรคกาบใบแห้ง','Sheath Blight',dp_disease.days_sheath??0,rSheath)}
+          ${dRow('🌊','โรคขอบใบแห้ง','Bacterial Blight',dp_disease.days_strong_wind??0,rBlight)}
+          <div style="font-size:9px;color:var(--muted);margin-top:8px">${t(`ที่มา: Open-Meteo · อัปเดต ${window.DISEASE_DATA?._meta?.updated||'—'}`,`Source: Open-Meteo · Updated ${window.DISEASE_DATA?._meta?.updated||'—'}`)}</div>
+        </div>`;
+      }
       // ── Carousel panes — แต่ละ pane เป็น 100% width, scroll ซ้าย-ขวา
-      const envContent   = weatherHtml + damHtml + floodHtml + ndviHtml + riceEviHtml + rainHtml + gsmapHtml + forecastHtml + alertsHtml + soilMoistureHtml;
+      const envContent   = weatherHtml + damHtml + floodHtml + ndviHtml + riceEviHtml + rainHtml + gsmapHtml + forecastHtml + alertsHtml + soilMoistureHtml + diseaseHtml;
       const econContent  = profitHtml + fertRatioHtml + millsHtml + fertHtml;
       const peopleContent = householdsHtml;
       const riceContent  = cardHtml;
@@ -4917,6 +4959,15 @@ ${warningsHtml}
       } catch (e) { console.info("soil-moisture.json not available"); }
     }
 
+    async function fetchDiseaseData() {
+      try {
+        const r = await fetch("data/disease-risk.json?_=" + Date.now(), { cache: "no-store" });
+        if (!r.ok) return;
+        window.DISEASE_DATA = await r.json();
+        if (S.sel) selectProvince(S.sel);
+      } catch (e) { console.info("disease-risk.json not available"); }
+    }
+
     // ── District drill-down: lazy loaders ────────────────────────────────────
     let _districtGeoLoading = false;
     async function loadDistrictData() {
@@ -5104,6 +5155,7 @@ ${warningsHtml}
       fetchForecastData();
       fetchAlertsData();
       fetchSoilMoistureData();
+      fetchDiseaseData();
       updateNationalFert();
 
       VIEW.features = window.THAILAND_GEO.features.filter(feature => allEN.includes(feature.properties.name));
