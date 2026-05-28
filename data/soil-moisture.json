@@ -1,246 +1,250 @@
 {
   "_meta": {
-    "source": "NASA SMAP 10km via Google Earth Engine",
-    "dataset": "NASA_USDA/HSL/SMAP10KM_soil_moisture",
-    "band": "smp",
-    "unit": "% (surface moisture profile × 100)",
-    "resolution": "10 km — spatial average per province polygon",
-    "period_start": "2022-07-27",
-    "period_end": "2022-08-02",
+    "source": "NASA SMAP via Google Earth Engine (L3 primary + L4 gap-fill)",
+    "dataset_l3": "NASA/SMAP/SPL3SMP_E/006",
+    "dataset_l4": "NASA/SMAP/SPL4SMGP/008",
+    "band_l3": "soil_moisture_am + soil_moisture_pm (quality-masked, mean)",
+    "band_l4": "sm_surface_wetness (gap-fill for null provinces)",
+    "unit": "% ความชุ่มชื้น (0% = แห้ง, 100% = อิ่มตัว)",
+    "resolution": "L3: 9km · L4: 11km — spatial average per province",
+    "period_start": "2026-05-19",
+    "period_end": "2026-05-25",
     "updated": "2026-05-28",
+    "l3_provinces": 65,
+    "l4_provinces": 12,
     "note": "ความชื้นในดินระดับผิว — 0% = แห้งสนิท, 100% = อิ่มตัว"
   },
   "provinces": {
     "Amnat Charoen": {
-      "smp": 97.0
+      "smp": 45.2
     },
     "Ang Thong": {
-      "smp": 62.2
+      "smp": 71.4
     },
     "Bangkok Metropolis": {
-      "smp": 97.3
+      "smp": 42.5
     },
     "Bueng Kan": {
-      "smp": 96.1
+      "smp": 66.8
     },
     "Buri Ram": {
-      "smp": 94.6
+      "smp": 38.0
     },
     "Chachoengsao": {
-      "smp": 97.8
+      "smp": 48.2
     },
     "Chai Nat": {
-      "smp": 47.0
+      "smp": 57.4
     },
     "Chaiyaphum": {
-      "smp": 92.9
+      "smp": 45.1
     },
     "Chanthaburi": {
-      "smp": 87.4
+      "smp": 39.8
     },
     "Chiang Mai": {
-      "smp": 92.9
+      "smp": 13.9
     },
     "Chiang Rai": {
-      "smp": 92.3
+      "smp": 39.2
     },
     "Chon Buri": {
-      "smp": 99.5
+      "smp": 35.8
     },
     "Chumphon": {
-      "smp": 84.7
+      "smp": 58.5
     },
     "Kalasin": {
-      "smp": 93.1
+      "smp": 61.2
     },
     "Kamphaeng Phet": {
-      "smp": 88.4
+      "smp": 57.1
     },
     "Kanchanaburi": {
-      "smp": 76.1
+      "smp": 22.6
     },
     "Khon Kaen": {
-      "smp": 90.4
+      "smp": 48.6
     },
     "Krabi": {
-      "smp": 99.5
+      "smp": 51.1
     },
     "Lampang": {
-      "smp": 91.9
+      "smp": 31.4
     },
     "Lamphun": {
-      "smp": 91.3
+      "smp": 19.2
     },
     "Loei": {
-      "smp": 95.5
+      "smp": 44.6
     },
     "Lop Buri": {
-      "smp": 54.0
+      "smp": 44.7
     },
     "Mae Hong Son": {
-      "smp": 91.0
+      "smp": 64.6
     },
     "Maha Sarakham": {
-      "smp": 89.6
+      "smp": 50.1
     },
     "Mukdahan": {
-      "smp": 92.7
+      "smp": 61.5
     },
     "Nakhon Nayok": {
-      "smp": 99.8
+      "smp": 63.6
     },
     "Nakhon Pathom": {
-      "smp": 58.9
+      "smp": 53.4
     },
     "Nakhon Phanom": {
-      "smp": 94.4
+      "smp": 74.4
     },
     "Nakhon Ratchasima": {
-      "smp": 81.6
+      "smp": 40.2
     },
     "Nakhon Sawan": {
-      "smp": 72.9
+      "smp": 66.2
     },
     "Nakhon Si Thammarat": {
-      "smp": 81.3
+      "smp": 44.2
     },
     "Nan": {
-      "smp": 97.1
+      "smp": 32.5
     },
     "Narathiwat": {
-      "smp": 71.0
+      "smp": 51.6
     },
     "Nong Bua Lam Phu": {
-      "smp": 92.7
+      "smp": 58.4
     },
     "Nong Khai": {
-      "smp": 94.5
+      "smp": 70.0
     },
     "Nonthaburi": {
-      "smp": 87.3
+      "smp": 66.2
     },
     "Pathum Thani": {
-      "smp": 98.1
+      "smp": 67.0
     },
     "Pattani": {
-      "smp": 60.5
+      "smp": 48.1
     },
     "Phangnga": {
-      "smp": 99.6
+      "smp": 73.2
     },
     "Phatthalung": {
-      "smp": 76.3
+      "smp": 32.0
     },
     "Phayao": {
-      "smp": 93.6
+      "smp": 37.4
     },
     "Phetchabun": {
-      "smp": 96.8
+      "smp": 45.1
     },
     "Phetchaburi": {
-      "smp": 58.9
+      "smp": 22.9
     },
     "Phichit": {
-      "smp": 92.5
+      "smp": 73.0
     },
     "Phitsanulok": {
-      "smp": 97.3
+      "smp": 53.1
     },
     "Phra Nakhon Si Ayutthaya": {
-      "smp": 90.5
+      "smp": 70.8
     },
     "Phrae": {
-      "smp": 95.9
+      "smp": 28.8
     },
     "Phuket": {
-      "smp": null
+      "smp": 68.7
     },
     "Prachin Buri": {
-      "smp": 97.8
+      "smp": 42.0
     },
     "Prachuap Khiri Khan": {
-      "smp": 48.7
+      "smp": 20.3
     },
     "Ranong": {
-      "smp": 99.2
+      "smp": 65.8
     },
     "Ratchaburi": {
-      "smp": 66.3
+      "smp": 25.2
     },
     "Rayong": {
-      "smp": 99.8
+      "smp": 24.1
     },
     "Roi Et": {
-      "smp": 93.0
+      "smp": 47.1
     },
     "Sa Kaeo": {
-      "smp": 93.3
+      "smp": 30.6
     },
     "Sakon Nakhon": {
-      "smp": 94.2
+      "smp": 72.2
     },
     "Samut Prakan": {
-      "smp": 99.6
+      "smp": 43.5
     },
     "Samut Sakhon": {
-      "smp": 69.2
+      "smp": 37.0
     },
     "Samut Songkhram": {
-      "smp": 51.4
+      "smp": 33.0
     },
     "Saraburi": {
-      "smp": 68.9
+      "smp": 39.7
     },
     "Satun": {
-      "smp": 99.6
+      "smp": 59.0
     },
     "Si Sa Ket": {
-      "smp": 98.2
+      "smp": 46.4
     },
     "Sing Buri": {
-      "smp": 41.0
+      "smp": 75.3
     },
     "Songkhla": {
-      "smp": 86.4
+      "smp": 29.7
     },
     "Sukhothai": {
-      "smp": 92.9
+      "smp": 51.5
     },
     "Suphan Buri": {
-      "smp": 52.3
+      "smp": 50.4
     },
     "Surat Thani": {
-      "smp": 92.1
+      "smp": 40.9
     },
     "Surin": {
-      "smp": 95.9
+      "smp": 38.4
     },
     "Tak": {
-      "smp": 82.3
+      "smp": 22.3
     },
     "Trang": {
-      "smp": 99.0
+      "smp": 44.4
     },
     "Trat": {
-      "smp": 99.0
+      "smp": 32.0
     },
     "Ubon Ratchathani": {
-      "smp": 98.7
+      "smp": 47.4
     },
     "Udon Thani": {
-      "smp": 93.0
+      "smp": 63.6
     },
     "Uthai Thani": {
-      "smp": 83.7
+      "smp": 44.2
     },
     "Uttaradit": {
-      "smp": 96.8
+      "smp": 42.1
     },
     "Yala": {
-      "smp": 95.2
+      "smp": 55.7
     },
     "Yasothon": {
-      "smp": 95.7
+      "smp": 52.7
     }
   }
 }
