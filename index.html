@@ -1624,6 +1624,10 @@
             <button class="pill" data-layer="flood" onclick="setLayer('flood')"><span class="th-t">🌊 ความเสี่ยงน้ำท่วม</span><span class="en-t">🌊 Flood Risk</span></button>
             <button class="pill" data-layer="gsmap" onclick="setLayer('gsmap')"><span class="th-t">🛰 ปริมาณฝนรวม 7 วันล่าสุด</span><span class="en-t">🛰 7-Day Total Rainfall</span></button>
             <button class="pill" data-layer="forecast" onclick="setLayer('forecast')"><span class="th-t">🌦 พยากรณ์ฝน 7 วันข้างหน้า</span><span class="en-t">🌦 7-Day Rain Forecast</span></button>
+            <button class="pill" data-layer="alerts" onclick="setLayer('alerts')">
+              <span class="th-t">🚨 เตือนภัยเกษตร</span>
+              <span class="en-t">🚨 Agri Alerts</span>
+            </button>
             <button class="pill" data-layer="riceEvi" onclick="setLayer('riceEvi')"><span class="th-t">🌾 สภาพนาข้าว</span><span class="en-t">🌾 Rice Paddy Status</span></button>
             <!-- Hidden layers: code retained, buttons removed for cleaner UI -->
             <!-- <button class="pill" data-layer="rainfall" onclick="setLayer('rainfall')"><span class="th-t">ปริมาณฝน (มม.)</span><span class="en-t">Season Rainfall</span></button> -->
@@ -1889,7 +1893,7 @@
 
     // ── Layers that have no year-based time series (no spark chart, no est-year badge) ──
     const LAYER_NO_TIMESERIES = new Set([
-      "dam","rainfall","drought","mills","profit","flood","ndvi","riceEvi","rain","gsmap","forecast",
+      "dam","rainfall","drought","mills","profit","flood","ndvi","riceEvi","rain","gsmap","forecast","alerts",
     ]);
 
     const layerMeta = {
@@ -1910,6 +1914,7 @@
       rain:       { th: "ฝนสะสม 7 วัน", en: "7-Day Rainfall", unit: "มม. (7 วันล่าสุด)", unitEn: "mm (last 7 days)", unitShort: "มม.", unitShortEn: "mm", summary: "ฝนสะสมเฉลี่ยต่อจังหวัด", summaryMode: "avg" },
       gsmap:      { th: "ปริมาณฝนรวม 7 วัน (ดาวเทียม)", en: "7-Day Total Rainfall (Satellite)", unit: "มม. (รวม 7 วัน)", unitEn: "mm (7-day total)", unitShort: "มม.", unitShortEn: "mm", summary: "ปริมาณฝนรวมเฉลี่ยต่อจังหวัด", summaryMode: "avg" },
       forecast:   { th: "พยากรณ์ฝน 7 วัน", en: "7-Day Rain Forecast", unit: "มม. (พยากรณ์ 7 วัน)", unitEn: "mm (7-day forecast)", unitShort: "มม.", unitShortEn: "mm", summary: "พยากรณ์ฝนเฉลี่ยต่อจังหวัด", summaryMode: "avg" },
+      alerts:     { th: "เตือนภัยเกษตร", en: "Agri Alerts", unit: "ระดับการเตือน", unitEn: "Alert Level", unitShort: "ระดับ", unitShortEn: "Level", summary: "จังหวัดที่มีการเตือนภัย", summaryMode: "avg" },
     };
     const riceMeta = {
       white:   { th: "ข้าวขาว",  en: "White Rice",   badge: "🌾" },
@@ -2193,6 +2198,7 @@
       if (layer === "rain")    return ["rain"];
       if (layer === "gsmap")   return ["gsmap"];
       if (layer === "forecast") return ["forecast"];
+      if (layer === "alerts") return ["alerts"];
       if (layer === "profit") return PRICE_YEARS;
       return layer === "price" ? PRICE_YEARS : PRODUCTION_YEARS;
     }
@@ -2263,6 +2269,9 @@ function t(th, en) {
     function forecastValueOf(en) {
       return window.FORECAST_DATA?.provinces?.[en]?.rain_7d ?? null;
     }
+    function alertsValueOf(en) {
+      return window.ALERTS_DATA?.provinces?.[en]?.level_num ?? null;
+    }
 
     function millsValueOf(en) {
       const thName = NM[en];
@@ -2294,6 +2303,7 @@ function t(th, en) {
       if (layer === "rain")       return rainValueOf(en) ?? 0;
       if (layer === "gsmap")      return gsmapValueOf(en) ?? 0;
       if (layer === "forecast")   return forecastValueOf(en) ?? 0;
+      if (layer === "alerts")     return alertsValueOf(en) ?? 0;
       return Number(entryOf(en, rice, year)[layer] || 0);
     }
 
@@ -2308,6 +2318,7 @@ function t(th, en) {
       if (layer === "rain")       return window.RAIN_DATA?.provinces?.[en] != null;
       if (layer === "gsmap")      return window.GSMAP_DATA?.provinces?.[en] != null;
       if (layer === "forecast")   return forecastValueOf(en) !== null;
+      if (layer === "alerts")     return alertsValueOf(en) !== null;
       return valueOf(en, rice, year, layer) > 0;
     }
 
@@ -2353,6 +2364,9 @@ function t(th, en) {
       if (S.layer === "rain")       return { lo: [224, 247, 250], mid: [0, 188, 212],   hi: [0, 77, 103],   accent: "#00bcd4" };
       if (S.layer === "gsmap")      return { lo: [227, 242, 253], mid: [30, 136, 229],  hi: [13, 71, 161],  accent: "#1e88e5" };
       if (S.layer === "forecast")   return { lo: [255, 243, 224], mid: [255, 152, 0],   hi: [230, 81, 0],   accent: "#ff9800" };
+      if (S.layer === "alerts") return {
+        lo: [255, 249, 196], mid: [255, 152, 0], hi: [198, 40, 40], accent: "#c62828"
+      };
       return S.rice === "white"
         ? { lo: [36, 75, 54], mid: [154, 131, 73], hi: [245, 192, 101], accent: "#ff8f4d" }
         : { lo: [42, 39, 77], mid: [134, 93, 178], hi: [236, 186, 217], accent: "#d9a0ff" };
@@ -2398,6 +2412,10 @@ function t(th, en) {
       if (S.layer === "rain")       return fmtNumber(Math.round(n)) + " mm";
       if (S.layer === "gsmap")      return fmtNumber(Math.round(n)) + " mm";
       if (S.layer === "forecast")   return fmtNumber(Math.round(n)) + " mm";
+      if (S.layer === "alerts") {
+        const lvl = Math.round(n);
+        return lvl >= 3 ? t("เสี่ยงสูง","High Risk") : lvl >= 2 ? t("เสี่ยงปานกลาง","Medium Risk") : lvl >= 1 ? t("เฝ้าระวัง","Watch") : t("ปกติ","Normal");
+      }
       if (S.layer === "price") return fmtNumber(Math.round(n));
       if (S.layer === "households") {
         if (n >= 1e6) return `${(n / 1e6).toFixed(2)}M`;
@@ -2419,6 +2437,10 @@ function t(th, en) {
       if (layer === "rain")    return fmtNumber(Math.round(n)) + " mm";
       if (layer === "gsmap")   return fmtNumber(Math.round(n)) + " mm";
       if (layer === "forecast") return fmtNumber(Math.round(n)) + " mm";
+      if (layer === "alerts") {
+        const lvl = Math.round(n);
+        return lvl >= 3 ? t("เสี่ยงสูง","High Risk") : lvl >= 2 ? t("เสี่ยงปานกลาง","Medium Risk") : lvl >= 1 ? t("เฝ้าระวัง","Watch") : t("ปกติ","Normal");
+      }
       return fmtNumber(Math.round(n));
     }
 
@@ -2885,6 +2907,7 @@ function t(th, en) {
         : S.layer === "rain"  ? t("Open-Meteo", "Open-Meteo")
         : S.layer === "gsmap" ? t("ดาวเทียมตรวจฝน", "Satellite Rainfall")
         : S.layer === "forecast" ? t("พยากรณ์ฝน", "Rain Forecast")
+        : S.layer === "alerts" ? t("เตือนภัยเกษตร", "Agri Alerts")
         : t(riceMeta[S.rice].th, riceMeta[S.rice].en);
       refs.legendLayer.textContent = t(layerMeta[S.layer].th, layerMeta[S.layer].en);
       refs.legendUnit.textContent = uLabel();
@@ -2918,6 +2941,8 @@ function t(th, en) {
               ? `🛰 ${t('ปริมาณฝนรวม 7 วัน (ดาวเทียม)','7-Day Total Rainfall (Satellite)')} · ${window.GSMAP_DATA?._meta?.period_end || ''}`
               : S.layer === "forecast"
               ? `🌦 ${t('พยากรณ์ฝน 7 วันข้างหน้า','7-Day Rain Forecast')} · Open-Meteo ${window.FORECAST_DATA?._meta?.updated || ''}`
+              : S.layer === "alerts"
+              ? `🚨 ${t('เตือนภัยเกษตร','Agri Alerts')} · ${t('อัปเดต','Updated')} ${window.ALERTS_DATA?._meta?.updated || ''}`
               : isEstYear
                 ? `📊 ${t('ประมาณการ','Estimate')} ${S.year}`
                 : `OAE ${t('ข้อมูลปี','Crop Year')} ${S.year}`;
@@ -2987,6 +3012,15 @@ function t(th, en) {
         refs.dataSourceNote.textContent = t(
           `🌦 พยากรณ์ฝนสะสม 7 วันข้างหน้า · Open-Meteo Forecast API · ฟรี ไม่ต้อง API key · อัปเดตทุกวัน · ครอบคลุม ${covered} จังหวัด · ช่วง: ${period}`,
           `🌦 7-day cumulative rain forecast · Open-Meteo Forecast API · Free, no API key · Daily update · ${covered} provinces · Period: ${period}`
+        );
+        return;
+      }
+      if (S.layer === "alerts") {
+        const meta = window.ALERTS_DATA?._meta;
+        const sum = window.ALERTS_DATA?.summary;
+        refs.dataSourceNote.textContent = t(
+          `🚨 สร้างอัตโนมัติจากข้อมูล: ${(meta?.sources || []).join(' · ')} · อัปเดตทุกวัน · ครอบคลุม ${covered} จังหวัด · สูง:${sum?.high||0} ปานกลาง:${sum?.medium||0} ต่ำ:${sum?.low||0} แล้ง:${sum?.drought||0}`,
+          `🚨 Auto-generated from: ${(meta?.sources || []).join(' · ')} · Daily update · ${covered} provinces · High:${sum?.high||0} Med:${sum?.medium||0} Low:${sum?.low||0} Drought:${sum?.drought||0}`
         );
         return;
       }
@@ -3088,8 +3122,10 @@ function t(th, en) {
         ? t(`อัปเดต ${window.RAIN_DATA?._meta?.updated || '—'}`, `Updated ${window.RAIN_DATA?._meta?.updated || '—'}`)
         : (S.layer === "forecast")
         ? t(`อัปเดต ${window.FORECAST_DATA?._meta?.updated || '—'}`, `Updated ${window.FORECAST_DATA?._meta?.updated || '—'}`)
+        : (S.layer === "alerts")
+        ? t(`อัปเดต ${window.ALERTS_DATA?._meta?.updated || '—'}`, `Updated ${window.ALERTS_DATA?._meta?.updated || '—'}`)
         : t("ยังไม่มีฐานเทียบ", "No prior year");
-      if (S.layer !== "rain" && S.layer !== "gsmap" && S.layer !== "forecast" && prevYear) {
+      if (S.layer !== "rain" && S.layer !== "gsmap" && S.layer !== "forecast" && S.layer !== "alerts" && prevYear) {
         const yoy = yoyForProvinces(visible, S.rice, S.year, S.layer, mode);
         if (Number.isFinite(yoy)) {
           const dir = yoy >= 0 ? t("เพิ่มขึ้น ▲", "▲ up") : t("ลดลง ▼", "▼ down");
@@ -3097,7 +3133,7 @@ function t(th, en) {
         }
       }
       refs.scopeLabel.textContent = t("ขอบเขต", "Scope");
-      refs.scopeValue.textContent = (S.layer === "price" || S.layer === "dam" || S.layer === "rainfall" || S.layer === "drought" || S.layer === "mills" || S.layer === "profit" || S.layer === "rain" || S.layer === "gsmap" || S.layer === "forecast") ? `${covered.length}/${visible.length} ${t('จว.','Prov.')}` : `${visible.length} ${t('จว.','Prov.')}`;
+      refs.scopeValue.textContent = (S.layer === "price" || S.layer === "dam" || S.layer === "rainfall" || S.layer === "drought" || S.layer === "mills" || S.layer === "profit" || S.layer === "rain" || S.layer === "gsmap" || S.layer === "forecast" || S.layer === "alerts") ? `${covered.length}/${visible.length} ${t('จว.','Prov.')}` : `${visible.length} ${t('จว.','Prov.')}`;
       refs.scopeSub.textContent = S.layer === "price"
         ? t("จังหวัดที่มีราคา", "Provinces with price")
         : (S.reg === "all" ? t("ทั้งประเทศ", "Nationwide") : t(`ภาค${thaiRegionName(S.reg)}`, `${S.reg.charAt(0).toUpperCase() + S.reg.slice(1)} Region`));
@@ -3126,6 +3162,8 @@ function t(th, en) {
         ? t("แผนที่ปริมาณฝนรวม 7 วันล่าสุดรายจังหวัด (ดาวเทียม)", "7-Day Total Rainfall by Province (Satellite)")
         : S.layer === "forecast"
         ? t("แผนที่พยากรณ์ฝน 7 วันข้างหน้ารายจังหวัด", "7-Day Rain Forecast by Province")
+        : S.layer === "alerts"
+        ? t("แผนที่เตือนภัยเกษตรรายจังหวัด", "Agricultural Alert Map by Province")
         : t(`แผนที่${riceMeta[S.rice].th}รายจังหวัด`, `${riceMeta[S.rice].en} Rice · Province Map`);
       refs.headlineDesc.textContent = S.layer === "dam"
         ? t("ระดับน้ำในเขื่อนขนาดใหญ่ 35 แห่ง จากกรมชลประทาน (RID) อัปเดตรายวัน", "Large dam water levels from Royal Irrigation Dept. (RID). 35 dams, daily update.")
@@ -3158,6 +3196,9 @@ function t(th, en) {
         : S.layer === "forecast"
         ? t(`พยากรณ์ปริมาณฝนสะสม 7 วันข้างหน้ารายจังหวัด จาก Open-Meteo Forecast API · อัปเดตทุกวัน · สีเข้ม = ฝนมาก · ข้อมูลล่าสุด ${window.FORECAST_DATA?._meta?.updated||'—'}`,
            `7-day cumulative rain forecast by province via Open-Meteo Forecast API · Daily update · Dark = heavy rain · Latest: ${window.FORECAST_DATA?._meta?.updated||'—'}`)
+        : S.layer === "alerts"
+        ? t(`แผนที่แสดงระดับความเสี่ยงน้ำท่วม/แล้งรายจังหวัด สร้างอัตโนมัติจากข้อมูลพยากรณ์ฝน ดาวเทียม และระดับเขื่อน อัปเดตทุกวัน`,
+           `Province-level flood/drought risk map. Auto-generated from rainfall forecast, satellite data, and dam levels. Daily update.`)
         : S.layer === "price"
         ? t(`แผนที่ fit ตามสัดส่วนประเทศไทยและใช้รายงานราคาข้าวเปลือกรายวันของสมาคมโรงสีข้าวไทย โดยไฮไลต์ราคาของ ${riceTypeDescription(S.rice, S.layer)} ปี ${S.year}`,
            `Province-level paddy price map using Thai Rice Miller Association daily reports. ${riceTypeDescription(S.rice, S.layer)} · Crop year ${S.year}.`)
@@ -3183,6 +3224,8 @@ function t(th, en) {
         ? `${metaLabel}<br>${t(`ดาวเทียม · ข้อมูลถึง ${window.GSMAP_DATA?._meta?.period_end || '—'}`, `Satellite · Through ${window.GSMAP_DATA?._meta?.period_end || '—'}`)}`
         : S.layer === "forecast"
         ? `${metaLabel}<br>${t(`Open-Meteo · อัปเดต ${window.FORECAST_DATA?._meta?.updated || '—'}`, `Open-Meteo · Updated ${window.FORECAST_DATA?._meta?.updated || '—'}`)}`
+        : S.layer === "alerts"
+        ? `${metaLabel}<br>${t(`อัปเดต ${window.ALERTS_DATA?._meta?.updated || '—'}`, `Updated ${window.ALERTS_DATA?._meta?.updated || '—'}`)}`
         : S.layer === "riceEvi"
         ? `${metaLabel}<br>${t(`MODIS + GLAD + Phenology · ${window.RICE_EVI_DATA?.month || '—'}`, `MODIS + GLAD + Phenology · ${window.RICE_EVI_DATA?.month || '—'}`)}`
         : `${riceLabel} &nbsp;·&nbsp; ${metaLabel}<br>${yearLabel}`;
@@ -3192,11 +3235,12 @@ function t(th, en) {
       const isRain     = S.layer === "rain";
       const isGsmap    = S.layer === "gsmap";
       const isForecast = S.layer === "forecast";
+      const isAlerts   = S.layer === "alerts";
       const allSorted = visible
         .filter(en => hasLayerValue(en))
         .map(en => ({ en, v: valueOf(en) }))
         .sort((a, b) => b.v - a.v);
-      const items = (isFlood || isNdvi || isRiceEvi || isRain || isGsmap || isForecast) ? allSorted : allSorted.slice(0, 10);
+      const items = (isFlood || isNdvi || isRiceEvi || isRain || isGsmap || isForecast || isAlerts) ? allSorted : allSorted.slice(0, 10);
 
       // Update rank title
       if (refs.rankTitle) {
@@ -3212,6 +3256,8 @@ function t(th, en) {
           ? `<span class="th-t">ทุกจังหวัด เรียงตามปริมาณฝน</span><span class="en-t">All Provinces by Rainfall</span>`
           : isForecast
           ? `<span class="th-t">ทุกจังหวัด เรียงตามพยากรณ์ฝน</span><span class="en-t">All Provinces by Rain Forecast</span>`
+          : isAlerts
+          ? `<span class="th-t">ทุกจังหวัด เรียงตามระดับเตือนภัย</span><span class="en-t">All Provinces by Alert Level</span>`
           : `Top 10 <span class="th-t">จังหวัด</span><span class="en-t">Provinces</span>`;
       }
 
@@ -3913,8 +3959,26 @@ function t(th, en) {
           <div style="font-size:9px;color:rgba(255,152,0,.7);margin-top:2px">🌦 ${t('พยากรณ์ล่วงหน้า — อาจแตกต่างจากค่าจริง','Forecast — actual values may differ')}</div>
         </div>`;
       }
+      // ── Agri Alerts detail card ──────────────────────────────────────────
+      let alertsHtml = "";
+      const alertsProv = window.ALERTS_DATA?.provinces?.[en];
+      if (alertsProv && alertsProv.level !== "none") {
+        const levelColor = alertsProv.level === "high" ? "#c62828" : alertsProv.level === "medium" ? "#e65100" : alertsProv.level === "drought" ? "#00838f" : "#f9a825";
+        const warningItems = (alertsProv.warnings || []).map(w =>
+          `<div style="margin-top:6px;padding:4px 8px;background:rgba(255,255,255,.06);border-radius:5px;font-size:10px;line-height:1.5">
+            ${w.icon} <strong style="color:${levelColor}">${t(w.type === 'flood' ? 'เสี่ยงน้ำท่วม' : w.type === 'drought' ? 'เสี่ยงแล้ง' : 'เขื่อนน้ำน้อย', w.type)}</strong><br>
+            <span style="color:var(--muted)">${t(w.message_th, w.message_en)}</span>
+          </div>`
+        ).join('');
+        alertsHtml = `<div class="rice-card" style="grid-column:1/-1;background:rgba(198,40,40,.07);border:1px solid rgba(198,40,40,.25)">
+          <div class="t">🚨 ${t('เตือนภัยเกษตร','Agri Alerts')}</div>
+          <div class="metric"><span class="val" style="color:${levelColor}">${alertsProv.level === "high" ? t("เสี่ยงสูง","High Risk") : alertsProv.level === "medium" ? t("เสี่ยงปานกลาง","Medium Risk") : alertsProv.level === "drought" ? t("เสี่ยงแล้ง","Drought Risk") : t("เฝ้าระวัง","Watch")}</span></div>
+          ${warningItems}
+          <div style="font-size:9px;color:var(--muted);margin-top:8px">${t(`ที่มา: ${(window.ALERTS_DATA?._meta?.sources||[]).join(' + ')} · อัปเดต ${window.ALERTS_DATA?._meta?.updated||'—'}`, `Source: ${(window.ALERTS_DATA?._meta?.sources||[]).join(' + ')} · Updated ${window.ALERTS_DATA?._meta?.updated||'—'}`)}</div>
+        </div>`;
+      }
       // ── Carousel panes — แต่ละ pane เป็น 100% width, scroll ซ้าย-ขวา
-      const envContent   = weatherHtml + damHtml + floodHtml + ndviHtml + riceEviHtml + rainHtml + gsmapHtml + forecastHtml;
+      const envContent   = weatherHtml + damHtml + floodHtml + ndviHtml + riceEviHtml + rainHtml + gsmapHtml + forecastHtml + alertsHtml;
       const econContent  = profitHtml + fertRatioHtml + millsHtml + fertHtml;
       const peopleContent = householdsHtml;
       const riceContent  = cardHtml;
@@ -3936,7 +4000,7 @@ function t(th, en) {
           btn.style.opacity = hasContent ? "1" : "0.4";
         });
         // default: flood layer → env, อื่น → rice
-        const defaultTab = (S.layer === "flood" || S.layer === "dam" || S.layer === "rainfall" || S.layer === "drought" || S.layer === "ndvi" || S.layer === "riceEvi" || S.layer === "rain" || S.layer === "gsmap" || S.layer === "forecast")
+        const defaultTab = (S.layer === "flood" || S.layer === "dam" || S.layer === "rainfall" || S.layer === "drought" || S.layer === "ndvi" || S.layer === "riceEvi" || S.layer === "rain" || S.layer === "gsmap" || S.layer === "forecast" || S.layer === "alerts")
           ? "env" : "rice";
         switchDetailTab(defaultTab);
       }
@@ -3970,6 +4034,8 @@ function t(th, en) {
           ? t(`ปริมาณฝนรวม 7 วัน ข้อมูลถึง ${window.GSMAP_DATA?._meta?.period_end || ''} — ดาวเทียม`, `7-Day total rainfall through ${window.GSMAP_DATA?._meta?.period_end || ''} — Satellite`)
           : S.layer === "forecast"
           ? t(`พยากรณ์ฝน 7 วันข้างหน้า อัปเดต ${window.FORECAST_DATA?._meta?.updated || ''} — Open-Meteo`, `7-Day rain forecast updated ${window.FORECAST_DATA?._meta?.updated || ''} — Open-Meteo`)
+          : S.layer === "alerts"
+          ? t(`เตือนภัยเกษตร อัปเดต ${window.ALERTS_DATA?._meta?.updated || ''} — สร้างจากข้อมูลฝน+เขื่อน`, `Agri alerts updated ${window.ALERTS_DATA?._meta?.updated || ''} — from rain+dam data`)
           : S.layer === "dam"
           ? t("ไม่มีข้อมูลอนุกรมเวลา", "No time-series data")
           : S.layer === "mills"
@@ -4167,6 +4233,26 @@ function t(th, en) {
 <div class="rank">${rank ? `${t('อันดับ','Rank')} #${rank} / ${total}` : t('ไม่มีข้อมูล','No data')}</div>
 `;
       }
+      // ── Alerts tooltip ──────────────────────────────────────────────────
+      if (S.layer === "alerts") {
+        const ap = window.ALERTS_DATA?.provinces?.[en];
+        const rank = currentRank(en);
+        const total = getVisibleProvinces().filter(n => hasLayerValue(n)).length;
+        if (!ap || ap.level === "none") return `<div class="th">${t(NM[en]||en,en)}</div><div class="en">${en}</div><div style="color:#66bb6a;font-size:11px;margin-top:6px">✅ ${t('ไม่มีการเตือนภัย','No active alerts')}</div>`;
+        const levelColor = ap.level === "high" ? "#c62828" : ap.level === "medium" ? "#e65100" : ap.level === "drought" ? "#00838f" : "#f9a825";
+        const warningsHtml = (ap.warnings || []).map(w =>
+          `<div style="font-size:10px;margin-top:4px;padding:3px 6px;background:rgba(255,255,255,.06);border-radius:4px">${w.icon} ${t(w.message_th, w.message_en)}</div>`
+        ).join('');
+        return `
+<div class="th">${t(NM[en]||en,en)}</div>
+<div class="en">${en}</div>
+<div class="type">${t('เตือนภัยเกษตร','Agri Alert')}</div>
+<div class="value" style="color:${levelColor}">${ap.level_num.toFixed(0)} <small style="font-size:12px;color:var(--muted)">${t('ระดับ','level')}</small></div>
+<div style="font-size:11px;font-weight:700;color:${levelColor};margin:2px 0">${ap.level === "high" ? t("🔴 เสี่ยงสูง","🔴 High Risk") : ap.level === "medium" ? t("🟠 เสี่ยงปานกลาง","🟠 Medium Risk") : ap.level === "drought" ? t("🏜 เสี่ยงแล้ง","🏜 Drought Risk") : t("🟡 เฝ้าระวัง","🟡 Watch")}</div>
+<div class="rank">${rank ? `${t('อันดับ','Rank')} #${rank} / ${total}` : t('ไม่มีข้อมูล','No data')}</div>
+${warningsHtml}
+`;
+      }
       // ── Rice EVI tooltip: แสดงระยะข้าว + ปฏิทินฤดูกาล ──────────────────
       if (S.layer === "riceEvi") {
         const rp = window.RICE_EVI_DATA?.provinces?.[en];
@@ -4334,6 +4420,11 @@ function t(th, en) {
         const dates = fcMeta?.dates;
         const period = dates?.length ? `${dates[0]} → ${dates[dates.length - 1]}` : t('ล่าสุด','Latest');
         refs.yearButtons.innerHTML = `<button class="pill on" data-year="forecast">🌦 ${t('พยากรณ์ฝน 7 วันข้างหน้า','7-Day Rain Forecast')} · ${period}</button>`;
+        return;
+      }
+      if (S.layer === "alerts") {
+        const sum = window.ALERTS_DATA?.summary;
+        refs.yearButtons.innerHTML = `<button class="pill on" data-year="alerts">🚨 ${t('เตือนภัยเกษตร','Agri Alerts')} · ${window.ALERTS_DATA?._meta?.updated || t('ล่าสุด','Latest')} · 🔴${sum?.high||0} 🟠${sum?.medium||0} 🟡${sum?.low||0}</button>`;
         return;
       }
       if (S.layer === "profit") {
@@ -4694,6 +4785,17 @@ function t(th, en) {
         console.info("rain-forecast.json not available");
       }
     }
+    async function fetchAlertsData() {
+      try {
+        const r = await fetch("data/agri-warnings.json?_=" + Date.now(), { cache: "no-store" });
+        if (!r.ok) return;
+        window.ALERTS_DATA = await r.json();
+        if (S.layer === "alerts") rerender();
+        else if (S.sel) selectProvince(S.sel);
+      } catch (e) {
+        console.info("agri-warnings.json not available");
+      }
+    }
 
     // ── District drill-down: lazy loaders ────────────────────────────────────
     let _districtGeoLoading = false;
@@ -4880,6 +4982,7 @@ function t(th, en) {
       fetchRainData();
       fetchGsmapData();
       fetchForecastData();
+      fetchAlertsData();
       updateNationalFert();
 
       VIEW.features = window.THAILAND_GEO.features.filter(feature => allEN.includes(feature.properties.name));

@@ -36,11 +36,14 @@ jobs:
       - name: Fetch 7-day rain forecast from Open-Meteo
         run: python scripts/fetch_rain_forecast.py
 
+      - name: Generate agricultural warnings
+        run: python scripts/fetch_agri_warnings.py
+
       - name: Commit and push
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/rain-daily.json data/rain-gsmap.json data/rain-forecast.json
+          git add data/rain-daily.json data/rain-gsmap.json data/rain-forecast.json data/agri-warnings.json
           if git diff --quiet && git diff --staged --quiet; then
             echo "No changes."
           else
