@@ -1621,7 +1621,7 @@
             <button class="pill" data-layer="mills" onclick="setLayer('mills')"><span class="th-t">🏭 โรงสีข้าว</span><span class="en-t">🏭 Rice Mills</span></button>
             <button class="pill" data-layer="profit" onclick="setLayer('profit')"><span class="th-t">💰 กำไร/ขาดทุน</span><span class="en-t">💰 Profit/Loss</span></button>
             <button class="pill" data-layer="dam" onclick="setLayer('dam')"><span class="th-t">ระดับน้ำในเขื่อน</span><span class="en-t">Dam Level</span></button>
-            <button class="pill" data-layer="flood" onclick="setLayer('flood')"><span class="th-t">🌊 ความเสี่ยงน้ำท่วมซ้ำจุดเดิม</span><span class="en-t">🌊 Flood Risk</span></button>
+            <button class="pill" data-layer="flood" onclick="setLayer('flood')"><span class="th-t">🌊 % ความเสี่ยงน้ำท่วมซ้ำจุดเดิม</span><span class="en-t">🌊 Flood Risk</span></button>
             <button class="pill" data-layer="gsmap" onclick="setLayer('gsmap')"><span class="th-t">🛰 ปริมาณฝนรวม 7 วันล่าสุด</span><span class="en-t">🛰 7-Day Total Rainfall</span></button>
             <button class="pill" data-layer="forecast" onclick="setLayer('forecast')"><span class="th-t">🌦 พยากรณ์ฝน 7 วันข้างหน้า</span><span class="en-t">🌦 7-Day Rain Forecast</span></button>
             <button class="pill" data-layer="alerts" onclick="setLayer('alerts')">
@@ -1912,7 +1912,7 @@
       drought:    { th: "ฝนเบี่ยงเบนจากปกติ", en: "Rainfall Anomaly", unit: "% เทียบค่าปกติ 5 ปี", unitEn: "% vs 5-yr avg", unitShort: "%", unitShortEn: "%", summary: "% เบี่ยงเบนเฉลี่ย", summaryMode: "avg_signed" },
       mills:      { th: "โรงสีข้าว", en: "Rice Mills", unit: "แห่ง/จังหวัด", unitEn: "mills/prov", unitShort: "แห่ง", unitShortEn: "mills", summary: "โรงสีข้าวรวม", summaryMode: "sum" },
       profit:     { th: "กำไร/ขาดทุนต่อไร่", en: "Est. Profit/Loss per Rai", unit: "บาท/ไร่ (ประมาณการ)", unitEn: "฿/rai (est.)", unitShort: "฿/ไร่", unitShortEn: "฿/rai", summary: "กำไร/ขาดทุนเฉลี่ย", summaryMode: "avg_signed" },
-      flood:      { th: "ความเสี่ยงน้ำท่วมซ้ำจุดเดิม", en: "Flood Risk Zone", unit: "% พื้นที่ (GISTDA 2554–2566 · 5,926 ตำบล)", unitEn: "% area (GISTDA 2011–2023 · 5,926 tambons)", unitShort: "%", unitShortEn: "%", summary: "พื้นที่เสี่ยงน้ำท่วมเฉลี่ย", summaryMode: "avg_nonzero" },
+      flood:      { th: "% ความเสี่ยงน้ำท่วมซ้ำจุดเดิม", en: "Flood Risk Zone", unit: "% พื้นที่ (GISTDA 2554–2566 · 5,926 ตำบล)", unitEn: "% area (GISTDA 2011–2023 · 5,926 tambons)", unitShort: "%", unitShortEn: "%", summary: "พื้นที่เสี่ยงน้ำท่วมเฉลี่ย", summaryMode: "avg_nonzero" },
       ndvi:       { th: "ดัชนีพืชพรรณ (NDVI)", en: "Vegetation Index (NDVI)", unit: "ค่า NDVI เฉลี่ยรายจังหวัด (0–1)", unitEn: "Mean NDVI per province (0–1)", unitShort: "NDVI", unitShortEn: "NDVI", summary: "NDVI เฉลี่ยทั้งประเทศ", summaryMode: "avg" },
       riceEvi:    { th: "สภาพนาข้าว", en: "Rice Paddy Status", unit: "EVI เฉพาะนาข้าว (0–1)", unitEn: "Rice paddy EVI (0–1)", unitShort: "EVI", unitShortEn: "EVI", summary: "EVI เฉลี่ยนาข้าวทั้งประเทศ", summaryMode: "avg" },
       rain:       { th: "ฝนสะสม 7 วัน", en: "7-Day Rainfall", unit: "มม. (7 วันล่าสุด)", unitEn: "mm (last 7 days)", unitShort: "มม.", unitShortEn: "mm", summary: "ฝนสะสมเฉลี่ยต่อจังหวัด", summaryMode: "avg" },
@@ -2954,7 +2954,7 @@ function t(th, en) {
               : S.layer === "drought"
               ? `🌡 ${t('ฝนเบี่ยงเบนจากปกติ','Rainfall Anomaly')} ${WEATHER_DATA?._meta?.year ? toBE(WEATHER_DATA._meta.year) : '2568'} vs ${WEATHER_FORECAST?._meta?.base_years||'2020–2024'}`
               : S.layer === "flood"
-              ? `🌊 ${t('ความเสี่ยงน้ำท่วมซ้ำจุดเดิม','Flood Risk')} GISTDA 2554–2566`
+              ? `🌊 ${t('% ความเสี่ยงน้ำท่วมซ้ำจุดเดิม','Flood Risk')} GISTDA 2554–2566`
               : S.layer === "ndvi"
               ? `🌿 NDVI ${window.NDVI_DATA?.month || ''} · NASA MODIS`
               : S.layer === "riceEvi"
@@ -3187,7 +3187,7 @@ function t(th, en) {
         : S.layer === "profit"
         ? t("แผนที่กำไร/ขาดทุนประมาณการต่อไร่", "Estimated Profit/Loss per Rai by Province")
         : S.layer === "flood"
-        ? t("แผนที่ความเสี่ยงน้ำท่วมซ้ำจุดเดิมรายจังหวัด", "Recurring Flood Risk by Province")
+        ? t("แผนที่% ความเสี่ยงน้ำท่วมซ้ำจุดเดิมรายจังหวัด", "Recurring Flood Risk by Province")
         : S.layer === "ndvi"
         ? t("แผนที่ดัชนีพืชพรรณ (NDVI) รายจังหวัด", "Vegetation Index (NDVI) by Province")
         : S.layer === "riceEvi"
@@ -3651,7 +3651,7 @@ function t(th, en) {
         const riskColor = pct >= 30 ? '#1565c0' : pct >= 10 ? '#1e88e5' : pct >= 1 ? '#64b5f6' : 'var(--muted)';
         floodHtml = `
           <div class="rice-card" style="grid-column:1/-1;background:rgba(30,136,229,.08);border:1px solid rgba(30,136,229,.25)">
-            <div class="t">🌊 ${t('ความเสี่ยงน้ำท่วมซ้ำจุดเดิม (GISTDA 2554–2566)','Recurring Flood Risk (GISTDA 2011–2023)')}</div>
+            <div class="t">🌊 ${t('% ความเสี่ยงน้ำท่วมซ้ำจุดเดิม (GISTDA 2554–2566)','Recurring Flood Risk (GISTDA 2011–2023)')}</div>
             <div class="metric">
               <div class="m-label">${t('% พื้นที่จังหวัดที่เคยถูกน้ำท่วม','% Province Area Flooded')}</div>
               <div class="m-value" style="color:${riskColor}">${pct.toFixed(1)}% <small style="color:${riskColor}">${riskLabel}</small></div>
@@ -4282,7 +4282,7 @@ function t(th, en) {
         return `
     <div class="th">${t(NM[en]||en,en)}</div>
     <div class="en">${en}</div>
-    <div class="type">${t('ความเสี่ยงน้ำท่วมซ้ำจุดเดิม (GISTDA 2554–2566)','Recurring Flood Risk (GISTDA 2011–2023)')}</div>
+    <div class="type">${t('% ความเสี่ยงน้ำท่วมซ้ำจุดเดิม (GISTDA 2554–2566)','Recurring Flood Risk (GISTDA 2011–2023)')}</div>
     <div class="value" style="color:${riskColor}">~${pct.toFixed(1)}% <small style="font-size:12px;color:var(--muted)">${t('ของพื้นที่จังหวัด','of province area')}</small></div>
     <div style="font-size:11px;font-weight:700;color:${riskColor};margin:2px 0">${riskLabel}</div>
     <div class="rank">${rank ? `${t('อันดับ','Rank')} #${rank} / ${total}` : t('ไม่มีข้อมูล','No data')}</div>
