@@ -52,6 +52,13 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add data/ndvi.json data/rice-evi.json \
                   data/ndvi-district.json data/rice-evi-district.json
-          git diff --quiet && git diff --staged --quiet || \
-            (git commit -m "auto: update NDVI + Rice EVI (province+district) $(date +'%Y-%m')" && \
-             git pull --rebase origin main && git push)
+          if git diff --quiet && git diff --staged --quiet; then
+            echo "No changes."
+          else
+            git commit -m "auto: update NDVI + Rice EVI (province+district) $(date +'%Y-%m')"
+            for i in 1 2 3; do
+              git pull --rebase origin main && git push && break
+              echo "Push attempt $i failed, retrying in 10s..."
+              sleep 10
+            done
+          fi
