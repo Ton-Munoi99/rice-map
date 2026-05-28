@@ -1,401 +1,555 @@
 {
   "_meta": {
-    "source": "GISTDA — พื้นที่น้ำท่วมซ้ำซาก ปี 2554–2566",
+    "source": "GISTDA — พื้นที่น้ำท่วมซ้ำซาก ปี 2554–2566 (13 ปี)",
     "source_en": "GISTDA — Recurring Flood Areas 2011–2023",
     "source_url": "https://opendata.gistda.or.th/en/dataset/disasters-01",
-    "api_url": "https://api-gateway.gistda.or.th/api/2.0/resources/gi-service/v1.1/disasters/flood-recurrence",
-    "updated": "2026-05-21",
-    "period": "2011-2023 (13 years)",
-    "method": "Monte Carlo point sampling (100 points/province) via GISTDA point API",
+    "boundary_source": "GADM 4.1 Thailand level 3 (subdistrict/tambon)",
+    "method": "Tambon centroid query — full coverage, area-weighted",
+    "tambons_queried": 5926,
     "provinces_covered": 77,
-    "note": "% พื้นที่จังหวัดที่อยู่ในเขตน้ำท่วมซ้ำซาก · ประมาณจากการสุ่มจุด (point-based API) · GISTDA ข้อมูลดาวเทียม 13 ปี",
-    "boundary_source": "OCHA HDX — Thailand Admin Boundaries (tha_admin1)"
+    "period": "2011-2023 (13 years)",
+    "updated": "2026-05-28",
+    "note": "% คำนวณจากพื้นที่ตำบลจริง ไม่ใช่การสุ่มตัวอย่าง — แม่นกว่าเวอร์ชันเดิม"
   },
   "provinces": {
     "Amnat Charoen": {
-      "flood_rai": 185098,
-      "province_rai": 2056647,
-      "pct": 9.0
+      "pct": 6.7,
+      "flood_rai": 136119,
+      "province_rai": 2043768,
+      "flood_tambons": 4,
+      "total_tambons": 42
     },
     "Ang Thong": {
-      "flood_rai": 530975,
-      "province_rai": 589973,
-      "pct": 90.0
+      "pct": 90.5,
+      "flood_rai": 537852,
+      "province_rai": 594059,
+      "flood_tambons": 63,
+      "total_tambons": 66
     },
     "Bangkok Metropolis": {
-      "flood_rai": 540142,
-      "province_rai": 982077,
-      "pct": 55.0
+      "pct": 15.6,
+      "flood_rai": 152455,
+      "province_rai": 977610,
+      "flood_tambons": 10,
+      "total_tambons": 50
     },
     "Bueng Kan": {
-      "flood_rai": 250793,
-      "province_rai": 2507926,
-      "pct": 10.0
+      "pct": 16.9,
+      "flood_rai": 424481,
+      "province_rai": 2512571,
+      "flood_tambons": 8,
+      "total_tambons": 41
     },
     "Buri Ram": {
-      "flood_rai": 315486,
-      "province_rai": 6309722,
-      "pct": 5.0
+      "pct": 12.4,
+      "flood_rai": 785277,
+      "province_rai": 6313346,
+      "flood_tambons": 19,
+      "total_tambons": 146
     },
     "Chachoengsao": {
-      "flood_rai": 1292682,
-      "province_rai": 3231705,
-      "pct": 40.0
+      "pct": 31.1,
+      "flood_rai": 1016509,
+      "province_rai": 3266365,
+      "flood_tambons": 58,
+      "total_tambons": 91
     },
     "Chai Nat": {
-      "flood_rai": 699003,
-      "province_rai": 1553341,
-      "pct": 45.0
+      "pct": 59.9,
+      "flood_rai": 922195,
+      "province_rai": 1539493,
+      "flood_tambons": 35,
+      "total_tambons": 48
     },
     "Chaiyaphum": {
-      "flood_rai": 789646,
-      "province_rai": 7896459,
-      "pct": 10.0
+      "pct": 6.9,
+      "flood_rai": 547664,
+      "province_rai": 7927303,
+      "flood_tambons": 12,
+      "total_tambons": 91
     },
     "Chanthaburi": {
-      "flood_rai": 120316,
-      "province_rai": 4010550,
-      "pct": 3.0
+      "pct": 0.8,
+      "flood_rai": 30249,
+      "province_rai": 3917819,
+      "flood_tambons": 1,
+      "total_tambons": 58
     },
     "Chiang Mai": {
-      "flood_rai": 415491,
-      "province_rai": 13849700,
-      "pct": 3.0
+      "pct": 1.3,
+      "flood_rai": 183480,
+      "province_rai": 13803810,
+      "flood_tambons": 13,
+      "total_tambons": 161
     },
     "Chiang Rai": {
-      "flood_rai": 795965,
-      "province_rai": 7236049,
-      "pct": 11.0
+      "pct": 10.8,
+      "flood_rai": 782076,
+      "province_rai": 7231042,
+      "flood_tambons": 20,
+      "total_tambons": 98
     },
     "Chon Buri": {
-      "flood_rai": 112689,
-      "province_rai": 2817229,
-      "pct": 4.0
+      "pct": 5.7,
+      "flood_rai": 158908,
+      "province_rai": 2797162,
+      "flood_tambons": 15,
+      "total_tambons": 72
     },
     "Chumphon": {
-      "flood_rai": 75210,
-      "province_rai": 3760503,
-      "pct": 2.0
+      "pct": 0.0,
+      "flood_rai": 0,
+      "province_rai": 3748021,
+      "flood_tambons": 0,
+      "total_tambons": 69
     },
     "Kalasin": {
-      "flood_rai": 346212,
-      "province_rai": 4327650,
-      "pct": 8.0
+      "pct": 10.6,
+      "flood_rai": 459880,
+      "province_rai": 4333956,
+      "flood_tambons": 15,
+      "total_tambons": 101
     },
     "Kamphaeng Phet": {
-      "flood_rai": 1175898,
-      "province_rai": 5344990,
-      "pct": 22.0
+      "pct": 21.5,
+      "flood_rai": 1157798,
+      "province_rai": 5391673,
+      "flood_tambons": 24,
+      "total_tambons": 61
     },
     "Kanchanaburi": {
-      "flood_rai": 0,
-      "province_rai": 12147723,
-      "pct": 0.0
+      "pct": 1.3,
+      "flood_rai": 153415,
+      "province_rai": 12087154,
+      "flood_tambons": 9,
+      "total_tambons": 91
     },
     "Khon Kaen": {
-      "flood_rai": 465603,
-      "province_rai": 6651474,
-      "pct": 7.0
+      "pct": 6.4,
+      "flood_rai": 422325,
+      "province_rai": 6644157,
+      "flood_tambons": 7,
+      "total_tambons": 126
     },
     "Krabi": {
+      "pct": 0.0,
       "flood_rai": 0,
-      "province_rai": 3115262,
-      "pct": 0.0
+      "province_rai": 3022923,
+      "flood_tambons": 0,
+      "total_tambons": 53
     },
     "Lampang": {
-      "flood_rai": 312190,
-      "province_rai": 7804749,
-      "pct": 4.0
+      "pct": 5.4,
+      "flood_rai": 424382,
+      "province_rai": 7816908,
+      "flood_tambons": 9,
+      "total_tambons": 73
     },
     "Lamphun": {
-      "flood_rai": 167975,
-      "province_rai": 2799587,
-      "pct": 6.0
+      "pct": 5.2,
+      "flood_rai": 146028,
+      "province_rai": 2803594,
+      "flood_tambons": 3,
+      "total_tambons": 43
     },
     "Loei": {
-      "flood_rai": 0,
-      "province_rai": 6572142,
-      "pct": 0.0
+      "pct": 5.1,
+      "flood_rai": 333741,
+      "province_rai": 6588230,
+      "flood_tambons": 2,
+      "total_tambons": 73
     },
     "Lop Buri": {
-      "flood_rai": 852271,
-      "province_rai": 4058432,
-      "pct": 21.0
+      "pct": 17.8,
+      "flood_rai": 697766,
+      "province_rai": 3909365,
+      "flood_tambons": 45,
+      "total_tambons": 113
     },
     "Mae Hong Son": {
+      "pct": 0.0,
       "flood_rai": 0,
-      "province_rai": 7978303,
-      "pct": 0.0
+      "province_rai": 7925879,
+      "flood_tambons": 0,
+      "total_tambons": 39
     },
     "Maha Sarakham": {
-      "flood_rai": 703842,
-      "province_rai": 3519209,
-      "pct": 20.0
+      "pct": 17.6,
+      "flood_rai": 618234,
+      "province_rai": 3515926,
+      "flood_tambons": 15,
+      "total_tambons": 92
     },
     "Mukdahan": {
-      "flood_rai": 77688,
-      "province_rai": 2589608,
-      "pct": 3.0
+      "pct": 4.7,
+      "flood_rai": 123416,
+      "province_rai": 2622356,
+      "flood_tambons": 3,
+      "total_tambons": 49
     },
     "Nakhon Nayok": {
-      "flood_rai": 654664,
-      "province_rai": 1336049,
-      "pct": 49.0
+      "pct": 63.0,
+      "flood_rai": 843556,
+      "province_rai": 1339196,
+      "flood_tambons": 2,
+      "total_tambons": 4
     },
     "Nakhon Pathom": {
-      "flood_rai": 788479,
-      "province_rai": 1336405,
-      "pct": 59.0
+      "pct": 52.5,
+      "flood_rai": 704417,
+      "province_rai": 1341206,
+      "flood_tambons": 43,
+      "total_tambons": 90
     },
     "Nakhon Phanom": {
-      "flood_rai": 773782,
-      "province_rai": 3517190,
-      "pct": 22.0
+      "pct": 16.0,
+      "flood_rai": 548111,
+      "province_rai": 3434233,
+      "flood_tambons": 13,
+      "total_tambons": 79
     },
     "Nakhon Ratchasima": {
-      "flood_rai": 1945394,
-      "province_rai": 12969294,
-      "pct": 15.0
+      "pct": 10.0,
+      "flood_rai": 1293111,
+      "province_rai": 12955028,
+      "flood_tambons": 32,
+      "total_tambons": 188
     },
     "Nakhon Sawan": {
-      "flood_rai": 2496314,
-      "province_rai": 5943605,
-      "pct": 42.0
+      "pct": 45.1,
+      "flood_rai": 2678511,
+      "province_rai": 5939405,
+      "flood_tambons": 80,
+      "total_tambons": 124
     },
     "Nakhon Si Thammarat": {
-      "flood_rai": 1855465,
-      "province_rai": 6184883,
-      "pct": 30.0
+      "pct": 29.4,
+      "flood_rai": 1821412,
+      "province_rai": 6185217,
+      "flood_tambons": 71,
+      "total_tambons": 170
     },
     "Nan": {
-      "flood_rai": 0,
-      "province_rai": 7620241,
-      "pct": 0.0
+      "pct": 0.9,
+      "flood_rai": 72074,
+      "province_rai": 7648444,
+      "flood_tambons": 3,
+      "total_tambons": 80
     },
     "Narathiwat": {
-      "flood_rai": 56176,
-      "province_rai": 2808791,
-      "pct": 2.0
+      "pct": 4.9,
+      "flood_rai": 137250,
+      "province_rai": 2789877,
+      "flood_tambons": 6,
+      "total_tambons": 74
     },
     "Nong Bua Lam Phu": {
-      "flood_rai": 50916,
-      "province_rai": 2545824,
-      "pct": 2.0
+      "pct": 4.2,
+      "flood_rai": 108825,
+      "province_rai": 2587286,
+      "flood_tambons": 3,
+      "total_tambons": 50
     },
     "Nong Khai": {
-      "flood_rai": 369227,
-      "province_rai": 2051264,
-      "pct": 18.0
+      "pct": 17.3,
+      "flood_rai": 348892,
+      "province_rai": 2019790,
+      "flood_tambons": 7,
+      "total_tambons": 41
     },
     "Nonthaburi": {
-      "flood_rai": 322173,
-      "province_rai": 397745,
-      "pct": 81.0
+      "pct": 68.7,
+      "flood_rai": 272596,
+      "province_rai": 396714,
+      "flood_tambons": 27,
+      "total_tambons": 37
     },
     "Pathum Thani": {
-      "flood_rai": 834582,
-      "province_rai": 948389,
-      "pct": 88.0
+      "pct": 89.5,
+      "flood_rai": 847925,
+      "province_rai": 947351,
+      "flood_tambons": 45,
+      "total_tambons": 49
     },
     "Pattani": {
-      "flood_rai": 233706,
-      "province_rai": 1230031,
-      "pct": 19.0
+      "pct": 21.2,
+      "flood_rai": 258752,
+      "province_rai": 1218613,
+      "flood_tambons": 26,
+      "total_tambons": 105
     },
     "Phangnga": {
+      "pct": 0.0,
       "flood_rai": 0,
-      "province_rai": 2558055,
-      "pct": 0.0
+      "province_rai": 2491324,
+      "flood_tambons": 0,
+      "total_tambons": 48
     },
     "Phatthalung": {
-      "flood_rai": 602914,
-      "province_rai": 2411658,
-      "pct": 25.0
+      "pct": 24.2,
+      "flood_rai": 578268,
+      "province_rai": 2384811,
+      "flood_tambons": 24,
+      "total_tambons": 59
     },
     "Phayao": {
-      "flood_rai": 619314,
-      "province_rai": 3870711,
-      "pct": 16.0
+      "pct": 7.2,
+      "flood_rai": 274444,
+      "province_rai": 3819497,
+      "flood_tambons": 6,
+      "total_tambons": 40
     },
     "Phetchabun": {
-      "flood_rai": 697240,
-      "province_rai": 7747116,
-      "pct": 9.0
+      "pct": 7.7,
+      "flood_rai": 595753,
+      "province_rai": 7749029,
+      "flood_tambons": 14,
+      "total_tambons": 105
     },
     "Phetchaburi": {
-      "flood_rai": 308942,
-      "province_rai": 3861780,
-      "pct": 8.0
+      "pct": 4.5,
+      "flood_rai": 172286,
+      "province_rai": 3858031,
+      "flood_tambons": 17,
+      "total_tambons": 72
     },
     "Phichit": {
-      "flood_rai": 1706979,
-      "province_rai": 2709490,
-      "pct": 63.0
+      "pct": 64.0,
+      "flood_rai": 1726984,
+      "province_rai": 2697021,
+      "flood_tambons": 41,
+      "total_tambons": 69
     },
     "Phitsanulok": {
-      "flood_rai": 1512555,
-      "province_rai": 6576326,
-      "pct": 23.0
+      "pct": 22.8,
+      "flood_rai": 1507453,
+      "province_rai": 6623343,
+      "flood_tambons": 36,
+      "total_tambons": 88
     },
     "Phra Nakhon Si Ayutthaya": {
-      "flood_rai": 1515871,
-      "province_rai": 1595654,
-      "pct": 95.0
+      "pct": 96.0,
+      "flood_rai": 1528142,
+      "province_rai": 1591138,
+      "flood_tambons": 153,
+      "total_tambons": 162
     },
     "Phrae": {
-      "flood_rai": 81062,
-      "province_rai": 4053113,
-      "pct": 2.0
+      "pct": 0.9,
+      "flood_rai": 38208,
+      "province_rai": 4045667,
+      "flood_tambons": 3,
+      "total_tambons": 62
     },
     "Phuket": {
+      "pct": 0.0,
       "flood_rai": 0,
-      "province_rai": 342286,
-      "pct": 0.0
+      "province_rai": 345722,
+      "flood_tambons": 0,
+      "total_tambons": 17
     },
     "Prachin Buri": {
-      "flood_rai": 600074,
-      "province_rai": 3158284,
-      "pct": 19.0
+      "pct": 12.1,
+      "flood_rai": 377075,
+      "province_rai": 3124407,
+      "flood_tambons": 5,
+      "total_tambons": 15
     },
     "Prachuap Khiri Khan": {
-      "flood_rai": 40275,
-      "province_rai": 4027535,
-      "pct": 1.0
+      "pct": 0.0,
+      "flood_rai": 0,
+      "province_rai": 4008614,
+      "flood_tambons": 0,
+      "total_tambons": 35
     },
     "Ranong": {
+      "pct": 0.0,
       "flood_rai": 0,
-      "province_rai": 2056850,
-      "pct": 0.0
+      "province_rai": 1953910,
+      "flood_tambons": 0,
+      "total_tambons": 30
     },
     "Ratchaburi": {
-      "flood_rai": 97475,
-      "province_rai": 3249172,
-      "pct": 3.0
+      "pct": 4.2,
+      "flood_rai": 136683,
+      "province_rai": 3233519,
+      "flood_tambons": 7,
+      "total_tambons": 90
     },
     "Rayong": {
-      "flood_rai": 23035,
-      "province_rai": 2303478,
-      "pct": 1.0
+      "pct": 0.0,
+      "flood_rai": 0,
+      "province_rai": 2313999,
+      "flood_tambons": 0,
+      "total_tambons": 45
     },
     "Roi Et": {
-      "flood_rai": 1376278,
-      "province_rai": 4915279,
-      "pct": 28.0
+      "pct": 24.6,
+      "flood_rai": 1204986,
+      "province_rai": 4907975,
+      "flood_tambons": 38,
+      "total_tambons": 150
     },
     "Sa Kaeo": {
-      "flood_rai": 85066,
-      "province_rai": 4253309,
-      "pct": 2.0
+      "pct": 0.0,
+      "flood_rai": 0,
+      "province_rai": 4296428,
+      "flood_tambons": 0,
+      "total_tambons": 25
     },
     "Sakon Nakhon": {
-      "flood_rai": 479083,
-      "province_rai": 5988540,
-      "pct": 8.0
+      "pct": 9.6,
+      "flood_rai": 574883,
+      "province_rai": 5990711,
+      "flood_tambons": 14,
+      "total_tambons": 97
     },
     "Samut Prakan": {
-      "flood_rai": 94905,
-      "province_rai": 593156,
-      "pct": 16.0
+      "pct": 21.3,
+      "flood_rai": 125305,
+      "province_rai": 587333,
+      "flood_tambons": 4,
+      "total_tambons": 35
     },
     "Samut Sakhon": {
-      "flood_rai": 26767,
-      "province_rai": 535348,
-      "pct": 5.0
+      "pct": 4.4,
+      "flood_rai": 23302,
+      "province_rai": 532540,
+      "flood_tambons": 2,
+      "total_tambons": 40
     },
     "Samut Songkhram": {
+      "pct": 0.0,
       "flood_rai": 0,
-      "province_rai": 258855,
-      "pct": 0.0
+      "province_rai": 253459,
+      "flood_tambons": 0,
+      "total_tambons": 36
     },
     "Saraburi": {
-      "flood_rai": 370077,
-      "province_rai": 2176924,
-      "pct": 17.0
+      "pct": 16.6,
+      "flood_rai": 368882,
+      "province_rai": 2226124,
+      "flood_tambons": 31,
+      "total_tambons": 94
     },
     "Satun": {
-      "flood_rai": 0,
-      "province_rai": 1800028,
-      "pct": 0.0
+      "pct": 0.8,
+      "flood_rai": 13881,
+      "province_rai": 1678449,
+      "flood_tambons": 1,
+      "total_tambons": 34
     },
     "Si Sa Ket": {
-      "flood_rai": 895171,
-      "province_rai": 5594816,
-      "pct": 16.0
+      "pct": 20.5,
+      "flood_rai": 1144471,
+      "province_rai": 5573393,
+      "flood_tambons": 34,
+      "total_tambons": 142
     },
     "Sing Buri": {
-      "flood_rai": 460105,
-      "province_rai": 511227,
-      "pct": 90.0
+      "pct": 91.9,
+      "flood_rai": 482073,
+      "province_rai": 524469,
+      "flood_tambons": 34,
+      "total_tambons": 38
     },
     "Songkhla": {
-      "flood_rai": 193522,
-      "province_rai": 4838054,
-      "pct": 4.0
+      "pct": 7.5,
+      "flood_rai": 358847,
+      "province_rai": 4759361,
+      "flood_tambons": 15,
+      "total_tambons": 119
     },
     "Sukhothai": {
-      "flood_rai": 834478,
-      "province_rai": 4172392,
-      "pct": 20.0
+      "pct": 28.7,
+      "flood_rai": 1202710,
+      "province_rai": 4185494,
+      "flood_tambons": 44,
+      "total_tambons": 79
     },
     "Suphan Buri": {
-      "flood_rai": 1697014,
-      "province_rai": 3394029,
-      "pct": 50.0
+      "pct": 43.1,
+      "flood_rai": 1460254,
+      "province_rai": 3384400,
+      "flood_tambons": 65,
+      "total_tambons": 98
     },
     "Surat Thani": {
-      "flood_rai": 898938,
-      "province_rai": 8172163,
-      "pct": 11.0
+      "pct": 12.1,
+      "flood_rai": 995217,
+      "province_rai": 8191831,
+      "flood_tambons": 31,
+      "total_tambons": 131
     },
     "Surin": {
-      "flood_rai": 1163350,
-      "province_rai": 5539763,
-      "pct": 21.0
+      "pct": 12.2,
+      "flood_rai": 674228,
+      "province_rai": 5512774,
+      "flood_tambons": 17,
+      "total_tambons": 118
     },
     "Tak": {
-      "flood_rai": 431664,
-      "province_rai": 10791592,
-      "pct": 4.0
+      "pct": 1.5,
+      "flood_rai": 165116,
+      "province_rai": 10747099,
+      "flood_tambons": 3,
+      "total_tambons": 53
     },
     "Trang": {
-      "flood_rai": 0,
-      "province_rai": 2941571,
-      "pct": 0.0
+      "pct": 2.2,
+      "flood_rai": 66583,
+      "province_rai": 3028379,
+      "flood_tambons": 4,
+      "total_tambons": 86
     },
     "Trat": {
-      "flood_rai": 17985,
-      "province_rai": 1798484,
-      "pct": 1.0
+      "pct": 0.0,
+      "flood_rai": 0,
+      "province_rai": 1787923,
+      "flood_tambons": 0,
+      "total_tambons": 30
     },
     "Ubon Ratchathani": {
-      "flood_rai": 586382,
-      "province_rai": 9773040,
-      "pct": 6.0
+      "pct": 7.3,
+      "flood_rai": 709375,
+      "province_rai": 9763680,
+      "flood_tambons": 17,
+      "total_tambons": 168
     },
     "Udon Thani": {
-      "flood_rai": 346625,
-      "province_rai": 6932493,
-      "pct": 5.0
+      "pct": 10.2,
+      "flood_rai": 708988,
+      "province_rai": 6934049,
+      "flood_tambons": 14,
+      "total_tambons": 119
     },
     "Uthai Thani": {
-      "flood_rai": 331686,
-      "province_rai": 4146071,
-      "pct": 8.0
+      "pct": 8.9,
+      "flood_rai": 369044,
+      "province_rai": 4159226,
+      "flood_tambons": 22,
+      "total_tambons": 64
     },
     "Uttaradit": {
-      "flood_rai": 791824,
-      "province_rai": 4948898,
-      "pct": 16.0
+      "pct": 16.7,
+      "flood_rai": 816368,
+      "province_rai": 4875663,
+      "flood_tambons": 20,
+      "total_tambons": 67
     },
     "Yala": {
-      "flood_rai": 27975,
-      "province_rai": 2797452,
-      "pct": 1.0
+      "pct": 2.8,
+      "flood_rai": 77023,
+      "province_rai": 2771828,
+      "flood_tambons": 6,
+      "total_tambons": 58
     },
     "Yasothon": {
-      "flood_rai": 515912,
-      "province_rai": 2579558,
-      "pct": 20.0
+      "pct": 17.6,
+      "flood_rai": 452686,
+      "province_rai": 2577765,
+      "flood_tambons": 16,
+      "total_tambons": 70
     }
   }
 }

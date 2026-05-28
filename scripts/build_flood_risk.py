@@ -1,23 +1,28 @@
 #!/usr/bin/env python3
 """
-Build data/flood-risk.json from GISTDA Flood Recurrence API (Point-based).
+Build data/flood-risk.json from GISTDA Flood Recurrence API.
+Method: query centroid of EVERY subdistrict (tambon) in Thailand — full coverage.
 
-Source: GISTDA — พื้นที่น้ำท่วมซ้ำซาก ปี 2554–2566 (13 ปี)
-API:    Point-based: lat/lon → flood recurrence data per subdistrict
-Auth:   Demo key + Referer header
+Source data:
+  - Subdistrict boundaries: GADM 4.1 Thailand level 3 (auto-downloaded, 1.4 MB)
+  - Flood history: GISTDA Point API ปี 2554–2566 (13 ปี)
 
-Approach: Monte Carlo grid sampling — ~40 random points per province,
-query point API, estimate % area that's flood-prone.
+Logic per subdistrict:
+  - Query centroid → GISTDA returns flood history OR "not found"
+  - "not found" = ไม่มีประวัติน้ำท่วมในตำบลนั้นเลย
+  - Aggregate by province using actual subdistrict AREA (rai) — ไม่ใช่แค่นับจุด
+
+Result: % พื้นที่จังหวัดที่มีประวัติน้ำท่วมซ้ำ (area-weighted, full tambon coverage)
 
 Usage:
-  python scripts/build_flood_risk.py               # ทั้ง 77 จังหวัด (~10 นาที)
-  python scripts/build_flood_risk.py --test         # 5 จังหวัดแรก
+  python scripts/build_flood_risk.py               # ทุกตำบล ~40 นาที
   python scripts/build_flood_risk.py --resume       # ต่อจาก cache
-
-Output: data/flood-risk.json
+  python scripts/build_flood_risk.py --test         # 100 ตำบลแรก
+  python scripts/build_flood_risk.py --province "Chiang Mai"  # จังหวัดเดียว
 """
-import argparse, json, os, sys, io, time, random
+import argparse, json, os, sys, io, time, zipfile
 from datetime import date
+from urllib.request import urlretrieve
 
 if sys.platform == "win32":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
@@ -29,256 +34,253 @@ try:
 except ImportError as e:
     sys.exit(f"ERROR: {e}\npip install geopandas requests shapely pyproj")
 
-HERE   = os.path.dirname(__file__)
-ROOT   = os.path.join(HERE, "..")
-OUTPUT = os.path.join(ROOT, "data", "flood-risk.json")
-CACHE  = os.path.join(ROOT, "data", "source", "gistda_point_cache.json")
-UTM    = "EPSG:32647"
+HERE      = os.path.dirname(os.path.abspath(__file__))
+ROOT      = os.path.join(HERE, "..")
+OUTPUT    = os.path.join(ROOT, "data", "flood-risk.json")
+CACHE     = os.path.join(ROOT, "data", "source", "tambon_flood_cache.json")
+ADM3_LOCAL = os.path.join(ROOT, "data", "source", "gadm41_THA_3.json")
+ADM3_ZIP  = os.path.join(ROOT, "data", "source", "gadm41_THA_3.zip")
+ADM1_FILE = os.path.join(ROOT, "data", "source", "tha_admin1.geojson")
+GADM_URL  = "https://geodata.ucdavis.edu/gadm/gadm4.1/json/gadm41_THA_3.json.zip"
+UTM       = "EPSG:32647"
 
-# ── GISTDA API ────────────────────────────────────────────────────────────────
-API_URL  = "https://api-gateway.gistda.or.th/api/2.0/resources/gi-service/v1.1/disasters/flood-recurrence"
-DEMO_KEY = "CoxyRDixPBGCMuEkriUXZqlBlUMTZK6klJ8WKgalsLuQ74fTNJsFZUQXLVBPuk9o"
-HEADERS  = {"Referer": "https://opendata.gistda.or.th/"}
-
-POINTS_PER_PROVINCE = 40   # จุด sampling ต่อจังหวัด
-POINT_DELAY         = 0.3  # วินาที ระหว่าง request
-PROVINCE_DELAY      = 2.0  # วินาที ระหว่างจังหวัด
-MAX_RETRIES         = 2
-RETRY_DELAY         = 5.0
-
-NAME_FIX = {"Bangkok": "Bangkok Metropolis"}
+API_URL   = "https://api-gateway.gistda.or.th/api/2.0/resources/gi-service/v1.1/disasters/flood-recurrence"
+DEMO_KEY  = "CoxyRDixPBGCMuEkriUXZqlBlUMTZK6klJ8WKgalsLuQ74fTNJsFZUQXLVBPuk9o"
+HEADERS   = {"Referer": "https://opendata.gistda.or.th/"}
+DELAY     = 0.3   # วินาที ระหว่าง request
+MAX_RETRY = 2
+RETRY_DELAY = 5.0
 
 
-def load_provinces():
-    """Load province boundaries (WGS84) from cached GeoJSON"""
-    cached = os.path.join(ROOT, "data", "source", "tha_admin1.geojson")
-    zip_paths = [
-        os.path.join(ROOT, "data", "source", "tha_admin_boundaries.geojson.zip"),
-        os.path.join(os.path.expanduser("~"), "Downloads", "tha_admin_boundaries.geojson.zip"),
-    ]
-    if os.path.exists(cached):
-        print(f"Loading provinces (cached): {cached}")
-        gdf = gpd.read_file(cached)
-    else:
-        for zp in zip_paths:
-            if os.path.exists(zp):
-                import zipfile
-                with zipfile.ZipFile(zp) as z:
-                    with z.open("tha_admin1.geojson") as f:
-                        gdf = gpd.read_file(f)
-                gdf.to_file(cached, driver="GeoJSON")
-                break
-        else:
-            sys.exit("ERROR: ไม่พบ tha_admin1.geojson — โหลดจาก HDX ก่อน")
+def load_adm3():
+    """Download (if needed) and load GADM Thailand level 3 subdistrict GeoJSON"""
+    if not os.path.exists(ADM3_LOCAL):
+        if not os.path.exists(ADM3_ZIP):
+            print(f"Downloading GADM 4.1 Thailand level 3 (~1.4 MB)...")
+            os.makedirs(os.path.dirname(ADM3_ZIP), exist_ok=True)
+            urlretrieve(GADM_URL, ADM3_ZIP)
+            print(f"  → {ADM3_ZIP}")
+        print("Extracting...")
+        with zipfile.ZipFile(ADM3_ZIP) as z:
+            names = z.namelist()
+            json_files = [n for n in names if n.endswith(".json")]
+            if not json_files:
+                sys.exit(f"ERROR: No .json found in zip. Contents: {names}")
+            z.extract(json_files[0], os.path.dirname(ADM3_LOCAL))
+            extracted = os.path.join(os.path.dirname(ADM3_LOCAL), json_files[0])
+            if extracted != ADM3_LOCAL:
+                os.rename(extracted, ADM3_LOCAL)
+        print(f"  → {ADM3_LOCAL}")
 
-    gdf = gdf.rename(columns={"adm1_name": "prov_en"})
-    gdf["prov_en"] = gdf["prov_en"].map(lambda n: NAME_FIX.get(str(n), str(n)))
-    print(f"  {len(gdf)} provinces, CRS: {gdf.crs}")
-    return gdf[["prov_en", "geometry"]]
+    print("Loading subdistrict boundaries (GADM THA level 3)...")
+    gdf = gpd.read_file(ADM3_LOCAL)
+    print(f"  {len(gdf)} subdistricts, CRS: {gdf.crs}")
+    return gdf
 
 
-def random_points_in_polygon(polygon, n):
-    """Generate n random points inside a polygon"""
-    points = []
-    minx, miny, maxx, maxy = polygon.bounds
-    attempts = 0
-    max_attempts = n * 20  # safety limit
-    while len(points) < n and attempts < max_attempts:
-        x = random.uniform(minx, maxx)
-        y = random.uniform(miny, maxy)
-        p = Point(x, y)
-        if polygon.contains(p):
-            points.append((y, x))  # (lat, lon)
-        attempts += 1
-    return points
+def map_province_name(gadm_name, canonical_names):
+    """Map GADM NAME_1 → canonical province key.
+    GADM 4.1 strips all spaces (e.g. 'AmnatCharoen', 'BangkokMetropolis').
+    We match by lowercasing and removing spaces from both sides.
+    """
+    # Already canonical (with spaces)
+    if gadm_name in canonical_names:
+        return gadm_name
+    # Normalize: lowercase, no spaces
+    norm = gadm_name.lower().replace(" ", "")
+    for cn in canonical_names:
+        if cn.lower().replace(" ", "") == norm:
+            return cn
+    return gadm_name  # return as-is — will be flagged in output
 
 
-def query_point(lat, lon):
-    """Query GISTDA point API, returns dict or None"""
-    params = {"api_key": DEMO_KEY, "lat": str(lat), "lon": str(lon)}
-    for attempt in range(1, MAX_RETRIES + 1):
+def query_gistda(lat, lon):
+    """Query GISTDA point API. Returns dict with flood data or None (not found)."""
+    for attempt in range(1, MAX_RETRY + 1):
         try:
-            r = requests.get(API_URL, params=params, headers=HEADERS, timeout=20)
-            if r.status_code == 503 or r.status_code == 502:
-                if attempt < MAX_RETRIES:
+            r = requests.get(
+                API_URL,
+                params={"api_key": DEMO_KEY, "lat": str(lat), "lon": str(lon)},
+                headers=HEADERS,
+                timeout=20,
+            )
+            if r.status_code in (502, 503):
+                if attempt < MAX_RETRY:
                     time.sleep(RETRY_DELAY)
                     continue
                 return None
             r.raise_for_status()
             data = r.json()
-            # Point API returns list with 1 item or {"result":"not found"}
             if isinstance(data, list) and len(data) > 0:
                 return data[0]
-            return None  # not found = no flood at this point
+            return None  # "not found" = ไม่มีประวัติน้ำท่วม
         except Exception:
-            if attempt < MAX_RETRIES:
+            if attempt < MAX_RETRY:
                 time.sleep(RETRY_DELAY)
                 continue
             return None
     return None
 
 
-def process_province(geom, prov_en, n_points=POINTS_PER_PROVINCE):
-    """Sample n random points in province, query each via point API"""
-    points = random_points_in_polygon(geom, n_points)
-    if not points:
-        return {"flood_pct": 0.0, "sampled": 0, "flooded": 0, "avg_total": 0, "subdistricts": set()}
-
-    flooded_count = 0
-    total_years_sum = 0
-    subdistricts = set()
-    errors = 0
-
-    for i, (lat, lon) in enumerate(points):
-        result = query_point(lat, lon)
-        if result is None and errors < 3:
-            # Could be "not found" or error — we treat both as not flooded
-            pass
-        elif result is not None:
-            total = result.get("total", 0)
-            if total and int(total) > 0:
-                flooded_count += 1
-                total_years_sum += int(total)
-                sub = result.get("subdistrict_name", "")
-                dist = result.get("district_name", "")
-                if sub:
-                    subdistricts.add((sub, dist))
-
-        # Progress dot
-        if (i + 1) % 10 == 0:
-            print(".", end="", flush=True)
-        time.sleep(POINT_DELAY)
-
-    flood_pct = round(flooded_count / len(points) * 100, 1) if points else 0.0
-    avg_total = round(total_years_sum / flooded_count, 1) if flooded_count > 0 else 0
-
-    return {
-        "flood_pct": flood_pct,
-        "sampled": len(points),
-        "flooded": flooded_count,
-        "avg_total": avg_total,
-        "subdist_count": len(subdistricts),
-    }
-
-
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--test", action="store_true", help="5 จังหวัดแรก")
-    parser.add_argument("--resume", action="store_true", help="ต่อจาก cache")
-    parser.add_argument("--points", type=int, default=POINTS_PER_PROVINCE, help="จุด sample ต่อจังหวัด")
+    parser.add_argument("--resume",   action="store_true", help="ต่อจาก cache")
+    parser.add_argument("--test",     action="store_true", help="100 ตำบลแรก")
+    parser.add_argument("--province", help="เฉพาะจังหวัดนี้ (ชื่อภาษาอังกฤษ)")
     args = parser.parse_args()
 
-    random.seed(42)  # reproducible sampling
+    # ── 1. Load subdistrict boundaries ──────────────────────────────────────
+    gdf_wgs = load_adm3()
 
-    # 1. Load provinces
-    prov_wgs = load_provinces()
-    prov_utm = prov_wgs.to_crs(UTM)
-    prov_utm["province_rai"] = prov_utm.geometry.area / 1600.0
+    # ── 2. Load canonical province names from tha_admin1.geojson ────────────
+    prov_gdf  = gpd.read_file(ADM1_FILE)
+    canonical = set(prov_gdf["adm1_name"].map(lambda n: "Bangkok Metropolis" if n == "Bangkok" else str(n)))
+    # Fix for Bangkok Metropolis
+    canonical.discard("Bangkok")
+    canonical.add("Bangkok Metropolis")
 
-    rows = list(zip(prov_wgs["prov_en"], prov_wgs.geometry, prov_utm["province_rai"]))
+    # ── 3. Prepare rows: centroid (UTM for area, WGS84 for query) ───────────
+    gdf_utm = gdf_wgs.to_crs(UTM)
+    gdf_utm["area_rai"] = gdf_utm.geometry.area / 1600.0
+
+    rows = []
+    for idx, row in gdf_utm.iterrows():
+        gadm_prov = str(gdf_wgs.loc[idx, "NAME_1"])
+        prov_key  = map_province_name(gadm_prov, canonical)
+        # Centroid in WGS84
+        c_wgs = gdf_wgs.loc[idx].geometry.centroid
+        lat, lon = round(c_wgs.y, 6), round(c_wgs.x, 6)
+        tambon_id = f"{gadm_prov}|{gdf_wgs.loc[idx, 'NAME_2']}|{gdf_wgs.loc[idx, 'NAME_3']}"
+        rows.append({
+            "id":       tambon_id,
+            "prov_key": prov_key,
+            "area_rai": row["area_rai"],
+            "lat":      lat,
+            "lon":      lon,
+        })
+
+    # Apply filters
+    if args.province:
+        rows = [r for r in rows if r["prov_key"] == args.province]
+        if not rows:
+            print(f"ERROR: ไม่พบจังหวัด '{args.province}'")
+            print("Available:", sorted({r['prov_key'] for r in rows[:100]}))
+            sys.exit(1)
     if args.test:
-        rows = rows[:5]
-        print(f"  [TEST MODE — {len(rows)} จังหวัด]\n")
+        rows = rows[:100]
+        print(f"[TEST MODE — {len(rows)} subdistricts]")
 
-    # 2. Load cache
+    print(f"\nTotal subdistricts: {len(rows)}")
+    est_min = len(rows) * DELAY / 60
+    print(f"Estimated time: ~{est_min:.0f} minutes at {DELAY}s/request\n")
+
+    # ── 4. Load cache ────────────────────────────────────────────────────────
     cache = {}
     if args.resume and os.path.exists(CACHE):
-        with open(CACHE, "r", encoding="utf-8") as f:
+        with open(CACHE, encoding="utf-8") as f:
             cache = json.load(f)
-        print(f"  Cache loaded: {len(cache)} provinces\n")
+        print(f"Cache loaded: {len(cache)} tambons already done\n")
 
-    # 3. Process
-    n_points = args.points
-    total_requests = len(rows) * n_points
-    est_minutes = total_requests * POINT_DELAY / 60
-    print(f"Processing {len(rows)} provinces × {n_points} points = {total_requests} requests")
-    print(f"Estimated time: ~{est_minutes:.0f} minutes")
-    print(f"API: {API_URL} (point-based)\n")
+    # ── 5. Query GISTDA for each tambon centroid ─────────────────────────────
+    results = dict(cache)  # tambon_id → {flooded, total_years, area_rai}
+    todo = [r for r in rows if r["id"] not in results]
+    print(f"To query: {len(todo)} tambons (skipping {len(rows)-len(todo)} cached)\n")
 
-    results = {}
-    for i, (prov_en, geom, province_rai) in enumerate(rows, 1):
-        # Skip if cached
-        if args.resume and prov_en in cache:
-            results[prov_en] = cache[prov_en]
-            c = cache[prov_en]
-            print(f"[{i:2d}/{len(rows)}] {prov_en:<35} (cached) {c['pct']}%")
-            continue
+    for i, row in enumerate(todo, 1):
+        data = query_gistda(row["lat"], row["lon"])
+        flooded     = data is not None
+        total_years = int(data["total"]) if flooded and data.get("total") else 0
 
-        print(f"[{i:2d}/{len(rows)}] {prov_en:<35} ", end="", flush=True)
-        res = process_province(geom, prov_en, n_points)
-
-        pct = res["flood_pct"]
-        flood_rai = round(province_rai * pct / 100)
-
-        results[prov_en] = {
-            "flood_rai": flood_rai,
-            "province_rai": round(province_rai),
-            "pct": pct,
-            "avg_years_flooded": res["avg_total"],
-            "subdist_count": res["subdist_count"],
-            "_sampled": res["sampled"],
-            "_flooded_points": res["flooded"],
+        results[row["id"]] = {
+            "prov_key":   row["prov_key"],
+            "area_rai":   round(row["area_rai"]),
+            "flooded":    flooded,
+            "total_years": total_years,
+            "lat":        row["lat"],
+            "lon":        row["lon"],
         }
 
-        bar = "█" * max(1, int(pct / 2)) if pct > 0 else ""
-        print(f" {pct:5.1f}%  ({res['flooded']}/{res['sampled']} pts)  avg_yrs={res['avg_total']}  {bar}")
+        # Progress
+        sym = "🌊" if flooded else "·"
+        if i % 50 == 0 or i == len(todo):
+            pct_done = i / len(todo) * 100
+            remaining_min = (len(todo) - i) * DELAY / 60
+            print(f"[{i:4d}/{len(todo)}] {pct_done:4.0f}%  {sym}  ETA: {remaining_min:.0f} min", flush=True)
 
-        # Save cache after each province
-        cache[prov_en] = results[prov_en]
-        os.makedirs(os.path.dirname(CACHE), exist_ok=True)
-        with open(CACHE, "w", encoding="utf-8") as f:
-            json.dump(cache, f, ensure_ascii=False, indent=2)
+        # Save cache every 100 tambons
+        if i % 100 == 0:
+            os.makedirs(os.path.dirname(CACHE), exist_ok=True)
+            with open(CACHE, "w", encoding="utf-8") as f:
+                json.dump(results, f, ensure_ascii=False, indent=2)
 
-        # Delay between provinces
-        if i < len(rows):
-            time.sleep(PROVINCE_DELAY)
+        time.sleep(DELAY)
 
-    # 4. Summary
+    # Final cache save
+    os.makedirs(os.path.dirname(CACHE), exist_ok=True)
+    with open(CACHE, "w", encoding="utf-8") as f:
+        json.dump(results, f, ensure_ascii=False, indent=2)
+
+    # ── 6. Aggregate by province (area-weighted) ─────────────────────────────
+    prov_data = {}
+    for tid, v in results.items():
+        pk = v["prov_key"]
+        if pk not in prov_data:
+            prov_data[pk] = {"total_rai": 0, "flood_rai": 0, "tambons": 0, "flood_tambons": 0}
+        prov_data[pk]["total_rai"]    += v["area_rai"]
+        prov_data[pk]["tambons"]      += 1
+        if v["flooded"]:
+            prov_data[pk]["flood_rai"]   += v["area_rai"]
+            prov_data[pk]["flood_tambons"] += 1
+
+    # ── 7. Build output ───────────────────────────────────────────────────────
+    provinces_out = {}
+    for pk in sorted(prov_data.keys()):
+        pd = prov_data[pk]
+        pct = round(pd["flood_rai"] / pd["total_rai"] * 100, 1) if pd["total_rai"] > 0 else 0.0
+        provinces_out[pk] = {
+            "pct":          pct,
+            "flood_rai":    pd["flood_rai"],
+            "province_rai": pd["total_rai"],
+            "flood_tambons": pd["flood_tambons"],
+            "total_tambons": pd["tambons"],
+        }
+
+    # ── 8. Summary ────────────────────────────────────────────────────────────
     print(f"\n{'='*65}")
-    top10 = sorted(results.items(), key=lambda x: x[1]["pct"], reverse=True)[:10]
-    print("Top 10 เสี่ยงสูงสุด (GISTDA 2554–2566):")
-    for en, v in top10:
-        print(f"  {en:<35} {v['pct']:5.1f}%  ({v['flood_rai']:>10,} ไร่)  avg {v.get('avg_years_flooded',0)} yrs")
+    top10 = sorted(provinces_out.items(), key=lambda x: x[1]["pct"], reverse=True)[:10]
+    print("Top 10 จังหวัดเสี่ยงน้ำท่วมสูงสุด:")
+    for pk, v in top10:
+        print(f"  {pk:<35} {v['pct']:5.1f}%  ({v['flood_rai']:>10,} ไร่)  {v['flood_tambons']}/{v['total_tambons']} ตำบล")
 
-    zero_count = sum(1 for v in results.values() if v["pct"] == 0)
-    nonzero = [v["pct"] for v in results.values() if v["pct"] > 0]
-    avg_pct = sum(nonzero) / len(nonzero) if nonzero else 0
-    print(f"\nProvinces with flood: {len(nonzero)}/{len(results)}")
-    print(f"Provinces without flood: {zero_count}")
-    print(f"Average flood % (non-zero): {avg_pct:.1f}%")
+    covered = len([v for v in provinces_out.values() if v["total_tambons"] > 0])
+    unmapped = [pk for pk in provinces_out if pk not in canonical]
+    if unmapped:
+        print(f"\n⚠️  Province name mismatch: {unmapped}")
 
     if args.test:
         print("\n[TEST — ไม่ save flood-risk.json]")
         return
 
-    # 5. Save — clean internal fields
-    clean_results = {}
-    for en, v in results.items():
-        clean_results[en] = {
-            "flood_rai": v["flood_rai"],
-            "province_rai": v["province_rai"],
-            "pct": v["pct"],
-        }
-
-    output = {
+    # ── 9. Save ───────────────────────────────────────────────────────────────
+    out = {
         "_meta": {
-            "source":            "GISTDA — พื้นที่น้ำท่วมซ้ำซาก ปี 2554–2566",
+            "source":            "GISTDA — พื้นที่น้ำท่วมซ้ำซาก ปี 2554–2566 (13 ปี)",
             "source_en":         "GISTDA — Recurring Flood Areas 2011–2023",
             "source_url":        "https://opendata.gistda.or.th/en/dataset/disasters-01",
-            "api_url":           API_URL,
-            "updated":           date.today().isoformat(),
+            "boundary_source":   "GADM 4.1 Thailand level 3 (subdistrict/tambon)",
+            "method":            "Tambon centroid query — full coverage, area-weighted",
+            "tambons_queried":   len(results),
+            "provinces_covered": covered,
             "period":            "2011-2023 (13 years)",
-            "method":            f"Monte Carlo point sampling ({n_points} points/province) via GISTDA point API",
-            "provinces_covered": len(clean_results),
-            "note":              "% พื้นที่จังหวัดที่อยู่ในเขตน้ำท่วมซ้ำซาก · ประมาณจากการสุ่มจุด (point-based API) · GISTDA ข้อมูลดาวเทียม 13 ปี",
-            "boundary_source":   "OCHA HDX — Thailand Admin Boundaries (tha_admin1)",
+            "updated":           date.today().isoformat(),
+            "note":              "% คำนวณจากพื้นที่ตำบลจริง ไม่ใช่การสุ่มตัวอย่าง — แม่นกว่าเวอร์ชันเดิม",
         },
-        "provinces": dict(sorted(clean_results.items())),
+        "provinces": provinces_out,
     }
     os.makedirs(os.path.dirname(OUTPUT), exist_ok=True)
     with open(OUTPUT, "w", encoding="utf-8") as f:
-        json.dump(output, f, ensure_ascii=False, indent=2)
-    print(f"\n✅ Saved {len(clean_results)} provinces → {OUTPUT}")
+        json.dump(out, f, ensure_ascii=False, indent=2)
+    print(f"\n✅ Saved {covered} provinces → {OUTPUT}")
 
 
 if __name__ == "__main__":
