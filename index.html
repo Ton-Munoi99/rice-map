@@ -4869,7 +4869,7 @@ ${warningsHtml}
 
     async function fetchFloodData() {
       try {
-        const r = await fetch("data/flood-risk.json");
+        const r = await fetch("data/flood-risk.json?_=" + Date.now(), { cache: "no-store" });
         if (!r.ok) return;
         window.FLOOD_DATA = await r.json();
         if (S.layer === "flood") rerender();
