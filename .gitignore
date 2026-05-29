@@ -31,3 +31,21 @@ desktop.ini
 
 # Node
 node_modules/
+
+# Claude Code session/config + worktrees (must not be committed)
+.claude/
+.firecrawl/
+scratch/
+
+# Scratch / working files (research, OCR, temp exports)
+ocr-table-pages/
+fertilizer-table-pages-rendered/
+fertilizer-tables-by-page/
+fertilizer-tables-by-page.xlsx
+fertilizer-tables-by-page.zip
+*.docx
+*.xlsx
+*.txt
+app_check.js
+# keep legit tracked data files
+!data/rice-mills-api-snapshot.xlsx
