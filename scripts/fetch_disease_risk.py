@@ -50,9 +50,10 @@ def load_centroids():
         if all_pts:
             lons = [p[0] for p in all_pts]
             lats = [p[1] for p in all_pts]
+            # Bounding box center — less biased than vertex average for coastal/irregular provinces
             centroids[name] = {
-                "lat": round(sum(lats) / len(lats), 4),
-                "lon": round(sum(lons) / len(lons), 4),
+                "lat": round((min(lats) + max(lats)) / 2, 4),
+                "lon": round((min(lons) + max(lons)) / 2, 4),
             }
     return centroids
 

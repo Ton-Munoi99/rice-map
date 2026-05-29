@@ -194,7 +194,9 @@ def main():
         l4_count  = l4_window.size().getInfo()
         print(f"  Images in 7-day window: {l4_count}")
 
-        l4_img  = l4_window.mean()
+        # Rename to "sm" so GEE produces "sm_mean" in reduceRegions output
+        # (without rename GEE uses "sm_surface_wetness_mean" which reduce_provinces misses)
+        l4_img  = l4_window.mean().rename("sm")
         l4_data = reduce_provinces(l4_img, provinces, L4_SCALE, L4_SM_SCALE, "SMAP L4")
 
         filled = []

@@ -45,7 +45,9 @@ GADM_URL  = "https://geodata.ucdavis.edu/gadm/gadm4.1/json/gadm41_THA_3.json.zip
 UTM       = "EPSG:32647"
 
 API_URL   = "https://api-gateway.gistda.or.th/api/2.0/resources/gi-service/v1.1/disasters/flood-recurrence"
-DEMO_KEY  = "CoxyRDixPBGCMuEkriUXZqlBlUMTZK6klJ8WKgalsLuQ74fTNJsFZUQXLVBPuk9o"
+# Public demo key from GISTDA Open Data (https://opendata.gistda.or.th)
+# Override via env var GISTDA_API_KEY if you have a dedicated key
+DEMO_KEY  = os.environ.get("GISTDA_API_KEY", "CoxyRDixPBGCMuEkriUXZqlBlUMTZK6klJ8WKgalsLuQ74fTNJsFZUQXLVBPuk9o")
 HEADERS   = {"Referer": "https://opendata.gistda.or.th/"}
 DELAY     = 0.3   # วินาที ระหว่าง request
 MAX_RETRY = 2
@@ -161,10 +163,11 @@ def main():
 
     # Apply filters
     if args.province:
+        all_prov_keys = sorted({r["prov_key"] for r in rows})  # save before filter
         rows = [r for r in rows if r["prov_key"] == args.province]
         if not rows:
             print(f"ERROR: ไม่พบจังหวัด '{args.province}'")
-            print("Available:", sorted({r['prov_key'] for r in rows[:100]}))
+            print("Available:", all_prov_keys)
             sys.exit(1)
     if args.test:
         rows = rows[:100]
@@ -188,8 +191,8 @@ def main():
 
     for i, row in enumerate(todo, 1):
         data = query_gistda(row["lat"], row["lon"])
-        flooded     = data is not None
-        total_years = int(data["total"]) if flooded and data.get("total") else 0
+        total_years = int(data["total"]) if data and data.get("total") else 0
+        flooded     = total_years > 0  # ต้องมีอย่างน้อย 1 ปีที่ท่วม, total=0 = ไม่นับ
 
         results[row["id"]] = {
             "prov_key":   row["prov_key"],
@@ -207,8 +210,8 @@ def main():
             remaining_min = (len(todo) - i) * DELAY / 60
             print(f"[{i:4d}/{len(todo)}] {pct_done:4.0f}%  {sym}  ETA: {remaining_min:.0f} min", flush=True)
 
-        # Save cache every 100 tambons
-        if i % 100 == 0:
+        # Save cache every 100 tambons (not on last — post-loop handles it)
+        if i % 100 == 0 and i < len(todo):
             os.makedirs(os.path.dirname(CACHE), exist_ok=True)
             with open(CACHE, "w", encoding="utf-8") as f:
                 json.dump(results, f, ensure_ascii=False, indent=2)
