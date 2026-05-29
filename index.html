@@ -1912,7 +1912,7 @@
       drought:    { th: "ฝนเบี่ยงเบนจากปกติ", en: "Rainfall Anomaly", unit: "% เทียบค่าปกติ 5 ปี", unitEn: "% vs 5-yr avg", unitShort: "%", unitShortEn: "%", summary: "% เบี่ยงเบนเฉลี่ย", summaryMode: "avg_signed" },
       mills:      { th: "โรงสีข้าว", en: "Rice Mills", unit: "แห่ง/จังหวัด", unitEn: "mills/prov", unitShort: "แห่ง", unitShortEn: "mills", summary: "โรงสีข้าวรวม", summaryMode: "sum" },
       profit:     { th: "กำไร/ขาดทุนต่อไร่", en: "Est. Profit/Loss per Rai", unit: "บาท/ไร่ (ประมาณการ)", unitEn: "฿/rai (est.)", unitShort: "฿/ไร่", unitShortEn: "฿/rai", summary: "กำไร/ขาดทุนเฉลี่ย", summaryMode: "avg_signed" },
-      flood:      { th: "% ความเสี่ยงน้ำท่วมซ้ำจุดเดิม", en: "Flood Risk Zone", unit: "% พื้นที่ (GISTDA 2554–2566 · 5,926 ตำบล)", unitEn: "% area (GISTDA 2011–2023 · 5,926 tambons)", unitShort: "%", unitShortEn: "%", summary: "พื้นที่เสี่ยงน้ำท่วมเฉลี่ย", summaryMode: "avg_nonzero" },
+      flood:      { th: "% ความเสี่ยงน้ำท่วมซ้ำจุดเดิม", en: "Flood Risk Zone", unit: "% พื้นที่ (GFD/MODIS 2543–2561 · 100 เหตุการณ์)", unitEn: "% area (GFD/MODIS 2000–2018 · 100 flood events)", unitShort: "%", unitShortEn: "%", summary: "พื้นที่เสี่ยงน้ำท่วมเฉลี่ย", summaryMode: "avg_nonzero" },
       ndvi:       { th: "ดัชนีพืชพรรณ (NDVI)", en: "Vegetation Index (NDVI)", unit: "ค่า NDVI เฉลี่ยรายจังหวัด (0–1)", unitEn: "Mean NDVI per province (0–1)", unitShort: "NDVI", unitShortEn: "NDVI", summary: "NDVI เฉลี่ยทั้งประเทศ", summaryMode: "avg" },
       riceEvi:    { th: "สภาพนาข้าว", en: "Rice Paddy Status", unit: "EVI เฉพาะนาข้าว (0–1)", unitEn: "Rice paddy EVI (0–1)", unitShort: "EVI", unitShortEn: "EVI", summary: "EVI เฉลี่ยนาข้าวทั้งประเทศ", summaryMode: "avg" },
       rain:       { th: "ฝนสะสม 7 วัน", en: "7-Day Rainfall", unit: "มม. (7 วันล่าสุด)", unitEn: "mm (last 7 days)", unitShort: "มม.", unitShortEn: "mm", summary: "ฝนสะสมเฉลี่ยต่อจังหวัด", summaryMode: "avg" },
@@ -2924,7 +2924,7 @@ function t(th, en) {
         : (S.layer === "rainfall" || S.layer === "drought") ? t("Open-Meteo", "Open-Meteo")
         : S.layer === "mills" ? t("กรมการค้าภายใน", "DIT")
         : S.layer === "profit" ? t("OAE+สมาคมโรงสีฯ", "OAE+TRMAB")
-        : S.layer === "flood" ? t("GISTDA", "GISTDA")
+        : S.layer === "flood" ? t("GFD/MODIS", "GFD/MODIS")
         : S.layer === "ndvi" ? t("NASA MODIS", "NASA MODIS")
         : S.layer === "riceEvi" ? t("ดาวเทียม", "Satellite")
         : S.layer === "rain"  ? t("Open-Meteo", "Open-Meteo")
@@ -2954,7 +2954,7 @@ function t(th, en) {
               : S.layer === "drought"
               ? `🌡 ${t('ฝนเบี่ยงเบนจากปกติ','Rainfall Anomaly')} ${WEATHER_DATA?._meta?.year ? toBE(WEATHER_DATA._meta.year) : '2568'} vs ${WEATHER_FORECAST?._meta?.base_years||'2020–2024'}`
               : S.layer === "flood"
-              ? `🌊 ${t('% ความเสี่ยงน้ำท่วมซ้ำจุดเดิม','Flood Risk')} GISTDA 2554–2566`
+              ? `🌊 ${t('% ความเสี่ยงน้ำท่วมซ้ำจุดเดิม','Flood Risk')} GFD 2543–2561`
               : S.layer === "ndvi"
               ? `🌿 NDVI ${window.NDVI_DATA?.month || ''} · NASA MODIS`
               : S.layer === "riceEvi"
@@ -2998,8 +2998,8 @@ function t(th, en) {
       }
       if (S.layer === "flood") {
         refs.dataSourceNote.textContent = t(
-          `📊 คำนวณจากพื้นที่ตำบลจริงทุกตำบล (5,926 ตำบลทั่วประเทศ) · ครอบคลุม ${covered} จังหวัด · ข้อมูลดาวเทียม GISTDA 13 ปี (2554–2566)`,
-          `📊 Calculated from actual tambon area — all 5,926 tambons nationwide · ${covered} provinces · 13-yr GISTDA satellite data (2011–2023)`
+          `📊 คำนวณจาก pixel ดาวเทียม MODIS 250m · 100 เหตุการณ์น้ำท่วม 2543–2561 · ครอบคลุมทุกประเภทน้ำท่วม`,
+          `📊 Calculated from MODIS 250m satellite pixels · 100 flood events 2000–2018 · covers all flood types`
         );
         return;
       }
@@ -3217,8 +3217,8 @@ function t(th, en) {
         ? t(`ประมาณการกำไร/ขาดทุนต่อไร่ = ราคาโรงสี × ผลผลิต − ต้นทุน OAE · สีเขียว = กำไร · สีแดง = ขาดทุน · ใช้ต้นทุนอ้างอิงระดับประเทศ (ข้าวขาว ${fmtNumber(COST_BASE.white.oaeRaiCost)} / หอมมะลิ ${fmtNumber(COST_BASE.jasmine.oaeRaiCost)} ฿/ไร่)`,
            `Est. profit/loss per rai = mill price × yield − OAE cost benchmark · Green = profit · Red = loss · National cost reference (white ${fmtNumber(COST_BASE.white.oaeRaiCost)} / jasmine ${fmtNumber(COST_BASE.jasmine.oaeRaiCost)} ฿/rai)`)
         : S.layer === "flood"
-        ? t(`% พื้นที่จังหวัดที่มีประวัติน้ำท่วมซ้ำจุดเดิม · คำนวณจากพื้นที่ตำบลจริงทุกตำบล (5,926 ตำบล) · ข้อมูลดาวเทียม GISTDA 13 ปี (2554–2566) · สีน้ำเงินเข้ม = เสี่ยงสูงกว่า`,
-           `% of province area with recurring flood history · Calculated from all 5,926 tambons · GISTDA satellite data 13 years (2011–2023) · Dark blue = higher risk`)
+        ? t(`% พื้นที่จังหวัดที่เคยถูกน้ำท่วม · ดาวเทียม MODIS 250m · 100 เหตุการณ์ 2543–2561 · ครอบคลุมน้ำท่วมฉับพลัน+น้ำท่วมขัง · สีน้ำเงินเข้ม = เสี่ยงสูงกว่า`,
+           `% of province area ever flooded · MODIS 250m satellite · 100 flood events 2000–2018 · covers flash floods & riverine floods · Dark blue = higher risk`)
         : S.layer === "ndvi"
         ? t(`ค่าเฉลี่ย NDVI รายจังหวัด เดือน ${window.NDVI_DATA?.month || '—'} · จากดาวเทียม NASA MODIS (1km) · สีเขียวเข้ม = พืชพรรณหนาแน่น · อัปเดตทุกเดือน`,
            `Mean NDVI by province for ${window.NDVI_DATA?.month || '—'} · NASA MODIS satellite 1km · Dark green = dense vegetation · Monthly update`)
@@ -3258,7 +3258,7 @@ function t(th, en) {
         : S.layer === "profit"
         ? `${riceLabel} &nbsp;·&nbsp; ${metaLabel}<br>${yearLabel} · ${t('ประมาณการ','Est.')}`
         : S.layer === "flood"
-        ? `${metaLabel}<br>${t('GISTDA 2554–2566', 'GISTDA 2011–2023')}`
+        ? `${metaLabel}<br>${t('GFD/MODIS 2543–2561', 'GFD/MODIS 2000–2018')}`
         : S.layer === "rain"
         ? `${metaLabel}<br>${t(`Open-Meteo · อัปเดต ${window.RAIN_DATA?._meta?.updated || '—'}`, `Open-Meteo · Updated ${window.RAIN_DATA?._meta?.updated || '—'}`)}`
         : S.layer === "gsmap"
@@ -3651,7 +3651,7 @@ function t(th, en) {
         const riskColor = pct >= 30 ? '#1565c0' : pct >= 10 ? '#1e88e5' : pct >= 1 ? '#64b5f6' : 'var(--muted)';
         floodHtml = `
           <div class="rice-card" style="grid-column:1/-1;background:rgba(30,136,229,.08);border:1px solid rgba(30,136,229,.25)">
-            <div class="t">🌊 ${t('% ความเสี่ยงน้ำท่วมซ้ำจุดเดิม (GISTDA 2554–2566)','Recurring Flood Risk (GISTDA 2011–2023)')}</div>
+            <div class="t">🌊 ${t('% ความเสี่ยงน้ำท่วมซ้ำจุดเดิม (GFD 2543–2561)','Recurring Flood Risk (GFD 2000–2018)')}</div>
             <div class="metric">
               <div class="m-label">${t('% พื้นที่จังหวัดที่เคยถูกน้ำท่วม','% Province Area Flooded')}</div>
               <div class="m-value" style="color:${riskColor}">${pct.toFixed(1)}% <small style="color:${riskColor}">${riskLabel}</small></div>
@@ -3668,8 +3668,8 @@ function t(th, en) {
               <div class="m-label">${t('ตำบลที่มีประวัติน้ำท่วม','Tambons with Flood History')}</div>
               <div class="m-value" style="color:${riskColor}">${floodTambons} <small style="color:var(--muted)">/ ${totalTambons} ${t('ตำบล','tambons')}</small></div>
             </div>` : ''}
-            <div style="font-size:9px;color:var(--muted);margin-top:4px">📊 ${t('คำนวณจากพื้นที่ตำบลจริงทุกตำบล (5,926 ตำบลทั่วประเทศ) · ข้อมูลดาวเทียม GISTDA 13 ปี','Calculated from actual tambon area — all 5,926 tambons nationwide · 13-yr GISTDA satellite data')}</div>
-            <div style="font-size:9px;color:var(--muted);margin-top:2px">${t('ที่มา: GISTDA — พื้นที่น้ำท่วมซ้ำซาก 2554–2566 (ข้อมูลเปิด)','Source: GISTDA — Recurring Flood Areas 2011–2023 (Open Data)')}</div>
+            <div style="font-size:9px;color:var(--muted);margin-top:4px">📊 ${t('คำนวณจาก pixel ดาวเทียม MODIS 250m · Global Flood Database (Cloud to Street/Google) · 100 เหตุการณ์ 2543–2561','MODIS 250m satellite pixels · Global Flood Database (Cloud to Street/Google) · 100 events 2000–2018')}</div>
+            <div style="font-size:9px;color:var(--muted);margin-top:2px">${t('ที่มา: Global Flood Database (Cloud to Street / Google) · 2543–2561','Source: Global Flood Database (Cloud to Street / Google) · 2000–2018')}</div>
           </div>`;
       }
       // ── NDVI detail card ──────────────────────────────────────────────────
@@ -4147,7 +4147,7 @@ function t(th, en) {
       if (LAYER_NO_TIMESERIES.has(S.layer)) {
         refs.sparkSvg.innerHTML = "";
         refs.sparkTitle.textContent = S.layer === "flood"
-          ? t("ข้อมูล GISTDA 2554–2566 — ไม่มีอนุกรมเวลา", "GISTDA 2011–2023 snapshot — no time series")
+          ? t("ข้อมูล GFD/MODIS 2543–2561 — ไม่มีอนุกรมเวลา", "GFD/MODIS 2000–2018 snapshot — no time series")
           : S.layer === "ndvi"
           ? t(`NDVI ${window.NDVI_DATA?.month || ''} — อัปเดตรายเดือน (NASA MODIS)`, `NDVI ${window.NDVI_DATA?.month || ''} — monthly update (NASA MODIS)`)
           : S.layer === "riceEvi"
@@ -4282,7 +4282,7 @@ function t(th, en) {
         return `
     <div class="th">${t(NM[en]||en,en)}</div>
     <div class="en">${en}</div>
-    <div class="type">${t('% ความเสี่ยงน้ำท่วมซ้ำจุดเดิม (GISTDA 2554–2566)','Recurring Flood Risk (GISTDA 2011–2023)')}</div>
+    <div class="type">${t('% ความเสี่ยงน้ำท่วมซ้ำจุดเดิม (GFD/MODIS 2543–2561)','Recurring Flood Risk (GFD/MODIS 2000–2018)')}</div>
     <div class="value" style="color:${riskColor}">~${pct.toFixed(1)}% <small style="font-size:12px;color:var(--muted)">${t('ของพื้นที่จังหวัด','of province area')}</small></div>
     <div style="font-size:11px;font-weight:700;color:${riskColor};margin:2px 0">${riskLabel}</div>
     <div class="rank">${rank ? `${t('อันดับ','Rank')} #${rank} / ${total}` : t('ไม่มีข้อมูล','No data')}</div>
@@ -4544,7 +4544,7 @@ ${warningsHtml}
         return;
       }
       if (S.layer === "flood") {
-        refs.yearButtons.innerHTML = `<button class="pill on" data-year="flood">🌊 GISTDA 2554–2566</button>`;
+        refs.yearButtons.innerHTML = `<button class="pill on" data-year="flood">🌊 GFD 2543–2561</button>`;
         return;
       }
       if (S.layer === "ndvi") {
@@ -5262,6 +5262,11 @@ ${warningsHtml}
           if (!entry) continue;
           entry.price_low = lo;
           entry.price_high = hi;
+          // ข้าวเปลือกเจ้า: คอลัมน์ความชื้น 25% จาก PDF (ถ้ามี) → overlay ทับ CSV เก่า
+          if (rice === 'white' && live.white_low_25 && live.white_high_25) {
+            entry.price_low_alt = live.white_low_25;
+            entry.price_high_alt = live.white_high_25;
+          }
           entry.price_basis = 'moisture_15_pct';
           entry.source = 'mill_pdf';
           entry.source_title = LIVE_PRICES?.provincial_prices?.source_th || 'สมาคมโรงสีข้าวไทย';

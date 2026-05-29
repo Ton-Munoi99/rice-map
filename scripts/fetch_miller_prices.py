@@ -235,10 +235,32 @@ def _ensure_prov(prices: dict, th_name: str, date_str: str) -> dict:
     if th_name not in prices:
         prices[th_name] = {
             "white": None, "white_low": None, "white_high": None,
+            "white_25": None, "white_low_25": None, "white_high_25": None,
             "jasmine": None, "jasmine_low": None, "jasmine_high": None,
             "date": date_str,
         }
     return prices[th_name]
+
+
+def _store_prices(prov_data, rice_type, ranges):
+    """เก็บราคา: index 0 = ความชื้น 15% (คอลัมน์ซ้าย, ราคาสูงกว่า)
+    สำหรับข้าวเปลือกเจ้า (white) คอลัมน์ขวา index 1 = ความชื้น 25% (ราคาต่ำกว่า)
+    คืน True ถ้าเก็บสำเร็จ"""
+    lo, hi, avg = _parse_range(*ranges[0])
+    if avg is None or prov_data[rice_type] is not None:
+        return False
+    prov_data[rice_type] = avg
+    prov_data[f"{rice_type}_low"] = lo
+    prov_data[f"{rice_type}_high"] = hi
+    # หน้า white มี 2 คอลัมน์ — คอลัมน์ขวา (index 1) = ความชื้น 25%
+    if rice_type == "white" and len(ranges) > 1 and prov_data["white_25"] is None:
+        lo2, hi2, avg2 = _parse_range(*ranges[1])
+        # guard: 25% (ชื้นกว่า) ต้องถูกกว่า 15% — ถ้าสลับคอลัมน์ให้ข้าม
+        if avg2 is not None and lo2 < lo:
+            prov_data["white_25"] = avg2
+            prov_data["white_low_25"] = lo2
+            prov_data["white_high_25"] = hi2
+    return True
 
 
 def _parse_range(lo_str: str, hi_str: str):
@@ -296,13 +318,7 @@ def extract_prices_from_bytes(pdf_bytes: bytes, date_str: str) -> dict:
                     # Case A: line has BOTH price and province (legacy format)
                     if th_name and price_ranges:
                         prov_data = _ensure_prov(prices, th_name, date_str)
-                        # Index 0 = ความชื้น 15% (left column) — always want this.
-                        # Index 1 would be ความชื้น 25% (right column) which we skip.
-                        lo, hi, avg = _parse_range(*price_ranges[0])
-                        if avg is not None and prov_data[rice_type] is None:
-                            prov_data[rice_type] = avg
-                            prov_data[f"{rice_type}_low"] = lo
-                            prov_data[f"{rice_type}_high"] = hi
+                        if _store_prices(prov_data, rice_type, price_ranges):
                             page_prov_count += 1
                         pending_ranges = None
                         continue
@@ -315,12 +331,7 @@ def extract_prices_from_bytes(pdf_bytes: bytes, date_str: str) -> dict:
                     # Case C: province-only line → pair with pending price
                     if th_name and pending_ranges:
                         prov_data = _ensure_prov(prices, th_name, date_str)
-                        # Index 0 = ความชื้น 15% (left column) — always want this.
-                        lo, hi, avg = _parse_range(*pending_ranges[0])
-                        if avg is not None and prov_data[rice_type] is None:
-                            prov_data[rice_type] = avg
-                            prov_data[f"{rice_type}_low"] = lo
-                            prov_data[f"{rice_type}_high"] = hi
+                        if _store_prices(prov_data, rice_type, pending_ranges):
                             page_prov_count += 1
                         pending_ranges = None
                         continue
@@ -408,9 +419,9 @@ def main():
             "source_en":  "Thai Rice Millers Association",
             "source_url": source_url,
             "updated_at": datetime.now(timezone.utc).isoformat(),
-            "note_th":    "ราคาข้าวเปลือกรายจังหวัด ความชื้น 15% (บาท/ตัน)",
-            "note_en":    "Provincial paddy rice prices at 15% moisture (THB/ton)",
-            "moisture":   "15%",
+            "note_th":    "ราคาข้าวเปลือกรายจังหวัด — ข้าวเปลือกเจ้ามีทั้งความชื้น 15% (หลัก) และ 25% (บาท/ตัน)",
+            "note_en":    "Provincial paddy prices — white paddy at both 15% (primary) and 25% moisture (THB/ton)",
+            "moisture":   "15% + 25%",
             "data":       prices,
         }
     }
@@ -421,7 +432,9 @@ def main():
     print(f"\n[saved] {OUTPUT_FILE}")
     print(f"  {len(prices)} provinces | date: {date_str}")
     for prov, vals in list(prices.items())[:5]:
-        print(f"  {prov}: white={vals.get('white')} jasmine={vals.get('jasmine')}")
+        w15 = f"{vals.get('white_low')}-{vals.get('white_high')}" if vals.get('white_low') else "—"
+        w25 = f"{vals.get('white_low_25')}-{vals.get('white_high_25')}" if vals.get('white_low_25') else "—"
+        print(f"  {prov}: 15%={w15}  25%={w25}  jasmine={vals.get('jasmine')}")
 
 
 if __name__ == "__main__":
