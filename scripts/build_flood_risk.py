@@ -1,221 +1,330 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
-Build data/flood-risk.json using Global Flood Database (GFD) via Google Earth Engine.
-
-Dataset: GLOBAL_FLOOD_DB/MODIS_EVENTS/V1 (Cloud to Street / Google)
-- 100 flood events in Thailand, 2000–2018
-- Band 'flooded': 1 = pixel was flooded in this event
-- Band 'jrc_perm_water': 1 = permanent water (rivers/sea) → exclude
-- Resolution: 250m MODIS
-- Covers ALL flood types including flash floods in southern provinces
-
-Method:
-- Union all 100 events → "ever flooded" mask (excluding permanent water)
-- Also compute flood frequency (how many events hit each province)
-- reduceRegions per province → % area flooded + avg event count
-- Much faster and more accurate than GISTDA point API (1 call vs 5,926 calls)
-
-Output: data/flood-risk.json
-Usage: python scripts/build_flood_risk.py
+Build data/flood-risk.json from DDPM (กรมป้องกันและบรรเทาสาธารณภัย) flood statistics.
+Source: catalog.disaster.go.th/dataset/dpm-gd027
+Period: 2562-2568 (7 years / 2019-2025)
+Data: Official disaster declarations -- covers ALL flood types including flash floods
 """
-import sys, io
+import json, os, sys, io
+from datetime import date
+
 if sys.platform == "win32":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
-import ee
-import json
-import os
-from datetime import date
+try:
+    import openpyxl
+except ImportError:
+    sys.exit("pip install openpyxl")
 
-# ── Province name mapping: GAUL → rice-map ─────────────────────────────────
-NAME_MAP = {
-    "Bangkok":                  "Bangkok Metropolis",
-    "Buriram":                  "Buri Ram",
-    "Chainat":                  "Chai Nat",
-    "Chonburi":                 "Chon Buri",
-    "Kampaeng Phet":            "Kamphaeng Phet",
-    "Lopburi":                  "Lop Buri",
-    "Nong Bua Lamphu":          "Nong Bua Lam Phu",
-    "Phachinburi":              "Prachin Buri",
-    "Phra Nakhon Si Ayudhya":   "Phra Nakhon Si Ayutthaya",
-    "Prachuap Khilikhan":       "Prachuap Khiri Khan",
-    "Samut Prakarn":            "Samut Prakan",
-    "Samut Songkham":           "Samut Songkhram",
-    "Si Saket":                 "Si Sa Ket",
-    "Sisaket":                  "Si Sa Ket",
-    "Singburi":                 "Sing Buri",
-    "Suphanburi":               "Suphan Buri",
-    "Trad":                     "Trat",
-    "Bung Kan":                 "Bueng Kan",
-    "Changwat Bueng Kan":       "Bueng Kan",
+HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.join(HERE, "..")
+DDPM_DIR = os.path.join(ROOT, "data", "source", "ddpm")
+OUTPUT = os.path.join(ROOT, "data", "flood-risk.json")
+
+# ─────────────────────────────────────────────
+# Province name mapping: Thai -> English
+# (copied from fetch_miller_prices.py + additions)
+# ─────────────────────────────────────────────
+PROVINCE_MAP = {
+    "กรุงเทพมหานคร": "Bangkok Metropolis",
+    "กระบี่": "Krabi", "กาญจนบุรี": "Kanchanaburi",
+    "กาฬสินธุ์": "Kalasin", "กำแพงเพชร": "Kamphaeng Phet",
+    "ขอนแก่น": "Khon Kaen", "จันทบุรี": "Chanthaburi",
+    "ฉะเชิงเทรา": "Chachoengsao", "ชลบุรี": "Chon Buri",
+    "ชัยนาท": "Chai Nat", "ชัยภูมิ": "Chaiyaphum",
+    "ชุมพร": "Chumphon", "เชียงราย": "Chiang Rai",
+    "เชียงใหม่": "Chiang Mai", "ตรัง": "Trang",
+    "ตราด": "Trat", "ตาก": "Tak",
+    "นครนายก": "Nakhon Nayok", "นครปฐม": "Nakhon Pathom",
+    "นครพนม": "Nakhon Phanom", "นครราชสีมา": "Nakhon Ratchasima",
+    "นครศรีธรรมราช": "Nakhon Si Thammarat",
+    "นครสวรรค์": "Nakhon Sawan", "นนทบุรี": "Nonthaburi",
+    "นราธิวาส": "Narathiwat", "น่าน": "Nan",
+    "บึงกาฬ": "Bueng Kan", "บุรีรัมย์": "Buri Ram",
+    "ปทุมธานี": "Pathum Thani",
+    "ประจวบคีรีขันธ์": "Prachuap Khiri Khan",
+    "ปราจีนบุรี": "Prachin Buri", "ปัตตานี": "Pattani",
+    "พระนครศรีอยุธยา": "Phra Nakhon Si Ayutthaya",
+    "พะเยา": "Phayao", "พังงา": "Phangnga",
+    "พัทลุง": "Phatthalung", "พิจิตร": "Phichit",
+    "พิษณุโลก": "Phitsanulok", "เพชรบุรี": "Phetchaburi",
+    "เพชรบูรณ์": "Phetchabun", "แพร่": "Phrae",
+    "ภูเก็ต": "Phuket", "มหาสารคาม": "Maha Sarakham",
+    "มุกดาหาร": "Mukdahan", "แม่ฮ่องสอน": "Mae Hong Son",
+    "ยโสธร": "Yasothon", "ยะลา": "Yala",
+    "ร้อยเอ็ด": "Roi Et", "ระนอง": "Ranong",
+    "ระยอง": "Rayong", "ราชบุรี": "Ratchaburi",
+    "ลพบุรี": "Lop Buri", "ลำปาง": "Lampang",
+    "ลำพูน": "Lamphun", "เลย": "Loei",
+    "ศรีสะเกษ": "Si Sa Ket", "สกลนคร": "Sakon Nakhon",
+    "สงขลา": "Songkhla", "สตูล": "Satun",
+    "สมุทรปราการ": "Samut Prakan",
+    "สมุทรสงคราม": "Samut Songkhram",
+    "สมุทรสาคร": "Samut Sakhon",
+    "สระแก้ว": "Sa Kaeo", "สระบุรี": "Saraburi",
+    "สิงห์บุรี": "Sing Buri", "สุโขทัย": "Sukhothai",
+    "สุพรรณบุรี": "Suphan Buri", "สุราษฎร์ธานี": "Surat Thani",
+    "สุรินทร์": "Surin", "หนองคาย": "Nong Khai",
+    "หนองบัวลำภู": "Nong Bua Lam Phu",
+    "อ่างทอง": "Ang Thong", "อำนาจเจริญ": "Amnat Charoen",
+    "อุดรธานี": "Udon Thani", "อุตรดิตถ์": "Uttaradit",
+    "อุทัยธานี": "Uthai Thani", "อุบลราชธานี": "Ubon Ratchathani",
 }
 
-DATASET    = "GLOBAL_FLOOD_DB/MODIS_EVENTS/V1"
-SCALE      = 250        # MODIS native resolution (meters)
-M2_PER_RAI = 1600.0     # 1 rai = 1,600 m²
+# Abbreviations sometimes used in DDPM data
+ABBREV_MAP = {
+    "กรุงเทพ": "กรุงเทพมหานคร",
+    "กทม": "กรุงเทพมหานคร",
+    "กทม.": "กรุงเทพมหานคร",
+    "อยุธยา": "พระนครศรีอยุธยา",
+}
+
+# All 77 province English names (for filling zeros)
+ALL_PROVINCES_EN = set(PROVINCE_MAP.values())
 
 
-# ── GEE Auth ─────────────────────────────────────────────────────────────────
-def init_gee():
-    key_data = os.environ.get("GEE_SERVICE_ACCOUNT_KEY")
-    if key_data:
-        key_dict = json.loads(key_data)
-        credentials = ee.ServiceAccountCredentials(
-            email=key_dict["client_email"],
-            key_data=key_dict["private_key"],
-        )
-        ee.Initialize(credentials, project="agriculture-monitoring-497007")
-        print("✓ Authenticated via Service Account")
-    else:
-        ee.Initialize(project="agriculture-monitoring-497007")
-        print("✓ Authenticated via default credentials")
+# ─────────────────────────────────────────────
+# Helpers
+# ─────────────────────────────────────────────
+def _clean_prov(raw):
+    """Clean province name: strip, handle abbreviations."""
+    s = str(raw or "").strip()
+    # Remove common prefixes like จ. or จังหวัด
+    for prefix in ["จ.", "จังหวัด"]:
+        if s.startswith(prefix):
+            s = s[len(prefix):].strip()
+    # Check abbreviations
+    if s in ABBREV_MAP:
+        s = ABBREV_MAP[s]
+    return s
 
 
-# ── Province polygons (GAUL 76 + Bueng Kan) ──────────────────────────────────
-def build_provinces():
-    gaul_provinces = (
-        ee.FeatureCollection("FAO/GAUL/2015/level1")
-        .filter(ee.Filter.eq("ADM0_NAME", "Thailand"))
-    )
-    bueng_kan_poly = ee.Geometry.Polygon([[
-        [103.378, 17.979], [103.380, 18.121], [103.416, 18.215],
-        [103.453, 18.319], [103.498, 18.416], [103.558, 18.502],
-        [103.594, 18.582], [103.640, 18.643], [103.723, 18.693],
-        [103.810, 18.681], [103.875, 18.640], [103.952, 18.620],
-        [104.030, 18.598], [104.113, 18.562], [104.193, 18.507],
-        [104.230, 18.438], [104.218, 18.350], [104.170, 18.263],
-        [104.082, 18.210], [103.990, 18.174], [103.900, 18.110],
-        [103.840, 18.035], [103.760, 17.970], [103.680, 17.952],
-        [103.590, 17.960], [103.500, 17.960], [103.420, 17.970],
-        [103.378, 17.979],
-    ]])
-    bueng_kan_feat = ee.Feature(bueng_kan_poly, {
-        "ADM1_NAME": "Bung Kan", "ADM0_NAME": "Thailand",
-    })
-    return gaul_provinces.merge(ee.FeatureCollection([bueng_kan_feat]))
+def _safe_int(val):
+    """Convert a value to int, handling None, float, and string numbers."""
+    if val is None:
+        return 0
+    if isinstance(val, (int, float)):
+        return int(val)
+    s = str(val).strip().replace(",", "")
+    try:
+        return int(float(s))
+    except (ValueError, TypeError):
+        return 0
 
 
-# ── Main ─────────────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────
+# Parsers for each format
+# ─────────────────────────────────────────────
+def parse_2562(path):
+    """Format 1: Summary by province -- Sheet "flood2562cut"
+    Row 0: EN headers, Row 1: TH headers, Row 2+: data
+    Col 0 = province (TH), Col 2 = number of tambons
+    """
+    wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
+    # Try specific sheet name first, fall back to last sheet
+    ws = wb["flood2562cut"] if "flood2562cut" in wb.sheetnames else wb[wb.sheetnames[-1]]
+    result = {}
+    for row in ws.iter_rows(min_row=3, values_only=True):  # skip 2 header rows
+        prov = _clean_prov(row[0])
+        if not prov or prov not in PROVINCE_MAP:
+            continue
+        n_tambon = _safe_int(row[2])
+        if n_tambon > 0:
+            result[prov] = n_tambon
+    wb.close()
+    return result
+
+
+def parse_granular(path, prov_col, tambon_col, skip_rows):
+    """Format 2/3: Per-tambon/village rows -- group by province, count distinct tambons.
+    Uses last sheet of the workbook.
+    """
+    wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
+    ws = wb[wb.sheetnames[-1]]
+    prov_tambons = {}  # { "province_th": {"tambon1", "tambon2", ...} }
+    for row in ws.iter_rows(min_row=skip_rows + 1, values_only=True):
+        if row is None:
+            continue
+        if len(row) <= max(prov_col, tambon_col):
+            continue
+        prov = _clean_prov(row[prov_col])
+        tambon = str(row[tambon_col] or "").strip()
+        # Remove common prefixes from tambon
+        for prefix in ["ต.", "ตำบล"]:
+            if tambon.startswith(prefix):
+                tambon = tambon[len(prefix):].strip()
+        if not prov or not tambon:
+            continue
+        # Validate province name -- must be in our map
+        if prov not in PROVINCE_MAP:
+            continue
+        # Filter out long strings that are likely not province names
+        if len(prov) > 30:
+            continue
+        if prov not in prov_tambons:
+            prov_tambons[prov] = set()
+        prov_tambons[prov].add(tambon)
+    wb.close()
+    return {p: len(t) for p, t in prov_tambons.items()}
+
+
+def parse_2568(path):
+    """Format 4: Summary by province -- Sheet "flood68"
+    Row 0: EN headers, Row 1: TH headers, Row 2+: data
+    Col 2 = province, Col 5 = number of tambons
+    """
+    wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
+    # Try specific sheet name first, fall back to last sheet
+    target = None
+    for name in wb.sheetnames:
+        if "68" in name or "อุทกภัย" in name:
+            target = name
+            break
+    ws = wb[target] if target else wb[wb.sheetnames[-1]]
+    result = {}
+    for row in ws.iter_rows(min_row=3, values_only=True):  # skip 2 header rows
+        if row is None or len(row) <= 5:
+            continue
+        prov = _clean_prov(row[2])
+        if not prov or prov not in PROVINCE_MAP:
+            continue
+        n_tambon = _safe_int(row[5])
+        if n_tambon > 0:
+            result[prov] = n_tambon
+    wb.close()
+    return result
+
+
+# ─────────────────────────────────────────────
+# Year -> parser mapping
+# ─────────────────────────────────────────────
+YEAR_PARSERS = {
+    "2562": lambda: parse_2562(os.path.join(DDPM_DIR, "ddpm_flood_2562.xlsx")),
+    "2563": lambda: parse_granular(os.path.join(DDPM_DIR, "ddpm_flood_2563.xlsx"), 0, 2, 1),   # no TH header row
+    "2564": lambda: parse_granular(os.path.join(DDPM_DIR, "ddpm_flood_2564.xlsx"), 0, 2, 2),
+    "2565": lambda: parse_granular(os.path.join(DDPM_DIR, "ddpm_flood_2565.xlsx"), 0, 2, 2),
+    "2566": lambda: parse_granular(os.path.join(DDPM_DIR, "ddpm_flood_2566.xlsx"), 3, 7, 2),   # Col3=province, Col7=tambon
+    "2567": lambda: parse_granular(os.path.join(DDPM_DIR, "ddpm_flood_2567.xlsx"), 5, 9, 2),   # Col5=province, Col9=tambon
+    "2568": lambda: parse_2568(os.path.join(DDPM_DIR, "ddpm_flood_2568.xlsx")),
+}
+
+
+# ─────────────────────────────────────────────
+# Main
+# ─────────────────────────────────────────────
 def main():
-    init_gee()
-    provinces = build_provinces()
-    print("✓ Provinces: GAUL 76 + Bueng Kan = 77 total")
+    print("=" * 60)
+    print("DDPM Flood Risk Builder")
+    print(f"Source: {DDPM_DIR}")
+    print(f"Output: {OUTPUT}")
+    print("=" * 60)
 
-    # ── Load GFD events for Thailand ─────────────────────────────────────────
-    print(f"\n[GFD] {DATASET}")
-    tha_bbox   = ee.Geometry.Rectangle([97.5, 5.5, 105.7, 20.5])
-    gfd        = ee.ImageCollection(DATASET)
-    tha_events = gfd.filterBounds(tha_bbox)
-    n_events   = tha_events.size().getInfo()
-    print(f"  Thailand flood events: {n_events}")
+    # 1. Parse each year
+    all_years = {}
+    for year, parser in YEAR_PARSERS.items():
+        xlsx_path = os.path.join(DDPM_DIR, f"ddpm_flood_{year}.xlsx")
+        if not os.path.exists(xlsx_path):
+            print(f"  {year}: SKIP (file not found: {xlsx_path})")
+            continue
+        try:
+            data = parser()
+            all_years[year] = data
+            print(f"  {year}: {len(data)} provinces")
+        except Exception as e:
+            print(f"  {year}: ERROR - {e}")
 
-    # ── Build "ever flooded" mask (excluding permanent water) ─────────────────
-    # flooded band  : 1 = pixel was flooded in this event
-    # jrc_perm_water: 1 = permanent water body (rivers/sea) → exclude to avoid
-    #                 counting permanent water as flood-prone land
-    ever_flooded = tha_events.select("flooded").max()           # 1 = flooded ≥ 1 event
-    perm_water   = tha_events.select("jrc_perm_water").max()    # 1 = permanent water
-    flood_mask   = ever_flooded.updateMask(perm_water.Not())    # exclude rivers/sea
+    if not all_years:
+        print("\n[ERROR] No data parsed from any year!")
+        sys.exit(1)
 
-    # Count how many distinct events hit each pixel (flood frequency per pixel)
-    event_freq = tha_events.select("flooded").sum().rename("n_events")
+    n_years = len(all_years)
+    print(f"\nParsed {n_years} years successfully.\n")
 
-    # Combine into single image: 'flooded' (0/1 fraction after mean) + 'n_events' (count)
-    flood_img = flood_mask.rename("flooded").addBands(event_freq)
+    # 2. Aggregate: for each province count years flooded + max tambons
+    all_provs_th = set()
+    for yr_data in all_years.values():
+        all_provs_th.update(yr_data.keys())
 
-    # ── Add area_m2 to each province feature (computed on-the-fly from GAUL polygon) ──
-    provinces_with_area = provinces.map(lambda f: f.set("area_m2", f.geometry().area()))
+    results = {}
+    unmapped = []
+    for prov_th in sorted(all_provs_th):
+        prov_en = PROVINCE_MAP.get(prov_th)
+        if not prov_en:
+            unmapped.append(prov_th)
+            continue
+        years_flooded = sum(1 for yr_data in all_years.values() if prov_th in yr_data)
+        max_tambons = max((yr_data.get(prov_th, 0) for yr_data in all_years.values()), default=0)
+        pct = round(years_flooded / n_years * 100, 1)
+        results[prov_en] = {
+            "pct": pct,
+            "flood_events": years_flooded,
+            "total_years": n_years,
+            "flood_tambons": max_tambons,
+            "total_tambons": 0,
+            "flood_rai": 0,
+            "province_rai": 0,
+        }
 
-    # ── reduceRegions at 250m (MODIS native resolution) ──────────────────────
-    print("  Running reduceRegions (250m MODIS) ...")
-    result   = flood_img.reduceRegions(
-        collection=provinces_with_area,
-        reducer=ee.Reducer.mean(),
-        scale=SCALE,
-    )
-    features = result.getInfo()["features"]
-    print(f"  Got {len(features)} provinces from GEE")
+    if unmapped:
+        print("Unmapped province names:")
+        for u in unmapped:
+            print(f"  WARNING: '{u}'")
+        print()
 
-    # ── Parse results ─────────────────────────────────────────────────────────
-    # reduceRegions with a multi-band image + mean() returns properties named
-    # after each band: 'flooded' and 'n_events' (GEE uses band name directly).
-    # Fallback keys cover edge-cases where GEE appends '_mean'.
-    provinces_data = {}
-    null_list      = []
-
-    for f in features:
-        props     = f["properties"]
-        gaul_name = props.get("ADM1_NAME", "")
-        mapped    = NAME_MAP.get(gaul_name, gaul_name)
-
-        pct_raw      = (props.get("flooded")
-                        or props.get("flooded_mean")
-                        or props.get("mean"))
-        n_events_raw = (props.get("n_events")
-                        or props.get("n_events_mean"))
-        area_m2      = props.get("area_m2")
-
-        prov_rai = round(area_m2 / M2_PER_RAI) if area_m2 else None
-
-        if pct_raw is None:
-            # Province has zero overlap with any GFD flood event → pct = 0
-            provinces_data[mapped] = {
-                "pct":          0.0,
-                "flood_rai":    0,
-                "province_rai": prov_rai,
-                "flood_events": 0.0,
-            }
-            null_list.append(gaul_name)
-        else:
-            pct       = round(float(pct_raw) * 100, 2)     # fraction → percent
-            n_ev      = round(float(n_events_raw), 2) if n_events_raw is not None else 0.0
-            flood_rai = round(pct * prov_rai / 100) if prov_rai else None
-            provinces_data[mapped] = {
-                "pct":          pct,
-                "flood_rai":    flood_rai,
-                "province_rai": prov_rai,
-                "flood_events": n_ev,
+    # 3. Fill provinces that never flooded with pct=0
+    for prov_en in ALL_PROVINCES_EN:
+        if prov_en not in results:
+            results[prov_en] = {
+                "pct": 0.0,
+                "flood_events": 0,
+                "total_years": n_years,
+                "flood_tambons": 0,
+                "total_tambons": 0,
+                "flood_rai": 0,
+                "province_rai": 0,
             }
 
-    # ── Summary ───────────────────────────────────────────────────────────────
-    pct_vals = [v["pct"] for v in provinces_data.values()]
-    if null_list:
-        print(f"  Zero-flood provinces (set pct=0): {null_list}")
-    else:
-        print("  All provinces have flood history ✓")
-    print(f"  Provinces total: {len(pct_vals)}/77")
-    if pct_vals:
-        print(f"  pct range: {min(pct_vals):.2f}% – {max(pct_vals):.2f}%"
-              f"  Avg: {sum(pct_vals)/len(pct_vals):.2f}%")
+    # 4. Print summary
+    sorted_by_pct = sorted(results.items(), key=lambda x: (-x[1]["pct"], x[0]))
 
-    top10 = sorted(provinces_data.items(), key=lambda x: x[1]["pct"], reverse=True)[:10]
-    print("\n  Top 10 flood-risk provinces (% area ever flooded 2000-2018):")
-    for rank, (name, vals) in enumerate(top10, 1):
-        print(f"    {rank:2d}. {name:<35s} {vals['pct']:6.2f}%"
-              f"  ({vals['flood_events']:.1f} events avg)")
+    print(f"Total provinces: {len(results)}")
+    print(f"\n--- TOP 10 (highest flood frequency) ---")
+    for prov, d in sorted_by_pct[:10]:
+        print(f"  {prov:30s}  {d['pct']:5.1f}%  ({d['flood_events']}/{d['total_years']} yrs, max {d['flood_tambons']} tambons)")
 
-    # ── Save ──────────────────────────────────────────────────────────────────
-    output = {
-        "_meta": {
-            "source":       "Global Flood Database (Cloud to Street / Google) via GEE",
-            "dataset":      DATASET,
-            "period":       "2000-2018 (19 years)",
-            "method":       ("Pixel-based union of flood events (250m MODIS)"
-                             " — ครอบคลุมทุกประเภทน้ำท่วม รวม flash flood ภาคใต้"),
-            "total_events": n_events,
-            "updated":      date.today().isoformat(),
-            "note":         ("pct = % พื้นที่จังหวัดที่เคยถูกน้ำท่วม"
-                             " · flood_events = จำนวนครั้งเฉลี่ยต่อพื้นที่ท่วม"),
-        },
-        "provinces": dict(sorted(provinces_data.items())),
+    print(f"\n--- BOTTOM 10 (lowest flood frequency) ---")
+    for prov, d in sorted_by_pct[-10:]:
+        print(f"  {prov:30s}  {d['pct']:5.1f}%  ({d['flood_events']}/{d['total_years']} yrs, max {d['flood_tambons']} tambons)")
+
+    # 5. Check specific provinces of interest (Andaman coast)
+    check_provs = ["Phuket", "Phangnga", "Ranong", "Chumphon", "Krabi"]
+    print(f"\n--- Andaman coast check ---")
+    for prov in check_provs:
+        d = results.get(prov, {})
+        pct = d.get("pct", "N/A")
+        events = d.get("flood_events", "N/A")
+        tambons = d.get("flood_tambons", "N/A")
+        print(f"  {prov:20s}  {pct}%  ({events}/{n_years} yrs, max {tambons} tambons)")
+
+    # 6. Save flood-risk.json
+    output_data = {
+        "source_th": "กรมป้องกันและบรรเทาสาธารณภัย (ปภ.)",
+        "source_en": "Department of Disaster Prevention and Mitigation (DDPM)",
+        "source_url": "https://catalog.disaster.go.th/dataset/dpm-gd027",
+        "period": "2562-2568",
+        "period_ce": "2019-2025",
+        "updated_at": date.today().isoformat(),
+        "note_th": "ร้อยละปีที่เกิดอุทกภัยในรอบ 7 ปี จากประกาศเขตภัยพิบัติอย่างเป็นทางการ",
+        "note_en": "Percentage of years with official flood disaster declarations over 7 years",
+        "data": dict(sorted(results.items())),
     }
 
-    os.makedirs("data", exist_ok=True)
-    out_path = "data/flood-risk.json"
-    with open(out_path, "w", encoding="utf-8") as fh:
-        json.dump(output, fh, ensure_ascii=False, indent=2)
-    print(f"\n✅ Saved {len(provinces_data)} provinces → {out_path}")
+    os.makedirs(os.path.dirname(OUTPUT), exist_ok=True)
+    with open(OUTPUT, "w", encoding="utf-8") as f:
+        json.dump(output_data, f, ensure_ascii=False, indent=2)
+
+    print(f"\n[SAVED] {OUTPUT}")
+    print(f"  {len(results)} provinces | {n_years} years")
 
 
 if __name__ == "__main__":
