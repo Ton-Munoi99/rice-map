@@ -1624,8 +1624,8 @@
             <button class="pill" data-layer="gsmap" onclick="setLayer('gsmap')"><span class="th-t">🛰 ปริมาณฝนรวม 7 วันล่าสุด</span><span class="en-t">🛰 7-Day Total Rainfall</span></button>
             <button class="pill" data-layer="forecast" onclick="setLayer('forecast')"><span class="th-t">🌦 พยากรณ์ฝน 7 วันข้างหน้า</span><span class="en-t">🌦 7-Day Rain Forecast</span></button>
             <button class="pill" data-layer="alerts" onclick="setLayer('alerts')">
-              <span class="th-t">🚨 เตือนภัยเกษตร</span>
-              <span class="en-t">🚨 Agri Alerts</span>
+              <span class="th-t">🚨 พื้นที่เสี่ยงน้ำท่วม</span>
+              <span class="en-t">🚨 Flood Risk Areas</span>
             </button>
             <button class="pill" data-layer="soilMoisture" onclick="setLayer('soilMoisture')">
               <span class="th-t">💧 ความชื้นในดิน (SMAP)</span>
@@ -1916,7 +1916,7 @@
       rain:       { th: "ฝนสะสม 7 วัน", en: "7-Day Rainfall", unit: "มม. (7 วันล่าสุด)", unitEn: "mm (last 7 days)", unitShort: "มม.", unitShortEn: "mm", summary: "ฝนสะสมเฉลี่ยต่อจังหวัด", summaryMode: "avg" },
       gsmap:      { th: "ปริมาณฝนรวม 7 วัน (ดาวเทียม)", en: "7-Day Total Rainfall (Satellite)", unit: "มม. (รวม 7 วัน)", unitEn: "mm (7-day total)", unitShort: "มม.", unitShortEn: "mm", summary: "ปริมาณฝนรวมเฉลี่ยต่อจังหวัด", summaryMode: "avg" },
       forecast:   { th: "พยากรณ์ฝน 7 วัน", en: "7-Day Rain Forecast", unit: "มม. (พยากรณ์ 7 วัน)", unitEn: "mm (7-day forecast)", unitShort: "มม.", unitShortEn: "mm", summary: "พยากรณ์ฝนเฉลี่ยต่อจังหวัด", summaryMode: "avg" },
-      alerts:     { th: "เตือนภัยเกษตร", en: "Agri Alerts", unit: "ระดับการเตือน", unitEn: "Alert Level", unitShort: "ระดับ", unitShortEn: "Level", summary: "จังหวัดที่มีการเตือนภัย", summaryMode: "avg" },
+      alerts:     { th: "พื้นที่เสี่ยงน้ำท่วม", en: "Flood Risk Areas", unit: "ระดับการเตือน", unitEn: "Alert Level", unitShort: "ระดับ", unitShortEn: "Level", summary: "จังหวัดที่มีการเตือนภัย", summaryMode: "avg" },
       soilMoisture: { th: "ความชื้นในดิน (SMAP)", en: "Soil Moisture (SMAP)", unit: "% ความชื้น", unitEn: "% moisture", unitShort: "%", unitShortEn: "%", summary: "ความชื้นในดินเฉลี่ยต่อจังหวัด", summaryMode: "avg" },
     };
     const riceMeta = {
@@ -2917,7 +2917,7 @@ function t(th, en) {
         : S.layer === "rain"  ? t("Open-Meteo", "Open-Meteo")
         : S.layer === "gsmap" ? t("ดาวเทียมตรวจฝน", "Satellite Rainfall")
         : S.layer === "forecast" ? t("พยากรณ์ฝน", "Rain Forecast")
-        : S.layer === "alerts" ? t("เตือนภัยเกษตร", "Agri Alerts")
+        : S.layer === "alerts" ? t("พื้นที่เสี่ยงน้ำท่วม", "Flood Risk Areas")
         : S.layer === "soilMoisture" ? t("NASA SMAP (GEE)", "NASA SMAP (GEE)")
         : t(riceMeta[S.rice].th, riceMeta[S.rice].en);
       refs.legendLayer.textContent = t(layerMeta[S.layer].th, layerMeta[S.layer].en);
@@ -2951,7 +2951,7 @@ function t(th, en) {
               : S.layer === "forecast"
               ? `🌦 ${t('พยากรณ์ฝน 7 วันข้างหน้า','7-Day Rain Forecast')} · Open-Meteo ${window.FORECAST_DATA?._meta?.updated || ''}`
               : S.layer === "alerts"
-              ? `🚨 ${t('เตือนภัยเกษตร','Agri Alerts')} · ${t('อัปเดต','Updated')} ${window.ALERTS_DATA?._meta?.updated || ''}`
+              ? `🚨 ${t('พื้นที่เสี่ยงน้ำท่วม','Flood Risk Areas')} · ${t('อัปเดต','Updated')} ${window.ALERTS_DATA?._meta?.updated || ''}`
               : S.layer === "soilMoisture"
               ? `💧 ${t('ความชื้นในดิน SMAP','Soil Moisture SMAP')} · NASA ${window.SOIL_DATA?._meta?.updated || ''}`
               : isEstYear
@@ -3175,7 +3175,7 @@ function t(th, en) {
         : S.layer === "forecast"
         ? t("แผนที่พยากรณ์ฝน 7 วันข้างหน้ารายจังหวัด", "7-Day Rain Forecast by Province")
         : S.layer === "alerts"
-        ? t("แผนที่เตือนภัยเกษตรรายจังหวัด", "Agricultural Alert Map by Province")
+        ? t("แผนที่พื้นที่เสี่ยงน้ำท่วมรายจังหวัด", "Agricultural Alert Map by Province")
         : S.layer === "soilMoisture"
         ? t("แผนที่ความชื้นในดินรายจังหวัด (SMAP)", "Soil Moisture by Province — NASA SMAP")
         : t(`แผนที่${riceMeta[S.rice].th}รายจังหวัด`, `${riceMeta[S.rice].en} Rice · Province Map`);
@@ -3930,7 +3930,7 @@ function t(th, en) {
           <div style="font-size:9px;color:var(--muted);margin-top:6px;opacity:.7">${t(`ที่มา: NASA SMAP 10km · อัปเดต ${window.SOIL_DATA?._meta?.updated||'—'}`, `Source: NASA SMAP 10km · Updated ${window.SOIL_DATA?._meta?.updated||'—'}`)}</div>
         </div>`;
       }
-      // ── Agri Alerts detail card ──────────────────────────────────────────
+      // ── Flood Risk Areas detail card ──────────────────────────────────────────
       let alertsHtml = "";
       const alertsProv = window.ALERTS_DATA?.provinces?.[en];
       if (alertsProv && alertsProv.level !== "none") {
@@ -3942,7 +3942,7 @@ function t(th, en) {
           </div>`
         ).join('');
         alertsHtml = `<div class="rice-card" style="grid-column:1/-1;background:rgba(198,40,40,.07);border:1px solid rgba(198,40,40,.25)">
-          <div class="t">🚨 ${t('เตือนภัยเกษตร','Agri Alerts')}</div>
+          <div class="t">🚨 ${t('พื้นที่เสี่ยงน้ำท่วม','Flood Risk Areas')}</div>
           <div class="metric"><span class="val" style="color:${levelColor}">${alertsProv.level === "high" ? t("เสี่ยงสูง","High Risk") : alertsProv.level === "medium" ? t("เสี่ยงปานกลาง","Medium Risk") : alertsProv.level === "drought" ? t("เสี่ยงแล้ง","Drought Risk") : t("เฝ้าระวัง","Watch")}</span></div>
           ${warningItems}
           <div style="font-size:9px;color:var(--muted);margin-top:8px">${t(`ที่มา: ${(window.ALERTS_DATA?._meta?.sources||[]).join(' + ')} · อัปเดต ${window.ALERTS_DATA?._meta?.updated||'—'}`, `Source: ${(window.ALERTS_DATA?._meta?.sources||[]).join(' + ')} · Updated ${window.ALERTS_DATA?._meta?.updated||'—'}`)}</div>
@@ -4037,7 +4037,7 @@ function t(th, en) {
           : S.layer === "forecast"
           ? t(`พยากรณ์ฝน 7 วันข้างหน้า อัปเดต ${window.FORECAST_DATA?._meta?.updated || ''} — Open-Meteo`, `7-Day rain forecast updated ${window.FORECAST_DATA?._meta?.updated || ''} — Open-Meteo`)
           : S.layer === "alerts"
-          ? t(`เตือนภัยเกษตร อัปเดต ${window.ALERTS_DATA?._meta?.updated || ''} — สร้างจากข้อมูลฝน+เขื่อน`, `Agri alerts updated ${window.ALERTS_DATA?._meta?.updated || ''} — from rain+dam data`)
+          ? t(`พื้นที่เสี่ยงน้ำท่วม อัปเดต ${window.ALERTS_DATA?._meta?.updated || ''} — สร้างจากข้อมูลฝน+เขื่อน`, `Agri alerts updated ${window.ALERTS_DATA?._meta?.updated || ''} — from rain+dam data`)
           : S.layer === "dam"
           ? t("ไม่มีข้อมูลอนุกรมเวลา", "No time-series data")
           : S.layer === "mills"
@@ -4256,7 +4256,7 @@ function t(th, en) {
         return `
 <div class="th">${t(NM[en]||en,en)}</div>
 <div class="en">${en}</div>
-<div class="type">${t('เตือนภัยเกษตร','Agri Alert')}</div>
+<div class="type">${t('พื้นที่เสี่ยงน้ำท่วม','Flood Risk Areas')}</div>
 <div class="value" style="color:${levelColor}">${ap.level_num.toFixed(0)} <small style="font-size:12px;color:var(--muted)">${t('ระดับ','level')}</small></div>
 <div style="font-size:11px;font-weight:700;color:${levelColor};margin:2px 0">${ap.level === "high" ? t("🔴 เสี่ยงสูง","🔴 High Risk") : ap.level === "medium" ? t("🟠 เสี่ยงปานกลาง","🟠 Medium Risk") : ap.level === "drought" ? t("🏜 เสี่ยงแล้ง","🏜 Drought Risk") : t("🟡 เฝ้าระวัง","🟡 Watch")}</div>
 <div class="rank">${rank ? `${t('อันดับ','Rank')} #${rank} / ${total}` : t('ไม่มีข้อมูล','No data')}</div>
@@ -4430,7 +4430,7 @@ ${warningsHtml}
       }
       if (S.layer === "alerts") {
         const sum = window.ALERTS_DATA?.summary;
-        refs.yearButtons.innerHTML = `<button class="pill on" data-year="alerts">🚨 ${t('เตือนภัยเกษตร','Agri Alerts')} · ${window.ALERTS_DATA?._meta?.updated || t('ล่าสุด','Latest')} · 🔴${sum?.high||0} 🟠${sum?.medium||0} 🟡${sum?.low||0}</button>`;
+        refs.yearButtons.innerHTML = `<button class="pill on" data-year="alerts">🚨 ${t('พื้นที่เสี่ยงน้ำท่วม','Flood Risk Areas')} · ${window.ALERTS_DATA?._meta?.updated || t('ล่าสุด','Latest')} · 🔴${sum?.high||0} 🟠${sum?.medium||0} 🟡${sum?.low||0}</button>`;
         return;
       }
       if (S.layer === "soilMoisture") {
