@@ -749,6 +749,31 @@
       margin-bottom: 8px;
     }
 
+    /* Weather Watch */
+    .ww-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 4px 7px;
+      border-radius: 6px;
+      background: rgba(255,255,255,.05);
+      line-height: 1.4;
+    }
+    .ww-row .ww-label { flex: 1; color: var(--muted); }
+    .ww-row .ww-badge {
+      font-size: 9px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 10px;
+      white-space: nowrap;
+    }
+    .ww-storm { background: rgba(198,40,40,.15); border: 1px solid rgba(198,40,40,.4); }
+    .ww-high  { background: rgba(198,40,40,.10); }
+    .ww-med   { background: rgba(230,81,0,.10);  }
+    .ww-low   { background: rgba(249,168,37,.10);}
+    .ww-ok    { background: rgba(102,187,106,.08);}
+    .ww-divider { height:1px; background: rgba(255,255,255,.08); margin: 2px 0; }
+
     .pill-row {
       display: flex;
       flex-wrap: wrap;
@@ -1608,6 +1633,15 @@
             <div class="v" id="aggValue">-</div>
             <div class="s" id="aggSub">-</div>
           </div>
+        </section>
+
+        <!-- ── Weather Watch Card ────────────────────────────────────────── -->
+        <section class="panel-block" id="weatherWatchPanel" style="display:none">
+          <div class="panel-label" style="display:flex;justify-content:space-between;align-items:center">
+            <span>🌩️ <span class="th-t">สภาพอากาศสำคัญ</span><span class="en-t">Weather Watch</span></span>
+            <span id="weatherWatchUpdated" style="font-size:9px;opacity:.55;font-weight:400"></span>
+          </div>
+          <div id="weatherWatchContent" style="display:flex;flex-direction:column;gap:5px;font-size:10px"></div>
         </section>
 
         <section class="panel-block">
@@ -4981,6 +5015,77 @@ ${warningsHtml}
       </div>`;
     }
 
+    // ── Weather Watch ─────────────────────────────────────────────────────
+    async function fetchStormAlerts() {
+      try {
+        const r = await fetch("data/storm-alerts.json?_=" + Date.now(), { cache: "no-store" });
+        if (!r.ok) return;
+        window.STORM_DATA = await r.json();
+        renderWeatherWatch();
+      } catch (e) { console.info("storm-alerts.json not available"); }
+    }
+
+    function renderWeatherWatch() {
+      const panel   = document.getElementById("weatherWatchPanel");
+      const content = document.getElementById("weatherWatchContent");
+      const upd     = document.getElementById("weatherWatchUpdated");
+      if (!panel || !content) return;
+
+      const sd = window.STORM_DATA;
+      if (!sd) return;
+
+      const ws = sd.weather_summary || {};
+      const storms = sd.storms || [];
+      const rows = [];
+
+      // ── Storms ──
+      if (storms.length > 0) {
+        storms.forEach(s => {
+          const eta = s.eta_hours < 72
+            ? `<span class="ww-badge" style="background:rgba(198,40,40,.3);color:#ef9a9a">${t('เข้าใกล้','Approaching')}</span>`
+            : `<span class="ww-badge" style="background:rgba(255,255,255,.08);color:var(--muted)">${s.distance_km.toLocaleString()} km</span>`;
+          rows.push(`<div class="ww-row ww-storm">
+            <span style="font-size:13px">${s.alert_icon}</span>
+            <span class="ww-label"><strong style="color:#ef9a9a">${s.type_th} ${s.name}</strong><br>
+            <span style="font-size:9px">${t('ระยะ','Distance')} ${s.distance_km.toLocaleString()} km · ${s.direction_th}</span></span>
+            ${eta}
+          </div>`);
+        });
+        rows.push('<div class="ww-divider"></div>');
+      }
+
+      // ── Flood alerts summary ──
+      const high = ws.flood_high || 0;
+      const med  = ws.flood_medium || 0;
+      const low  = ws.flood_low || 0;
+      const ok   = ws.normal || 0;
+      if (high > 0)
+        rows.push(`<div class="ww-row ww-high"><span>🔴</span><span class="ww-label">${t('เสี่ยงสูง','High risk')}</span><span class="ww-badge" style="color:#ef9a9a;background:rgba(198,40,40,.2)">${high} ${t('จว.','prov.')}</span></div>`);
+      if (med > 0)
+        rows.push(`<div class="ww-row ww-med"><span>🟠</span><span class="ww-label">${t('เสี่ยงปานกลาง','Medium risk')}</span><span class="ww-badge" style="color:#ffcc80;background:rgba(230,81,0,.2)">${med} ${t('จว.','prov.')}</span></div>`);
+      if (low > 0)
+        rows.push(`<div class="ww-row ww-low"><span>🟡</span><span class="ww-label">${t('เฝ้าระวัง','Watch')}</span><span class="ww-badge" style="color:#fff9c4;background:rgba(249,168,37,.2)">${low} ${t('จว.','prov.')}</span></div>`);
+      if (ok > 0)
+        rows.push(`<div class="ww-row ww-ok"><span>✅</span><span class="ww-label">${t('ฝนปกติ','Normal')}</span><span class="ww-badge" style="color:#a5d6a7;background:rgba(102,187,106,.15)">${ok} ${t('จว.','prov.')}</span></div>`);
+
+      if (ws.top_rain_province && ws.top_rain_mm) {
+        rows.push('<div class="ww-divider"></div>');
+        rows.push(`<div class="ww-row"><span>🌧</span><span class="ww-label">${t('ฝนมากสุด','Heaviest rain')} · ${ws.top_rain_province}</span><span class="ww-badge" style="color:#81d4fa;background:rgba(30,136,229,.2)">${ws.top_rain_mm} mm</span></div>`);
+      }
+      if (ws.soil_moisture_avg) {
+        rows.push(`<div class="ww-row"><span>💧</span><span class="ww-label">${t('ความชื้นดินเฉลี่ย','Avg soil moisture')}</span><span class="ww-badge" style="color:#80cbc4;background:rgba(0,137,123,.2)">${ws.soil_moisture_avg}%</span></div>`);
+      }
+
+      if (rows.length === 0) {
+        content.innerHTML = `<div class="ww-row ww-ok"><span>✅</span><span class="ww-label">${t('สภาพอากาศปกติ','Normal weather conditions')}</span></div>`;
+      } else {
+        content.innerHTML = rows.join('');
+      }
+
+      if (upd && sd._meta?.updated) upd.textContent = sd._meta.updated;
+      panel.style.display = '';
+    }
+
     async function init() {
       if (!window.THAILAND_GEO?.features?.length) {
         toast("โหลดข้อมูลแผนที่ไม่สำเร็จ");
@@ -4993,6 +5098,7 @@ ${warningsHtml}
       fetchMillsData();
       fetchHouseholds();
       fetchNdviData();
+      fetchStormAlerts();
       fetchRiceEviData();
       fetchRainData();
       fetchGsmapData();
