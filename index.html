@@ -5070,7 +5070,7 @@ ${warningsHtml}
 
       if (ws.top_rain_province && ws.top_rain_mm) {
         rows.push('<div class="ww-divider"></div>');
-        rows.push(`<div class="ww-row"><span>🌧</span><span class="ww-label">${t('ฝนมากสุด','Heaviest rain')} · ${ws.top_rain_province}</span><span class="ww-badge" style="color:#81d4fa;background:rgba(30,136,229,.2)">${ws.top_rain_mm} mm</span></div>`);
+        rows.push(`<div class="ww-row"><span>🌧</span><span class="ww-label">${t('พยากรณ์ฝน 7 วันข้างหน้า','7-Day Rain Forecast')} · ${ws.top_rain_province}</span><span class="ww-badge" style="color:#81d4fa;background:rgba(30,136,229,.2)">${ws.top_rain_mm} mm</span></div>`);
       }
       if (ws.soil_moisture_avg) {
         rows.push(`<div class="ww-row"><span>💧</span><span class="ww-label">${t('ความชื้นดินเฉลี่ย','Avg soil moisture')}</span><span class="ww-badge" style="color:#80cbc4;background:rgba(0,137,123,.2)">${ws.soil_moisture_avg}%</span></div>`);
