@@ -4248,8 +4248,9 @@ function t(th, en) {
         const ap = window.ALERTS_DATA?.provinces?.[en];
         const rank = currentRank(en);
         const total = getVisibleProvinces().filter(n => hasLayerValue(n)).length;
-        if (!ap || ap.level === "none") return `<div class="th">${t(NM[en]||en,en)}</div><div class="en">${en}</div><div style="color:#66bb6a;font-size:11px;margin-top:6px">✅ ${t('ไม่มีการเตือนภัย','No active alerts')}</div>`;
-        const levelColor = ap.level === "high" ? "#c62828" : ap.level === "medium" ? "#e65100" : ap.level === "drought" ? "#00838f" : "#f9a825";
+        if (!ap) return `<div class="th">${t(NM[en]||en,en)}</div><div class="en">${en}</div><div style="color:var(--muted);font-size:11px;margin-top:6px">${t('ไม่มีข้อมูล','No data')}</div>`;
+        const levelColor = ap.level === "high" ? "#c62828" : ap.level === "medium" ? "#e65100" : ap.level === "drought" ? "#00838f" : (ap.level === "normal" || ap.level === "none") ? "#66bb6a" : "#f9a825";
+        const levelLabel = ap.level === "high" ? t("🔴 เสี่ยงสูง","🔴 High Risk") : ap.level === "medium" ? t("🟠 เสี่ยงปานกลาง","🟠 Medium Risk") : ap.level === "drought" ? t("🏜 เสี่ยงแล้ง","🏜 Drought Risk") : (ap.level === "normal" || ap.level === "none") ? t("✅ ฝนปกติ — ไม่มีความเสี่ยง","✅ Normal rainfall — no risk") : t("🟡 เฝ้าระวัง","🟡 Watch");
         const warningsHtml = (ap.warnings || []).map(w =>
           `<div style="font-size:10px;margin-top:4px;padding:3px 6px;background:rgba(255,255,255,.06);border-radius:4px">${w.icon} ${t(w.message_th, w.message_en)}</div>`
         ).join('');
@@ -4257,8 +4258,7 @@ function t(th, en) {
 <div class="th">${t(NM[en]||en,en)}</div>
 <div class="en">${en}</div>
 <div class="type">${t('พื้นที่เสี่ยงน้ำท่วม','Flood Risk Areas')}</div>
-<div class="value" style="color:${levelColor}">${ap.level_num.toFixed(0)} <small style="font-size:12px;color:var(--muted)">${t('ระดับ','level')}</small></div>
-<div style="font-size:11px;font-weight:700;color:${levelColor};margin:2px 0">${ap.level === "high" ? t("🔴 เสี่ยงสูง","🔴 High Risk") : ap.level === "medium" ? t("🟠 เสี่ยงปานกลาง","🟠 Medium Risk") : ap.level === "drought" ? t("🏜 เสี่ยงแล้ง","🏜 Drought Risk") : t("🟡 เฝ้าระวัง","🟡 Watch")}</div>
+<div style="font-size:11px;font-weight:700;color:${levelColor};margin:2px 0">${levelLabel}</div>
 <div class="rank">${rank ? `${t('อันดับ','Rank')} #${rank} / ${total}` : t('ไม่มีข้อมูล','No data')}</div>
 ${warningsHtml}
 `;

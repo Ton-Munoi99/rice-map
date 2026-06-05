@@ -198,13 +198,29 @@ def build_warnings(prov_name, fc_7d, gs_7d, dam_pct):
                 "threshold":  DAM_LOW_PCT,
             })
 
+    # -----------------------------------------------------------------------
+    # Normal status (no flood/drought risk — rain < 30mm)
+    # -----------------------------------------------------------------------
+    if not warnings:
+        rain_max = max(v for v in [fc_7d, gs_7d] if v is not None) if any(v is not None for v in [fc_7d, gs_7d]) else 0
+        warnings.append({
+            "icon":       "✅",
+            "type":       "normal",
+            "level":      "normal",
+            "message_th": f"ฝนปกติ ({rain_max:.0f} มม./7 วัน) — ไม่มีความเสี่ยง",
+            "message_en": f"Normal rainfall ({rain_max:.0f}mm/7d) — no risk",
+            "source":     "Open-Meteo + JAXA GSMaP",
+            "value":      round2(rain_max),
+            "threshold":  FLOOD_LOW_MM,
+        })
+
     return warnings
 
 
 def top_level(warnings):
     """Return (level_string, level_num) for the worst warning in the list."""
     if not warnings:
-        return "none", 0
+        return "normal", 0
 
     LEVEL_ORDER = {
         "high":    3,
