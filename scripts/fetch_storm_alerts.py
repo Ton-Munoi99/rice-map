@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 """
-Fetch active storm/cyclone alerts near Thailand from GDACS (free API)
-+ derive weather summary from existing data files.
+Fetch active tropical cyclone alerts near Thailand from GDACS (free RSS, no API key).
 Output: data/storm-alerts.json
 """
-import json, os, sys, io, math, requests
+import os, sys, io, math, json, requests
 import xml.etree.ElementTree as ET
-from datetime import date, datetime, timezone
+from datetime import date
 
 if sys.platform == "win32":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
@@ -15,29 +14,40 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(ROOT, "data")
 OUTPUT = os.path.join(DATA, "storm-alerts.json")
 
-# Thailand bounding box + center
-TH_CENTER = (13.0, 101.0)  # lat, lon
-TH_BBOX = {"lat_min": 4, "lat_max": 21, "lon_min": 95, "lon_max": 110}
-NEAR_THRESHOLD_KM = 2500  # show storms within 2500km
-
+TH_CENTER = (13.0, 101.0)   # lat, lon — ศูนย์กลางประเทศไทย
+NEAR_THRESHOLD_KM = 2500    # แสดงพายุที่อยู่ในรัศมีนี้
 GDACS_URL = "https://www.gdacs.org/xml/rss.xml"
 
-# Storm type Thai names
+# ชนิดพายุ (ภาษาอังกฤษใน GDACS → ไทย/อังกฤษที่แสดง)
 STORM_TYPE_MAP = {
-    "Tropical Depression":   "ดีเปรสชั่น",
-    "Tropical Storm":        "พายุโซนร้อน",
-    "Typhoon":               "ไต้ฝุ่น",
-    "Super Typhoon":         "ซูเปอร์ไต้ฝุ่น",
-    "Cyclone":               "ไซโคลน",
-    "Hurricane":             "เฮอริเคน",
-    "Severe Cyclonic Storm": "พายุหมุน",
+    "Tropical Depression":   ("ดีเปรสชั่น",      "Tropical Depression"),
+    "Tropical Storm":        ("พายุโซนร้อน",     "Tropical Storm"),
+    "Typhoon":               ("ไต้ฝุ่น",         "Typhoon"),
+    "Super Typhoon":         ("ซูเปอร์ไต้ฝุ่น",  "Super Typhoon"),
+    "Cyclone":               ("ไซโคลน",          "Cyclone"),
+    "Hurricane":             ("เฮอริเคน",        "Hurricane"),
+    "Severe Cyclonic Storm": ("พายุหมุน",        "Severe Cyclonic Storm"),
 }
 
-ALERT_COLOR_MAP = {
-    "Red":    {"level": "high",   "icon": "🔴", "th": "อันตราย",   "en": "Dangerous"},
-    "Orange": {"level": "medium", "icon": "🟠", "th": "เฝ้าระวัง",  "en": "Watch"},
-    "Green":  {"level": "low",    "icon": "🟡", "th": "ติดตาม",    "en": "Monitor"},
+# ระดับเตือนภัย GDACS → ไอคอน + คำ
+ALERT_MAP = {
+    "Red":    {"level": "high",   "icon": "🔴", "th": "อันตราย",  "en": "Dangerous"},
+    "Orange": {"level": "medium", "icon": "🟠", "th": "เฝ้าระวัง", "en": "Watch"},
+    "Green":  {"level": "low",    "icon": "🟡", "th": "ติดตาม",   "en": "Monitor"},
 }
+
+# ทิศ (ไทย, อังกฤษ) — เรียงตามเข็มทิศ เริ่มที่เหนือ
+DIRECTIONS = [
+    ("เหนือ", "N"), ("ตะวันออกเฉียงเหนือ", "NE"), ("ตะวันออก", "E"),
+    ("ตะวันออกเฉียงใต้", "SE"), ("ใต้", "S"), ("ตะวันตกเฉียงใต้", "SW"),
+    ("ตะวันตก", "W"), ("ตะวันตกเฉียงเหนือ", "NW"),
+]
+
+NS = {
+    "gdacs":  "http://www.gdacs.org",
+    "georss": "http://www.georss.org/georss",
+}
+
 
 def haversine_km(lat1, lon1, lat2, lon2):
     R = 6371
@@ -46,22 +56,12 @@ def haversine_km(lat1, lon1, lat2, lon2):
     a = math.sin(dlat/2)**2 + math.cos(math.radians(lat1))*math.cos(math.radians(lat2))*math.sin(dlon/2)**2
     return 2 * R * math.asin(math.sqrt(a))
 
-def bearing_to_direction(deg):
-    dirs = ["เหนือ","ตะวันออกเฉียงเหนือ","ตะวันออก","ตะวันออกเฉียงใต้","ใต้","ตะวันตกเฉียงใต้","ตะวันตก","ตะวันตกเฉียงเหนือ"]
-    return dirs[round(deg / 45) % 8]
 
 def fetch_gdacs_storms():
-    # XML namespaces used in GDACS RSS feed
-    NS = {
-        "gdacs":   "http://www.gdacs.org",
-        "georss":  "http://www.georss.org/georss",
-        "geo":     "http://www.w3.org/2003/01/geo/wgs84_pos#",
-    }
     try:
         r = requests.get(GDACS_URL, timeout=20, headers={"User-Agent": "RiceMap/1.0"})
         r.raise_for_status()
-        root = ET.fromstring(r.content)
-        items = root.findall(".//item")
+        items = ET.fromstring(r.content).findall(".//item")
         print(f"GDACS RSS: {len(items)} total events")
     except Exception as e:
         print(f"GDACS error: {e}")
@@ -69,17 +69,13 @@ def fetch_gdacs_storms():
 
     storms = []
     for item in items:
-        # Only tropical cyclone events
         etype = item.find("gdacs:eventtype", NS)
         if etype is None or etype.text != "TC":
             continue
-
-        # Skip non-current events
         is_current = item.find("gdacs:iscurrent", NS)
         if is_current is not None and is_current.text.lower() == "false":
             continue
 
-        # Position from georss:point (lat lon)
         point = item.find("georss:point", NS)
         if point is None or not point.text:
             continue
@@ -96,119 +92,56 @@ def fetch_gdacs_storms():
         name = (name_el.text if name_el is not None else "Unknown").upper()
 
         alert_el = item.find("gdacs:alertlevel", NS)
-        alert_color = alert_el.text if alert_el is not None else "Green"
-        alert_info  = ALERT_COLOR_MAP.get(alert_color, ALERT_COLOR_MAP["Green"])
+        alert = ALERT_MAP.get(alert_el.text if alert_el is not None else "Green", ALERT_MAP["Green"])
 
-        # Storm type from severity or description
         severity_el = item.find("gdacs:severity", NS)
-        raw_type = severity_el.text if severity_el is not None else ""
-        if not raw_type:
-            desc_el = item.find("description")
-            raw_type = desc_el.text if desc_el is not None else ""
-
-        storm_type_en = "Tropical Cyclone"
-        storm_type_th = "พายุหมุนเขตร้อน"
-        for en_key, th_val in STORM_TYPE_MAP.items():
+        raw_type = (severity_el.text if severity_el is not None else "") or \
+                   (item.findtext("description") or "")
+        type_th, type_en = "พายุหมุนเขตร้อน", "Tropical Cyclone"
+        for en_key, (th_val, en_val) in STORM_TYPE_MAP.items():
             if en_key.lower() in raw_type.lower():
-                storm_type_en = en_key
-                storm_type_th = th_val
+                type_th, type_en = th_val, en_val
                 break
 
-        # Bearing from storm to Thailand center
-        d_lat = TH_CENTER[0] - lat
-        d_lon = TH_CENTER[1] - lon
-        bearing = math.degrees(math.atan2(d_lon, d_lat)) % 360
-        direction_th = bearing_to_direction(bearing)
-
-        # Approximate ETA (very rough: assume 20km/h average storm speed)
-        eta_hours = round(dist_km / 20)
-        approaching = d_lat > 0 or abs(d_lon) < 5  # rough heuristic
+        # ทิศของพายุเทียบกับไทย (ทิศที่พายุอยู่ ไม่ใช่ทิศที่กำลังเคลื่อน — GDACS ไม่ให้ track vector)
+        bearing = math.degrees(math.atan2(TH_CENTER[1] - lon, TH_CENTER[0] - lat)) % 360
+        dir_th, dir_en = DIRECTIONS[round(bearing / 45) % 8]
 
         storms.append({
             "name":         name,
-            "type_th":      storm_type_th,
-            "type_en":      storm_type_en,
-            "alert_level":  alert_info["level"],
-            "alert_icon":   alert_info["icon"],
-            "alert_th":     alert_info["th"],
-            "alert_en":     alert_info["en"],
+            "type_th":      type_th,
+            "type_en":      type_en,
+            "alert_icon":   alert["icon"],
+            "alert_th":     alert["th"],
+            "alert_en":     alert["en"],
             "distance_km":  round(dist_km),
-            "direction_th": direction_th,
-            "approaching":  approaching,
-            "eta_hours":    eta_hours,
-            "lat":          round(lat, 2),
-            "lon":          round(lon, 2),
+            "direction_th": dir_th,
+            "direction_en": dir_en,
         })
-        print(f"  Storm: {name} ({storm_type_th}) | {dist_km:.0f}km | {alert_color}")
+        print(f"  Storm: {name} ({type_th}) | {dist_km:.0f}km | {alert['th']}")
 
     storms.sort(key=lambda s: s["distance_km"])
     return storms
 
-def derive_weather_summary():
-    """Derive national weather summary from existing JSON files."""
-    summary = {}
-
-    # Alert summary from agri-warnings.json
-    try:
-        aw = json.load(open(os.path.join(DATA, "agri-warnings.json"), encoding="utf-8"))
-        s = aw.get("summary", {})
-        summary["flood_high"]   = s.get("high", 0)
-        summary["flood_medium"] = s.get("medium", 0)
-        summary["flood_low"]    = s.get("low", 0)
-        summary["normal"]       = s.get("normal", s.get("none", 0))
-        summary["alerts_updated"] = aw.get("_meta", {}).get("updated", "")
-    except Exception as e:
-        print(f"agri-warnings: {e}")
-
-    # Top rain forecast province
-    try:
-        fc = json.load(open(os.path.join(DATA, "rain-forecast.json"), encoding="utf-8"))
-        provs = fc.get("provinces", {})
-        if provs:
-            top = max(provs.items(), key=lambda x: x[1].get("rain_7d", 0))
-            summary["top_rain_province"] = top[0]
-            summary["top_rain_mm"]       = round(top[1].get("rain_7d", 0))
-    except Exception as e:
-        print(f"rain-forecast: {e}")
-
-    # Average soil moisture
-    try:
-        sm = json.load(open(os.path.join(DATA, "soil-moisture.json"), encoding="utf-8"))
-        vals = [v["smp"] for v in sm.get("provinces", {}).values() if v.get("smp") is not None]
-        if vals:
-            summary["soil_moisture_avg"] = round(sum(vals) / len(vals), 1)
-            summary["soil_updated"] = sm.get("_meta", {}).get("period_end", "")
-    except Exception as e:
-        print(f"soil-moisture: {e}")
-
-    return summary
 
 def main():
     print("Fetching GDACS storm data...")
     storms = fetch_gdacs_storms()
-    print(f"\nDeriving weather summary from existing data...")
-    weather_summary = derive_weather_summary()
 
     output = {
         "_meta": {
-            "source_storms":  "GDACS — Global Disaster Alert and Coordination System",
-            "source_weather": "Derived from agri-warnings.json + rain-forecast.json + soil-moisture.json",
-            "updated":        date.today().isoformat(),
+            "source":  "GDACS — Global Disaster Alert and Coordination System",
+            "updated": date.today().isoformat(),
             "storms_near_thailand": len(storms),
         },
         "storms": storms,
-        "has_active_storm": len(storms) > 0,
-        "weather_summary": weather_summary,
     }
 
     os.makedirs(DATA, exist_ok=True)
     with open(OUTPUT, "w", encoding="utf-8") as f:
         json.dump(output, f, ensure_ascii=False, indent=2)
-    print(f"\n✅ Saved → {OUTPUT}")
-    print(f"  Storms near Thailand: {len(storms)}")
-    if storms:
-        for s in storms:
-            print(f"    {s['alert_icon']} {s['name']} ({s['type_th']}) — {s['distance_km']}km")
+    print(f"\n✅ Saved → {OUTPUT}  ({len(storms)} storms near Thailand)")
+
 
 if __name__ == "__main__":
     main()

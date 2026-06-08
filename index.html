@@ -5044,14 +5044,11 @@ ${warningsHtml}
 
       const rows = [];
       storms.forEach(s => {
-        const eta = s.eta_hours < 72
-          ? `<span class="ww-badge" style="background:rgba(198,40,40,.3);color:#ef9a9a">${t('เข้าใกล้','Approaching')}</span>`
-          : `<span class="ww-badge" style="background:rgba(255,255,255,.08);color:var(--muted)">${s.distance_km.toLocaleString()} km</span>`;
         rows.push(`<div class="ww-row ww-storm">
           <span style="font-size:13px">${s.alert_icon}</span>
-          <span class="ww-label"><strong style="color:#ef9a9a">${s.type_th} ${s.name}</strong><br>
-          <span style="font-size:9px">${t('ระยะ','Distance')} ${s.distance_km.toLocaleString()} km · ${s.direction_th}</span></span>
-          ${eta}
+          <span class="ww-label"><strong style="color:#ef9a9a">${t(s.type_th, s.type_en)} ${s.name}</strong><br>
+          <span style="font-size:9px">${t('ห่าง','Distance')} ${s.distance_km.toLocaleString()} km · ${t('ทิศ','')}${t(s.direction_th, s.direction_en)}</span></span>
+          <span class="ww-badge" style="background:rgba(198,40,40,.2);color:#ef9a9a">${t(s.alert_th, s.alert_en)}</span>
         </div>`);
       });
 
