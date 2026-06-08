@@ -17,74 +17,12 @@ import ee
 import json
 import os
 from datetime import date, datetime, timedelta, timezone
+from riceutils import init_gee, build_provinces, GAUL_NAME_MAP as NAME_MAP
 
-# ── Province name mapping: GAUL → rice-map ─────────────────────────────────
-NAME_MAP = {
-    "Bangkok":                  "Bangkok Metropolis",
-    "Buriram":                  "Buri Ram",
-    "Chainat":                  "Chai Nat",
-    "Chonburi":                 "Chon Buri",
-    "Kampaeng Phet":            "Kamphaeng Phet",
-    "Lopburi":                  "Lop Buri",
-    "Nong Bua Lamphu":          "Nong Bua Lam Phu",
-    "Phachinburi":              "Prachin Buri",
-    "Phra Nakhon Si Ayudhya":   "Phra Nakhon Si Ayutthaya",
-    "Prachuap Khilikhan":       "Prachuap Khiri Khan",
-    "Samut Prakarn":            "Samut Prakan",
-    "Samut Songkham":           "Samut Songkhram",
-    "Si Saket":                 "Si Sa Ket",
-    "Sisaket":                  "Si Sa Ket",
-    "Singburi":                 "Sing Buri",
-    "Suphanburi":               "Suphan Buri",
-    "Trad":                     "Trat",
-    "Bung Kan":                 "Bueng Kan",
-    "Changwat Bueng Kan":       "Bueng Kan",
-}
 
 COLLECTION = "JAXA/GPM_L3/GSMaP/v8/operational"
 BAND       = "hourlyPrecipRate"   # mm/hr, 1-hour cadence
 SCALE      = 11132                # GSMaP native resolution: 0.1° ≈ 11.132 km at equator
-
-
-# ── GEE Auth ─────────────────────────────────────────────────────────────────
-def init_gee():
-    key_data = os.environ.get("GEE_SERVICE_ACCOUNT_KEY")
-    if key_data:
-        key_dict = json.loads(key_data)
-        credentials = ee.ServiceAccountCredentials(
-            email=key_dict["client_email"],
-            key_data=key_dict["private_key"],
-        )
-        ee.Initialize(credentials, project="agriculture-monitoring-497007")
-        print("✓ Authenticated via Service Account")
-    else:
-        ee.Initialize(project="agriculture-monitoring-497007")
-        print("✓ Authenticated via default credentials")
-
-
-# ── Province polygons (GAUL 76 + Bueng Kan) ──────────────────────────────────
-def build_provinces():
-    gaul_provinces = (
-        ee.FeatureCollection("FAO/GAUL/2015/level1")
-        .filter(ee.Filter.eq("ADM0_NAME", "Thailand"))
-    )
-    bueng_kan_poly = ee.Geometry.Polygon([[
-        [103.378, 17.979], [103.380, 18.121], [103.416, 18.215],
-        [103.453, 18.319], [103.498, 18.416], [103.558, 18.502],
-        [103.594, 18.582], [103.640, 18.643], [103.723, 18.693],
-        [103.810, 18.681], [103.875, 18.640], [103.952, 18.620],
-        [104.030, 18.598], [104.113, 18.562], [104.193, 18.507],
-        [104.230, 18.438], [104.218, 18.350], [104.170, 18.263],
-        [104.082, 18.210], [103.990, 18.174], [103.900, 18.110],
-        [103.840, 18.035], [103.760, 17.970], [103.680, 17.952],
-        [103.590, 17.960], [103.500, 17.960], [103.420, 17.970],
-        [103.378, 17.979],
-    ]])
-    bueng_kan_feat = ee.Feature(bueng_kan_poly, {
-        "ADM1_NAME": "Bung Kan",
-        "ADM0_NAME": "Thailand",
-    })
-    return gaul_provinces.merge(ee.FeatureCollection([bueng_kan_feat]))
 
 
 # ── Find latest available date in GSMaP catalog ──────────────────────────────

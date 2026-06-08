@@ -16,6 +16,7 @@ Output: data/disease-risk.json
 import json, os, re, sys, time, io
 import requests
 from datetime import date
+from riceutils import load_centroids
 
 if sys.platform == "win32":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
@@ -28,34 +29,6 @@ MAX_RETRY  = 3
 TIMEOUT    = 60          # seconds per batch request
 
 
-# ── Load province centroids from thailand-data.js GeoJSON ───────────────────
-def load_centroids():
-    with open("thailand-data.js", encoding="utf-8") as f:
-        js = f.read()
-    js = re.sub(r"^window\.THAILAND_GEO\s*=\s*", "", js.strip().rstrip(";"))
-    geo = json.loads(js)
-
-    centroids = {}
-    for feat in geo["features"]:
-        name = feat["properties"]["name"]
-        geom = feat["geometry"]
-        all_pts = []
-        if geom["type"] == "Polygon":
-            for ring in geom["coordinates"]:
-                all_pts.extend(ring)
-        elif geom["type"] == "MultiPolygon":
-            for poly in geom["coordinates"]:
-                for ring in poly:
-                    all_pts.extend(ring)
-        if all_pts:
-            lons = [p[0] for p in all_pts]
-            lats = [p[1] for p in all_pts]
-            # Bounding box center — less biased than vertex average for coastal/irregular provinces
-            centroids[name] = {
-                "lat": round((min(lats) + max(lats)) / 2, 4),
-                "lon": round((min(lons) + max(lons)) / 2, 4),
-            }
-    return centroids
 
 
 # ── Fetch one batch of provinces in a single API call ───────────────────────

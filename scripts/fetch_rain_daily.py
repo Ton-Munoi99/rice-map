@@ -10,6 +10,7 @@ Output: data/rain-daily.json
 import json, os, re, sys, time, io
 import requests
 from datetime import date
+from riceutils import load_centroids
 
 if sys.platform == "win32":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
@@ -20,35 +21,6 @@ API_URL    = "https://api.open-meteo.com/v1/forecast"
 BATCH_SIZE = 40          # provinces per request (2 requests for 77 provinces)
 MAX_RETRY  = 3
 TIMEOUT    = 60          # seconds per batch request
-
-
-# ── Load province centroids from thailand-data.js GeoJSON ───────────────────
-def load_centroids():
-    with open("thailand-data.js", encoding="utf-8") as f:
-        js = f.read()
-    js = re.sub(r"^window\.THAILAND_GEO\s*=\s*", "", js.strip().rstrip(";"))
-    geo = json.loads(js)
-
-    centroids = {}
-    for feat in geo["features"]:
-        name = feat["properties"]["name"]
-        geom = feat["geometry"]
-        all_pts = []
-        if geom["type"] == "Polygon":
-            for ring in geom["coordinates"]:
-                all_pts.extend(ring)
-        elif geom["type"] == "MultiPolygon":
-            for poly in geom["coordinates"]:
-                for ring in poly:
-                    all_pts.extend(ring)
-        if all_pts:
-            lons = [p[0] for p in all_pts]
-            lats = [p[1] for p in all_pts]
-            centroids[name] = {
-                "lat": round(sum(lats) / len(lats), 4),
-                "lon": round(sum(lons) / len(lons), 4),
-            }
-    return centroids
 
 
 # ── Fetch one batch of provinces in a single API call ───────────────────────

@@ -17,27 +17,7 @@ import ee
 import json
 import os
 from datetime import date, timedelta
-
-# ── Province name mapping: GAUL → rice-map (same as province scripts) ───────
-PROV_MAP = {
-    "Bangkok":                  "Bangkok Metropolis",
-    "Buriram":                  "Buri Ram",
-    "Chainat":                  "Chai Nat",
-    "Chonburi":                 "Chon Buri",
-    "Kampaeng Phet":            "Kamphaeng Phet",
-    "Lopburi":                  "Lop Buri",
-    "Nong Bua Lamphu":          "Nong Bua Lam Phu",
-    "Phachinburi":              "Prachin Buri",
-    "Phra Nakhon Si Ayudhya":   "Phra Nakhon Si Ayutthaya",
-    "Prachuap Khilikhan":       "Prachuap Khiri Khan",
-    "Samut Prakarn":            "Samut Prakan",
-    "Samut Songkham":           "Samut Songkhram",
-    "Si Saket":                 "Si Sa Ket",
-    "Sisaket":                  "Si Sa Ket",
-    "Singburi":                 "Sing Buri",
-    "Suphanburi":               "Suphan Buri",
-    "Trad":                     "Trat",
-}
+from riceutils import init_gee, GAUL_NAME_MAP as PROV_MAP
 
 
 def get_last_month_dates():
@@ -46,21 +26,6 @@ def get_last_month_dates():
     last_prev  = first_this - timedelta(days=1)
     first_prev = last_prev.replace(day=1)
     return first_prev.isoformat(), last_prev.isoformat()
-
-
-def init_gee():
-    key_data = os.environ.get("GEE_SERVICE_ACCOUNT_KEY")
-    if key_data:
-        key_dict = json.loads(key_data)
-        credentials = ee.ServiceAccountCredentials(
-            email=key_dict["client_email"],
-            key_data=key_dict["private_key"],
-        )
-        ee.Initialize(credentials, project="agriculture-monitoring-497007")
-        print("✓ Authenticated via Service Account")
-    else:
-        ee.Initialize(project="agriculture-monitoring-497007")
-        print("✓ Authenticated via default credentials")
 
 
 def main():
