@@ -4759,76 +4759,19 @@ ${warningsHtml}
       if (S.sel) selectProvince(S.sel);
     }
 
-    async function fetchNdviData() {
+    // โหลดข้อมูล layer แบบมาตรฐาน: rerender ถ้ากำลังดู layer นั้น ไม่งั้นอัปเดต detail card
+    async function fetchLayerData(file, globalName, layerKey) {
       try {
-        const r = await fetch("data/ndvi.json?_=" + Date.now(), { cache: "no-store" });
+        const r = await fetch(`data/${file}?_=` + Date.now(), { cache: "no-store" });
         if (!r.ok) return;
-        window.NDVI_DATA = await r.json();
-        if (S.layer === "ndvi") rerender();
+        window[globalName] = await r.json();
+        if (S.layer === layerKey) rerender();
         else if (S.sel) selectProvince(S.sel);
       } catch (e) {
-        console.info("ndvi.json not available");
+        console.info(`${file} not available`);
       }
     }
 
-    async function fetchRiceEviData() {
-      try {
-        const r = await fetch("data/rice-evi.json?_=" + Date.now(), { cache: "no-store" });
-        if (!r.ok) return;
-        window.RICE_EVI_DATA = await r.json();
-        // rerender() already calls selectProvince(S.sel) internally
-        if (S.layer === "riceEvi") rerender();
-        else if (S.sel) selectProvince(S.sel);  // update detail card without full rerender
-      } catch (e) {
-        console.info("rice-evi.json not available");
-      }
-    }
-
-    async function fetchRainData() {
-      try {
-        const r = await fetch("data/rain-daily.json?_=" + Date.now(), { cache: "no-store" });
-        if (!r.ok) return;
-        window.RAIN_DATA = await r.json();
-        if (S.layer === "rain") rerender();
-        else if (S.sel) selectProvince(S.sel);
-      } catch (e) {
-        console.info("rain-daily.json not available");
-      }
-    }
-    async function fetchGsmapData() {
-      try {
-        const r = await fetch("data/rain-gsmap.json?_=" + Date.now(), { cache: "no-store" });
-        if (!r.ok) return;
-        window.GSMAP_DATA = await r.json();
-        if (S.layer === "gsmap") rerender();
-        else if (S.sel) selectProvince(S.sel);
-      } catch (e) {
-        console.info("rain-gsmap.json not available");
-      }
-    }
-
-    async function fetchForecastData() {
-      try {
-        const r = await fetch("data/rain-forecast.json?_=" + Date.now(), { cache: "no-store" });
-        if (!r.ok) return;
-        window.FORECAST_DATA = await r.json();
-        if (S.layer === "forecast") rerender();
-        else if (S.sel) selectProvince(S.sel);
-      } catch (e) {
-        console.info("rain-forecast.json not available");
-      }
-    }
-    async function fetchAlertsData() {
-      try {
-        const r = await fetch("data/agri-warnings.json?_=" + Date.now(), { cache: "no-store" });
-        if (!r.ok) return;
-        window.ALERTS_DATA = await r.json();
-        if (S.layer === "alerts") rerender();
-        else if (S.sel) selectProvince(S.sel);
-      } catch (e) {
-        console.info("agri-warnings.json not available");
-      }
-    }
     async function fetchSoilMoistureData() {
       try {
         const r = await fetch("data/soil-moisture.json?_=" + Date.now(), { cache: "no-store" });
@@ -5068,13 +5011,13 @@ ${warningsHtml}
       fetchWeatherData();
       fetchMillsData();
       fetchHouseholds();
-      fetchNdviData();
       fetchStormAlerts();
-      fetchRiceEviData();
-      fetchRainData();
-      fetchGsmapData();
-      fetchForecastData();
-      fetchAlertsData();
+      fetchLayerData("ndvi.json", "NDVI_DATA", "ndvi");
+      fetchLayerData("rice-evi.json", "RICE_EVI_DATA", "riceEvi");
+      fetchLayerData("rain-daily.json", "RAIN_DATA", "rain");
+      fetchLayerData("rain-gsmap.json", "GSMAP_DATA", "gsmap");
+      fetchLayerData("rain-forecast.json", "FORECAST_DATA", "forecast");
+      fetchLayerData("agri-warnings.json", "ALERTS_DATA", "alerts");
       fetchSoilMoistureData();
       fetchDiseaseData();
       updateNationalFert();
