@@ -1953,6 +1953,31 @@
       alerts:     { th: "พื้นที่เสี่ยงน้ำท่วม", en: "Flood Risk Areas", unit: "ระดับการเตือน", unitEn: "Alert Level", unitShort: "ระดับ", unitShortEn: "Level", summary: "จังหวัดที่มีการเตือนภัย", summaryMode: "avg" },
       soilMoisture: { th: "ความชื้นในดิน (SMAP)", en: "Soil Moisture (SMAP)", unit: "% ความชื้น", unitEn: "% moisture", unitShort: "%", unitShortEn: "%", summary: "ความชื้นในดินเฉลี่ยต่อจังหวัด", summaryMode: "avg" },
     };
+
+    // ── per-layer rendering config (merged into layerMeta) ───────────────────
+    // format: bignum|int|pct1|signedPct1|mm|num3|signedInt|alertLevel|households
+    // valueFn: 8 env layers อ่าน window.X_DATA?.provinces · palette→getPalette · sourceTh/En→legendType
+    // (valueFn refs ใช้ hoisting — ฟังก์ชันประกาศด้านล่างแต่ JS hoist ขึ้นมาให้)
+    Object.entries({
+      production:  { format: "bignum" },
+      yield:       { format: "bignum" },
+      area:        { format: "bignum" },
+      price:       { format: "int" },
+      households:  { format: "households" },
+      fertilizer:  { format: "int" },
+      dam:         { format: "pct1",       valueFn: damValueOf,          sourceTh: "กรมชลประทาน",          sourceEn: "RID",                palette: { lo:[192,57,43],   mid:[241,196,15], hi:[41,128,185], accent:"#3498db" } },
+      rainfall:    { format: "mm",                                       sourceTh: "Open-Meteo",           sourceEn: "Open-Meteo",         palette: { lo:[180,90,30],   mid:[235,185,55], hi:[30,100,195], accent:"#3b82f6" } },
+      drought:     { format: "signedPct1",                               sourceTh: "Open-Meteo",           sourceEn: "Open-Meteo",         palette: { lo:[192,57,43],   mid:[241,196,15], hi:[41,128,185], accent:"#2ecc71" } },
+      mills:       { format: "int",                                      sourceTh: "กรมการค้าภายใน",       sourceEn: "DIT",                palette: { lo:[60,40,20],    mid:[160,110,40], hi:[230,170,60], accent:"#e6aa3c" } },
+      profit:      { format: "signedInt",                                sourceTh: "OAE+สมาคมโรงสีฯ",      sourceEn: "OAE+TRMAB",          palette: { lo:[192,57,43],   mid:[241,196,15], hi:[39,174,96],  accent:"#27ae60" } },
+      ndvi:        { format: "num3",       valueFn: ndviValueOf,         sourceTh: "NASA MODIS",           sourceEn: "NASA MODIS",         palette: { lo:[255,251,230], mid:[139,195,74], hi:[27,94,32],   accent:"#4caf50" } },
+      riceEvi:     { format: "num3",       valueFn: riceEviValueOf,      sourceTh: "ดาวเทียม",             sourceEn: "Satellite",          palette: { lo:[255,243,224], mid:[255,183,77], hi:[46,125,50],  accent:"#66bb6a" } },
+      rain:        { format: "mm",         valueFn: rainValueOf,         sourceTh: "Open-Meteo",           sourceEn: "Open-Meteo",         palette: { lo:[224,247,250], mid:[0,188,212],  hi:[0,77,103],   accent:"#00bcd4" } },
+      gsmap:       { format: "mm",         valueFn: gsmapValueOf,        sourceTh: "ดาวเทียมตรวจฝน",       sourceEn: "Satellite Rainfall", palette: { lo:[227,242,253], mid:[30,136,229], hi:[13,71,161],  accent:"#1e88e5" } },
+      forecast:    { format: "mm",         valueFn: forecastValueOf,     sourceTh: "พยากรณ์ฝน",            sourceEn: "Rain Forecast",      palette: { lo:[255,243,224], mid:[255,152,0],  hi:[230,81,0],   accent:"#ff9800" } },
+      alerts:      { format: "alertLevel", valueFn: alertsValueOf,       sourceTh: "พื้นที่เสี่ยงน้ำท่วม", sourceEn: "Flood Risk Areas",   palette: { lo:[255,249,196], mid:[255,152,0],  hi:[198,40,40],  accent:"#c62828" } },
+      soilMoisture:{ format: "pct1",       valueFn: soilMoistureValueOf, sourceTh: "NASA SMAP (GEE)",      sourceEn: "NASA SMAP (GEE)",    palette: { lo:[255,245,157], mid:[38,198,218], hi:[0,77,64],    accent:"#00bcd4" } },
+    }).forEach(([k, cfg]) => Object.assign(layerMeta[k], cfg));
     const riceMeta = {
       white:   { th: "ข้าวขาว",  en: "White Rice",   badge: "🌾" },
       jasmine: { th: "หอมมะลิ", en: "Jasmine Rice", badge: "🌸" }
@@ -2270,7 +2295,7 @@ function t(th, en) {
     }
 
     function damValueOf(en) {
-      return window.DAM_DATA?.provinces?.[en]?.dam_level_pct ?? 0;
+      return window.DAM_DATA?.provinces?.[en]?.dam_level_pct ?? null;
     }
 
     // ── ความต้องการปุ๋ยโดยประมาณ (กระสอบ 50 กก./ฤดูกาล) ────────────────────────
@@ -2338,32 +2363,20 @@ function t(th, en) {
 
     function valueOf(en, rice = S.rice, year = S.year, layer = S.layer) {
       if (layer === "households") return householdValueOf(en);
-      if (layer === "dam") return damValueOf(en);
       if (layer === "rainfall" || layer === "drought") return weatherValueOf(en, layer) ?? 0;
       if (layer === "mills")      return millsValueOf(en);
       if (layer === "profit")     return profitValueOf(en, rice, year) ?? 0;
-      if (layer === "ndvi")       return ndviValueOf(en) ?? 0;
-      if (layer === "riceEvi")    return riceEviValueOf(en) ?? 0;
-      if (layer === "rain")       return rainValueOf(en) ?? 0;
-      if (layer === "gsmap")      return gsmapValueOf(en) ?? 0;
-      if (layer === "forecast")   return forecastValueOf(en) ?? 0;
-      if (layer === "alerts")     return alertsValueOf(en) ?? 0;
-      if (layer === "soilMoisture") return soilMoistureValueOf(en) ?? 0;
+      const m = layerMeta[layer];
+      if (m?.valueFn) return m.valueFn(en) ?? 0;   // 8 env layers (config-driven)
       return Number(entryOf(en, rice, year)[layer] || 0);
     }
 
     function hasLayerValue(en, rice = S.rice, year = S.year, layer = S.layer) {
-      if (layer === "dam") return window.DAM_DATA?.provinces?.[en] != null;
       if (layer === "rainfall" || layer === "drought") return weatherValueOf(en, layer) != null;
       if (layer === "mills")      return millsValueOf(en) > 0;
       if (layer === "profit")     return profitValueOf(en, rice, year) !== null;
-      if (layer === "ndvi")       return window.NDVI_DATA?.provinces?.[en] != null;
-      if (layer === "riceEvi")    return window.RICE_EVI_DATA?.provinces?.[en]?.evi != null;
-      if (layer === "rain")       return window.RAIN_DATA?.provinces?.[en] != null;
-      if (layer === "gsmap")      return window.GSMAP_DATA?.provinces?.[en] != null;
-      if (layer === "forecast")   return forecastValueOf(en) !== null;
-      if (layer === "alerts")     return alertsValueOf(en) !== null;
-      if (layer === "soilMoisture") return soilMoistureValueOf(en) !== null;
+      const m = layerMeta[layer];
+      if (m?.valueFn) return m.valueFn(en) != null;  // 8 env layers (config-driven)
       return valueOf(en, rice, year, layer) > 0;
     }
 
@@ -2398,20 +2411,8 @@ function t(th, en) {
     }
 
     function getPalette() {
-      if (S.layer === "dam")      return { lo: [192, 57, 43], mid: [241, 196, 15], hi: [41, 128, 185], accent: "#3498db" };
-      if (S.layer === "rainfall") return { lo: [180, 90, 30],  mid: [235, 185, 55], hi: [30, 100, 195],  accent: "#3b82f6" };
-      if (S.layer === "drought")  return { lo: [192, 57, 43],  mid: [241, 196, 15], hi: [41, 128, 185],  accent: "#2ecc71" };
-      if (S.layer === "mills")    return { lo: [60, 40, 20],   mid: [160, 110, 40], hi: [230, 170, 60],  accent: "#e6aa3c" };
-      if (S.layer === "profit")     return { lo: [192, 57, 43],  mid: [241, 196, 15], hi: [39, 174, 96],   accent: "#27ae60" };
-      if (S.layer === "ndvi")       return { lo: [255, 251, 230], mid: [139, 195, 74],  hi: [27, 94, 32],   accent: "#4caf50" };
-      if (S.layer === "riceEvi")    return { lo: [255, 243, 224], mid: [255, 183, 77],  hi: [46, 125, 50],   accent: "#66bb6a" };
-      if (S.layer === "rain")       return { lo: [224, 247, 250], mid: [0, 188, 212],   hi: [0, 77, 103],   accent: "#00bcd4" };
-      if (S.layer === "gsmap")      return { lo: [227, 242, 253], mid: [30, 136, 229],  hi: [13, 71, 161],  accent: "#1e88e5" };
-      if (S.layer === "forecast")   return { lo: [255, 243, 224], mid: [255, 152, 0],   hi: [230, 81, 0],   accent: "#ff9800" };
-      if (S.layer === "alerts") return {
-        lo: [255, 249, 196], mid: [255, 152, 0], hi: [198, 40, 40], accent: "#c62828"
-      };
-      if (S.layer === "soilMoisture") return { lo: [255, 245, 157], mid: [38, 198, 218], hi: [0, 77, 64], accent: "#00bcd4" };
+      const m = layerMeta[S.layer];
+      if (m?.palette) return m.palette;
       return S.rice === "white"
         ? { lo: [36, 75, 54], mid: [154, 131, 73], hi: [245, 192, 101], accent: "#ff8f4d" }
         : { lo: [42, 39, 77], mid: [134, 93, 178], hi: [236, 186, 217], accent: "#d9a0ff" };
@@ -2444,50 +2445,36 @@ function t(th, en) {
       return n.toLocaleString("th-TH");
     }
 
-    function fmtCompact(n) {
-      if (!Number.isFinite(n)) return "—";
-      if (S.layer === "dam")      return n.toFixed(1) + "%";
-      if (S.layer === "rainfall") return fmtNumber(Math.round(n)) + " mm";
-      if (S.layer === "drought")  return (n >= 0 ? "+" : "") + n.toFixed(1) + "%";
-      if (S.layer === "mills")    return fmtNumber(Math.round(n));
-      if (S.layer === "profit")     return (n >= 0 ? "+" : "") + fmtNumber(Math.round(n));
-      if (S.layer === "ndvi")       return n.toFixed(3);
-      if (S.layer === "riceEvi")    return n.toFixed(3);
-      if (S.layer === "rain")       return fmtNumber(Math.round(n)) + " mm";
-      if (S.layer === "gsmap")      return fmtNumber(Math.round(n)) + " mm";
-      if (S.layer === "forecast")   return fmtNumber(Math.round(n)) + " mm";
-      if (S.layer === "alerts") {
-        const lvl = Math.round(n);
-        return lvl >= 3 ? t("เสี่ยงสูง","High Risk") : lvl >= 2 ? t("เสี่ยงปานกลาง","Medium Risk") : lvl >= 1 ? t("เฝ้าระวัง","Watch") : t("ปกติ","Normal");
-      }
-      if (S.layer === "soilMoisture") return n.toFixed(1) + "%";
-      if (S.layer === "price") return fmtNumber(Math.round(n));
-      if (S.layer === "households") {
-        if (n >= 1e6) return `${(n / 1e6).toFixed(2)}M`;
-        if (n >= 1e4) return `${Math.round(n / 1e3)}K`;
-        return fmtNumber(Math.round(n));
-      }
-      if (S.layer === "fertilizer") return fmtNumber(Math.round(n));
-      if (n >= 1e6) return `${(n / 1e6).toFixed(1)}M`;
+    // M/K compact — mDecimals = ทศนิยมหลัก M (households=2, bignum=1)
+    function compactNum(n, mDecimals) {
+      if (n >= 1e6) return `${(n / 1e6).toFixed(mDecimals)}M`;
       if (n >= 1e4) return `${Math.round(n / 1e3)}K`;
       return fmtNumber(Math.round(n));
     }
 
-    function fmtValue(n, layer = S.layer) {
-      if (!Number.isFinite(n)) return "—";
-      if (layer === "dam")     return n.toFixed(1) + "%";
-      if (layer === "ndvi")    return n.toFixed(3);
-      if (layer === "riceEvi") return n.toFixed(3);
-      if (layer === "rain")    return fmtNumber(Math.round(n)) + " mm";
-      if (layer === "gsmap")   return fmtNumber(Math.round(n)) + " mm";
-      if (layer === "forecast") return fmtNumber(Math.round(n)) + " mm";
-      if (layer === "alerts") {
-        const lvl = Math.round(n);
-        return lvl >= 3 ? t("เสี่ยงสูง","High Risk") : lvl >= 2 ? t("เสี่ยงปานกลาง","Medium Risk") : lvl >= 1 ? t("เฝ้าระวัง","Watch") : t("ปกติ","Normal");
-      }
-      if (layer === "soilMoisture") return n.toFixed(1) + "%";
-      return fmtNumber(Math.round(n));
+    function alertWord(n) {
+      const lvl = Math.round(n);
+      return lvl >= 3 ? t("เสี่ยงสูง","High Risk") : lvl >= 2 ? t("เสี่ยงปานกลาง","Medium Risk") : lvl >= 1 ? t("เฝ้าระวัง","Watch") : t("ปกติ","Normal");
     }
+
+    // รวม fmtCompact (compact=true) + fmtValue (compact=false) ตาม layerMeta.format
+    function fmtLayer(n, layer, compact) {
+      if (!Number.isFinite(n)) return "—";
+      switch (layerMeta[layer]?.format || "bignum") {
+        case "pct1":       return n.toFixed(1) + "%";
+        case "signedPct1": return compact ? (n >= 0 ? "+" : "") + n.toFixed(1) + "%" : fmtNumber(Math.round(n));
+        case "mm":         return fmtNumber(Math.round(n)) + " mm";
+        case "num3":       return n.toFixed(3);
+        case "int":        return fmtNumber(Math.round(n));
+        case "signedInt":  return compact ? (n >= 0 ? "+" : "") + fmtNumber(Math.round(n)) : fmtNumber(Math.round(n));
+        case "alertLevel": return alertWord(n);
+        case "households": return compact ? compactNum(n, 2) : fmtNumber(Math.round(n));
+        default:           return compact ? compactNum(n, 1) : fmtNumber(Math.round(n)); // bignum
+      }
+    }
+
+    function fmtCompact(n) { return fmtLayer(n, S.layer, true); }
+    function fmtValue(n, layer = S.layer) { return fmtLayer(n, layer, false); }
 
     function sum(arr) { return arr.reduce((acc, v) => acc + v, 0) }
     function average(arr) { return arr.length ? sum(arr) / arr.length : 0 }
@@ -2942,17 +2929,9 @@ function t(th, en) {
       refs.legendBar.style.background = `linear-gradient(90deg,${rgb(palette.lo)} 0%,${rgb(palette.mid)} 52%,${rgb(palette.hi)} 100%)`;
       refs.legendLow.textContent = `${fmtCompact(min)} ${usLabel()}`;
       refs.legendHigh.textContent = `${fmtCompact(max)} ${usLabel()}`;
-      refs.legendType.textContent = S.layer === "dam" ? t("กรมชลประทาน", "RID")
-        : (S.layer === "rainfall" || S.layer === "drought") ? t("Open-Meteo", "Open-Meteo")
-        : S.layer === "mills" ? t("กรมการค้าภายใน", "DIT")
-        : S.layer === "profit" ? t("OAE+สมาคมโรงสีฯ", "OAE+TRMAB")
-        : S.layer === "ndvi" ? t("NASA MODIS", "NASA MODIS")
-        : S.layer === "riceEvi" ? t("ดาวเทียม", "Satellite")
-        : S.layer === "rain"  ? t("Open-Meteo", "Open-Meteo")
-        : S.layer === "gsmap" ? t("ดาวเทียมตรวจฝน", "Satellite Rainfall")
-        : S.layer === "forecast" ? t("พยากรณ์ฝน", "Rain Forecast")
-        : S.layer === "alerts" ? t("พื้นที่เสี่ยงน้ำท่วม", "Flood Risk Areas")
-        : S.layer === "soilMoisture" ? t("NASA SMAP (GEE)", "NASA SMAP (GEE)")
+      const lm = layerMeta[S.layer];
+      refs.legendType.textContent = lm.sourceTh
+        ? t(lm.sourceTh, lm.sourceEn)
         : t(riceMeta[S.rice].th, riceMeta[S.rice].en);
       refs.legendLayer.textContent = t(layerMeta[S.layer].th, layerMeta[S.layer].en);
       refs.legendUnit.textContent = uLabel();
