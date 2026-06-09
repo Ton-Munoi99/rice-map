@@ -26,30 +26,17 @@ current_season_year = today.year if today.month >= SEASON_MONTH_START else today
 # Completed seasons: current_season_year-1, current_season_year-2, … (5 years)
 base_years = list(range(current_season_year - N_YEARS, current_season_year))  # e.g. 2020–2024
 
-OUTPUT = "data/weather-forecast.json"
+OUTPUT     = "data/weather-forecast.json"
+API_URL    = "https://archive-api.open-meteo.com/v1/archive"
+BATCH_SIZE = 40   # provinces per request
 
 
-
-# ── Fetch one season for one province ────────────────────────────────────────
-def fetch_season(lat, lon, year):
-    url = "https://archive-api.open-meteo.com/v1/archive"
-    params = {
-        "latitude":  lat,
-        "longitude": lon,
-        "start_date": f"{year}-{SEASON_MONTH_START:02d}-01",
-        "end_date":   f"{year}-{SEASON_MONTH_END:02d}-30",
-        "daily":  "precipitation_sum,temperature_2m_mean,et0_fao_evapotranspiration",
-        "timezone": "Asia/Bangkok",
-    }
-    r = requests.get(url, params=params, timeout=30)
-    r.raise_for_status()
-    daily = r.json()["daily"]
-
+def _season_totals(daily):
+    """รวมค่าฤดูกาลของ 1 จังหวัด 1 ปี (ไม่ round — round ตอน average)"""
     def s(vals): return sum(v for v in vals if v is not None)
     def m(vals):
         v = [x for x in vals if x is not None]
         return sum(v) / len(v) if v else None
-
     return {
         "rain": s(daily["precipitation_sum"]),
         "et0":  s(daily["et0_fao_evapotranspiration"]),
@@ -57,32 +44,43 @@ def fetch_season(lat, lon, year):
     }
 
 
-# ── Average across N years ────────────────────────────────────────────────────
-def fetch_normal(lat, lon):
-    rains, et0s, temps = [], [], []
-    for yr in base_years:
-        d = fetch_season(lat, lon, yr)
-        rains.append(d["rain"])
-        et0s.append(d["et0"])
-        if d["temp"] is not None:
-            temps.append(d["temp"])
-        time.sleep(0.05)
+# ── Fetch one season for a batch of provinces in one API call ───────────────
+def fetch_season_batch(batch_names, centroids, year):
+    lats = ",".join(str(centroids[n]["lat"]) for n in batch_names)
+    lons = ",".join(str(centroids[n]["lon"]) for n in batch_names)
+    params = {
+        "latitude":  lats, "longitude": lons,
+        "start_date": f"{year}-{SEASON_MONTH_START:02d}-01",
+        "end_date":   f"{year}-{SEASON_MONTH_END:02d}-30",
+        "daily":  "precipitation_sum,temperature_2m_mean,et0_fao_evapotranspiration",
+        "timezone": "Asia/Bangkok",
+    }
+    for attempt in range(3):
+        try:
+            r = requests.get(API_URL, params=params, timeout=60)
+            r.raise_for_status()
+            results = r.json()
+            if isinstance(results, dict):
+                results = [results]
+            return {n: _season_totals(res["daily"]) for n, res in zip(batch_names, results)}
+        except Exception as e:
+            if attempt == 2:
+                print(f"  batch {year} ERROR – {e}", file=sys.stderr)
+                return {}
+            time.sleep(2)
 
+
+def _average_normal(rains, et0s, temps, lat, lon):
+    """เฉลี่ย N ปี → output schema เดิม"""
     rain_avg = round(sum(rains) / len(rains), 1)
     et0_avg  = round(sum(et0s)  / len(et0s),  1)
     temp_avg = round(sum(temps) / len(temps),  2) if temps else None
-    wb_avg   = round(rain_avg - et0_avg, 1)
-
-    # year-to-year spread as simple uncertainty indicator
-    rain_min = round(min(rains), 1)
-    rain_max = round(max(rains), 1)
-
     return {
         "forecast_rainfall_mm": rain_avg,
         "forecast_et0_mm":      et0_avg,
-        "forecast_wb_mm":       wb_avg,
-        "rainfall_p10_mm":      rain_min,
-        "rainfall_p90_mm":      rain_max,
+        "forecast_wb_mm":       round(rain_avg - et0_avg, 1),
+        "rainfall_p10_mm":      round(min(rains), 1),
+        "rainfall_p90_mm":      round(max(rains), 1),
         "forecast_temp_c":      temp_avg,
         "n_members":            N_YEARS,
         "base_years":           base_years,
@@ -112,24 +110,31 @@ def main():
     skipped = sum(1 for v in existing.values() if v is not None)
     print(f"  Reusing {skipped} existing, fetching {len(centroids)-skipped} missing...")
 
-    for i, (name, c) in enumerate(centroids.items()):
-        if provinces.get(name) is not None:
-            continue
-        for attempt in range(3):
-            try:
-                data = fetch_normal(c["lat"], c["lon"])
-                provinces[name] = data
-                rain = data["forecast_rainfall_mm"]
-                span = f"[{data['rainfall_p10_mm']:.0f}-{data['rainfall_p90_mm']:.0f}]"
-                print(f"  [{i+1:2}/{len(centroids)}] {name:25s} avg={rain:.0f}mm {span}")
-                break
-            except Exception as e:
-                if attempt == 2:
-                    print(f"  [{i+1:2}/{len(centroids)}] {name}: ERROR – {e}", file=sys.stderr)
-                    provinces[name] = None
-                else:
-                    time.sleep(2)
-        time.sleep(0.3)
+    # ดึงเฉพาะจังหวัดที่ยังไม่มี — batch ต่อปี (N_YEARS × 2 batch = ~10 requests แทน 385)
+    todo = [n for n in centroids if provinces.get(n) is None]
+    acc = {n: {"rains": [], "et0s": [], "temps": []} for n in todo}
+    for yr in base_years:
+        for i in range(0, len(todo), BATCH_SIZE):
+            batch = todo[i:i + BATCH_SIZE]
+            res = fetch_season_batch(batch, centroids, yr)
+            for name in batch:
+                d = res.get(name)
+                if d:
+                    acc[name]["rains"].append(d["rain"])
+                    acc[name]["et0s"].append(d["et0"])
+                    if d["temp"] is not None:
+                        acc[name]["temps"].append(d["temp"])
+            time.sleep(0.3)
+        print(f"  year {yr} done")
+
+    for name in todo:
+        a = acc[name]
+        if len(a["rains"]) == N_YEARS:   # ครบทุกปีเท่านั้น
+            c = centroids[name]
+            provinces[name] = _average_normal(a["rains"], a["et0s"], a["temps"], c["lat"], c["lon"])
+        else:
+            provinces[name] = None
+            print(f"  {name}: incomplete ({len(a['rains'])}/{N_YEARS} yrs)", file=sys.stderr)
 
     output = {
         "_meta": {
