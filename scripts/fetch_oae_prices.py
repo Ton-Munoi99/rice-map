@@ -103,7 +103,7 @@ def main():
     result = {
         **existing,
         "oae_national": {},
-        "meta": {
+        "_meta": {
             "source": "OAE CKAN API — catalog.oae.go.th",
             "source_en": "Office of Agricultural Economics (OAE)",
             "updated_at": datetime.now(timezone.utc).isoformat(),

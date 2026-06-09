@@ -5187,7 +5187,7 @@ ${warningsHtml}
       block.innerHTML = rows.join('');
 
       // อัพเดตเวลา
-      const updatedAt = LIVE_PRICES?.meta?.updated_at || LIVE_PRICES?.oae_national?.white?.latest?.year || FOB_PRICES?.date || '';
+      const updatedAt = LIVE_PRICES?._meta?.updated_at || LIVE_PRICES?.meta?.updated_at || LIVE_PRICES?.oae_national?.white?.latest?.year || FOB_PRICES?.date || '';
       if (updatedAt) {
         try {
           const d = new Date(updatedAt);
