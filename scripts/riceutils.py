@@ -57,6 +57,12 @@ _BUENG_KAN_POLY = [[
 # repo root = โฟลเดอร์แม่ของ scripts/
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+# จังหวัดที่ polygon ใน thailand-data.js เพี้ยน (จุดกระจายผิด) → ใช้พิกัดจริงแทน
+# Satun: geometry corrupt ทำให้ centroid ตกกลางอ่าวไทย (~330km จากจริง)
+CENTROID_OVERRIDE = {
+    "Satun": {"lat": 6.75, "lon": 100.02},   # จ.สตูล (เขตในแผ่นดิน)
+}
+
 
 # ── GEE Auth ─────────────────────────────────────────────────────────────────
 def init_gee():
@@ -128,4 +134,8 @@ def load_centroids(js_path=None, method="bbox"):
             lat = (min(lats) + max(lats)) / 2
             lon = (min(lons) + max(lons)) / 2
         centroids[name] = {"lat": round(lat, 4), "lon": round(lon, 4)}
+    # แทนที่จังหวัดที่ polygon เพี้ยนด้วยพิกัดจริง
+    for name, pt in CENTROID_OVERRIDE.items():
+        if name in centroids:
+            centroids[name] = dict(pt)
     return centroids
