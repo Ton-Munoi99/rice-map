@@ -2937,8 +2937,9 @@ function t(th, en) {
     function updateLegend(min, max) {
       const palette = getPalette();
       refs.legendBar.style.background = `linear-gradient(90deg,${rgb(palette.lo)} 0%,${rgb(palette.mid)} 52%,${rgb(palette.hi)} 100%)`;
-      refs.legendLow.textContent = `${fmtCompact(min)}${embedsUnit(S.layer, true) ? "" : " " + usLabel()}`;
-      refs.legendHigh.textContent = `${fmtCompact(max)}${embedsUnit(S.layer, true) ? "" : " " + usLabel()}`;
+      const legUnit = embedsUnit(S.layer, true) ? "" : " " + usLabel();
+      refs.legendLow.textContent = `${fmtCompact(min)}${legUnit}`;
+      refs.legendHigh.textContent = `${fmtCompact(max)}${legUnit}`;
       const lm = layerMeta[S.layer];
       refs.legendType.textContent = lm.sourceTh
         ? t(lm.sourceTh, lm.sourceEn)
