@@ -2476,6 +2476,16 @@ function t(th, en) {
     function fmtCompact(n) { return fmtLayer(n, S.layer, true); }
     function fmtValue(n, layer = S.layer) { return fmtLayer(n, layer, false); }
 
+    // format ที่ฝังหน่วยไว้ใน fmt output แล้ว → ไม่ต้องต่อ usLabel ซ้ำ (กันหน่วยซ้ำที่ legend/detail/tooltip)
+    // pct1/mm ฝังหน่วยทั้ง compact และ non-compact · signedPct1 ฝัง % เฉพาะ compact (legend)
+    // ไม่ฝังใน fmtValue (detail/tooltip) → ต้องส่ง compact ให้ตรงกับ fmt ที่ใช้ ณ จุดนั้น
+    function embedsUnit(layer = S.layer, compact = false) {
+      const f = layerMeta[layer]?.format;
+      if (f === "pct1" || f === "mm") return true;
+      if (f === "signedPct1") return compact;
+      return false;
+    }
+
     function sum(arr) { return arr.reduce((acc, v) => acc + v, 0) }
     function average(arr) { return arr.length ? sum(arr) / arr.length : 0 }
 
@@ -2927,8 +2937,8 @@ function t(th, en) {
     function updateLegend(min, max) {
       const palette = getPalette();
       refs.legendBar.style.background = `linear-gradient(90deg,${rgb(palette.lo)} 0%,${rgb(palette.mid)} 52%,${rgb(palette.hi)} 100%)`;
-      refs.legendLow.textContent = `${fmtCompact(min)} ${usLabel()}`;
-      refs.legendHigh.textContent = `${fmtCompact(max)} ${usLabel()}`;
+      refs.legendLow.textContent = `${fmtCompact(min)}${embedsUnit(S.layer, true) ? "" : " " + usLabel()}`;
+      refs.legendHigh.textContent = `${fmtCompact(max)}${embedsUnit(S.layer, true) ? "" : " " + usLabel()}`;
       const lm = layerMeta[S.layer];
       refs.legendType.textContent = lm.sourceTh
         ? t(lm.sourceTh, lm.sourceEn)
@@ -3678,7 +3688,7 @@ function t(th, en) {
             : "";
           const mainValue = layer === "price"
             ? `${priceRange(entry)} <small>${usLabel(layer)}</small>`
-            : `${fmtValue(valueOf(en, rice, S.year, layer), layer)} <small>${usLabel(layer)}</small>`;
+            : `${fmtValue(valueOf(en, rice, S.year, layer), layer)}${embedsUnit(layer) ? "" : ` <small>${usLabel(layer)}</small>`}`;
           const subValue = layer === "price" && priceAltRange(entry)
             ? `<div class="m-label" style="margin-top:2px">${t('ความชื้น 25%','Moisture 25%')}: ${priceAltRange(entry)}</div>`
             : "";
@@ -4340,7 +4350,7 @@ ${warningsHtml}
       const mainMoist = entry.price_basis === "moisture_15_pct" ? t('ความชื้น 15%','15% moisture') : "";
       const valueHTML = S.layer === "price"
         ? `${priceRange(entry)} <small style="font-size:12px;color:var(--muted)">${usLabel()}</small>${mainMoist ? `<div class="rank" style="margin-top:2px;font-size:10px;opacity:.7">${mainMoist}</div>` : ""}${priceAltRange(entry) ? `<div class="rank" style="margin-top:2px">${t('ความชื้น 25%','Moisture 25%')}: ${priceAltRange(entry)}</div>` : ""}`
-        : `${fmtValue(value)} <small style="font-size:12px;color:var(--muted)">${usLabel()}</small>`;
+        : `${fmtValue(value)}${embedsUnit() ? "" : ` <small style="font-size:12px;color:var(--muted)">${usLabel()}</small>`}`;
       const householdsLine = S.layer !== "households" && window.PROVINCE_HOUSEHOLDS
         ? `<div style="font-size:10px;color:var(--muted);margin-top:4px">👨‍🌾 ${t('ครัวเรือนเกษตรกร','Farm Households')}: ${fmtNumber(householdValueOf(en))} ${t('ครัวเรือน','HH')} (OAE 2566)</div>`
         : "";
