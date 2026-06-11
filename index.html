@@ -1174,6 +1174,15 @@
       pointer-events: none;
     }
 
+    .wl-dot {
+      stroke: rgba(7, 16, 22, .85);
+      stroke-width: .6;
+      opacity: .92;
+      cursor: pointer;
+      transition: stroke-width .12s ease, opacity .12s ease;
+    }
+    .wl-dot:hover { stroke: #fff; stroke-width: 1.4; opacity: 1; }
+
     .tooltip {
       position: fixed;
       z-index: 20;
@@ -1665,6 +1674,10 @@
               <span class="th-t">💧 ความชื้นในดิน (SMAP)</span>
               <span class="en-t">💧 Soil Moisture (SMAP)</span>
             </button>
+            <button class="pill" data-layer="waterlevel" onclick="setLayer('waterlevel')">
+              <span class="th-t">💧 ระดับน้ำในแม่น้ำ/คลอง</span>
+              <span class="en-t">💧 River Water Level</span>
+            </button>
             <button class="pill" data-layer="riceEvi" onclick="setLayer('riceEvi')"><span class="th-t">🌾 สภาพนาข้าว</span><span class="en-t">🌾 Rice Paddy Status</span></button>
             <!-- Hidden layers: code retained, buttons removed for cleaner UI -->
             <!-- <button class="pill" data-layer="rainfall" onclick="setLayer('rainfall')"><span class="th-t">ปริมาณฝน (มม.)</span><span class="en-t">Season Rainfall</span></button> -->
@@ -1930,7 +1943,7 @@
 
     // ── Layers that have no year-based time series (no spark chart, no est-year badge) ──
     const LAYER_NO_TIMESERIES = new Set([
-      "dam","rainfall","drought","mills","profit","ndvi","riceEvi","rain","gsmap","forecast","alerts","soilMoisture",
+      "dam","rainfall","drought","mills","profit","ndvi","riceEvi","rain","gsmap","forecast","alerts","soilMoisture","waterlevel",
     ]);
 
     const layerMeta = {
@@ -1952,7 +1965,18 @@
       forecast:   { th: "พยากรณ์ฝน 7 วัน", en: "7-Day Rain Forecast", unit: "มม. (พยากรณ์ 7 วัน)", unitEn: "mm (7-day forecast)", unitShort: "มม.", unitShortEn: "mm", summary: "พยากรณ์ฝนเฉลี่ยต่อจังหวัด", summaryMode: "avg" },
       alerts:     { th: "พื้นที่เสี่ยงน้ำท่วม", en: "Flood Risk Areas", unit: "ระดับการเตือน", unitEn: "Alert Level", unitShort: "ระดับ", unitShortEn: "Level", summary: "จังหวัดที่มีการเตือนภัย", summaryMode: "avg" },
       soilMoisture: { th: "ความชื้นในดิน (SMAP)", en: "Soil Moisture (SMAP)", unit: "% ความชื้น", unitEn: "% moisture", unitShort: "%", unitShortEn: "%", summary: "ความชื้นในดินเฉลี่ยต่อจังหวัด", summaryMode: "avg" },
+      waterlevel: { th: "ระดับน้ำในแม่น้ำ/คลอง (สถานีจริง)", en: "River/Canal Water Level (stations)", unit: "ThaiWater · realtime", unitShort: "", summary: "สถานีเตือนภัย", summaryMode: "sum", pointOverlay: true },
     };
+
+    const WL_COLORS = { 1: "#7fd4ff", 2: "#39b0e5", 3: "#2ecc71", 4: "#f39c12", 5: "#e74c3c" };
+    const WL_LABELS = {
+      1: { th: "น้อยวิกฤต", en: "Critically Low" },
+      2: { th: "น้อย",       en: "Low" },
+      3: { th: "ปกติ",       en: "Normal" },
+      4: { th: "มาก",        en: "High" },
+      5: { th: "ล้นตลิ่ง",   en: "Overflow" },
+    };
+    function isPointLayer(layer = S.layer) { return !!layerMeta[layer]?.pointOverlay; }
 
     // ── per-layer rendering config (merged into layerMeta) ───────────────────
     // format: bignum|int|pct1|signedPct1|mm|num3|signedInt|alertLevel|households
@@ -2074,7 +2098,7 @@
       nationalFertBlock: document.getElementById("nationalFertBlock")
     };
 
-    let S = { rice: "white", layer: "production", year: "2567", reg: "all", sel: null };
+    let S = { rice: "white", layer: "production", year: "2567", reg: "all", sel: null, wlShowAll: false };
     let DATA = {};
     let DATA_META = { mode: "loading", label: "กำลังโหลดข้อมูล CSV", detail: "กำลังอ่านไฟล์ชุดเริ่มต้น" };
     let VIEW = {
@@ -2261,6 +2285,7 @@
       if (layer === "forecast") return ["forecast"];
       if (layer === "alerts") return ["alerts"];
       if (layer === "soilMoisture") return ["soilMoisture"];
+      if (layer === "waterlevel") return ["waterlevel"];
       if (layer === "profit") return PRICE_YEARS;
       return layer === "price" ? PRICE_YEARS : PRODUCTION_YEARS;
     }
@@ -2362,6 +2387,7 @@ function t(th, en) {
     }
 
     function valueOf(en, rice = S.rice, year = S.year, layer = S.layer) {
+      if (isPointLayer(layer)) return 0;
       if (layer === "households") return householdValueOf(en);
       if (layer === "rainfall" || layer === "drought") return weatherValueOf(en, layer) ?? 0;
       if (layer === "mills")      return millsValueOf(en);
@@ -2372,6 +2398,7 @@ function t(th, en) {
     }
 
     function hasLayerValue(en, rice = S.rice, year = S.year, layer = S.layer) {
+      if (isPointLayer(layer)) return false;
       if (layer === "rainfall" || layer === "drought") return weatherValueOf(en, layer) != null;
       if (layer === "mills")      return millsValueOf(en) > 0;
       if (layer === "profit")     return profitValueOf(en, rice, year) !== null;
@@ -2733,6 +2760,7 @@ function t(th, en) {
         <g fill="rgba(246,236,220,.09)" stroke="url(#coastStroke)" stroke-width="1.6" stroke-linejoin="round">${silhouette.join("")}</g>
       </g>
       <g id="provinceLayer">${featurePaths.join("")}</g>
+      <g id="stationLayer"></g>
       <g id="labelLayer">${labelMarkup}</g>
     </g>
   `;
@@ -2889,6 +2917,7 @@ function t(th, en) {
 
     function applyMapColors() {
       const visible = getVisibleProvinces();
+      const pointMode = isPointLayer();
       const vals = visible.filter(en => hasLayerValue(en)).map(en => valueOf(en));
       const min = vals.length ? Math.min(...vals) : 0;
       const max = vals.length ? Math.max(...vals) : 1;
@@ -2896,6 +2925,12 @@ function t(th, en) {
       refs.mapSvg.querySelectorAll(".province").forEach(path => {
         const en = path.dataset.en;
         const inside = visible.includes(en);
+        if (pointMode) {
+          path.classList.toggle("faded", !inside);
+          path.classList.toggle("sel", false);
+          path.setAttribute("fill", inside ? "rgba(255,255,255,.06)" : "rgba(255,255,255,.03)");
+          return;
+        }
         const hasData = hasLayerValue(en);
         path.classList.toggle("faded", !inside || !hasData);
         path.classList.toggle("sel", S.sel === en);
@@ -2915,7 +2950,56 @@ function t(th, en) {
       });
       renderMapLabels();
       updateLegend(min, max);
+      renderStations();
     }
+
+    function renderStations() {
+      const layer = refs.mapSvg.querySelector("#stationLayer");
+      if (!layer) return;
+      if (!isPointLayer()) { layer.innerHTML = ""; return; }
+      const rows = window.WATERLEVEL_DATA?.stations || [];
+      layer.innerHTML = rows
+        .filter(s => S.wlShowAll || (s.level || 0) >= 4)
+        .map(s => {
+          const [x, y] = project([s.lon, s.lat]);
+          const lvl = s.level || 0;
+          const r = lvl >= 5 ? 4.6 : lvl >= 4 ? 3.6 : 2.4;
+          return `<circle class="wl-dot" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r}" fill="${WL_COLORS[lvl] || '#9ca3af'}" data-sid="${s.id}"></circle>`;
+        }).join("");
+      layer.querySelectorAll(".wl-dot").forEach(dot => {
+        const st = rows.find(s => String(s.id) === dot.dataset.sid);
+        if (!st) return;
+        dot.addEventListener("mouseenter", event => showStationTooltip(event, st));
+        dot.addEventListener("mousemove", moveTooltip);
+        dot.addEventListener("mouseleave", hideTooltip);
+      });
+    }
+
+    function showStationTooltip(event, st) {
+      const lvl = st.level || 0;
+      const lbl = WL_LABELS[lvl] ? t(WL_LABELS[lvl].th, WL_LABELS[lvl].en) : t("ไม่มีข้อมูล","No data");
+      const col = WL_COLORS[lvl] || "var(--muted)";
+      const prov = t(st.province_th || "", st.province_en || "");
+      const amphoe = t(st.amphoe_th || "", st.amphoe_en || "");
+      const where = [amphoe, prov].filter(Boolean).join(" · ");
+      refs.tooltip.innerHTML = `
+        <div class="th">${t(st.name_th||st.name_en, st.name_en||st.name_th)}</div>
+        ${where ? `<div class="en">${where}</div>` : ""}
+        ${st.river ? `<div class="type">🌊 ${st.river}</div>` : ""}
+        <div class="value" style="color:${col}">${st.pct!=null?st.pct.toFixed(0)+"%":"—"} <small style="font-size:9px;opacity:.7">${t('ของตลิ่ง','of bank')}</small></div>
+        <div style="font-size:10px;margin-top:2px">${lbl}${st.diff_text ? " · "+st.diff_text : ""}</div>
+        <div class="rank" style="font-size:9px;margin-top:3px;opacity:.7">${st.agency||"ThaiWater"} · ${st.dt||""}</div>
+      `;
+      refs.tooltip.classList.add("show");
+      moveTooltip(event);
+    }
+
+    function toggleWlAll() {
+      S.wlShowAll = !S.wlShowAll;
+      renderStations();
+      updateLegend();
+    }
+    window.toggleWlAll = toggleWlAll;
 
     function renderMapLabels() {
       const layer = refs.mapSvg.querySelector("#labelLayer");
@@ -2935,6 +3019,7 @@ function t(th, en) {
     }
 
     function updateLegend(min, max) {
+      if (isPointLayer()) { updatePointLegend(); return; }
       const palette = getPalette();
       refs.legendBar.style.background = `linear-gradient(90deg,${rgb(palette.lo)} 0%,${rgb(palette.mid)} 52%,${rgb(palette.hi)} 100%)`;
       const legUnit = embedsUnit(S.layer, true) ? "" : " " + usLabel();
@@ -2984,10 +3069,28 @@ function t(th, en) {
       refs.latestBadge.style.borderColor = isEstYear ? 'rgba(245,192,101,.55)' : '';
     }
 
+    function updatePointLegend() {
+      const meta = window.WATERLEVEL_DATA?._meta;
+      const total = meta?.total ?? 0;
+      const stops = [1,2,3,4,5].map(l => WL_COLORS[l]).join(",");
+      refs.legendBar.style.background = `linear-gradient(90deg,${stops})`;
+      refs.legendLow.textContent = t(WL_LABELS[1].th, WL_LABELS[1].en);
+      refs.legendHigh.textContent = t(WL_LABELS[5].th, WL_LABELS[5].en);
+      refs.legendType.textContent = t("สสน./ThaiWater","HII/ThaiWater");
+      refs.legendLayer.textContent = t(layerMeta.waterlevel.th, layerMeta.waterlevel.en);
+      refs.legendUnit.innerHTML = `<a href="javascript:void(0)" onclick="toggleWlAll()" style="color:var(--accent);text-decoration:underline;cursor:pointer">${S.wlShowAll ? t('แสดงทุกจุด ('+total+')','All stations ('+total+')') : t("เฉพาะเตือนภัย ▸ แสดงทุกจุด","Alerts only ▸ show all")}</a>`;
+      refs.latestBadge.classList.add("show");
+      refs.latestBadge.textContent = '💧 ThaiWater ' + (meta?.updated_at?.slice(0,16).replace("T"," ") || "realtime");
+    }
+
     function updateDataSourceUI() {
       refs.dataStatus.textContent = DATA_META.label;
       const visible = getVisibleProvinces();
       const covered = visible.filter(en => hasLayerValue(en)).length;
+      if (S.layer === "waterlevel") {
+        if (refs.dataSourceLabel) refs.dataSourceLabel.textContent = "ThaiWater (สสน./HII)";
+        return;
+      }
       if (S.layer === "dam") {
         const updated = window.DAM_DATA?._meta?.updated || "—";
         refs.dataSourceNote.textContent = t(
@@ -3143,6 +3246,18 @@ function t(th, en) {
     }
 
     function updateSummary() {
+      if (S.layer === "waterlevel") {
+        const sts = window.WATERLEVEL_DATA?.stations || [];
+        const visible = S.wlShowAll ? sts : sts.filter(s => (s.level||0) >= 4);
+        const counts = {};
+        visible.forEach(s => { const l = s.level||0; counts[l] = (counts[l]||0)+1; });
+        refs.summaryValue.textContent = visible.length;
+        refs.summaryLabel.textContent = t("สถานี","stations");
+        refs.summaryNote.innerHTML = [5,4,3,2,1].filter(l => counts[l]).map(l =>
+          `<span style="color:${WL_COLORS[l]}">${t(WL_LABELS[l].th, WL_LABELS[l].en)}: ${counts[l]}</span>`
+        ).join(" · ");
+        return;
+      }
       const visible = getVisibleProvinces();
       const covered = visible.filter(en => hasLayerValue(en));
       const meta = layerMeta[S.layer];
@@ -3244,7 +3359,27 @@ function t(th, en) {
            `Province-level OAE data for ${riceTypeDescription(S.rice, S.layer)}. ${layerMeta[S.layer].en} · Crop year ${S.year}${S.reg === "all" ? " · Nationwide" : ` · ${S.reg.charAt(0).toUpperCase() + S.reg.slice(1)} Region`}.`);
     }
 
+    function updateStationList() {
+      const sts = (window.WATERLEVEL_DATA?.stations || [])
+        .filter(s => S.wlShowAll || (s.level||0) >= 4)
+        .sort((a,b) => (b.level||0) - (a.level||0) || (b.pct||0) - (a.pct||0))
+        .slice(0, 20);
+      refs.topList.innerHTML = sts.map((s, i) => {
+        const lvl = s.level || 0;
+        const col = WL_COLORS[lvl] || "var(--muted)";
+        const lbl = WL_LABELS[lvl] ? t(WL_LABELS[lvl].th, WL_LABELS[lvl].en) : "—";
+        const name = t(s.name_th||s.name_en, s.name_en||s.name_th);
+        const prov = t(s.province_th||"", s.province_en||"");
+        return `<div class="top-item" style="cursor:default">
+          <span class="rank" style="color:${col}">${i+1}</span>
+          <span class="name">${name} <small style="opacity:.6">${prov}</small></span>
+          <span class="value" style="color:${col}">${s.pct!=null?s.pct.toFixed(0)+"%":"—"} <small style="font-size:9px">${lbl}</small></span>
+        </div>`;
+      }).join("");
+    }
+
     function updateTopList() {
+      if (S.layer === "waterlevel") { updateStationList(); return; }
       const visible = getVisibleProvinces();
       const meta = layerMeta[S.layer];
       const yearLabel = S.layer === "dam" ? t("ล่าสุด", "Latest") : t(`ปี ${S.year}`, `Year ${S.year}`);
@@ -4406,6 +4541,10 @@ ${warningsHtml}
     }
 
     function renderYearButtons() {
+      if (S.layer === "waterlevel") {
+        refs.yearButtons.innerHTML = `<button class="pill on">💧 ${t('ข้อมูลสด','Realtime')}</button>`;
+        return;
+      }
       if (S.layer === "dam") {
         const updated = window.DAM_DATA?._meta?.updated || "—";
         refs.yearButtons.innerHTML = `<button class="pill on" data-year="dam">💧 ${t('ล่าสุด','Latest')} ${updated}</button>`;
@@ -4738,6 +4877,16 @@ ${warningsHtml}
       toastTimer = setTimeout(() => refs.toast.classList.remove("show"), 2200);
     }
 
+    async function fetchWaterLevelData() {
+      try {
+        const res = await fetch('data/water-level.json?_=' + Date.now(), { cache: 'no-store' });
+        if (res.ok) {
+          window.WATERLEVEL_DATA = await res.json();
+          if (isPointLayer()) rerender();
+        }
+      } catch (e) { console.info('water-level.json not available (local mode)'); }
+    }
+
     async function fetchDamData() {
       try {
         const res = await fetch('data/dam-water.json?_=' + Date.now(), { cache: 'no-store' });
@@ -5009,6 +5158,7 @@ ${warningsHtml}
       fetchLayerData("rain-forecast.json", "FORECAST_DATA", "forecast");
       fetchLayerData("agri-warnings.json", "ALERTS_DATA", "alerts");
       fetchSoilMoistureData();
+      fetchWaterLevelData();
       fetchDiseaseData();
       updateNationalFert();
 
