@@ -1820,6 +1820,14 @@
     };
 
     // Dam name English lookup (keyed by RID dam ID — matches dam-water.json)
+    function damOutflowLevel(d) {
+      const out = d.outflow;
+      if (out == null) return 0;
+      const ratio = out / (d.inflow || 0.1);
+      if (ratio >= 4 || out >= 100) return 2;  // สูงมาก — ระวังน้ำหลาก
+      if (ratio >= 2 || out >= 15)  return 1;  // สูง — ปล่อยน้ำอย่างชัดเจน
+      return 0;
+    }
     const DAM_NAME_EN = {
       "100211": "Lam Nang Rong Dam",        "100502": "Khlong Si Yat Dam",
       "200204": "Chulabhorn Dam",            "100104": "Mae Kuang Udom Thara Dam",
@@ -3812,11 +3820,23 @@ function t(th, en) {
       if (window.DAM_DATA?.provinces?.[en]) {
         const dp = window.DAM_DATA.provinces[en];
         const damColor = dp.dam_level_pct < 30 ? '#c0392b' : dp.dam_level_pct < 60 ? '#f39c12' : '#2980b9';
-        const damsDetail = dp.dams.map(d => `
+        const damsDetail = dp.dams.map(d => {
+          const lvl = damOutflowLevel(d);
+          const outCol = lvl === 2 ? '#ef4444' : lvl === 1 ? '#f97316' : 'var(--muted)';
+          const alertBadge = lvl >= 1 ? `<span style="color:${outCol};margin-left:4px;font-size:9px">${lvl===2?'⚠️ ':''} ${t('ปล่อยน้ำ','releasing')}</span>` : '';
+          const pctCol = (d.pct||0) < 30 ? '#c0392b' : (d.pct||0) < 60 ? '#f39c12' : '#2980b9';
+          const flowStr = [
+            d.inflow  != null ? `↓ ${d.inflow.toFixed(1)}` : null,
+            d.outflow != null ? `<span style="color:${outCol}">↑ ${d.outflow.toFixed(1)}</span>` : null,
+          ].filter(Boolean).join(' · ');
+          return `
           <div class="metric">
-            <div class="m-label" style="font-size:10px">${t(d.name, DAM_NAME_EN[d.id] || d.name)}</div>
-            <div class="m-value" style="font-size:11px;color:${dp.dam_level_pct < 30 ? '#c0392b' : dp.dam_level_pct < 60 ? '#f39c12' : '#2980b9'}">${Number(d.pct || 0).toFixed(1)}%</div>
-          </div>`).join("");
+            <div class="m-label" style="font-size:10px">${t(d.name, DAM_NAME_EN[d.id] || d.name)}${alertBadge}</div>
+            <div class="m-value" style="font-size:11px;color:${pctCol}">${Number(d.pct||0).toFixed(1)}%
+              ${flowStr ? `<small style="font-size:9px;color:var(--muted);margin-left:4px">${flowStr} m³/s</small>` : ''}
+            </div>
+          </div>`;
+        }).join("");
         damHtml = `
           <div class="rice-card" style="grid-column:1/-1;background:rgba(41,128,185,.08);border:1px solid rgba(41,128,185,.2)">
             <div class="t">💧 ${t('ระดับน้ำในเขื่อน (RID)','Dam Water Level (RID)')}</div>
@@ -3829,7 +3849,17 @@ function t(th, en) {
               <div class="m-value" style="font-size:11px">${dp.total_volume_mm3.toFixed(0)} / ${dp.total_storage_mm3.toFixed(0)} <small>${t('ล้าน ม.³','million m³')}</small></div>
             </div>
             ${damsDetail}
-            <div style="font-size:9px;color:var(--muted);margin-top:6px">${t('ที่มา: กรมชลประทาน (RID) · อัปเดตรายวัน','Source: Royal Irrigation Dept. (RID) · Daily update')} ${window.DAM_DATA._meta.updated}</div>
+            ${(() => {
+              const highOut = dp.dams.filter(d => damOutflowLevel(d) >= 1);
+              if (!highOut.length) return '';
+              const critical = highOut.filter(d => damOutflowLevel(d) === 2).length;
+              const msg = critical
+                ? t(`⚠️ ${critical} เขื่อนปล่อยน้ำสูงมาก — ระวังน้ำหลากปลายน้ำ`, `⚠️ ${critical} dam(s) releasing at high rate — downstream flood risk`)
+                : t(`▲ ${highOut.length} เขื่อนปล่อยน้ำสูงกว่าปกติ`, `▲ ${highOut.length} dam(s) releasing above normal`);
+              const col = critical ? '#ef4444' : '#f97316';
+              return `<div style="font-size:9px;color:${col};margin-top:6px;font-weight:600">${msg}</div>`;
+            })()}
+            <div style="font-size:9px;color:var(--muted);margin-top:4px">${t('ที่มา: กรมชลประทาน (RID) · อัปเดตรายวัน','Source: Royal Irrigation Dept. (RID) · Daily update')} ${window.DAM_DATA._meta.updated}</div>
           </div>`;
       }
 
@@ -4369,7 +4399,14 @@ function t(th, en) {
         if (!prov) return `<div class="th">${t(NM[en] || en, en)}</div><div class="en">${en}</div><div style="color:var(--muted);font-size:11px;margin-top:6px">${t('ไม่มีข้อมูลเขื่อน','No dam data')}</div>`;
         const rank = currentRank(en);
         const visible = getVisibleProvinces().filter(name => hasLayerValue(name)).length;
-        const damsHtml = prov.dams.map(d => `<div style="font-size:9px;color:var(--muted);margin-top:2px">${t(d.name, DAM_NAME_EN[d.id] || d.name)}: ${Number(d.pct || 0).toFixed(1)}%</div>`).join("");
+        const damsHtml = prov.dams.map(d => {
+          const lvl = damOutflowLevel(d);
+          const outCol = lvl === 2 ? '#ef4444' : lvl === 1 ? '#f97316' : 'var(--muted)';
+          const outStr = d.outflow != null
+            ? `<span style="color:${outCol}"> ↑${d.outflow.toFixed(1)} m³/s${lvl>=1?' ⚠':''}</span>`
+            : '';
+          return `<div style="font-size:9px;color:var(--muted);margin-top:2px">${t(d.name, DAM_NAME_EN[d.id] || d.name)}: ${Number(d.pct||0).toFixed(1)}%${outStr}</div>`;
+        }).join("");
         return `
     <div class="th">${t(NM[en] || en, en)}</div>
     <div class="en">${en}</div>
