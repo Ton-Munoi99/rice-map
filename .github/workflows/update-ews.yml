@@ -1,0 +1,45 @@
+name: Update EWS Flash Flood Stations
+
+on:
+  schedule:
+    # ทุก 3 ชั่วโมง (realtime — EWS DWR อัปเดตต่อเนื่อง)
+    - cron: '30 */3 * * *'
+  workflow_dispatch:
+
+jobs:
+  update-ews:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Fetch EWS stations (DWR API)
+        run: python scripts/fetch_ews.py
+
+      - name: Commit and push
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/ews.json
+          if git diff --quiet && git diff --staged --quiet; then
+            echo "No changes."
+          else
+            git commit -m "auto: update EWS flash flood stations (DWR)"
+            for i in 1 2 3; do
+              git pull --rebase origin main && git push && break
+              echo "Push attempt $i failed, retrying in 10s..."
+              sleep 10
+            done
+          fi
