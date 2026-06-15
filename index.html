@@ -1670,10 +1670,6 @@
               <span class="th-t">💧 ระดับน้ำในแม่น้ำ/คลอง</span>
               <span class="en-t">💧 River Water Level</span>
             </button>
-            <button class="pill" data-layer="ews" onclick="setLayer('ews')">
-              <span class="th-t">🌧️ สถานีเตือนน้ำป่า/ดินถล่ม</span>
-              <span class="en-t">🌧️ Flash Flood / Landslide EWS</span>
-            </button>
             <button class="pill" data-layer="alerts" onclick="setLayer('alerts')">
               <span class="th-t">🚨 พื้นที่เสี่ยงน้ำท่วม</span>
               <span class="en-t">🚨 Flood Risk Areas</span>
@@ -1955,7 +1951,7 @@
 
     // ── Layers that have no year-based time series (no spark chart, no est-year badge) ──
     const LAYER_NO_TIMESERIES = new Set([
-      "dam","rainfall","drought","mills","profit","ndvi","riceEvi","rain","gsmap","forecast","alerts","soilMoisture","waterlevel","ews",
+      "dam","rainfall","drought","mills","profit","ndvi","riceEvi","rain","gsmap","forecast","alerts","soilMoisture","waterlevel",
     ]);
 
     const layerMeta = {
@@ -1978,7 +1974,6 @@
       alerts:     { th: "พื้นที่เสี่ยงน้ำท่วม", en: "Flood Risk Areas", unit: "ระดับการเตือน", unitEn: "Alert Level", unitShort: "ระดับ", unitShortEn: "Level", summary: "จังหวัดที่มีการเตือนภัย", summaryMode: "avg" },
       soilMoisture: { th: "ความชื้นในดิน (SMAP)", en: "Soil Moisture (SMAP)", unit: "% ความชื้น", unitEn: "% moisture", unitShort: "%", unitShortEn: "%", summary: "ความชื้นในดินเฉลี่ยต่อจังหวัด", summaryMode: "avg" },
       waterlevel: { th: "ระดับน้ำในแม่น้ำ/คลอง (สถานีจริง)", en: "River/Canal Water Level (stations)", unit: "ThaiWater · realtime", unitShort: "", summary: "สถานีเตือนภัย", summaryMode: "sum", pointOverlay: true },
-      ews:        { th: "สถานีเตือนน้ำป่า/ดินถล่ม (EWS)", en: "Flash Flood / Landslide Warning (EWS)", unit: "กรมทรัพยากรน้ำ · realtime", unitShort: "", summary: "สถานีเตือนภัย", summaryMode: "sum", pointOverlay: true },
     };
 
     const WL_COLORS = { 1: "#7fd4ff", 2: "#39b0e5", 3: "#2ecc71", 4: "#f39c12", 5: "#e74c3c" };
@@ -1988,13 +1983,6 @@
       3: { th: "ปกติ",       en: "Normal" },
       4: { th: "มาก",        en: "High" },
       5: { th: "ล้นตลิ่ง",   en: "Overflow" },
-    };
-    const EWS_COLORS = { 0: "#9ca3af", 1: "#22c55e", 2: "#f97316", 3: "#ef4444" };
-    const EWS_LABELS = {
-      0: { th: "ปกติ",          en: "Normal" },
-      1: { th: "เฝ้าระวัง",     en: "Watch" },
-      2: { th: "เตรียมพร้อม",   en: "Prepare" },
-      3: { th: "วิกฤต",         en: "Critical" },
     };
     function isPointLayer(layer = S.layer) { return !!layerMeta[layer]?.pointOverlay; }
 
@@ -2118,7 +2106,7 @@
       nationalFertBlock: document.getElementById("nationalFertBlock")
     };
 
-    let S = { rice: "white", layer: "production", year: "2567", reg: "all", sel: null, wlShowAll: false, ewsShowAll: false };
+    let S = { rice: "white", layer: "production", year: "2567", reg: "all", sel: null, wlShowAll: false };
     let DATA = {};
     let DATA_META = { mode: "loading", label: "กำลังโหลดข้อมูล CSV", detail: "กำลังอ่านไฟล์ชุดเริ่มต้น" };
     let VIEW = {
@@ -2306,7 +2294,6 @@
       if (layer === "alerts") return ["alerts"];
       if (layer === "soilMoisture") return ["soilMoisture"];
       if (layer === "waterlevel") return ["waterlevel"];
-      if (layer === "ews") return ["ews"];
       if (layer === "profit") return PRICE_YEARS;
       return layer === "price" ? PRICE_YEARS : PRODUCTION_YEARS;
     }
@@ -2986,24 +2973,6 @@ function t(th, en) {
       if (!layer) return;
       if (!isPointLayer()) { layer.innerHTML = ""; return; }
 
-      if (S.layer === "ews") {
-        const rows = window.EWS_DATA?.stations || [];
-        layer.innerHTML = rows
-          .filter(s => S.ewsShowAll || s.status >= 1)
-          .map(s => {
-            const [x, y] = project([s.lon, s.lat]);
-            const r = s.status >= 3 ? 4.6 : s.status >= 2 ? 3.6 : s.status >= 1 ? 2.8 : 2.0;
-            return `<circle class="wl-dot" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r}" fill="${EWS_COLORS[s.status] ?? '#9ca3af'}" data-stn="${s.stn}"></circle>`;
-          }).join("");
-        layer.querySelectorAll(".wl-dot").forEach(dot => {
-          const st = rows.find(s => s.stn === dot.dataset.stn);
-          if (!st) return;
-          dot.addEventListener("mouseenter", event => showEwsTooltip(event, st));
-          dot.addEventListener("mousemove", moveTooltip);
-          dot.addEventListener("mouseleave", hideTooltip);
-        });
-        return;
-      }
 
       const rows = window.WATERLEVEL_DATA?.stations || [];
       layer.innerHTML = rows
@@ -3042,36 +3011,12 @@ function t(th, en) {
       moveTooltip(event);
     }
 
-    function showEwsTooltip(event, st) {
-      const col = EWS_COLORS[st.status] ?? "var(--muted)";
-      const lbl = EWS_LABELS[st.status] ? t(EWS_LABELS[st.status].th, EWS_LABELS[st.status].en) : t("ไม่มีข้อมูล","No data");
-      const typeStr = st.stn_type === "RF" ? t("สถานีวัดฝน","Rainfall Stn") : st.stn_type === "WL" ? t("สถานีวัดระดับน้ำ","Water Level Stn") : (st.stn_type || "");
-      refs.tooltip.innerHTML = `
-        <div class="th">${st.name || st.stn}</div>
-        <div class="en">${[st.amphoe, st.province].filter(Boolean).join(" · ")}</div>
-        ${typeStr ? `<div class="type">${typeStr}${st.basin ? " · " + st.basin : ""}</div>` : ""}
-        <div class="value" style="color:${col}">${lbl}</div>
-        ${st.rain != null ? `<div style="font-size:10px;margin-top:2px">🌧️ ${t('ฝน','Rain')}: ${st.rain} mm${st.rain12h != null ? ` · 12h: ${st.rain12h} mm` : ""}</div>` : ""}
-        ${st.wl != null ? `<div style="font-size:10px;margin-top:2px">💧 ${t('ระดับน้ำ','Water')}: ${st.wl} m</div>` : ""}
-        <div class="rank" style="font-size:9px;margin-top:3px;opacity:.7">กรมทรัพยากรน้ำ EWS · ${st.date || ""}</div>
-      `;
-      refs.tooltip.classList.add("show");
-      moveTooltip(event);
-    }
-
     function toggleWlAll() {
       S.wlShowAll = !S.wlShowAll;
       renderStations();
       updateLegend();
     }
     window.toggleWlAll = toggleWlAll;
-
-    function toggleEwsAll() {
-      S.ewsShowAll = !S.ewsShowAll;
-      renderStations();
-      updateLegend();
-    }
-    window.toggleEwsAll = toggleEwsAll;
 
     function renderMapLabels() {
       const layer = refs.mapSvg.querySelector("#labelLayer");
@@ -3142,19 +3087,6 @@ function t(th, en) {
     }
 
     function updatePointLegend() {
-      if (S.layer === "ews") {
-        const meta = window.EWS_DATA?._meta;
-        const total = meta?.total ?? 0;
-        refs.legendBar.style.background = `linear-gradient(90deg,${EWS_COLORS[1]},${EWS_COLORS[2]},${EWS_COLORS[3]})`;
-        refs.legendLow.textContent = t(EWS_LABELS[1].th, EWS_LABELS[1].en);
-        refs.legendHigh.textContent = t(EWS_LABELS[3].th, EWS_LABELS[3].en);
-        refs.legendType.textContent = t("กรมทรัพยากรน้ำ (DWR)","Dept. of Water Resources");
-        refs.legendLayer.textContent = t(layerMeta.ews.th, layerMeta.ews.en);
-        refs.legendUnit.innerHTML = `<a href="javascript:void(0)" onclick="toggleEwsAll()" style="color:var(--accent);text-decoration:underline;cursor:pointer">${S.ewsShowAll ? t('แสดงทุกจุด ('+total+')','All stations ('+total+')') : t("เฉพาะเตือนภัย ▸ แสดงทุกจุด","Alerts only ▸ show all")}</a>`;
-        refs.latestBadge.classList.add("show");
-        refs.latestBadge.textContent = '🌧️ EWS DWR ' + (meta?.updated_at?.slice(0,16).replace("T"," ") || "realtime");
-        return;
-      }
       const meta = window.WATERLEVEL_DATA?._meta;
       const total = meta?.total ?? 0;
       const stops = [1,2,3,4,5].map(l => WL_COLORS[l]).join(",");
@@ -3174,10 +3106,6 @@ function t(th, en) {
       const covered = visible.filter(en => hasLayerValue(en)).length;
       if (S.layer === "waterlevel") {
         if (refs.dataSourceLabel) refs.dataSourceLabel.textContent = "ThaiWater (สสน./HII)";
-        return;
-      }
-      if (S.layer === "ews") {
-        if (refs.dataSourceLabel) refs.dataSourceLabel.textContent = "กรมทรัพยากรน้ำ (DWR) EWS";
         return;
       }
       if (S.layer === "dam") {
@@ -3351,22 +3279,6 @@ function t(th, en) {
           "Real-time river/canal water level from Hydro-Informatics Institute (HII/สสน.) — updated every 3 hours.");
         return;
       }
-      if (S.layer === "ews") {
-        const sts = window.EWS_DATA?.stations || [];
-        const visible = S.ewsShowAll ? sts : sts.filter(s => s.status >= 1);
-        const nAlert = sts.filter(s => s.status >= 1).length;
-        const meta = window.EWS_DATA?._meta;
-        refs.scopeLabel.textContent = t("สถานีเตือนภัย EWS","EWS Stations");
-        refs.scopeValue.textContent = visible.length;
-        refs.scopeSub.textContent = meta?.updated_at?.slice(0,16).replace("T"," ") || "—";
-        refs.aggLabel.textContent = t("เตือนภัย (status 1-3)","Active Alerts");
-        refs.aggValue.textContent = nAlert;
-        refs.aggSub.textContent = t("เฝ้าระวัง/เตรียมพร้อม/วิกฤต","Watch/Prepare/Critical");
-        refs.headlineTitle.textContent = t("แผนที่สถานีเตือนน้ำป่า/ดินถล่ม (EWS DWR)","Flash Flood / Landslide Warning Stations (EWS DWR)");
-        refs.headlineDesc.textContent = t("สถานีเตือนภัยล่วงหน้าน้ำป่า/ดินถล่ม realtime จากกรมทรัพยากรน้ำ (DWR) อัปเดตทุก 3 ชม.",
-          "Real-time flash flood / landslide early warning stations from Dept. of Water Resources (DWR) — updated every 3 hours.");
-        return;
-      }
       const visible = getVisibleProvinces();
       const covered = visible.filter(en => hasLayerValue(en));
       const meta = layerMeta[S.layer];
@@ -3487,29 +3399,8 @@ function t(th, en) {
       }).join("");
     }
 
-    function updateEwsStationList() {
-      const meta = window.EWS_DATA?._meta;
-      if (refs.topSub) refs.topSub.innerHTML = `${t("สถานีเตือนภัยน้ำป่า/ดินถล่ม","Flash Flood / Landslide EWS")}<br>${t("กรมทรัพยากรน้ำ (DWR)","Dept. of Water Resources")}`;
-      if (refs.rankTitle) refs.rankTitle.innerHTML = `<span class="th-t">สถานีเตือนภัยสูงสุด</span><span class="en-t">Top Alert Stations</span>`;
-      const sts = (window.EWS_DATA?.stations || [])
-        .filter(s => S.ewsShowAll || s.status >= 1)
-        .sort((a,b) => b.status - a.status || (b.rain||0) - (a.rain||0))
-        .slice(0, 20);
-      const typeIcon = tp => tp === "RF" ? "🌧️" : tp === "WL" ? "💧" : "";
-      refs.topList.innerHTML = sts.map((s, i) => {
-        const col = EWS_COLORS[s.status] ?? "var(--muted)";
-        const lbl = EWS_LABELS[s.status] ? t(EWS_LABELS[s.status].th, EWS_LABELS[s.status].en) : "—";
-        return `<div class="top-item" style="cursor:default">
-          <span class="rank" style="color:${col}">${i+1}</span>
-          <span class="name">${typeIcon(s.stn_type)} ${s.name||s.stn} <small style="opacity:.6">${s.province||""}</small></span>
-          <span class="value" style="color:${col}"><small style="font-size:9px">${lbl}</small></span>
-        </div>`;
-      }).join("");
-    }
-
     function updateTopList() {
       if (S.layer === "waterlevel") { updateStationList(); return; }
-      if (S.layer === "ews") { updateEwsStationList(); return; }
       const visible = getVisibleProvinces();
       const meta = layerMeta[S.layer];
       const yearLabel = S.layer === "dam" ? t("ล่าสุด", "Latest") : t(`ปี ${S.year}`, `Year ${S.year}`);
@@ -5046,16 +4937,6 @@ ${warningsHtml}
       } catch (e) { console.info('water-level.json not available (local mode)'); }
     }
 
-    async function fetchEwsData() {
-      try {
-        const res = await fetch('data/ews.json?_=' + Date.now(), { cache: 'no-store' });
-        if (res.ok) {
-          window.EWS_DATA = await res.json();
-          if (S.layer === "ews") rerender();
-        }
-      } catch (e) { console.info('ews.json not available (local mode)'); }
-    }
-
     async function fetchDamData() {
       try {
         const res = await fetch('data/dam-water.json?_=' + Date.now(), { cache: 'no-store' });
@@ -5328,7 +5209,6 @@ ${warningsHtml}
       fetchLayerData("agri-warnings.json", "ALERTS_DATA", "alerts");
       fetchSoilMoistureData();
       fetchWaterLevelData();
-      fetchEwsData();
       fetchDiseaseData();
       updateNationalFert();
 
