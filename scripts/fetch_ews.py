@@ -28,20 +28,41 @@ def _num(v):
 
 
 def fetch_stations():
+    import urllib3
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
     for attempt in range(3):
+        verify = attempt < 1
         try:
+            print(f"  attempt {attempt+1} (verify={verify}) ...")
             r = requests.post(
                 API_URL,
-                headers={"User-Agent": "Mozilla/5.0"},
+                headers={
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                    "Accept": "application/json",
+                    "Accept-Language": "th,en;q=0.9",
+                },
                 data={"action": "LoadStation"},
-                timeout=60,
+                timeout=90,
+                verify=verify,
             )
+            print(f"  status={r.status_code}  size={len(r.content)} bytes")
             r.raise_for_status()
             return json.loads(r.content.decode("utf-8"))
-        except Exception as e:
+        except requests.exceptions.SSLError as e:
+            print(f"  SSL error on attempt {attempt+1}: {e}", file=sys.stderr)
             if attempt == 2:
                 raise
-            print(f"  attempt {attempt+1} failed ({e}) — retrying...", file=sys.stderr)
+        except requests.exceptions.ConnectionError as e:
+            print(f"  connection error on attempt {attempt+1}: {e}", file=sys.stderr)
+            if attempt == 2:
+                raise
+            import time; time.sleep(5)
+        except Exception as e:
+            print(f"  attempt {attempt+1} failed ({type(e).__name__}: {e})", file=sys.stderr)
+            if attempt == 2:
+                raise
+            import time; time.sleep(5)
 
 
 def main():
