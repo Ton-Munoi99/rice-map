@@ -1,0 +1,45 @@
+name: Update Rain Stations
+
+on:
+  schedule:
+    # ทุก 3 ชั่วโมง offset 15 นาที (ไม่ชนกับ water-level ที่ :00)
+    - cron: '15 */3 * * *'
+  workflow_dispatch:
+
+jobs:
+  update-rain-stations:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Fetch rain stations (ThaiWater API)
+        run: python scripts/fetch_rain_stations.py
+
+      - name: Commit and push
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/rain-stations.json
+          if git diff --quiet && git diff --staged --quiet; then
+            echo "No changes."
+          else
+            git commit -m "auto: update rain stations (ThaiWater)"
+            for i in 1 2 3; do
+              git pull --rebase origin main && git push && break
+              echo "Push attempt $i failed, retrying in 10s..."
+              sleep 10
+            done
+          fi

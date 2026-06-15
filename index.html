@@ -1670,6 +1670,10 @@
               <span class="th-t">💧 ระดับน้ำในแม่น้ำ/คลอง</span>
               <span class="en-t">💧 River Water Level</span>
             </button>
+            <button class="pill" data-layer="rainstation" onclick="setLayer('rainstation')">
+              <span class="th-t">🌧️ สถานีฝน Realtime</span>
+              <span class="en-t">🌧️ Rain Stations Realtime</span>
+            </button>
             <button class="pill" data-layer="alerts" onclick="setLayer('alerts')">
               <span class="th-t">🚨 พื้นที่เสี่ยงน้ำท่วม</span>
               <span class="en-t">🚨 Flood Risk Areas</span>
@@ -1951,7 +1955,7 @@
 
     // ── Layers that have no year-based time series (no spark chart, no est-year badge) ──
     const LAYER_NO_TIMESERIES = new Set([
-      "dam","rainfall","drought","mills","profit","ndvi","riceEvi","rain","gsmap","forecast","alerts","soilMoisture","waterlevel",
+      "dam","rainfall","drought","mills","profit","ndvi","riceEvi","rain","gsmap","forecast","alerts","soilMoisture","waterlevel","rainstation",
     ]);
 
     const layerMeta = {
@@ -1974,6 +1978,7 @@
       alerts:     { th: "พื้นที่เสี่ยงน้ำท่วม", en: "Flood Risk Areas", unit: "ระดับการเตือน", unitEn: "Alert Level", unitShort: "ระดับ", unitShortEn: "Level", summary: "จังหวัดที่มีการเตือนภัย", summaryMode: "avg" },
       soilMoisture: { th: "ความชื้นในดิน (SMAP)", en: "Soil Moisture (SMAP)", unit: "% ความชื้น", unitEn: "% moisture", unitShort: "%", unitShortEn: "%", summary: "ความชื้นในดินเฉลี่ยต่อจังหวัด", summaryMode: "avg" },
       waterlevel: { th: "ระดับน้ำในแม่น้ำ/คลอง (สถานีจริง)", en: "River/Canal Water Level (stations)", unit: "ThaiWater · realtime", unitShort: "", summary: "สถานีเตือนภัย", summaryMode: "sum", pointOverlay: true },
+      rainstation: { th: "สถานีฝน Realtime", en: "Rain Stations Realtime", unit: "ThaiWater · realtime", unitShort: "มม.", unitShortEn: "mm", summary: "สถานีฝนหนัก", summaryMode: "sum", pointOverlay: true },
     };
 
     const WL_COLORS = { 1: "#7fd4ff", 2: "#39b0e5", 3: "#2ecc71", 4: "#f39c12", 5: "#e74c3c" };
@@ -1983,6 +1988,16 @@
       3: { th: "ปกติ",       en: "Normal" },
       4: { th: "มาก",        en: "High" },
       5: { th: "ล้นตลิ่ง",   en: "Overflow" },
+    };
+
+    const RS_COLORS = { 0: "#e0e0e0", 1: "#a5d6a7", 2: "#4fc3f7", 3: "#fdd835", 4: "#ff9800", 5: "#f44336" };
+    const RS_LABELS = {
+      0: { th: "ไม่มีฝน",         en: "No Rain" },
+      1: { th: "ฝนเล็กน้อย",      en: "Light Rain" },
+      2: { th: "ฝนปานกลาง",       en: "Moderate Rain" },
+      3: { th: "ฝนหนัก",          en: "Heavy Rain" },
+      4: { th: "ฝนหนักมาก",       en: "Very Heavy Rain" },
+      5: { th: "ฝนหนักมากสุดขีด", en: "Extreme Rain" },
     };
     function isPointLayer(layer = S.layer) { return !!layerMeta[layer]?.pointOverlay; }
 
@@ -2106,7 +2121,7 @@
       nationalFertBlock: document.getElementById("nationalFertBlock")
     };
 
-    let S = { rice: "white", layer: "production", year: "2567", reg: "all", sel: null, wlShowAll: false };
+    let S = { rice: "white", layer: "production", year: "2567", reg: "all", sel: null, wlShowAll: false, rsShowAll: false };
     let DATA = {};
     let DATA_META = { mode: "loading", label: "กำลังโหลดข้อมูล CSV", detail: "กำลังอ่านไฟล์ชุดเริ่มต้น" };
     let VIEW = {
@@ -2973,6 +2988,25 @@ function t(th, en) {
       if (!layer) return;
       if (!isPointLayer()) { layer.innerHTML = ""; return; }
 
+      if (S.layer === "rainstation") {
+        const rows = window.RAINSTATION_DATA?.stations || [];
+        layer.innerHTML = rows
+          .filter(s => S.rsShowAll || (s.rain_level || 0) >= 3)
+          .map(s => {
+            const [x, y] = project([s.lon, s.lat]);
+            const lvl = s.rain_level || 0;
+            const r = lvl >= 5 ? 4.6 : lvl >= 4 ? 3.6 : lvl >= 3 ? 3 : 2.4;
+            return `<circle class="rs-dot" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r}" fill="${RS_COLORS[lvl] || '#9ca3af'}" data-sid="${s.id}"></circle>`;
+          }).join("");
+        layer.querySelectorAll(".rs-dot").forEach(dot => {
+          const st = rows.find(s => String(s.id) === dot.dataset.sid);
+          if (!st) return;
+          dot.addEventListener("mouseenter", event => showRainTooltip(event, st));
+          dot.addEventListener("mousemove", moveTooltip);
+          dot.addEventListener("mouseleave", hideTooltip);
+        });
+        return;
+      }
 
       const rows = window.WATERLEVEL_DATA?.stations || [];
       layer.innerHTML = rows
@@ -3017,6 +3051,31 @@ function t(th, en) {
       updateLegend();
     }
     window.toggleWlAll = toggleWlAll;
+
+    function showRainTooltip(event, st) {
+      const lvl = st.rain_level || 0;
+      const lbl = RS_LABELS[lvl] ? t(RS_LABELS[lvl].th, RS_LABELS[lvl].en) : t("ไม่มีข้อมูล","No data");
+      const col = RS_COLORS[lvl] || "var(--muted)";
+      const prov = t(st.province_th || "", st.province_en || st.province_th || "");
+      const amphoe = st.amphoe_th || "";
+      const where = [amphoe, prov].filter(Boolean).join(" · ");
+      refs.tooltip.innerHTML = `
+        <div class="th">${t(st.name_th||st.name_en, st.name_en||st.name_th)}</div>
+        ${where ? `<div class="en">${where}</div>` : ""}
+        <div class="value" style="color:${col}">${st.rain_24h != null ? st.rain_24h.toFixed(1) + " mm" : "—"}</div>
+        <div style="font-size:10px;margin-top:2px">${lbl}</div>
+        <div class="rank" style="font-size:9px;margin-top:3px;opacity:.7">${st.agency||"ThaiWater"} · ${st.dt||""}</div>
+      `;
+      refs.tooltip.classList.add("show");
+      moveTooltip(event);
+    }
+
+    function toggleRsAll() {
+      S.rsShowAll = !S.rsShowAll;
+      renderStations();
+      updateLegend();
+    }
+    window.toggleRsAll = toggleRsAll;
 
     function renderMapLabels() {
       const layer = refs.mapSvg.querySelector("#labelLayer");
@@ -3087,6 +3146,20 @@ function t(th, en) {
     }
 
     function updatePointLegend() {
+      if (S.layer === "rainstation") {
+        const meta = window.RAINSTATION_DATA?._meta;
+        const total = meta?.total ?? 0;
+        const stops = [0,1,2,3,4,5].map(l => RS_COLORS[l]).join(",");
+        refs.legendBar.style.background = `linear-gradient(90deg,${stops})`;
+        refs.legendLow.textContent = t(RS_LABELS[0].th, RS_LABELS[0].en);
+        refs.legendHigh.textContent = t(RS_LABELS[5].th, RS_LABELS[5].en);
+        refs.legendType.textContent = t("สสน./ThaiWater","HII/ThaiWater");
+        refs.legendLayer.textContent = t(layerMeta.rainstation.th, layerMeta.rainstation.en);
+        refs.legendUnit.innerHTML = `<a href="javascript:void(0)" onclick="toggleRsAll()" style="color:var(--accent);text-decoration:underline;cursor:pointer">${S.rsShowAll ? t('แสดงทุกจุด ('+total+')','All stations ('+total+')') : t("เฉพาะฝนหนัก ▸ แสดงทุกจุด","Heavy rain only ▸ show all")}</a>`;
+        refs.latestBadge.classList.add("show");
+        refs.latestBadge.textContent = '🌧️ ThaiWater ' + (meta?.updated_at?.slice(0,16).replace("T"," ") || "realtime");
+        return;
+      }
       const meta = window.WATERLEVEL_DATA?._meta;
       const total = meta?.total ?? 0;
       const stops = [1,2,3,4,5].map(l => WL_COLORS[l]).join(",");
@@ -3104,6 +3177,10 @@ function t(th, en) {
       refs.dataStatus.textContent = DATA_META.label;
       const visible = getVisibleProvinces();
       const covered = visible.filter(en => hasLayerValue(en)).length;
+      if (S.layer === "rainstation") {
+        if (refs.dataSourceLabel) refs.dataSourceLabel.textContent = "ThaiWater (สสน./HII)";
+        return;
+      }
       if (S.layer === "waterlevel") {
         if (refs.dataSourceLabel) refs.dataSourceLabel.textContent = "ThaiWater (สสน./HII)";
         return;
@@ -3263,6 +3340,22 @@ function t(th, en) {
     }
 
     function updateSummary() {
+      if (S.layer === "rainstation") {
+        const sts = window.RAINSTATION_DATA?.stations || [];
+        const visible = S.rsShowAll ? sts : sts.filter(s => (s.rain_level||0) >= 3);
+        const nHeavy = sts.filter(s => (s.rain_level||0) >= 3).length;
+        const meta = window.RAINSTATION_DATA?._meta;
+        refs.scopeLabel.textContent = t("สถานีวัดฝน","Rain Stations");
+        refs.scopeValue.textContent = visible.length;
+        refs.scopeSub.textContent = meta?.updated_at?.slice(0,16).replace("T"," ") || "—";
+        refs.aggLabel.textContent = t("ฝนหนัก (ระดับ 3-5)","Heavy Rain (Level 3-5)");
+        refs.aggValue.textContent = nHeavy;
+        refs.aggSub.textContent = t("สถานีที่ฝนตก ≥35 mm/24ชม.","Stations with ≥35 mm/24h");
+        refs.headlineTitle.textContent = t("แผนที่สถานีฝน Realtime (ThaiWater)","Rain Stations Realtime (ThaiWater)");
+        refs.headlineDesc.textContent = t("ปริมาณฝนสะสม 24 ชม. รายสถานี realtime จากสถาบันสารสนเทศทรัพยากรน้ำ (สสน./HII) อัปเดตทุก 3 ชม. เกณฑ์ TMD กรมอุตุนิยมวิทยา",
+          "24-hour accumulated rainfall per station from Hydro-Informatics Institute (HII/สสน.) — updated every 3 hours. TMD classification.");
+        return;
+      }
       if (S.layer === "waterlevel") {
         const sts = window.WATERLEVEL_DATA?.stations || [];
         const visible = S.wlShowAll ? sts : sts.filter(s => (s.level||0) >= 4);
@@ -3399,7 +3492,27 @@ function t(th, en) {
       }).join("");
     }
 
+    function updateRainStationList() {
+      const sts = (window.RAINSTATION_DATA?.stations || [])
+        .filter(s => S.rsShowAll || (s.rain_level||0) >= 3)
+        .sort((a,b) => (b.rain_24h||0) - (a.rain_24h||0))
+        .slice(0, 20);
+      refs.topList.innerHTML = sts.map((s, i) => {
+        const lvl = s.rain_level || 0;
+        const col = RS_COLORS[lvl] || "var(--muted)";
+        const lbl = RS_LABELS[lvl] ? t(RS_LABELS[lvl].th, RS_LABELS[lvl].en) : "—";
+        const name = t(s.name_th||s.name_en, s.name_en||s.name_th);
+        const prov = t(s.province_th||"", s.province_en||s.province_th||"");
+        return `<div class="top-item" style="cursor:default">
+          <span class="rank" style="color:${col}">${i+1}</span>
+          <span class="name">${name} <small style="opacity:.6">${prov}</small></span>
+          <span class="value" style="color:${col}">${s.rain_24h!=null?s.rain_24h.toFixed(1)+" mm":"—"} <small style="font-size:9px">${lbl}</small></span>
+        </div>`;
+      }).join("");
+    }
+
     function updateTopList() {
+      if (S.layer === "rainstation") { updateRainStationList(); return; }
       if (S.layer === "waterlevel") { updateStationList(); return; }
       const visible = getVisibleProvinces();
       const meta = layerMeta[S.layer];
@@ -4591,6 +4704,10 @@ ${warningsHtml}
     }
 
     function renderYearButtons() {
+      if (S.layer === "rainstation") {
+        refs.yearButtons.innerHTML = `<button class="pill on">🌧️ ${t('ข้อมูลสด','Realtime')}</button>`;
+        return;
+      }
       if (S.layer === "waterlevel") {
         refs.yearButtons.innerHTML = `<button class="pill on">💧 ${t('ข้อมูลสด','Realtime')}</button>`;
         return;
@@ -4937,6 +5054,16 @@ ${warningsHtml}
       } catch (e) { console.info('water-level.json not available (local mode)'); }
     }
 
+    async function fetchRainStationData() {
+      try {
+        const res = await fetch('data/rain-stations.json?_=' + Date.now(), { cache: 'no-store' });
+        if (res.ok) {
+          window.RAINSTATION_DATA = await res.json();
+          if (isPointLayer()) rerender();
+        }
+      } catch (e) { console.info('rain-stations.json not available (local mode)'); }
+    }
+
     async function fetchDamData() {
       try {
         const res = await fetch('data/dam-water.json?_=' + Date.now(), { cache: 'no-store' });
@@ -5209,6 +5336,7 @@ ${warningsHtml}
       fetchLayerData("agri-warnings.json", "ALERTS_DATA", "alerts");
       fetchSoilMoistureData();
       fetchWaterLevelData();
+      fetchRainStationData();
       fetchDiseaseData();
       updateNationalFert();
 
