@@ -2392,6 +2392,11 @@ function t(th, en) {
       const total = strawProductionBase(en, year).total * STRAW.rpr;
       return total > 0 ? Math.round(total) : null;
     }
+    // ฟางเหลือใช้ (พลังงาน/เสี่ยงเผา) = ฟางทั้งหมด × SAF 0.583
+    function strawSurplusOf(en, year = S.year) {
+      const s = strawValueOf(en, year);
+      return s == null ? null : Math.round(s * STRAW.saf);
+    }
 
     function ndviValueOf(en) {
       return window.NDVI_DATA?.provinces?.[en] ?? null;
@@ -4747,6 +4752,12 @@ ${warningsHtml}
       const householdsLine = S.layer !== "households" && window.PROVINCE_HOUSEHOLDS
         ? `<div style="font-size:10px;color:var(--muted);margin-top:4px">👨‍🌾 ${t('ครัวเรือนเกษตรกร','Farm Households')}: ${fmtNumber(householdValueOf(en))} ${t('ครัวเรือน','HH')} (OAE 2566)</div>`
         : "";
+      // ฟางข้าว: เพิ่มข้อมูลฟางเหลือใช้ (พลังงาน/เสี่ยงเผา) = ฟางทั้งหมด × SAF 0.583
+      let strawSurplusLine = "";
+      if (S.layer === "straw") {
+        const sp = strawSurplusOf(en);
+        if (sp != null) strawSurplusLine = `<div style="font-size:10px;color:#d4a017;margin-top:4px">🔥 ${t('ฟางเหลือใช้ (พลังงาน/เสี่ยงเผา)','Surplus Straw (energy/burn risk)')}: <strong>${fmtNumber(sp)}</strong> ${t('ตัน','tons')} <span style="opacity:.6">(× SAF 0.583)</span></div>`;
+      }
       return `
     <div class="th">${t(NM[en] || en, en)}</div>
     <div class="en">${en}</div>
@@ -4757,6 +4768,7 @@ ${warningsHtml}
     <div class="metric-name">${t(layerMeta[S.layer].th, layerMeta[S.layer].en)}</div>
     <div class="value">${valueHTML}</div>
     <div class="rank">${rank ? `${t('อันดับ','Rank')} #${rank} / ${getVisibleProvinces().filter(name => hasLayerValue(name)).length || getVisibleProvinces().length}` : t("ไม่มีข้อมูล","No data")}</div>
+    ${strawSurplusLine}
     ${yoyHTML}
     ${estBadge}
     ${householdsLine}
