@@ -1659,10 +1659,12 @@
             <button class="pill on" data-layer="production" onclick="setLayer('production')"><span class="th-t">ผลผลิต (ตัน)</span><span class="en-t">Production (tons)</span></button>
             <button class="pill" data-layer="yield" onclick="setLayer('yield')"><span class="th-t">ผลผลิตต่อไร่</span><span class="en-t">Yield (kg/rai)</span></button>
             <button class="pill" data-layer="area" onclick="setLayer('area')"><span class="th-t">เนื้อที่เก็บเกี่ยว</span><span class="en-t">Harvested Area (rai)</span></button>
+            <button class="pill" data-layer="naprang" onclick="setLayer('naprang')"><span class="th-t">🌾 ผลผลิตข้าวนาปรัง</span><span class="en-t">🌾 Second-Crop Production</span></button>
             <button class="pill" data-layer="households" onclick="setLayer('households')"><span class="th-t">ครัวเรือนเกษตรกร</span><span class="en-t">Farmer Households</span></button>
             <button class="pill" data-layer="price" onclick="setLayer('price')"><span class="th-t">ราคาโรงสี (฿/ตัน)</span><span class="en-t">Mill Price (THB/ton)</span></button>
             <button class="pill" data-layer="mills" onclick="setLayer('mills')"><span class="th-t">🏭 โรงสีข้าว</span><span class="en-t">🏭 Rice Mills</span></button>
             <button class="pill" data-layer="profit" onclick="setLayer('profit')"><span class="th-t">💰 กำไร/ขาดทุน</span><span class="en-t">💰 Profit/Loss</span></button>
+            <button class="pill" data-layer="straw" onclick="setLayer('straw')"><span class="th-t">🌾 ฟางข้าว</span><span class="en-t">🌾 Rice Straw</span></button>
             <button class="pill" data-layer="dam" onclick="setLayer('dam')"><span class="th-t">ระดับน้ำในเขื่อน</span><span class="en-t">Dam Level</span></button>
             <button class="pill" data-layer="gsmap" onclick="setLayer('gsmap')"><span class="th-t">🛰 ปริมาณฝนรวม 7 วันล่าสุด</span><span class="en-t">🛰 7-Day Total Rainfall</span></button>
             <button class="pill" data-layer="forecast" onclick="setLayer('forecast')"><span class="th-t">🌦 พยากรณ์ฝน 7 วันข้างหน้า</span><span class="en-t">🌦 7-Day Rain Forecast</span></button>
@@ -1788,6 +1790,7 @@
 
   <script src="./thailand-data.js"></script>
   <script src="./rice-data.js"></script>
+  <script src="./naprang-data.js"></script>
   <script>
     const NM = {
       "Mae Hong Son": "แม่ฮ่องสอน", "Chumphon": "ชุมพร", "Nakhon Si Thammarat": "นครศรีธรรมราช",
@@ -1979,6 +1982,8 @@
       soilMoisture: { th: "ความชื้นในดิน (SMAP)", en: "Soil Moisture (SMAP)", unit: "% ความชื้น", unitEn: "% moisture", unitShort: "%", unitShortEn: "%", summary: "ความชื้นในดินเฉลี่ยต่อจังหวัด", summaryMode: "avg" },
       waterlevel: { th: "ระดับน้ำในแม่น้ำ/คลอง (สถานีจริง)", en: "River/Canal Water Level (stations)", unit: "ThaiWater · realtime", unitShort: "", summary: "สถานีเตือนภัย", summaryMode: "sum", pointOverlay: true },
       rainstation: { th: "สถานีฝน Realtime", en: "Rain Stations Realtime", unit: "ThaiWater · realtime", unitShort: "มม.", unitShortEn: "mm", summary: "สถานีฝนหนัก", summaryMode: "sum", pointOverlay: true },
+      naprang:    { th: "ผลผลิตข้าวนาปรัง", en: "Second-Crop Production", unit: "ตัน/ปี", unitEn: "tons/yr", unitShort: "ตัน", unitShortEn: "tons", summary: "ผลผลิตนาปรังรวม", summaryMode: "sum" },
+      straw:      { th: "ฟางข้าว", en: "Rice Straw", unit: "ตัน/ปี", unitEn: "tons/yr", unitShort: "ตัน", unitShortEn: "tons", summary: "ฟางข้าวรวม", summaryMode: "sum" },
     };
 
     const WL_COLORS = { 1: "#7fd4ff", 2: "#39b0e5", 3: "#2ecc71", 4: "#f39c12", 5: "#e74c3c" };
@@ -2024,11 +2029,17 @@
       forecast:    { format: "mm",         valueFn: forecastValueOf,     sourceTh: "พยากรณ์ฝน",            sourceEn: "Rain Forecast",      palette: { lo:[255,243,224], mid:[255,152,0],  hi:[230,81,0],   accent:"#ff9800" } },
       alerts:      { format: "alertLevel", valueFn: alertsValueOf,       sourceTh: "พื้นที่เสี่ยงน้ำท่วม", sourceEn: "Flood Risk Areas",   palette: { lo:[255,249,196], mid:[255,152,0],  hi:[198,40,40],  accent:"#c62828" } },
       soilMoisture:{ format: "pct1",       valueFn: soilMoistureValueOf, sourceTh: "NASA SMAP (GEE)",      sourceEn: "NASA SMAP (GEE)",    palette: { lo:[255,245,157], mid:[38,198,218], hi:[0,77,64],    accent:"#00bcd4" } },
+      naprang:     { format: "bignum",                                   sourceTh: "สศก. (OAE)",           sourceEn: "OAE",                palette: { lo:[19,78,74],    mid:[20,130,140], hi:[125,211,212], accent:"#14b8a6" } },
+      straw:       { format: "bignum",                                   sourceTh: "OAE × พพ. (RPR 1.169)", sourceEn: "OAE × DEDE (RPR)",   palette: { lo:[92,64,28],    mid:[200,160,70], hi:[245,212,120], accent:"#d4a017" } },
     }).forEach(([k, cfg]) => Object.assign(layerMeta[k], cfg));
     const riceMeta = {
       white:   { th: "ข้าวขาว",  en: "White Rice",   badge: "🌾" },
       jasmine: { th: "หอมมะลิ", en: "Jasmine Rice", badge: "🌸" }
     };
+
+    // ค่าคงที่ฟางข้าว — กรมพัฒนาพลังงานทดแทน (พพ./DEDE) ผ่านเอกสาร สปก.
+    // RPR = ฟางต่อข้าวเปลือก 1 ตัน · SAF = สัดส่วนฟางเหลือใช้หลังหักที่ชาวนาใช้แล้ว
+    const STRAW = { rpr: 1.169, saf: 0.583, huskRpr: 0.230 };
 
     // OAE/สศก. · ThaiPBS · ThaiPublica · Krungsri Research · ปีเพาะปลูก 2566/67–2567/68
     const COST_BASE = {
@@ -2187,6 +2198,14 @@
             };
           });
         }
+        // ข้าวนาปรัง (second crop) — branch แยก ไม่อยู่ใน RICE_TYPES (ขาวล้วน ไม่มีมะลิ)
+        DATA[en].naprang = {};
+        ALL_YEARS.forEach(year => {
+          DATA[en].naprang[year] = {
+            production: 0, yield: 0, area: 0, area_planted: 0, yield_planted: 0,
+            source: "", source_title: "", source_url: "", source_note: "", source_date: ""
+          };
+        });
       }
     }
 
@@ -2239,6 +2258,10 @@
       rows.forEach(record => {
         if (applyRecord(record)) applied += 1;
       });
+      // ข้าวนาปรัง — โหลดเข้า branch naprang เสมอ ไม่ว่าจะมาจาก CSV หรือ embedded
+      if (Array.isArray(window.NAPRANG_DATA_ROWS)) {
+        window.NAPRANG_DATA_ROWS.forEach(record => applyRecord(record));
+      }
       DATA_META = {
         mode: meta.mode || "csv",
         label: meta.label || "Local CSV",
@@ -2358,6 +2381,18 @@ function t(th, en) {
       return Math.round(price * yld / 1000 - cost);
     }
 
+    // ── ฟางข้าว (ตัน) = (ผลผลิตนาปี ขาว+มะลิ + นาปรัง) × RPR 1.169 — ไม่ผูกกับ S.rice ──
+    function strawProductionBase(en, year = S.year) {
+      const napi    = (Number(entryOf(en, "white",   year).production) || 0)
+                    + (Number(entryOf(en, "jasmine", year).production) || 0);
+      const naprang =  Number(entryOf(en, "naprang", year).production) || 0;
+      return { napi, naprang, total: napi + naprang };
+    }
+    function strawValueOf(en, year = S.year) {
+      const total = strawProductionBase(en, year).total * STRAW.rpr;
+      return total > 0 ? Math.round(total) : null;
+    }
+
     function ndviValueOf(en) {
       return window.NDVI_DATA?.provinces?.[en] ?? null;
     }
@@ -2415,6 +2450,8 @@ function t(th, en) {
       if (layer === "rainfall" || layer === "drought") return weatherValueOf(en, layer) ?? 0;
       if (layer === "mills")      return millsValueOf(en);
       if (layer === "profit")     return profitValueOf(en, rice, year) ?? 0;
+      if (layer === "naprang")    return Number(entryOf(en, "naprang", year).production) || 0;
+      if (layer === "straw")      return strawValueOf(en, year) ?? 0;
       const m = layerMeta[layer];
       if (m?.valueFn) return m.valueFn(en) ?? 0;   // 8 env layers (config-driven)
       return Number(entryOf(en, rice, year)[layer] || 0);
@@ -4069,6 +4106,63 @@ function t(th, en) {
       }
       // ─────────────────────────────────────────────────────────────────────
 
+      // ── ฟางข้าว detail card (รวมขาว+มะลินาปี+นาปรัง · ไม่ผูก S.rice) ─────────
+      let strawHtml = "";
+      {
+        const sval = strawValueOf(en, S.year);
+        if (sval !== null) {
+          const base = strawProductionBase(en, S.year);
+          const surplus = Math.round(sval * STRAW.saf);
+          strawHtml = `
+            <div class="rice-card" style="grid-column:1/-1;background:rgba(212,160,23,.08);border:1px solid rgba(212,160,23,.25)">
+              <div class="t">🌾 ${t('ฟางข้าว','Rice Straw')} · ${S.year}</div>
+              <div class="metric">
+                <div class="m-label">${t('ฟางทั้งหมด','Total Straw')}</div>
+                <div class="m-value" style="color:#d4a017">${fmtNumber(sval)} <small>${t('ตัน','tons')}</small></div>
+                <div class="m-label" style="margin-top:2px">${t('ผลผลิตรวม','Total paddy')} × RPR ${STRAW.rpr}</div>
+              </div>
+              <div class="metric">
+                <div class="m-label">${t('ฟางเหลือใช้ (พลังงาน/เสี่ยงเผา)','Surplus Straw (energy/burn risk)')}</div>
+                <div class="m-value" style="font-size:13px;color:#b8860b">${fmtNumber(surplus)} <small>${t('ตัน','tons')}</small></div>
+                <div class="m-label" style="margin-top:2px">× SAF ${STRAW.saf} (${t('หลังหักที่ชาวนาใช้แล้ว','after on-farm use')})</div>
+              </div>
+              <div class="metric">
+                <div class="m-label">${t('ที่มาผลผลิต','Paddy basis')}</div>
+                <div class="m-value" style="font-size:12px">${t('นาปี','Main')} ${fmtNumber(base.napi)} + ${t('นาปรัง','2nd')} ${fmtNumber(base.naprang)} <small>${t('ตัน','tons')}</small></div>
+              </div>
+              <div style="font-size:9px;color:var(--muted);margin-top:6px">${t('RPR 1.169 · SAF 0.583 — กรมพัฒนาพลังงานทดแทน (พพ.) · ฟางที่เหลือมักถูกเผา → PM2.5','RPR 1.169 · SAF 0.583 — DEDE Thailand · surplus straw is often burned → PM2.5')}</div>
+            </div>`;
+        }
+      }
+      // ─────────────────────────────────────────────────────────────────────
+
+      // ── ข้าวนาปรัง detail card ────────────────────────────────────────────
+      let naprangHtml = "";
+      {
+        const np = entryOf(en, "naprang", S.year);
+        const npProd = Number(np.production) || 0;
+        if (npProd > 0) {
+          naprangHtml = `
+            <div class="rice-card" style="grid-column:1/-1;background:rgba(20,184,166,.08);border:1px solid rgba(20,184,166,.25)">
+              <div class="t">🌾 ${t('ข้าวนาปรัง (ฤดูแล้ง)','Second Crop · Dry Season')} · ${S.year}</div>
+              <div class="metric">
+                <div class="m-label">${t('ผลผลิต','Production')}</div>
+                <div class="m-value" style="color:#14b8a6">${fmtNumber(npProd)} <small>${t('ตัน','tons')}</small></div>
+              </div>
+              <div class="metric">
+                <div class="m-label">${t('เนื้อที่เก็บเกี่ยว','Harvested Area')}</div>
+                <div class="m-value" style="font-size:13px">${fmtNumber(Number(np.area)||0)} <small>${t('ไร่','rai')}</small></div>
+              </div>
+              <div class="metric">
+                <div class="m-label">${t('ผลผลิตต่อไร่','Yield')}</div>
+                <div class="m-value" style="font-size:13px">${fmtNumber(Number(np.yield)||0)} <small>${t('กก./ไร่','kg/rai')}</small></div>
+              </div>
+              <div style="font-size:9px;color:var(--muted);margin-top:6px">${t('ที่มา: สำนักงานเศรษฐกิจการเกษตร (สศก./OAE) — ข้าวนาปรังรายจังหวัด','Source: OAE — second-crop rice by province')}</div>
+            </div>`;
+        }
+      }
+      // ─────────────────────────────────────────────────────────────────────
+
       let millsHtml = "";
       if (RICE_MILLS_DATA) {
         const thName = NM[en];
@@ -4298,9 +4392,9 @@ function t(th, en) {
       }
       // ── Carousel panes — แต่ละ pane เป็น 100% width, scroll ซ้าย-ขวา
       const envContent   = weatherHtml + damHtml + ndviHtml + riceEviHtml + rainHtml + gsmapHtml + forecastHtml + alertsHtml + soilMoistureHtml + diseaseHtml;
-      const econContent  = profitHtml + fertRatioHtml + millsHtml + fertHtml;
+      const econContent  = profitHtml + strawHtml + fertRatioHtml + millsHtml + fertHtml;
       const peopleContent = householdsHtml;
-      const riceContent  = cardHtml;
+      const riceContent  = cardHtml + naprangHtml;
       refs.detailGrid.innerHTML =
         `<div class="detail-pane" data-pane="rice"><div class="detail-grid-inner">${riceContent}</div></div>` +
         `<div class="detail-pane" data-pane="env"><div class="detail-grid-inner">${envContent}</div></div>` +
@@ -4320,7 +4414,7 @@ function t(th, en) {
         });
         // default: env layers → env tab, อื่น → rice
         const defaultTab = (S.layer === "dam" || S.layer === "rainfall" || S.layer === "drought" || S.layer === "ndvi" || S.layer === "riceEvi" || S.layer === "rain" || S.layer === "gsmap" || S.layer === "forecast" || S.layer === "alerts" || S.layer === "soilMoisture")
-          ? "env" : "rice";
+          ? "env" : (S.layer === "straw" || S.layer === "profit") ? "econ" : "rice";
         switchDetailTab(defaultTab);
       }
       if (refs.detailDataNote) {
