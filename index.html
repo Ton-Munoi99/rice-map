@@ -968,6 +968,25 @@
     .detail-tab.active { background: rgba(255,255,255,.18); color: #fff; border-color: rgba(255,255,255,.3); font-weight: 600; }
     .detail-tab.has-data::after { content: ''; display:inline-block; width:5px; height:5px; border-radius:50%; background:var(--accent); margin-left:4px; vertical-align:middle; opacity:.7; }
 
+    /* ── Simulator pane ── */
+    .sim-presets { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
+    .sim-presets button { font-size:11px; padding:4px 10px; border-radius:12px; border:1px solid var(--border); background:var(--card-bg); cursor:pointer; transition:all .15s; }
+    .sim-presets button:hover { border-color:var(--accent); }
+    .sim-presets button.active { background:var(--accent,#3b82f6); color:#fff; border-color:var(--accent,#3b82f6); }
+    .sim-row { margin-bottom:14px; }
+    .sim-row label { display:flex; justify-content:space-between; font-size:11px; font-weight:600; margin-bottom:2px; }
+    .sim-row input[type="range"] { width:100%; accent-color:var(--accent,#3b82f6); margin:2px 0; }
+    .sim-row .sim-ref { font-size:9px; color:var(--muted); }
+    .sim-val { font-weight:700; font-size:13px; }
+    .sim-result { background:rgba(39,174,96,.07); border:1px solid rgba(39,174,96,.2); border-radius:8px; padding:12px; margin-top:12px; }
+    .sim-result .sim-profit { font-size:18px; font-weight:700; }
+    .sim-compare { font-size:10px; color:var(--muted); background:rgba(0,0,0,.04); border-radius:6px; padding:8px; margin-top:8px; }
+    .sim-cost-toggle { font-size:10px; color:var(--accent,#3b82f6); cursor:pointer; margin-top:8px; user-select:none; }
+    .sim-cost-grid { display:none; margin-top:6px; font-size:10px; }
+    .sim-cost-grid.open { display:block; }
+    .sim-cost-row { display:flex; justify-content:space-between; padding:2px 0; border-bottom:1px solid rgba(128,128,128,.1); }
+    .sim-cost-row:last-child { border-bottom:none; font-weight:600; }
+
     /* ── Horizontal scroll carousel for detail panes ── */
     .detail-carousel {
       display: flex;
@@ -1791,6 +1810,7 @@
             <button class="detail-tab" data-tab="env"     onclick="switchDetailTab('env')">🌦️ <span class="th-t">สภาพแวดล้อม</span><span class="en-t">Environment</span></button>
             <button class="detail-tab" data-tab="econ"    onclick="switchDetailTab('econ')">💰 <span class="th-t">เศรษฐกิจ</span><span class="en-t">Economics</span></button>
             <button class="detail-tab" data-tab="people"  onclick="switchDetailTab('people')">👨‍🌾 <span class="th-t">เกษตรกร</span><span class="en-t">Farmers</span></button>
+            <button class="detail-tab" data-tab="sim"     onclick="switchDetailTab('sim')">🧮 <span class="th-t">จำลอง</span><span class="en-t">Simulate</span></button>
           </div>
           <div class="detail-carousel" id="detailGrid"></div>
           <div id="detailDataNote" style="font-size:8.5px;color:var(--muted);padding:6px 2px 0;border-top:1px solid rgba(255,255,255,.1);line-height:1.6;display:none"></div>
@@ -4553,11 +4573,13 @@ function t(th, en) {
       const econContent  = profitHtml + strawHtml + fertRatioHtml + millsHtml + fertHtml;
       const peopleContent = householdsHtml;
       const riceContent  = cardHtml + naprangHtml;
+      const simContent   = buildSimPane(en);
       refs.detailGrid.innerHTML =
         `<div class="detail-pane" data-pane="rice"><div class="detail-grid-inner">${riceContent}</div></div>` +
         `<div class="detail-pane" data-pane="env"><div class="detail-grid-inner">${envContent}</div></div>` +
         `<div class="detail-pane" data-pane="econ"><div class="detail-grid-inner">${econContent}</div></div>` +
-        `<div class="detail-pane" data-pane="people"><div class="detail-grid-inner">${peopleContent}</div></div>`;
+        `<div class="detail-pane" data-pane="people"><div class="detail-grid-inner">${peopleContent}</div></div>` +
+        `<div class="detail-pane" data-pane="sim"><div class="detail-grid-inner">${simContent}</div></div>`;
 
       // ── แสดง tabs + เลือก default tab ──────────────────────────────────────
       if (refs.detailTabs) {
@@ -4586,9 +4608,173 @@ function t(th, en) {
         ? t("ค่ากลางของช่วงราคา", "Midpoint of price range")
         : t(layerMeta[S.layer].th, layerMeta[S.layer].en);
       drawSpark(en);
+      recalcSim();
       applyMapColors();
       refs.detailCard.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
+
+    // ── Simulator what-if calculator ─────────────────────────────────────
+    const SIM_PRESETS = {
+      real:    { th:'📊 ข้อมูลจริง', en:'📊 Real Data',       yieldMul:1,   priceMul:1,   costMul:1   },
+      drought: { th:'☀️ แล้ง',       en:'☀️ Drought',         yieldMul:0.7, priceMul:1.05,costMul:1   },
+      flood:   { th:'🌊 น้ำท่วม',    en:'🌊 Flood',           yieldMul:0.5, priceMul:1.1, costMul:1.2 },
+      pest:    { th:'🐛 ศัตรูพืช',   en:'🐛 Pest Outbreak',   yieldMul:0.8, priceMul:1,   costMul:1.15},
+      highprice:{th:'💰 ราคาดี',     en:'💰 High Price',      yieldMul:1,   priceMul:1.2, costMul:1   },
+    };
+    let _simBase = null;
+
+    function buildSimPane(en) {
+      const rice = S.rice;
+      const yld = valueOf(en, rice, S.year, "yield") || 0;
+      const entry = entryOf(en, rice, S.year);
+      let price = Number(entry.price || 0);
+      let priceNote = '';
+      if (!price) {
+        for (let y = ALL_YEARS.length - 1; y >= 0; y--) {
+          const p = Number(entryOf(en, rice, ALL_YEARS[y]).price || 0);
+          if (p > 0) { price = p; priceNote = ` (${t('ปี','yr')} ${ALL_YEARS[y]})`; break; }
+        }
+      }
+      if (!price) {
+        let sum = 0, cnt = 0;
+        for (const prov of Object.keys(DATA)) {
+          for (let y = ALL_YEARS.length - 1; y >= 0; y--) {
+            const p = Number(entryOf(prov, rice, ALL_YEARS[y]).price || 0);
+            if (p > 0) { sum += p; cnt++; break; }
+          }
+        }
+        if (cnt) { price = Math.round(sum / cnt); priceNote = ` (${t('เฉลี่ยประเทศ','nat. avg')})`; }
+      }
+      const cost = COST_BASE[rice]?.oaeRaiCost ?? 6100;
+      _simBase = { en, rice, yld, price, cost };
+
+      const presetBtns = Object.entries(SIM_PRESETS).map(([k, p]) =>
+        `<button data-preset="${k}" onclick="applySimPreset('${k}')" class="${k === 'real' ? 'active' : ''}">${t(p.th, p.en)}</button>`
+      ).join('');
+
+      return `
+        <div class="rice-card" style="grid-column:1/-1;background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.2)">
+          <div class="t">🧮 ${t('จำลองกำไร/ขาดทุน','Profit/Loss Simulator')} · ${t(riceMeta[rice].th, riceMeta[rice].en)}</div>
+          <div class="sim-presets">${presetBtns}</div>
+
+          <div class="sim-row">
+            <label><span>${t('ผลผลิตต่อไร่','Yield/Rai')}</span> <span class="sim-val" id="simYldVal">${fmtNumber(yld)}</span> <small>กก./ไร่</small></label>
+            <input type="range" id="simYld" min="0" max="1200" step="10" value="${yld}" oninput="recalcSim()">
+            <div class="sim-ref">${t('ค่าจริงจังหวัด','Province actual')}: ${fmtNumber(yld)} กก./ไร่</div>
+          </div>
+
+          <div class="sim-row">
+            <label><span>${t('ราคาข้าว','Rice Price')}</span> <span class="sim-val" id="simPriceVal">${fmtNumber(price)}</span> <small>฿/ตัน</small></label>
+            <input type="range" id="simPrice" min="0" max="20000" step="100" value="${price}" oninput="recalcSim()">
+            <div class="sim-ref">${t('ราคาจริง','Actual price')}: ${fmtNumber(price)} ฿/ตัน${priceNote}</div>
+          </div>
+
+          <div class="sim-row">
+            <label><span>${t('ต้นทุนต่อไร่','Cost/Rai')}</span> <span class="sim-val" id="simCostVal">${fmtNumber(cost)}</span> <small>฿/ไร่</small></label>
+            <input type="range" id="simCost" min="0" max="15000" step="100" value="${cost}" oninput="recalcSim()">
+            <div class="sim-ref">${t('OAE benchmark','OAE benchmark')}: ${fmtNumber(cost)} ฿/ไร่</div>
+          </div>
+
+          <div class="sim-row">
+            <label><span>${t('เนื้อที่ปลูก','Farm Size')}</span> <span class="sim-val" id="simAreaVal">10</span> <small>${t('ไร่','rai')}</small></label>
+            <input type="range" id="simArea" min="1" max="100" step="1" value="10" oninput="recalcSim()">
+          </div>
+
+          <div class="sim-result" id="simResult"></div>
+
+          <div class="sim-cost-toggle" onclick="toggleSimCostBreakdown()">▸ ${t('ต้นทุนรายการ','Cost Breakdown')}</div>
+          <div class="sim-cost-grid" id="simCostGrid"></div>
+
+          <div style="font-size:9px;color:var(--muted);margin-top:10px">
+            ⚠️ ${t('เป็นการประมาณการเท่านั้น ต้นทุนใช้ค่าอ้างอิง OAE ระดับประเทศ ไม่ใช่ต้นทุนจริงของจังหวัด','Estimates only. Cost uses national OAE benchmark, not actual provincial cost.')}
+          </div>
+        </div>`;
+    }
+
+    function recalcSim() {
+      const yld   = Number(document.getElementById('simYld')?.value   || 0);
+      const price = Number(document.getElementById('simPrice')?.value || 0);
+      const cost  = Number(document.getElementById('simCost')?.value  || 0);
+      const area  = Number(document.getElementById('simArea')?.value  || 10);
+      document.getElementById('simYldVal').textContent   = fmtNumber(yld);
+      document.getElementById('simPriceVal').textContent = fmtNumber(price);
+      document.getElementById('simCostVal').textContent  = fmtNumber(cost);
+      document.getElementById('simAreaVal').textContent  = fmtNumber(area);
+
+      const revenue = Math.round(price * yld / 1000);
+      const profit  = revenue - cost;
+      const total   = profit * area;
+      const col = profit >= 0 ? '#27ae60' : '#c0392b';
+      const icon = profit >= 500 ? '✅' : profit >= 0 ? '⚠️' : '❌';
+
+      let compareHtml = '';
+      if (_simBase && _simBase.price > 0 && _simBase.yld > 0) {
+        const realProfit = Math.round(_simBase.price * _simBase.yld / 1000) - (_simBase.cost);
+        const diff = profit - realProfit;
+        const pct = realProfit !== 0 ? Math.round(diff / Math.abs(realProfit) * 100) : 0;
+        const sign = diff >= 0 ? '+' : '';
+        compareHtml = `<div class="sim-compare">
+          ${t('เทียบข้อมูลจริง','vs Real Data')}: ${fmtNumber(realProfit)} → ${fmtNumber(profit)} ฿/${t('ไร่','rai')}
+          · ${t('ผลต่าง','Diff')}: <b style="color:${diff >= 0 ? '#27ae60' : '#c0392b'}">${sign}${fmtNumber(diff)} ฿ (${sign}${pct}%)</b>
+        </div>`;
+      }
+
+      const el = document.getElementById('simResult');
+      if (el) el.innerHTML = `
+        <div class="metric">
+          <div class="m-label">${t('กำไร/ขาดทุนต่อไร่','Profit/Loss per Rai')}</div>
+          <div class="sim-profit" style="color:${col}">${profit >= 0 ? '+' : ''}${fmtNumber(profit)} <small>฿/${t('ไร่','rai')}</small> ${icon}</div>
+        </div>
+        <div style="display:flex;gap:16px;margin-top:6px;font-size:11px">
+          <div>${t('รายได้','Revenue')}: <b>${fmtNumber(revenue)}</b> ฿/${t('ไร่','rai')}</div>
+          <div>${t('ต้นทุน','Cost')}: <b>${fmtNumber(cost)}</b> ฿/${t('ไร่','rai')}</div>
+        </div>
+        <div style="margin-top:8px;font-size:12px;font-weight:600">
+          ${t('กำไรรวม','Total Profit')} (${fmtNumber(area)} ${t('ไร่','rai')}):
+          <span style="color:${col}">${total >= 0 ? '+' : ''}${fmtNumber(total)} ฿/${t('ฤดูกาล','season')}</span>
+        </div>
+        ${compareHtml}`;
+
+      updateSimCostBreakdown(cost);
+    }
+
+    function applySimPreset(key) {
+      if (!_simBase) return;
+      const p = SIM_PRESETS[key];
+      if (!p) return;
+      const yEl = document.getElementById('simYld');
+      const pEl = document.getElementById('simPrice');
+      const cEl = document.getElementById('simCost');
+      if (yEl) yEl.value = Math.round(_simBase.yld * p.yieldMul);
+      if (pEl) pEl.value = Math.round(_simBase.price * p.priceMul);
+      if (cEl) cEl.value = Math.round(_simBase.cost * p.costMul);
+      document.querySelectorAll('.sim-presets button').forEach(btn =>
+        btn.classList.toggle('active', btn.dataset.preset === key));
+      recalcSim();
+    }
+
+    function toggleSimCostBreakdown() {
+      const el = document.getElementById('simCostGrid');
+      if (el) el.classList.toggle('open');
+    }
+
+    function updateSimCostBreakdown(totalCost) {
+      const el = document.getElementById('simCostGrid');
+      if (!el || !_simBase) return;
+      const rice = _simBase.rice;
+      const base = COST_BASE[rice]?.oaeRaiCost || 6100;
+      const ratio = totalCost / base;
+      const rows = COST_ROWS.map(r => {
+        const val = Math.round((rice === 'jasmine' ? r.j : r.w) * ratio);
+        return `<div class="sim-cost-row"><span>${t(r.th, r.en)}</span><span>${fmtNumber(val)} ฿</span></div>`;
+      }).join('');
+      el.innerHTML = rows + `<div class="sim-cost-row"><span><b>${t('รวม','Total')}</b></span><span><b>${fmtNumber(totalCost)} ฿/${t('ไร่','rai')}</b></span></div>`;
+    }
+
+    window.recalcSim = recalcSim;
+    window.applySimPreset = applySimPreset;
+    window.toggleSimCostBreakdown = toggleSimCostBreakdown;
+    // ── End Simulator ─────────────────────────────────────────────────────
 
     function drawSpark(en) {
       if (LAYER_NO_TIMESERIES.has(S.layer)) {
