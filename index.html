@@ -603,32 +603,31 @@
       transform: translateY(0);
     }
 
-    .straw-region-table {
+    .region-summary-table {
       position: absolute;
       left: 18px;
       bottom: 18px;
       z-index: 4;
       padding: 10px 12px;
       border-radius: 14px;
-      border: 1px solid rgba(212, 160, 23, .32);
+      border: 1px solid var(--rst-border, rgba(212,160,23,.32));
       background: rgba(9, 18, 24, .88);
       backdrop-filter: blur(12px);
       box-shadow: 0 12px 34px rgba(0, 0, 0, .3);
       font-size: 11px;
       display: none;
     }
-    .straw-region-table.show { display: block; }
-    .straw-region-table h4 { margin: 0 0 6px; font-size: 11px; color: #f5d56a; font-weight: 700; }
-    .straw-region-table table { border-collapse: collapse; }
-    .straw-region-table td, .straw-region-table th { padding: 2px 7px; text-align: right; white-space: nowrap; }
-    .straw-region-table th { font-weight: 600; color: var(--muted); font-size: 9px; letter-spacing: .04em; border-bottom: 1px solid rgba(255,255,255,.12); }
-    .straw-region-table td:first-child, .straw-region-table th:first-child { text-align: left; }
-    .straw-region-table .surp { color: #e88e3c; }
-    .straw-region-table .tot td { border-top: 1px solid rgba(212,160,23,.38); font-weight: 700; color: #f5d56a; padding-top: 4px; }
-    .straw-region-table .tot .surp { color: #f0a14e; }
+    .region-summary-table.show { display: block; }
+    .region-summary-table h4 { margin: 0 0 6px; font-size: 11px; color: var(--rst-accent, #f5d56a); font-weight: 700; }
+    .region-summary-table table { border-collapse: collapse; }
+    .region-summary-table td, .region-summary-table th { padding: 2px 7px; text-align: right; white-space: nowrap; }
+    .region-summary-table th { font-weight: 600; color: var(--muted); font-size: 9px; letter-spacing: .04em; border-bottom: 1px solid rgba(255,255,255,.12); }
+    .region-summary-table td:first-child, .region-summary-table th:first-child { text-align: left; }
+    .region-summary-table .hi { color: var(--rst-accent, #f5d56a); }
+    .region-summary-table .tot td { border-top: 1px solid var(--rst-border, rgba(212,160,23,.38)); font-weight: 700; color: var(--rst-accent, #f5d56a); padding-top: 4px; }
     @media (max-width: 720px) {
-      .straw-region-table { font-size: 9px; padding: 7px 9px; left: 10px; bottom: 10px; }
-      .straw-region-table td, .straw-region-table th { padding: 1px 5px; }
+      .region-summary-table { font-size: 9px; padding: 7px 9px; left: 10px; bottom: 10px; }
+      .region-summary-table td, .region-summary-table th { padding: 1px 5px; }
     }
 
     .compass {
@@ -1612,7 +1611,7 @@
       <section class="map-panel">
         <div class="map-wrap" id="mapWrap">
           <div class="map-badge show" id="latestBadge">OAE จังหวัดล่าสุด 2567 / Latest</div>
-          <div class="straw-region-table" id="strawRegionTable"></div>
+          <div class="region-summary-table" id="regionSummaryTable"></div>
           <div class="map-tools">
             <div class="map-tool-row">
               <div class="zoom-pill" id="zoomValue">100%</div>
@@ -2136,7 +2135,7 @@
       sparkSvg: document.getElementById("sparkSvg"),
       sparkTitle: document.getElementById("sparkTitle"),
       latestBadge: document.getElementById("latestBadge"),
-      strawRegionTable: document.getElementById("strawRegionTable"),
+      regionSummaryTable: document.getElementById("regionSummaryTable"),
       legendBar: document.getElementById("legendBar"),
       legendLow: document.getElementById("legendLow"),
       legendHigh: document.getElementById("legendHigh"),
@@ -2428,33 +2427,127 @@ function t(th, en) {
       return s == null ? null : Math.round(s * STRAW.saf);
     }
 
-    // ตารางสรุปฟางข้าวรายภาค (overlay บนแผนที่) — แสดงเฉพาะ layer ฟางข้าว
-    const STRAW_REGION_LABEL = {
+    // ตารางสรุปรายภาค (overlay บนแผนที่) — แสดงเฉพาะ layer ที่มี config
+    const REG_KEYS = ["north", "northeast", "central", "east", "south"];
+    const REG_LABEL = {
       north:     ["ภาคเหนือ", "North"],
       northeast: ["ภาคอีสาน", "Northeast"],
       central:   ["ภาคกลาง", "Central"],
       east:      ["ภาคตะวันออก", "East"],
       south:     ["ภาคใต้", "South"],
     };
-    function updateStrawRegionTable() {
-      const el = refs.strawRegionTable;
+    const REGION_TABLE_CFG = {
+      production: {
+        icon: "🌾", title: ["ผลผลิตรายภาค", "Production by Region"],
+        cols: [{ th: "ผลผลิต", en: "Production" }],
+        valueFn: (en, y) => (valueOf(en, S.rice, y, "production") || 0),
+        fmt: v => compactNum(v, 2),
+        unit: ["หน่วย: ตัน", "Unit: tons"],
+        accent: "#f5c065", border: "rgba(245,192,101,.32)",
+      },
+      yield: {
+        icon: "📊", title: ["ผลผลิตต่อไร่รายภาค", "Yield by Region"],
+        cols: [{ th: "ผลผลิตต่อไร่", en: "Yield" }],
+        valueFn: null,
+        regionFn: (reg, y) => {
+          let totalProd = 0, totalArea = 0;
+          (REG[reg] || []).forEach(en => {
+            totalProd += valueOf(en, S.rice, y, "production") || 0;
+            totalArea += valueOf(en, S.rice, y, "area") || 0;
+          });
+          return totalArea > 0 ? Math.round(totalProd * 1000 / totalArea) : 0;
+        },
+        nationalFn: (regVals, y) => {
+          let totalProd = 0, totalArea = 0;
+          allEN.forEach(en => {
+            totalProd += valueOf(en, S.rice, y, "production") || 0;
+            totalArea += valueOf(en, S.rice, y, "area") || 0;
+          });
+          return totalArea > 0 ? Math.round(totalProd * 1000 / totalArea) : 0;
+        },
+        fmt: v => fmtNumber(v),
+        unit: ["หน่วย: กก./ไร่ (เฉลี่ยถ่วงน้ำหนักตามเนื้อที่)", "Unit: kg/rai (area-weighted avg)"],
+        accent: "#f5c065", border: "rgba(245,192,101,.32)",
+      },
+      area: {
+        icon: "📐", title: ["เนื้อที่เก็บเกี่ยวรายภาค", "Harvested Area by Region"],
+        cols: [{ th: "เนื้อที่", en: "Area" }],
+        valueFn: (en, y) => (valueOf(en, S.rice, y, "area") || 0),
+        fmt: v => compactNum(v, 2),
+        unit: ["หน่วย: ไร่", "Unit: rai"],
+        accent: "#f5c065", border: "rgba(245,192,101,.32)",
+      },
+      naprang: {
+        icon: "🌾", title: ["ผลผลิตนาปรังรายภาค", "Second-Crop by Region"],
+        cols: [{ th: "ผลผลิต", en: "Production" }],
+        valueFn: (en, y) => (Number(entryOf(en, "naprang", y).production) || 0),
+        fmt: v => compactNum(v, 2),
+        unit: ["หน่วย: ตัน", "Unit: tons"],
+        accent: "#14b8a6", border: "rgba(20,184,166,.32)",
+      },
+      households: {
+        icon: "👨‍🌾", title: ["ครัวเรือนเกษตรกรรายภาค", "Farm Households by Region"],
+        cols: [{ th: "ครัวเรือน", en: "Households" }],
+        valueFn: (en) => (householdValueOf(en) || 0),
+        fmt: v => compactNum(v, 2),
+        unit: ["หน่วย: ครัวเรือน · OAE 2566", "Unit: households · OAE 2566"],
+        accent: "#22c55e", border: "rgba(34,197,94,.32)",
+      },
+      straw: {
+        icon: "🌾", title: ["ฟางข้าวรายภาค", "Rice Straw by Region"],
+        cols: [{ th: "ฟางทั้งหมด", en: "Total" }, { th: "เหลือใช้", en: "Surplus" }],
+        valueFn: (en, y) => (strawValueOf(en, y) || 0),
+        extraCol: (v) => Math.round(v * STRAW.saf),
+        fmt: v => compactNum(v, 2),
+        unit: ["หน่วย: ตัน · เหลือใช้ = ฟางทั้งหมด × SAF 0.583 (พพ.)", "Unit: tons · Surplus = total × SAF 0.583 (DEDE)"],
+        accent: "#d4a017", border: "rgba(212,160,23,.32)",
+      },
+    };
+
+    function updateRegionSummaryTable() {
+      const el = refs.regionSummaryTable;
       if (!el) return;
-      if (S.layer !== "straw") { el.classList.remove("show"); return; }
-      let gStraw = 0, gSurp = 0;
-      const rows = Object.keys(STRAW_REGION_LABEL).map(reg => {
-        const straw = (REG[reg] || []).reduce((sum, en) => sum + (strawValueOf(en, S.year) || 0), 0);
-        const surp = Math.round(straw * STRAW.saf);
-        gStraw += straw; gSurp += surp;
-        return `<tr><td>${t(STRAW_REGION_LABEL[reg][0], STRAW_REGION_LABEL[reg][1])}</td><td>${compactNum(straw, 2)}</td><td class="surp">${compactNum(surp, 2)}</td></tr>`;
+      const cfg = REGION_TABLE_CFG[S.layer];
+      if (!cfg) { el.classList.remove("show"); return; }
+
+      el.style.setProperty("--rst-accent", cfg.accent);
+      el.style.setProperty("--rst-border", cfg.border);
+
+      const hasExtra = !!cfg.extraCol;
+      const colHeaders = cfg.cols.map(c => `<th>${t(c.th, c.en)}</th>`).join("");
+      let gVal = 0;
+      let gExtra = 0;
+
+      const rows = REG_KEYS.map(reg => {
+        let val;
+        if (cfg.regionFn) {
+          val = cfg.regionFn(reg, S.year);
+        } else {
+          val = (REG[reg] || []).reduce((sum, en) => sum + cfg.valueFn(en, S.year), 0);
+        }
+        gVal += val;
+        let extraTd = "";
+        if (hasExtra) {
+          const ex = cfg.extraCol(val);
+          gExtra += ex;
+          extraTd = `<td class="hi">${cfg.fmt(ex)}</td>`;
+        }
+        return `<tr><td>${t(REG_LABEL[reg][0], REG_LABEL[reg][1])}</td><td>${cfg.fmt(val)}</td>${extraTd}</tr>`;
       }).join("");
+
+      let natVal = gVal;
+      if (cfg.nationalFn) natVal = cfg.nationalFn(null, S.year);
+      let natExtraTd = "";
+      if (hasExtra) natExtraTd = `<td class="hi">${cfg.fmt(gExtra)}</td>`;
+
       el.innerHTML = `
-        <h4>🌾 ${t('ฟางข้าวรายภาค', 'Rice Straw by Region')} · ${S.year}</h4>
+        <h4>${cfg.icon} ${t(cfg.title[0], cfg.title[1])} · ${S.year}</h4>
         <table>
-          <tr><th>${t('ภาค', 'Region')}</th><th>${t('ฟางทั้งหมด', 'Total')}</th><th>${t('เหลือใช้', 'Surplus')}</th></tr>
+          <tr><th>${t('ภาค', 'Region')}</th>${colHeaders}</tr>
           ${rows}
-          <tr class="tot"><td>${t('รวมทั้งประเทศ', 'Nationwide')}</td><td>${compactNum(gStraw, 2)}</td><td class="surp">${compactNum(gSurp, 2)}</td></tr>
+          <tr class="tot"><td>${t('รวมทั้งประเทศ', 'Nationwide')}</td><td>${cfg.fmt(natVal)}</td>${natExtraTd}</tr>
         </table>
-        <div style="font-size:8px;color:var(--muted);margin-top:5px;max-width:200px">${t('หน่วย: ตัน · เหลือใช้ = ฟางทั้งหมด × SAF 0.583 (พพ.)', 'Unit: tons · Surplus = total × SAF 0.583 (DEDE)')}</div>`;
+        <div style="font-size:8px;color:var(--muted);margin-top:5px;max-width:220px">${t(cfg.unit[0], cfg.unit[1])}</div>`;
       el.classList.add("show");
     }
 
@@ -5024,7 +5117,7 @@ ${warningsHtml}
       updateSummary();
       updateTopList();
       updateDataSourceUI();
-      updateStrawRegionTable();
+      updateRegionSummaryTable();
       if (S.sel) {
         if (!getVisibleProvinces().includes(S.sel)) {
           S.sel = null;
