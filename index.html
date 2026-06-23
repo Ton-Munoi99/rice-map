@@ -1910,6 +1910,8 @@
 
     const PRODUCTION_YEARS = ["2565", "2566", "2567", "2568", "2569"];
     const PRICE_YEARS = ["2568", "2569"];
+    // นาปรัง: OAE ออกสถิติถึงปี 2568 (ยังไม่มี 2569) — จำกัดปุ่มปีไม่ให้โชว์ปีว่าง
+    const NAPRANG_YEARS = ["2565", "2566", "2567", "2568"];
     const ALL_YEARS = [...new Set([...PRODUCTION_YEARS, ...PRICE_YEARS])];
     const RICE_TYPES = ["white", "jasmine"];
     const allEN = [...new Set(Object.values(REG).flat())];
@@ -2382,6 +2384,7 @@
       if (layer === "soilMoisture") return ["soilMoisture"];
       if (layer === "waterlevel") return ["waterlevel"];
       if (layer === "profit") return PRICE_YEARS;
+      if (layer === "naprang") return NAPRANG_YEARS;
       return layer === "price" ? PRICE_YEARS : PRODUCTION_YEARS;
     }
 
