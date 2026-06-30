@@ -6078,7 +6078,7 @@
 
           <div class="sim-row">
             <label><span>${t("ราคาข้าว", "Rice Price")}</span> <span class="sim-val" id="simPriceVal">${fmtNumber(price)}</span> <small>฿/ตัน</small></label>
-            <input type="range" id="simPrice" min="0" max="20000" step="100" value="${price}" oninput="recalcSim()">
+            <input type="range" id="simPrice" min="0" max="25000" step="100" value="${price}" oninput="recalcSim()">
             <div class="sim-ref">${t("ราคาจริง", "Actual price")}: ${fmtNumber(price)} ฿/ตัน${priceNote}</div>
           </div>
 
@@ -6105,6 +6105,7 @@
       }
 
       function recalcSim() {
+        if (!document.getElementById("simYld")) return; // sim pane not rendered
         const yld = Number(document.getElementById("simYld")?.value || 0);
         const price = Number(document.getElementById("simPrice")?.value || 0);
         const cost = Number(document.getElementById("simCost")?.value || 0);
