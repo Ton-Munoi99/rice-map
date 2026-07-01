@@ -3456,6 +3456,23 @@
         return s == null ? null : Math.round(s * STRAW.saf);
       }
 
+      // จับคู่ supply (ฟางเหลือใช้) กับ demand (โรงไฟฟ้าที่รับซื้อฟาง/แกลบ) ระดับจังหวัด/ภาค
+      function strawBuyerMarket(en) {
+        const riceBuyers = (provEn) => (window.BIOMASS_DATA?.provinces?.[provEn]?.plants || []).filter((p) => p.rice_straw || p.rice_husks);
+        const ownPlants = riceBuyers(en);
+        const ownMw = ownPlants.reduce((s, p) => s + (p.mw || 0), 0);
+        const region = regionOf(en);
+        const regionList = (REG[region] || [])
+          .filter((name) => name !== en)
+          .map((name) => {
+            const plants = riceBuyers(name);
+            return { en: name, count: plants.length, mw: plants.reduce((s, p) => s + (p.mw || 0), 0) };
+          })
+          .filter((p) => p.count > 0)
+          .sort((a, b) => b.count - a.count || b.mw - a.mw);
+        return { ownCount: ownPlants.length, ownMw, region, regionList };
+      }
+
       // ตารางสรุปรายภาค (overlay บนแผนที่) — แสดงเฉพาะ layer ที่มี config
       const REG_KEYS = ["north", "northeast", "central", "east", "south"];
       const REG_LABEL = {
@@ -5659,6 +5676,37 @@
         }
         // ─────────────────────────────────────────────────────────────────────
 
+        // ── ตลาดรับซื้อฟาง/แกลบ — จับคู่ supply (ฟางเหลือใช้) กับ demand (โรงไฟฟ้าชีวมวล) ──
+        let strawMarketHtml = "";
+        if (window.BIOMASS_DATA && strawSurplusOf(en, S.year) != null) {
+          const market = strawBuyerMarket(en);
+          const regionLabel = REG_LABEL[market.region] ? t(...REG_LABEL[market.region]) : "";
+          let statusHtml;
+          if (market.ownCount > 0) {
+            statusHtml = `<div style="font-size:11px;color:#2e7d32;font-weight:700">🟢 ${t(`มีผู้รับซื้อในจังหวัด ${market.ownCount} แห่ง (${market.ownMw.toFixed(1)} MW)`, `${market.ownCount} local buyers (${market.ownMw.toFixed(1)} MW)`)}</div>`;
+          } else if (market.regionList.length > 0) {
+            const topList = market.regionList
+              .slice(0, 3)
+              .map(
+                (p) =>
+                  `<div style="font-size:10px;color:var(--muted);margin-top:3px;cursor:pointer" onclick="selectProvince('${p.en.replace(/'/g, "\\'")}')">· ${t(NM[p.en] || p.en, p.en)} — ${p.count} ${t("แห่ง", "plants")} (${p.mw.toFixed(1)} MW)</div>`,
+              )
+              .join("");
+            statusHtml = `
+            <div style="font-size:11px;color:#e65100;font-weight:700">🟡 ${t(`ไม่มีผู้รับซื้อในจังหวัด — มีใน${regionLabel}`, `No local buyer — found in ${regionLabel}`)}</div>
+            ${topList}`;
+          } else {
+            statusHtml = `<div style="font-size:11px;color:#c62828;font-weight:700">🔴 ${t(`ไม่มีผู้รับซื้อฟาง/แกลบทั้งในจังหวัดและ${regionLabel} — เสี่ยงเผาสูง`, `No straw/husk buyer in province or ${regionLabel} — high burn risk`)}</div>`;
+          }
+          strawMarketHtml = `
+          <div class="rice-card" style="grid-column:1/-1;background:rgba(139,195,74,.07);border:1px solid rgba(139,195,74,.25)">
+            <div class="t">🔗 ${t("ตลาดรับซื้อฟาง/แกลบ", "Straw/Husk Buyer Market")}</div>
+            ${statusHtml}
+            <div style="font-size:9px;color:var(--muted);margin-top:6px">${t("จับคู่ฟางเหลือใช้กับโรงไฟฟ้าชีวมวลที่รับซื้อ · ระดับจังหวัด/ภาค (ยังไม่คำนวณระยะทางจริง)", "Matches surplus straw with biomass plants that buy it · province/region level (real distance not yet calculated)")}</div>
+          </div>`;
+        }
+        // ─────────────────────────────────────────────────────────────────────
+
         // ── ข้าวนาปรัง detail card ────────────────────────────────────────────
         let naprangHtml = "";
         {
@@ -6044,7 +6092,7 @@
         }
         // ─────────────────────────────────────────────────────────────────────
 
-        const econContent = profitHtml + strawHtml + biomassHtml + fertRatioHtml + millsHtml + fertHtml;
+        const econContent = profitHtml + strawHtml + strawMarketHtml + biomassHtml + fertRatioHtml + millsHtml + fertHtml;
         const peopleContent = householdsHtml;
         const riceContent = cardHtml + naprangHtml;
         const simContent = buildSimPane(en);
