@@ -3181,9 +3181,15 @@
         return x - Math.floor(x);
       }
 
+      const _regionWarned = new Set();
       function regionOf(en) {
         for (const [region, list] of Object.entries(REG)) {
           if (list.includes(en)) return region;
+        }
+        // ไม่รู้จักชื่อจังหวัด — เตือน 1 ครั้งต่อ key (มักเกิดจากสะกดชื่อ EN ไม่ตรง REG) แล้ว fallback เป็นภาคกลาง
+        if (!_regionWarned.has(en)) {
+          _regionWarned.add(en);
+          console.warn(`[regionOf] unknown province key "${en}" — check spelling against REG; defaulting to central`);
         }
         return "central";
       }
