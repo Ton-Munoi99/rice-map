@@ -1987,6 +1987,10 @@
                 <span class="th-t">🌾 ฟางข้าว</span>
                 <span class="en-t">🌾 Rice Straw</span>
               </button>
+              <button class="pill" data-layer="biomass" onclick="setLayer('biomass')">
+                <span class="th-t">⚡ โรงไฟฟ้าชีวมวล</span>
+                <span class="en-t">⚡ Biomass Plants</span>
+              </button>
               <button class="pill" data-layer="dam" onclick="setLayer('dam')">
                 <span class="th-t">ระดับน้ำในเขื่อน</span>
                 <span class="en-t">Dam Level</span>
@@ -2588,6 +2592,7 @@
         "soilMoisture",
         "waterlevel",
         "rainstation",
+        "biomass",
       ]);
 
       const layerMeta = {
@@ -2810,6 +2815,16 @@
           summary: "ฟางข้าวรวม",
           summaryMode: "sum",
         },
+        biomass: {
+          th: "โรงไฟฟ้าชีวมวล",
+          en: "Biomass Power Plants",
+          unit: "แห่ง (ปี 2565)",
+          unitEn: "plants (2565)",
+          unitShort: "แห่ง",
+          unitShortEn: "plants",
+          summary: "โรงไฟฟ้าชีวมวล",
+          summaryMode: "sum",
+        },
       };
 
       const WL_COLORS = { 1: "#7fd4ff", 2: "#39b0e5", 3: "#2ecc71", 4: "#f39c12", 5: "#e74c3c" };
@@ -2936,6 +2951,12 @@
           sourceTh: "OAE × พพ. (RPR 1.169)",
           sourceEn: "OAE × DEDE (RPR)",
           palette: { lo: [92, 64, 28], mid: [200, 160, 70], hi: [245, 212, 120], accent: "#d4a017" },
+        },
+        biomass: {
+          format: "int",
+          sourceTh: "พพ. (DEDE) 2565",
+          sourceEn: "DEDE 2565",
+          palette: { lo: [254, 243, 199], mid: [251, 146, 60], hi: [180, 83, 9], accent: "#f59e0b" },
         },
       }).forEach(([k, cfg]) => Object.assign(layerMeta[k], cfg));
       const riceMeta = {
@@ -3358,6 +3379,7 @@
         if (layer === "waterlevel") return ["waterlevel"];
         if (layer === "profit") return PRICE_YEARS;
         if (layer === "naprang") return NAPRANG_YEARS;
+        if (layer === "biomass") return ["biomass"];
         return layer === "price" ? PRICE_YEARS : PRODUCTION_YEARS;
       }
 
@@ -3423,6 +3445,11 @@
         const total = strawProductionBase(en, year).total * STRAW.rpr;
         return total > 0 ? Math.round(total) : null;
       }
+      // ── โรงไฟฟ้าชีวมวล (DEDE 2565) ───────────────────────────────────────────────
+      function biomassPlantsOf(en) {
+        return window.BIOMASS_DATA?.provinces?.[en]?.count ?? 0;
+      }
+
       // ฟางเหลือใช้ (พลังงาน/เสี่ยงเผา) = ฟางทั้งหมด × SAF 0.583
       function strawSurplusOf(en, year = S.year) {
         const s = strawValueOf(en, year);
@@ -3506,6 +3533,16 @@
           unit: ["หน่วย: ครัวเรือน · OAE 2566", "Unit: households · OAE 2566"],
           accent: "#22c55e",
           border: "rgba(34,197,94,.32)",
+        },
+        biomass: {
+          icon: "⚡",
+          title: ["โรงไฟฟ้าชีวมวลรายภาค", "Biomass Plants by Region"],
+          cols: [{ th: "จำนวนโรงไฟฟ้า", en: "Plants" }],
+          valueFn: (en) => biomassPlantsOf(en) || 0,
+          fmt: (v) => v.toString(),
+          unit: ["หน่วย: แห่ง · DEDE 2565", "Unit: plants · DEDE 2565"],
+          accent: "#f59e0b",
+          border: "rgba(245,158,11,.32)",
         },
         straw: {
           icon: "🌾",
@@ -3647,6 +3684,7 @@
         if (layer === "profit") return profitValueOf(en, rice, year) ?? 0;
         if (layer === "naprang") return Number(entryOf(en, "naprang", year).production) || 0;
         if (layer === "straw") return strawValueOf(en, year) ?? 0;
+        if (layer === "biomass") return biomassPlantsOf(en);
         const m = layerMeta[layer];
         if (m?.valueFn) return m.valueFn(en) ?? 0; // 8 env layers (config-driven)
         return Number(entryOf(en, rice, year)[layer] || 0);
@@ -4615,6 +4653,14 @@
           refs.dataSourceNote.textContent = t(
             `ข้อมูลโรงสีข้าวจดทะเบียน กรมการค้าภายใน (DIT) อัปเดต ${meta?.updated || "23 เมษายน 2569"} ครอบคลุม ${covered} จังหวัด จากทั้งหมด ${meta?.total_mills || 903} แห่ง`,
             `Registered rice mills, Dept. of Internal Trade (DIT). Updated ${meta?.updated || "23 Apr 2026"}. Covers ${covered} provinces, ${meta?.total_mills || 903} mills total.`,
+          );
+          return;
+        }
+        if (S.layer === "biomass") {
+          const meta = window.BIOMASS_DATA?._meta;
+          refs.dataSourceNote.textContent = t(
+            `⚡ โรงไฟฟ้าชีวมวล ${meta?.total || 79} แห่งทั่วประเทศ · สำรวจโดย กรมพัฒนาพลังงานทดแทนและอนุรักษ์พลังงาน (พพ./DEDE) ปี 2565 · ครอบคลุม ${covered} จังหวัด · ข้อมูลเบื้องต้น ได้จากโรงไฟฟ้าที่ตอบแบบสอบถาม`,
+            `⚡ ${meta?.total || 79} biomass power plants nationwide · Surveyed by DEDE (Dept. of Alternative Energy Development and Efficiency) 2022 · ${covered} provinces · Preliminary data from survey respondents`,
           );
           return;
         }
@@ -5954,7 +6000,51 @@
           alertsHtml +
           soilMoistureHtml +
           diseaseHtml;
-        const econContent = profitHtml + strawHtml + fertRatioHtml + millsHtml + fertHtml;
+        // ── โรงไฟฟ้าชีวมวล detail card ────────────────────────────────────────────
+        let biomassHtml = "";
+        {
+          const provData = window.BIOMASS_DATA?.provinces?.[en];
+          if (provData?.count > 0) {
+            const plants = provData.plants || [];
+            const riceCount = plants.filter((p) => p.rice_straw || p.rice_husks).length;
+            const totalMw = plants.reduce((s, p) => s + (p.mw || 0), 0);
+            const plantRows = plants
+              .map((p) => {
+                const fuelTags = [];
+                if (p.rice_straw) fuelTags.push(`<span style="background:rgba(212,160,23,.18);color:#b8860b;padding:1px 5px;border-radius:8px;font-size:9px">🌾 ฟาง</span>`);
+                if (p.rice_husks) fuelTags.push(`<span style="background:rgba(76,175,80,.15);color:#388e3c;padding:1px 5px;border-radius:8px;font-size:9px">🌾 แกลบ</span>`);
+                return `<div style="padding:4px 0;border-bottom:1px solid rgba(245,158,11,.1);display:flex;justify-content:space-between;align-items:flex-start;gap:4px">
+                  <span style="font-size:10px;flex:1;line-height:1.4">${p.name}</span>
+                  <span style="white-space:nowrap;font-size:10px;color:var(--muted);margin-left:4px">${p.mw} MW</span>
+                  ${fuelTags.length ? `<span style="white-space:nowrap">${fuelTags.join(" ")}</span>` : ""}
+                </div>`;
+              })
+              .join("");
+            biomassHtml = `
+            <div class="rice-card" style="grid-column:1/-1;background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.28)">
+              <div class="t">⚡ ${t("โรงไฟฟ้าชีวมวล", "Biomass Power Plants")} · DEDE 2565</div>
+              <div style="display:flex;gap:12px;margin-bottom:8px">
+                <div class="metric" style="flex:1">
+                  <div class="m-label">${t("จำนวนโรงไฟฟ้า", "Power Plants")}</div>
+                  <div class="m-value" style="color:#f59e0b">${provData.count} <small>${t("แห่ง", "plants")}</small></div>
+                </div>
+                <div class="metric" style="flex:1">
+                  <div class="m-label">${t("กำลังผลิตรวม", "Total Capacity")}</div>
+                  <div class="m-value" style="font-size:13px;color:#d97706">${totalMw.toFixed(1)} <small>MW</small></div>
+                </div>
+                <div class="metric" style="flex:1">
+                  <div class="m-label">${t("รับซื้อฟาง/แกลบ", "Buys Rice Biomass")}</div>
+                  <div class="m-value" style="font-size:13px;color:#388e3c">${riceCount} <small>${t("แห่ง", "plants")}</small></div>
+                </div>
+              </div>
+              <div style="margin-top:4px">${plantRows}</div>
+              <div style="font-size:9px;color:var(--muted);margin-top:6px">⚡ ${t("ที่มา: กรมพัฒนาพลังงานทดแทนและอนุรักษ์พลังงาน (พพ.) · ข้อมูลปี 2565 · 🌾 = รับซื้อฟางข้าว/แกลบ (เชื่อมโยงกับชาวนา)", "Source: DEDE Thailand · 2022 survey · 🌾 = accepts rice straw/husks (rice farmer linkage)")}</div>
+            </div>`;
+          }
+        }
+        // ─────────────────────────────────────────────────────────────────────
+
+        const econContent = profitHtml + strawHtml + biomassHtml + fertRatioHtml + millsHtml + fertHtml;
         const peopleContent = householdsHtml;
         const riceContent = cardHtml + naprangHtml;
         const simContent = buildSimPane(en);
@@ -5989,7 +6079,7 @@
             S.layer === "alerts" ||
             S.layer === "soilMoisture"
               ? "env"
-              : S.layer === "straw" || S.layer === "profit"
+              : S.layer === "straw" || S.layer === "profit" || S.layer === "biomass"
                 ? "econ"
                 : "rice";
           switchDetailTab(defaultTab);
@@ -6782,6 +6872,10 @@ ${warningsHtml}
           refs.yearButtons.innerHTML = `<button class="pill on" data-year="soilMoisture">💧 NASA SMAP 10km · ${smMeta?.period_start || ""} → ${smMeta?.period_end || ""}</button>`;
           return;
         }
+        if (S.layer === "biomass") {
+          refs.yearButtons.innerHTML = `<button class="pill on" data-year="biomass">⚡ DEDE ${t("ข้อมูลปี", "Survey Year")} 2565</button>`;
+          return;
+        }
         if (S.layer === "profit") {
           refs.yearButtons.innerHTML = PRICE_YEARS.map(
             (yr) =>
@@ -7101,6 +7195,19 @@ ${warningsHtml}
         refs.toast.classList.add("show");
         clearTimeout(toastTimer);
         toastTimer = setTimeout(() => refs.toast.classList.remove("show"), 2200);
+      }
+
+      async function fetchBiomassData() {
+        try {
+          const res = await fetch("data/biomass-plants.json?_=" + Date.now(), { cache: "no-store" });
+          if (res.ok) {
+            window.BIOMASS_DATA = await res.json();
+            if (S.layer === "biomass") rerender();
+            else if (S.sel) selectProvince(S.sel);
+          }
+        } catch (e) {
+          console.info("biomass-plants.json not available");
+        }
       }
 
       async function fetchWaterLevelData() {
@@ -7423,6 +7530,7 @@ ${warningsHtml}
         fetchSoilMoistureData();
         fetchWaterLevelData();
         fetchRainStationData();
+        fetchBiomassData();
         fetchDiseaseData();
         updateNationalFert();
 
