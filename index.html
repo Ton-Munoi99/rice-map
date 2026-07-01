@@ -6427,6 +6427,33 @@
     ${millListHtml}${sourceNote}
   `;
         }
+        if (S.layer === "biomass") {
+          const prov = window.BIOMASS_DATA?.provinces?.[en];
+          const rank = currentRank(en);
+          const total = getVisibleProvinces().filter((name) => hasLayerValue(name)).length;
+          if (!prov?.count)
+            return `<div class="th">${t(NM[en] || en, en)}</div><div class="en">${en}</div><div style="color:var(--muted);font-size:11px;margin-top:6px">${t("ไม่มีโรงไฟฟ้าชีวมวล", "No biomass power plants")}</div>`;
+          const plants = prov.plants || [];
+          const riceCount = plants.filter((p) => p.rice_straw || p.rice_husks).length;
+          const totalMw = plants.reduce((s, p) => s + (p.mw || 0), 0);
+          const plantListHtml = plants
+            .map((p) => {
+              const fuelTags = [];
+              if (p.rice_straw) fuelTags.push(`<span style="background:rgba(212,160,23,.18);color:#b8860b;padding:1px 5px;border-radius:8px;font-size:9px">🌾 ฟาง</span>`);
+              if (p.rice_husks) fuelTags.push(`<span style="background:rgba(76,175,80,.15);color:#388e3c;padding:1px 5px;border-radius:8px;font-size:9px">🌾 แกลบ</span>`);
+              return `<div style="font-size:9px;color:var(--muted);margin-top:3px;display:flex;justify-content:space-between;gap:4px"><span>· ${p.name}</span><span style="white-space:nowrap">${p.mw} MW ${fuelTags.join(" ")}</span></div>`;
+            })
+            .join("");
+          return `
+    <div class="th">${t(NM[en] || en, en)}</div>
+    <div class="en">${en}</div>
+    <div class="type">${t("โรงไฟฟ้าชีวมวล · DEDE 2565", "Biomass Power Plants · DEDE 2565")}</div>
+    <div class="metric-name">${t("จำนวนโรงไฟฟ้า", "Number of Plants")}</div>
+    <div class="value">${prov.count} <small style="font-size:12px;color:var(--muted)">${t("แห่ง", "plants")}</small></div>
+    <div class="rank">${rank ? `${t("อันดับ", "Rank")} #${rank} / ${total}` : t("ไม่มีข้อมูล", "No data")} &nbsp;·&nbsp; ${t(`กำลังผลิตรวม ${totalMw.toFixed(1)} MW · รับซื้อฟาง/แกลบ ${riceCount} แห่ง`, `Total ${totalMw.toFixed(1)} MW · ${riceCount} buy rice straw/husks`)}</div>
+    ${plantListHtml}
+  `;
+        }
         if (S.layer === "profit") {
           const pval = profitValueOf(en, S.rice, S.year);
           const rank = currentRank(en);
