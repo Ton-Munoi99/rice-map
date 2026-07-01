@@ -872,6 +872,25 @@
         gap: 7px;
       }
 
+      /* ชั้นข้อมูล: จัดเป็นกริด 2 คอลัมน์ให้สมมาตร (เฉพาะแถวนี้ ไม่กระทบปุ่มปี/ภาค) */
+      .pill-row.layer-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 7px;
+      }
+      .pill-row.layer-grid .pill {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        min-height: 34px;
+        line-height: 1.25;
+      }
+      /* ปุ่มสุดท้ายเมื่อจำนวนเป็นเลขคี่ — ขยายเต็มแถวไม่ให้เหลือช่องว่าง */
+      .pill-row.layer-grid .pill:last-child:nth-child(odd) {
+        grid-column: 1 / -1;
+      }
+
       .pill {
         padding: 6px 10px;
         border-radius: 999px;
@@ -1950,7 +1969,7 @@
               <span class="th-t">ชั้นข้อมูล</span>
               <span class="en-t">Data Layer</span>
             </div>
-            <div class="pill-row">
+            <div class="pill-row layer-grid">
               <button class="pill on" data-layer="production" onclick="setLayer('production')">
                 <span class="th-t">ผลผลิต (ตัน) นาปี</span>
                 <span class="en-t">Production (tons) Main Crop</span>
@@ -1979,10 +1998,8 @@
                 <span class="th-t">🏭 โรงสีข้าว</span>
                 <span class="en-t">🏭 Rice Mills</span>
               </button>
-              <button class="pill" data-layer="profit" onclick="setLayer('profit')">
-                <span class="th-t">💰 กำไร/ขาดทุน</span>
-                <span class="en-t">💰 Profit/Loss</span>
-              </button>
+              <!-- profit layer hidden per request — code retained (valueOf/tooltip/detail card still handle 'profit') -->
+              <!-- <button class="pill" data-layer="profit" onclick="setLayer('profit')"><span class="th-t">💰 กำไร/ขาดทุน</span><span class="en-t">💰 Profit/Loss</span></button> -->
               <button class="pill" data-layer="straw" onclick="setLayer('straw')">
                 <span class="th-t">🌾 ฟางข้าว</span>
                 <span class="en-t">🌾 Rice Straw</span>
