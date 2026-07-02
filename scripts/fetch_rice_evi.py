@@ -32,6 +32,20 @@ from riceutils import init_gee, GAUL_NAME_MAP as NAME_MAP
 # 12 เดือน = ครอบคลุมทั้งนาปี (flooding Jun-Aug) + นาปรัง (flooding Dec-Jan)
 PHENOLOGY_MONTHS = 12   # จำนวนเดือนย้อนหลังที่ตรวจ flooding phase
 
+# ── Rice-refinement thresholds (แก้ปัญหา mask หลุดพืชยืนต้น/พื้นที่น้ำ) ─────────
+# เดิมใช้แค่ "LSWI > EVI ≥1 เดือน" → ยาง/ปาล์ม/ป่า/บ่อเลี้ยงสัตว์น้ำ/ป่าชายเลน
+# หลุดเข้ามาเป็น false positive (ภูเก็ต/จันทบุรี/สุราษฎร์ฯ ขึ้นเขียวทั้งที่แทบไม่มีนา)
+# เพิ่มเงื่อนไข phenology ของนาข้าวจริง (ต้องผ่านทั้ง 3):
+FLOOD_EVI_MAX = 0.30   # น้ำท่วมขังต้องเกิดตอน canopy ยังโปร่ง (เตรียมดิน/ปักดำ) ไม่ใช่ป่าเขียวทึบ
+PEAK_MIN      = 0.40   # ต้องมีเดือนที่ต้นข้าวขึ้น canopy เขียวจริง → ตัดน้ำเปิด/บ่อกุ้ง/นาเกลือ
+AMP_MIN       = 0.20   # EVI แกว่งตามฤดูสูง → ตัดพืชยืนต้นเขียวคงที่ทั้งปี (ยาง ปาล์ม ป่า)
+
+# ── Stage trend threshold ────────────────────────────────────────────────────
+# EVI ขึ้นสูงสุดที่ "ออกรวง" แล้วลดลงตอนสร้างเมล็ด–สุกแก่ (senescence) จนเหลือ ~0.4
+# ตอนเก็บเกี่ยว (Xiao et al.; Sentinel-2 rice phenology). ค่าเดือนเดียวจึงกำกวม —
+# ต้องดู "ทิศทาง" เทียบเดือนก่อนหน้า: ขาขึ้น = กำลังเข้าออกรวง, ขาลง = สร้างเมล็ด/สุกแก่
+TREND_EPS = 0.02       # |Δ EVI| ต่ำกว่านี้ถือว่าทรงตัว (กัน noise MODIS รายเดือน)
+
 
 # ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -126,35 +140,39 @@ def load_rice_mask():
 
 # ── Phenology: Flooding confirmation via MOD13A3 LSWI ───────────────────────
 
-def build_flood_confirmation(current_start_iso, n_months=12):
+def build_rice_phenology_mask(current_start_iso, n_months=12):
     """
-    ตรวจ flooding/transplanting phase ใน n เดือนย้อนหลัง
-    โดยใช้เงื่อนไข:  LSWI > EVI  (Xiao et al. 2005, per pixel per month)
+    สร้าง rice-confirmation mask จาก phenology ของนาข้าวใน n เดือนย้อนหลัง
 
-    แหล่งข้อมูล: MOD13A3 เท่านั้น (ทั้ง EVI และ LSWI)
-    - LSWI = (sur_refl_b02 - sur_refl_b07) / (sur_refl_b02 + sur_refl_b07)
-    - b02 = NIR (841–876nm),  b07 = SWIR2 (2105–2155nm)
-    - cloud-composited แล้ว → ไม่มีปัญหาเมฆฤดูฝน (ต่างจาก MOD09A1)
+    เดิมใช้แค่ "LSWI > EVI ≥1 เดือน" ซึ่งหลวมเกินไป — พืชยืนต้น (ยาง/ปาล์ม/ป่า)
+    และพื้นที่น้ำ (บ่อเลี้ยงสัตว์น้ำ/ป่าชายเลน/นาเกลือ) หลุดเข้ามาเป็น rice ได้
+    เพราะค่า LSWI สูงกว่า EVI ในบางเดือนโดยไม่ต้องเป็นนาข้าว
 
-    หลักการ:
-    - ช่วงเตรียมดิน/ปักดำ: น้ำมากกว่าพืช → LSWI > EVI
+    เงื่อนไขนาข้าวจริง (pixel ต้องผ่านทั้ง 3):
+      1. flood_any  — เคยมีเดือน "น้ำท่วมขังตอน canopy โปร่ง": LSWI > EVI และ EVI < FLOOD_EVI_MAX
+                       = ระยะเตรียมดิน/ปักดำจริง (ไม่ใช่ LSWI>EVI จากป่าที่ EVI แกว่ง)
+      2. evi_max ≥ PEAK_MIN     — มีเดือนที่ต้นข้าวขึ้น canopy เขียวจริง → ตัดน้ำเปิด/บ่อกุ้ง/นาเกลือ
+      3. amplitude ≥ AMP_MIN    — EVI แกว่งตามฤดูสูง (max−min) → ตัดพืชยืนต้นเขียวคงที่ทั้งปี
+
+    แหล่งข้อมูล: MOD13A3 (EVI + LSWI จาก b02 NIR, b07 SWIR2), cloud-composited แล้ว
+    - LSWI = (NIR − SWIR2) / (NIR + SWIR2)
     - window 12 เดือน ครอบคลุมนาปี (flooding Jun-Aug) + นาปรัง (Dec-Jan)
 
     Return:
-        flood_any  — ee.Image binary (1 = เคย flood ≥ 1 เดือน)
-        window_str — "YYYY-MM to YYYY-MM"
+        rice_confirm — ee.Image binary (1 = ผ่าน phenology ครบ 3 เงื่อนไข) band "flooded"
+        window_str   — "YYYY-MM to YYYY-MM"
     """
     history = get_history_months(current_start_iso, n_months)
     print(f"  Phenology window: {history[0][0][:7]} → {history[-1][0][:7]} ({n_months} months)")
 
-    flood_imgs = []
+    evi_imgs, flood_imgs = [], []
     for m_start, m_end in history:
         # ดึง EVI + NIR + SWIR2 จาก MOD13A3 ในคราวเดียว
         mod13 = (
             ee.ImageCollection("MODIS/061/MOD13A3")
             .filterDate(m_start, m_end)
             .select(["EVI", "sur_refl_b02", "sur_refl_b07"])
-            .mosaic()              # all-masked ถ้าไม่มีข้อมูล → safe
+            .mosaic()              # all-masked ถ้าไม่มีข้อมูล → safe (ถูกข้ามใน max/min/any)
         )
 
         evi  = mod13.select("EVI").multiply(0.0001)
@@ -164,35 +182,62 @@ def build_flood_confirmation(current_start_iso, n_months=12):
         # LSWI = (NIR - SWIR2) / (NIR + SWIR2)
         lswi = nir.subtract(swir).divide(nir.add(swir))
 
-        # Flooding condition: LSWI > EVI (per pixel)
-        flooded = lswi.gt(evi).rename("flooded")
+        # Flooding: น้ำมากกว่าพืช (LSWI>EVI) และ canopy ยังโปร่ง (EVI ต่ำ)
+        flooded = lswi.gt(evi).And(evi.lt(FLOOD_EVI_MAX)).rename("flooded")
+        evi_imgs.append(evi.rename("EVI"))
         flood_imgs.append(flooded)
 
     if not flood_imgs:
-        print("  ⚠️ No flood images — returning zero mask")
+        print("  ⚠️ No phenology data — returning zero mask")
         return ee.Image(0).rename("flooded"), "no data"
 
-    # pixel = 1 ถ้าเคย flood ใน ≥1 เดือนในช่วง window
+    # เคย flood (แบบ canopy โปร่ง) ≥1 เดือน
     flood_any = (
         ee.ImageCollection(flood_imgs)
         .reduce(ee.Reducer.anyNonZero())
         .rename("flooded")
     )
+    # สถิติฤดูกาลของ EVI ต่อ pixel
+    evi_col   = ee.ImageCollection(evi_imgs)
+    evi_max   = evi_col.max()
+    evi_min   = evi_col.min()
+    amplitude = evi_max.subtract(evi_min)
+
+    rice_confirm = (
+        flood_any
+        .And(evi_max.gte(PEAK_MIN))
+        .And(amplitude.gte(AMP_MIN))
+        .rename("flooded")
+    )
     window_str = f"{history[0][0][:7]} to {history[-1][0][:7]}"
-    return flood_any, window_str
+    return rice_confirm, window_str
 
 
-# ── EVI stage classification ─────────────────────────────────────────────────
+# ── EVI stage classification (trend-aware) ────────────────────────────────────
 
-def classify_evi(evi_val):
-    """จำแนกสถานะข้าวจาก EVI (เฉพาะนาข้าว)"""
+def classify_evi(evi_val, evi_prev=None):
+    """
+    จำแนกระยะข้าวจาก EVI + ทิศทาง (เทียบเดือนก่อนหน้า)
+
+    หลักการ: ความเขียว (EVI) ขึ้นสูงสุดที่ "ออกรวง/ออกดอก" แล้วลดลงตอนสร้างเมล็ด–สุกแก่
+    ดังนั้นค่าสูงคือ canopy เขียวสุด (heading) ไม่ใช่ "ใกล้เก็บเกี่ยว" — นาใกล้เก็บเกี่ยว
+    EVI จะ "ลดลง" ต่างหาก. เมื่อรู้ทิศทางจึงแยก heading (ขาขึ้น) กับ ripening (ขาลง) ได้
+
+    evi_prev = None → ไม่รู้ทิศทาง → เดาเป็นขาขึ้น (label ตามระดับความเขียว)
+    """
     if evi_val is None:
         return None
-    if evi_val < 0.15:   return "fallow"    # นาว่าง / เตรียมดิน / น้ำขัง
-    if evi_val < 0.25:   return "early"     # เพิ่งปักดำ / ต้นกล้า
-    if evi_val < 0.40:   return "growing"   # ระยะแตกกอ / เจริญเติบโต
-    if evi_val < 0.55:   return "heading"   # ออกรวง / สร้างเมล็ด
-    return "peak"                            # สมบูรณ์เต็มที่
+    if evi_val < 0.15:
+        return "fallow"        # นาว่าง / เตรียมดิน / น้ำขัง
+    rising = True if evi_prev is None else (evi_val - evi_prev) >= -TREND_EPS
+    if evi_val < 0.25:
+        return "seedling" if rising else "harvest"    # ต้นกล้า(ขึ้น) / เก็บเกี่ยว-ตอซัง(ลง)
+    if evi_val < 0.40:
+        return "tillering" if rising else "ripening"  # แตกกอ(ขึ้น) / สุกแก่(ลง)
+    # EVI ≥ 0.40 = canopy หนาแน่น
+    if evi_val < 0.55:
+        return "heading" if rising else "ripening"    # ออกรวง(ขึ้น) / สร้างเมล็ด-สุกแก่(ลง)
+    return "heading"           # ≥0.55 = ยอด canopy เขียวสุด = ออกรวง/ออกดอก (ไม่ใช่สุกแก่)
 
 
 # ── Main ─────────────────────────────────────────────────────────────────────
@@ -230,23 +275,37 @@ def main():
     # ── Hybrid Union Mask (GLAD ∪ MCD12Q1 Cropland) ─────────────────────────
     union_mask, glad_mask, mask_source = load_rice_mask()
 
-    # ── Phenology Flooding Confirmation ────────────────────────────────────
-    print(f"Building phenology flooding mask (LSWI + EVI, {PHENOLOGY_MONTHS} months)...")
-    flood_confirmation, pheno_window = build_flood_confirmation(
+    # ── Previous-month EVI (สำหรับดูทิศทาง ขึ้น/ลง → แยก heading vs ripening) ──
+    prev_end_d   = date.fromisoformat(start) - timedelta(days=1)
+    prev_start_d = prev_end_d.replace(day=1)
+    prev_evi_img = (
+        ee.ImageCollection("MODIS/061/MOD13A3")
+        .filterDate(prev_start_d.isoformat(), prev_end_d.isoformat())
+        .select("EVI")
+        .mosaic()               # all-masked ถ้าไม่มีข้อมูล → EVIprev_mean = null → trend None
+        .multiply(0.0001)
+    )
+    print(f"  Previous month for trend: {prev_start_d.isoformat()[:7]}")
+
+    # ── Phenology rice-confirmation mask (flood + peak + amplitude) ─────────
+    print(f"Building rice phenology mask (flood+peak+amplitude, {PHENOLOGY_MONTHS} months)...")
+    flood_confirmation, pheno_window = build_rice_phenology_mask(
         start, PHENOLOGY_MONTHS
     )
 
     # ── Apply masks ────────────────────────────────────────────────────────
     # scan_evi       = EVI masked by UNION area (GLAD ∪ cropland)
-    # flood_in_scan  = flood confirmation within UNION area
+    # prev_in_scan   = previous-month EVI within UNION area (for trend)
+    # flood_in_scan  = rice confirmation within UNION area
     # glad_indicator = binary 1/0 per pixel: was this pixel in GLAD?
     scan_evi      = evi_img.updateMask(union_mask)
+    prev_in_scan  = prev_evi_img.updateMask(union_mask)
     flood_in_scan = flood_confirmation.updateMask(union_mask)
     # glad_indicator: 1 = GLAD rice pixel, masked elsewhere
     # ถ้า GLAD ไม่มี → zero image (glad_sum = 0, bonus_pixels จะเป็น N/A)
     _glad_src      = glad_mask if glad_mask is not None else ee.Image(0)
     glad_indicator = _glad_src.updateMask(union_mask)
-    print("✓ Applied union mask (GLAD ∪ MCD12Q1) + phenology flood mask")
+    print("✓ Applied union mask (GLAD ∪ MCD12Q1) + rice phenology mask")
 
     # ── Thailand provinces (FAO GAUL 2015 + Bueng Kan supplement) ──────────
     # FAO GAUL 2015 มีแค่ 76 จังหวัด — ไม่มีบึงกาฬ (แยกจากหนองคายปี 2554)
@@ -280,17 +339,19 @@ def main():
     provinces = gaul_provinces.merge(bueng_kan_fc)
     print(f"✓ Provinces: GAUL 76 + Bueng Kan = 77 total")
 
-    # ── Combined reduceRegions: 3-band image ──────────────────────────────
-    # Band "EVI"     = EVI within union scan area
+    # ── Combined reduceRegions: 4-band image ──────────────────────────────
+    # Band "EVI"     = EVI within union scan area (เดือนนี้)
+    # Band "EVIprev" = EVI เดือนก่อนหน้า (สำหรับ trend)
     # Band "flooded" = phenology confirmation (binary 0/1)
     # Band "glad"    = GLAD indicator (1 = GLAD rice pixel, 0 = MCD12Q1 only)
     #
     # Reducer เอา:
-    #   mean  → EVI_mean, flooded_mean, glad_mean
+    #   mean  → EVI_mean, EVIprev_mean, flooded_mean, glad_mean
     #   count → EVI_count (= total scan pixels per province)
     #   sum   → flooded_sum (= confirmed pixels), glad_sum (= GLAD-only pixels)
     combined_img = (
         scan_evi.rename("EVI")
+        .addBands(prev_in_scan.rename("EVIprev"))
         .addBands(flood_in_scan.float().rename("flooded"))
         .addBands(glad_indicator.float().rename("glad"))
     )
@@ -306,7 +367,7 @@ def main():
     )
 
     features = result.select(
-        ["ADM1_NAME", "EVI_mean", "EVI_count", "flooded_sum", "glad_sum"]
+        ["ADM1_NAME", "EVI_mean", "EVIprev_mean", "EVI_count", "flooded_sum", "glad_sum"]
     ).getInfo()["features"]
     print(f"  Got {len(features)} provinces from GEE")
 
@@ -318,6 +379,7 @@ def main():
         props           = f["properties"]
         gaul_name       = props.get("ADM1_NAME", "")
         evi_val         = props.get("EVI_mean")
+        evi_prev_val    = props.get("EVIprev_mean")
         scan_count      = int(props.get("EVI_count",    0) or 0)
         confirmed_count = int(props.get("flooded_sum",  0) or 0)
         glad_count      = int(props.get("glad_sum",     0) or 0)
@@ -326,9 +388,11 @@ def main():
 
         if evi_val is not None and scan_count > 0:
             evi_rounded   = round(float(evi_val), 4)
+            evi_prev_r    = round(float(evi_prev_val), 4) if evi_prev_val is not None else None
+            trend         = round(evi_rounded - evi_prev_r, 4) if evi_prev_r is not None else None
             # confidence = confirmed (phenology-verified rice) / total scan area
             confidence    = round(min(confirmed_count / scan_count, 1.0), 3)
-            stage         = classify_evi(evi_rounded)
+            stage         = classify_evi(evi_rounded, evi_prev_r)
             # rice_pixels/rice_rai = confirmed pixels (actual rice with flooding)
             rice_area_rai = int(confirmed_count * 625)
             scan_rai      = int(scan_count      * 625)
@@ -338,6 +402,8 @@ def main():
 
             provinces_data[mapped] = {
                 "evi":          evi_rounded,
+                "evi_prev":     evi_prev_r,          # EVI เดือนก่อนหน้า (None ถ้าไม่มีข้อมูล)
+                "trend":        trend,               # Δ EVI = เดือนนี้ − เดือนก่อน (+ ขึ้น / − ลง)
                 "stage":        stage,
                 "rice_pixels":  confirmed_count,    # confirmed rice (phenology-gated)
                 "rice_rai":     rice_area_rai,       # ไร่ นาข้าวที่ยืนยันแล้ว
@@ -351,6 +417,8 @@ def main():
         else:
             provinces_data[mapped] = {
                 "evi":          None,
+                "evi_prev":     None,
+                "trend":        None,
                 "stage":        None,
                 "rice_pixels":  0,
                 "rice_rai":     0,
@@ -414,25 +482,36 @@ def main():
             "rice_mask":  mask_source,
             "method":     (
                 "Hybrid Union Mask (GLAD rice ∪ MCD12Q1 cropland) + "
-                "Phenology flooding gate (LSWI > EVI ≥1 เดือนจาก 12 เดือน — Xiao et al. 2005). "
-                "เฉพาะ pixel ที่ผ่าน Phenology จึงนับเป็น rice"
+                "Rice phenology gate: flood ตอน canopy โปร่ง (LSWI>EVI & EVI<%.2f) "
+                "AND peak EVI≥%.2f AND seasonal amplitude≥%.2f จาก %d เดือน "
+                "(Xiao et al. 2005 + amplitude gate ตัดพืชยืนต้น). "
+                "Stage แยกด้วยทิศทาง EVI (heading ขาขึ้น / ripening ขาลง)"
+                % (FLOOD_EVI_MAX, PEAK_MIN, AMP_MIN, PHENOLOGY_MONTHS)
             ),
             "phenology_window":     pheno_window,
             "phenology_months":     PHENOLOGY_MONTHS,
+            "thresholds": {
+                "flood_evi_max": FLOOD_EVI_MAX,
+                "peak_min":      PEAK_MIN,
+                "amp_min":       AMP_MIN,
+                "trend_eps":     TREND_EPS,
+            },
             "resolution":           "1 km / monthly composite",
             "period":               f"{start} to {end}",
             "month":                month_label,
             "updated":              date.today().isoformat(),
             "provinces_covered":    len(valid),
             "note": (
-                f"Hybrid Union Mask: GLAD rice ∪ MCD12Q1 cropland → "
-                f"Phenology gate ({PHENOLOGY_MONTHS} เดือน LSWI > EVI). "
-                f"เฉพาะ pixel ที่ผ่าน flooding check จึงนับเป็น rice. "
-                "แก้ปัญหา GLAD underrepresent จังหวัดภาคกลาง"
+                f"Rice phenology gate ({PHENOLOGY_MONTHS} เดือน): flood ตอน canopy โปร่ง + "
+                f"peak EVI≥{PEAK_MIN} + amplitude≥{AMP_MIN} → ตัดพืชยืนต้น (ยาง/ปาล์ม/ป่า) "
+                f"และพื้นที่น้ำ (บ่อกุ้ง/ป่าชายเลน/นาเกลือ) ออกจากนาข้าว. "
+                f"stage ใช้ทิศทาง EVI: ค่าสูง=ออกรวง(ยอดเขียว) ไม่ใช่สุกแก่ — สุกแก่ EVI ลดลง"
             ),
             "fields": {
                 "evi":          "ค่าเฉลี่ย EVI เดือนนี้ (union scan area)",
-                "stage":        "สถานะข้าวจาก EVI threshold",
+                "evi_prev":     "ค่าเฉลี่ย EVI เดือนก่อนหน้า (null ถ้าไม่มีข้อมูล)",
+                "trend":        "Δ EVI = เดือนนี้ − เดือนก่อน (+ ขาขึ้น / − ขาลง)",
+                "stage":        "ระยะข้าวจาก EVI + ทิศทาง (heading ขาขึ้น / ripening ขาลง)",
                 "rice_pixels":  "pixel นาข้าวที่ผ่าน Phenology (confirmed)",
                 "rice_rai":     "พื้นที่นาข้าวยืนยัน (ไร่)",
                 "confidence":   "สัดส่วน confirmed/scan (0-1)",
@@ -443,11 +522,12 @@ def main():
                 "bonus_pixels": "pixel เพิ่มจาก MCD12Q1 ที่ผ่าน Phenology (0 ถ้า GLAD unavailable)",
             },
             "stages": {
-                "fallow":  "นาว่าง / เตรียมดิน (EVI < 0.15)",
-                "early":   "เพิ่งปักดำ / ต้นกล้า (EVI 0.15–0.25)",
-                "growing": "แตกกอ / เจริญเติบโต (EVI 0.25–0.40)",
-                "heading": "ออกรวง / สร้างเมล็ด (EVI 0.40–0.55)",
-                "peak":    "สมบูรณ์เต็มที่ (EVI ≥ 0.55)",
+                "fallow":    "นาว่าง / เตรียมดิน (EVI < 0.15)",
+                "seedling":  "ต้นกล้า / ปักดำ (EVI 0.15–0.25 · ขาขึ้น)",
+                "tillering": "แตกกอ / เจริญเติบโต (EVI 0.25–0.40 · ขาขึ้น)",
+                "heading":   "ออกรวง / ออกดอก · ยอด canopy เขียวสุด (EVI ≥ 0.40 ขาขึ้น หรือ ≥ 0.55)",
+                "ripening":  "สร้างเมล็ด / สุกแก่ · ใกล้เก็บเกี่ยว (EVI ขาลงจากยอด)",
+                "harvest":   "เก็บเกี่ยว / ตอซัง (EVI 0.15–0.25 · ขาลง)",
             },
         },
         "month": month_label,
