@@ -46,12 +46,17 @@ jobs:
           GEE_SERVICE_ACCOUNT_KEY: ${{ secrets.GEE_SERVICE_ACCOUNT_KEY }}
         run: python scripts/fetch_rice_evi_district.py
 
+      - name: Validate Rice EVI vs OAE (monitor overcount/drift)
+        # informational — ไม่ fail pipeline (ไม่ใส่ --strict) แค่รายงานใน log + เขียน json
+        run: python scripts/validate_rice_evi.py
+
       - name: Commit and push
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add data/ndvi.json data/rice-evi.json \
-                  data/ndvi-district.json data/rice-evi-district.json
+                  data/ndvi-district.json data/rice-evi-district.json \
+                  data/rice-evi-validation.json
           if git diff --quiet && git diff --staged --quiet; then
             echo "No changes."
           else
