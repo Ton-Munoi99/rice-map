@@ -1,7 +1,7 @@
 {
   "_meta": {
     "source": "NASA MODIS MOD13A3 via Google Earth Engine",
-    "mask": "GLAD ∪ MCD12Q1",
+    "mask": "GLAD ∪ MCD12Q1 − exclusion(oil palm (Descals))",
     "method": "Hybrid Union Mask + Rice phenology (12mo: flood<0.3 + peak≥0.4 + amp≥0.25 + minEVI≤0.2) · EVI เฉพาะนายืนยัน · stage แยกด้วยทิศทาง EVI",
     "regions": "FAO GAUL 2015 level2",
     "resolution": "1 km / monthly composite",
@@ -157,13 +157,13 @@
         "confidence": 0.2
       },
       "Nong Chok": {
-        "evi": 0.2898,
-        "evi_prev": 0.268,
-        "trend": 0.0218,
+        "evi": 0.2905,
+        "evi_prev": 0.2683,
+        "trend": 0.0222,
         "stage": "tillering",
-        "rice_rai": 25625,
+        "rice_rai": 25000,
         "rice_basis": "union",
-        "confidence": 0.2
+        "confidence": 0.197
       },
       "Bang Khen": {
         "evi": null,
@@ -674,22 +674,22 @@
         "confidence": 0.005
       },
       "Muang Chachoengsao": {
-        "evi": 0.2552,
-        "evi_prev": 0.2461,
-        "trend": 0.0091,
+        "evi": 0.2533,
+        "evi_prev": 0.2453,
+        "trend": 0.008,
         "stage": "tillering",
-        "rice_rai": 47500,
+        "rice_rai": 46875,
         "rice_basis": "union",
-        "confidence": 0.386
+        "confidence": 0.387
       },
       "Bang Nam Prieo": {
-        "evi": 0.2413,
-        "evi_prev": 0.2226,
-        "trend": 0.0187,
+        "evi": 0.242,
+        "evi_prev": 0.223,
+        "trend": 0.019,
         "stage": "seedling",
-        "rice_rai": 144375,
+        "rice_rai": 141875,
         "rice_basis": "union",
-        "confidence": 0.425
+        "confidence": 0.427
       },
       "Phanom Sarakham": {
         "evi": 0.2387,
@@ -1387,15 +1387,6 @@
         "rice_basis": "union",
         "confidence": 0.007
       },
-      "Nong Yai": {
-        "evi": 0.3642,
-        "evi_prev": 0.3675,
-        "trend": -0.0033,
-        "stage": "tillering",
-        "rice_rai": 5625,
-        "rice_basis": "union",
-        "confidence": 0.055
-      },
       "Phan Thong": {
         "evi": 0.3602,
         "evi_prev": 0.4353,
@@ -1404,6 +1395,15 @@
         "rice_rai": 625,
         "rice_basis": "union",
         "confidence": 0.014
+      },
+      "Nong Yai": {
+        "evi": 0.3551,
+        "evi_prev": 0.3434,
+        "trend": 0.0117,
+        "stage": "tillering",
+        "rice_rai": 5000,
+        "rice_basis": "union",
+        "confidence": 0.051
       },
       "Sattahip": {
         "evi": 0.3519,
@@ -1421,7 +1421,7 @@
         "stage": "tillering",
         "rice_rai": 27500,
         "rice_basis": "union",
-        "confidence": 0.101
+        "confidence": 0.102
       },
       "Phanat Nikhom": {
         "evi": 0.3396,
@@ -1468,7 +1468,7 @@
         "stage": "ripening",
         "rice_rai": 625,
         "rice_basis": "union",
-        "confidence": 0.02
+        "confidence": 0.026
       },
       "Lamae": {
         "evi": null,
@@ -1747,13 +1747,13 @@
     },
     "Kanchanaburi": {
       "Tha Muang": {
-        "evi": 0.611,
-        "evi_prev": 0.4323,
-        "trend": 0.1787,
+        "evi": 0.6115,
+        "evi_prev": 0.4327,
+        "trend": 0.1788,
         "stage": "heading",
         "rice_rai": 22500,
         "rice_basis": "union",
-        "confidence": 0.073
+        "confidence": 0.074
       },
       "Tha Maka": {
         "evi": 0.5653,
@@ -1765,13 +1765,13 @@
         "confidence": 0.18
       },
       "Phanom Thuan": {
-        "evi": 0.5354,
-        "evi_prev": 0.4154,
-        "trend": 0.12,
+        "evi": 0.5369,
+        "evi_prev": 0.419,
+        "trend": 0.1179,
         "stage": "heading",
-        "rice_rai": 72500,
+        "rice_rai": 71250,
         "rice_basis": "union",
-        "confidence": 0.112
+        "confidence": 0.111
       },
       "Thong Pha Phum": {
         "evi": 0.4704,
@@ -1780,7 +1780,7 @@
         "stage": "heading",
         "rice_rai": 12500,
         "rice_basis": "union",
-        "confidence": 0.142
+        "confidence": 0.144
       },
       "Si Sawat": {
         "evi": 0.4603,
@@ -2045,7 +2045,7 @@
         "stage": "ripening",
         "rice_rai": 625,
         "rice_basis": "union",
-        "confidence": 0.012
+        "confidence": 0.014
       },
       "Ko Lanta": {
         "evi": 0.3128,
@@ -2739,22 +2739,22 @@
         "confidence": 0.443
       },
       "Muang Nakhon Nayok": {
-        "evi": 0.2054,
-        "evi_prev": 0.1896,
-        "trend": 0.0158,
+        "evi": 0.2079,
+        "evi_prev": 0.1915,
+        "trend": 0.0164,
         "stage": "seedling",
         "rice_rai": 8125,
         "rice_basis": "glad",
-        "confidence": 0.188
+        "confidence": 0.18
       },
       "Ongkharak": {
-        "evi": 0.1738,
-        "evi_prev": 0.1602,
-        "trend": 0.0136,
+        "evi": 0.1762,
+        "evi_prev": 0.1623,
+        "trend": 0.0139,
         "stage": "seedling",
         "rice_rai": 5000,
         "rice_basis": "glad",
-        "confidence": 0.414
+        "confidence": 0.404
       }
     },
     "Nakhon Pathom": {
@@ -2777,13 +2777,13 @@
         "confidence": 0.015
       },
       "Bang Len": {
-        "evi": 0.3396,
-        "evi_prev": 0.3003,
-        "trend": 0.0393,
+        "evi": 0.3383,
+        "evi_prev": 0.301,
+        "trend": 0.0373,
         "stage": "tillering",
-        "rice_rai": 66875,
+        "rice_rai": 62500,
         "rice_basis": "union",
-        "confidence": 0.677
+        "confidence": 0.671
       },
       "Don Tum": {
         "evi": null,
@@ -3307,13 +3307,13 @@
         "confidence": 0.02
       },
       "Hua Sai": {
-        "evi": 0.3204,
+        "evi": 0.3103,
         "evi_prev": 0.4616,
-        "trend": -0.1412,
+        "trend": -0.1513,
         "stage": "ripening",
-        "rice_rai": 11250,
+        "rice_rai": 10625,
         "rice_basis": "union",
-        "confidence": 0.056
+        "confidence": 0.054
       },
       "Phipun": {
         "evi": 0.297,
@@ -3331,7 +3331,7 @@
         "stage": "tillering",
         "rice_rai": 625,
         "rice_basis": "union",
-        "confidence": 0.011
+        "confidence": 0.012
       },
       "Bang  Khan": {
         "evi": null,
@@ -3848,13 +3848,13 @@
         "confidence": 0.4
       },
       "Sai Noi": {
-        "evi": 0.3252,
+        "evi": 0.3244,
         "evi_prev": 0.2538,
-        "trend": 0.0714,
+        "trend": 0.0706,
         "stage": "tillering",
         "rice_rai": 20625,
         "rice_basis": "union",
-        "confidence": 0.351
+        "confidence": 0.367
       },
       "Bang Bua Thong": {
         "evi": 0.2107,
@@ -3946,16 +3946,16 @@
         "stage": "tillering",
         "rice_rai": 16250,
         "rice_basis": "union",
-        "confidence": 0.218
+        "confidence": 0.22
       },
       "Lam Luk Ka": {
-        "evi": 0.2222,
-        "evi_prev": 0.2744,
+        "evi": 0.2227,
+        "evi_prev": 0.2749,
         "trend": -0.0522,
         "stage": "harvest",
         "rice_rai": 26875,
         "rice_basis": "union",
-        "confidence": 0.224
+        "confidence": 0.225
       }
     },
     "Pattani": {
@@ -4383,15 +4383,6 @@
       }
     },
     "Phetchaburi": {
-      "Muang Phetchaburi": {
-        "evi": 0.5458,
-        "evi_prev": 0.3913,
-        "trend": 0.1545,
-        "stage": "heading",
-        "rice_rai": 25000,
-        "rice_basis": "union",
-        "confidence": 0.276
-      },
       "Khao Yoi": {
         "evi": 0.5407,
         "evi_prev": 0.4133,
@@ -4400,6 +4391,15 @@
         "rice_rai": 31250,
         "rice_basis": "union",
         "confidence": 0.205
+      },
+      "Muang Phetchaburi": {
+        "evi": 0.5291,
+        "evi_prev": 0.373,
+        "trend": 0.1561,
+        "stage": "heading",
+        "rice_rai": 20000,
+        "rice_basis": "union",
+        "confidence": 0.239
       },
       "Tha Yang": {
         "evi": 0.5103,
@@ -4426,7 +4426,7 @@
         "stage": "tillering",
         "rice_rai": 15000,
         "rice_basis": "union",
-        "confidence": 0.066
+        "confidence": 0.067
       },
       "Kaeng Krachan": {
         "evi": 0.2935,
@@ -4666,7 +4666,7 @@
         "stage": "ripening",
         "rice_rai": 15625,
         "rice_basis": "union",
-        "confidence": 0.255
+        "confidence": 0.26
       },
       "Uthai": {
         "evi": 0.2708,
@@ -4687,13 +4687,13 @@
         "confidence": 0.368
       },
       "Lat Bua Luang": {
-        "evi": 0.2596,
-        "evi_prev": 0.3619,
-        "trend": -0.1023,
+        "evi": 0.2578,
+        "evi_prev": 0.3654,
+        "trend": -0.1076,
         "stage": "ripening",
-        "rice_rai": 73125,
+        "rice_rai": 70000,
         "rice_basis": "union",
-        "confidence": 0.65
+        "confidence": 0.644
       },
       "Nakhon Luang": {
         "evi": 0.2539,
@@ -4705,13 +4705,13 @@
         "confidence": 0.235
       },
       "Bang Sai": {
-        "evi": 0.2535,
-        "evi_prev": 0.4597,
-        "trend": -0.2062,
+        "evi": 0.2531,
+        "evi_prev": 0.4599,
+        "trend": -0.2068,
         "stage": "ripening",
-        "rice_rai": 182500,
+        "rice_rai": 181875,
         "rice_basis": "union",
-        "confidence": 0.787
+        "confidence": 0.786
       },
       "Tha Rua": {
         "evi": 0.2484,
@@ -4873,22 +4873,22 @@
         "confidence": 0.01
       },
       "Ban Sang": {
-        "evi": 0.2542,
-        "evi_prev": 0.1839,
-        "trend": 0.0703,
+        "evi": 0.255,
+        "evi_prev": 0.1844,
+        "trend": 0.0706,
         "stage": "tillering",
-        "rice_rai": 98750,
+        "rice_rai": 98125,
         "rice_basis": "union",
-        "confidence": 0.81
+        "confidence": 0.818
       },
       "Prachantakham": {
-        "evi": 0.2439,
-        "evi_prev": 0.2513,
-        "trend": -0.0074,
-        "stage": "seedling",
-        "rice_rai": 8750,
+        "evi": 0.234,
+        "evi_prev": 0.259,
+        "trend": -0.025,
+        "stage": "harvest",
+        "rice_rai": 7500,
         "rice_basis": "union",
-        "confidence": 0.062
+        "confidence": 0.054
       },
       "Si Maha Phot": {
         "evi": 0.2325,
@@ -4900,13 +4900,13 @@
         "confidence": 0.158
       },
       "Muang Prachin Buri": {
-        "evi": 0.1956,
-        "evi_prev": 0.1894,
-        "trend": 0.0062,
+        "evi": 0.1955,
+        "evi_prev": 0.1897,
+        "trend": 0.0058,
         "stage": "seedling",
-        "rice_rai": 38750,
+        "rice_rai": 38125,
         "rice_basis": "union",
-        "confidence": 0.205
+        "confidence": 0.203
       },
       "Si Maho Sot": {
         "evi": 0.1789,
@@ -5049,6 +5049,15 @@
         "rice_basis": "union",
         "confidence": 0.023
       },
+      "Pak Tho": {
+        "evi": 0.4687,
+        "evi_prev": 0.3226,
+        "trend": 0.1461,
+        "stage": "heading",
+        "rice_rai": 32500,
+        "rice_basis": "union",
+        "confidence": 0.118
+      },
       "Wat Phleng": {
         "evi": 0.4675,
         "evi_prev": 0.3033,
@@ -5056,16 +5065,7 @@
         "stage": "heading",
         "rice_rai": 625,
         "rice_basis": "union",
-        "confidence": 0.036
-      },
-      "Pak Tho": {
-        "evi": 0.4668,
-        "evi_prev": 0.3225,
-        "trend": 0.1443,
-        "stage": "heading",
-        "rice_rai": 33125,
-        "rice_basis": "union",
-        "confidence": 0.12
+        "confidence": 0.037
       },
       "Suan Phung": {
         "evi": 0.438,
@@ -5380,13 +5380,13 @@
         "confidence": 0.019
       },
       "Wattana Nakhon": {
-        "evi": 0.2508,
-        "evi_prev": 0.2428,
-        "trend": 0.008,
-        "stage": "tillering",
-        "rice_rai": 7500,
+        "evi": 0.2494,
+        "evi_prev": 0.2426,
+        "trend": 0.0068,
+        "stage": "seedling",
+        "rice_rai": 6875,
         "rice_basis": "union",
-        "confidence": 0.014
+        "confidence": 0.013
       }
     },
     "Sakon Nakhon": {
@@ -6106,7 +6106,7 @@
         "stage": "heading",
         "rice_rai": 7500,
         "rice_basis": "union",
-        "confidence": 0.039
+        "confidence": 0.04
       },
       "Khuan Niang": {
         "evi": 0.4153,
@@ -6133,7 +6133,7 @@
         "stage": "tillering",
         "rice_rai": 1875,
         "rice_basis": "union",
-        "confidence": 0.034
+        "confidence": 0.035
       },
       "Thepha": {
         "evi": 0.3034,
@@ -6355,7 +6355,7 @@
         "stage": "harvest",
         "rice_rai": 3750,
         "rice_basis": "union",
-        "confidence": 0.154
+        "confidence": 0.162
       },
       "Ban Na Doem": {
         "evi": null,
@@ -6804,7 +6804,7 @@
         "stage": "heading",
         "rice_rai": 2500,
         "rice_basis": "union",
-        "confidence": 0.045
+        "confidence": 0.046
       },
       "Laem Ngop": {
         "evi": 0.4676,
