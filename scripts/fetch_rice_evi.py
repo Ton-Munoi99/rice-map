@@ -51,6 +51,14 @@ MIN_EVI_MAX   = 0.20   # ต้องเคย "โล่ง/น้ำขัง"
 GLAD_MIN_PIXELS  = 8    # GLAD ต่ำกว่านี้ = ถือว่า GLAD under-represent → คง union
 GLAD_BONUS_RATIO = 3.0  # bonus เกินสัดส่วนนี้ของ GLAD = น่าสงสัยว่าเป็นพืชอื่น
 
+# ── Perennial-crop exclusion (defense-in-depth เสริม phenology) ───────────────
+# ลบปาล์ม/ยางออกจาก scan area ตรงๆ เผื่อปาล์ม/ยางอ่อน (replanting ที่ยังโล่ง) หลุด gate
+# Oil palm: BIOPAMA/GlobalOilPalm/v1 (Descals et al. 2021, 10m) — dataset สาธารณะใน GEE
+#   band "classification": 1 = industrial palm, 2 = smallholder palm, 3 = non-palm
+# Rubber: ยังไม่มี dataset สาธารณะที่เชื่อถือได้แน่ + ยางถูก min-EVI gate จับได้ดีแล้ว
+#   → ปล่อย RUBBER_ASSET ว่างไว้; ตั้ง asset id ทีหลังได้ (ee.Image(id) > 0 = ยาง)
+RUBBER_ASSET = ""       # เช่น "projects/xxx/assets/thailand_rubber_2023" (ปล่อยว่าง = ข้าม)
+
 # ── Stage trend threshold ────────────────────────────────────────────────────
 # EVI ขึ้นสูงสุดที่ "ออกรวง" แล้วลดลงตอนสร้างเมล็ด–สุกแก่ (senescence) จนเหลือ ~0.4
 # ตอนเก็บเกี่ยว (Xiao et al.; Sentinel-2 rice phenology). ค่าเดือนเดียวจึงกำกวม —
@@ -147,6 +155,51 @@ def load_rice_mask():
         raise RuntimeError("No rice/cropland mask available!")
 
     return union_mask, glad_mask, mask_source
+
+
+def load_exclusion_mask():
+    """
+    โหลด mask พืชยืนต้นที่ไม่ใช่ข้าว (ปาล์ม/ยาง) สำหรับลบออกจาก scan area
+    เป็น defense-in-depth เสริม phenology gate
+
+    Returns:
+        excl_mask — ee.Image binary (1 = ปาล์ม/ยาง, 0 = อื่นๆ, unmasked ทั้งภาพ) | None
+        desc      — str อธิบายชั้นที่โหลดได้
+    """
+    parts, names = [], []
+
+    # ── Oil palm: Descals et al. (BIOPAMA/GlobalOilPalm/v1) ──
+    try:
+        palm = (
+            ee.ImageCollection("BIOPAMA/GlobalOilPalm/v1")
+            .select("classification")
+            .mosaic()
+            .lt(3)            # 1,2 = palm ; 3 = non-palm
+            .unmask(0)        # นอกพื้นที่ dataset → 0 (ไม่ลบพิกเซลนา)
+        )
+        parts.append(palm)
+        names.append("oil palm (Descals BIOPAMA v1)")
+        print("✓ Loaded oil-palm exclusion (BIOPAMA/GlobalOilPalm/v1)")
+    except Exception as e:
+        print(f"  ⚠️ oil-palm layer unavailable: {e}")
+
+    # ── Rubber (optional asset) ──
+    if RUBBER_ASSET:
+        try:
+            rubber = ee.Image(RUBBER_ASSET).gt(0).unmask(0)
+            parts.append(rubber)
+            names.append(f"rubber ({RUBBER_ASSET})")
+            print("✓ Loaded rubber exclusion")
+        except Exception as e:
+            print(f"  ⚠️ rubber layer unavailable: {e}")
+
+    if not parts:
+        return None, "none"
+
+    excl = parts[0]
+    for p in parts[1:]:
+        excl = excl.Or(p)
+    return excl.unmask(0), " ∪ ".join(names)
 
 
 # ── Phenology: Flooding confirmation via MOD13A3 LSWI ───────────────────────
@@ -287,6 +340,15 @@ def main():
 
     # ── Hybrid Union Mask (GLAD ∪ MCD12Q1 Cropland) ─────────────────────────
     union_mask, glad_mask, mask_source = load_rice_mask()
+
+    # ── ลบพืชยืนต้น (ปาล์ม/ยาง) ออกจาก scan area ───────────────────────────
+    exclusion_mask, excl_desc = load_exclusion_mask()
+    if exclusion_mask is not None:
+        union_mask = union_mask.And(exclusion_mask.Not())
+        mask_source += f" − exclusion({excl_desc})"
+        print(f"✓ Excluded perennial crops: {excl_desc}")
+    else:
+        print("  → No perennial-crop exclusion layer (relying on phenology gate)")
 
     # ── Previous-month EVI (สำหรับดูทิศทาง ขึ้น/ลง → แยก heading vs ripening) ──
     prev_end_d   = date.fromisoformat(start) - timedelta(days=1)
