@@ -3602,7 +3602,7 @@
           icon: "🌾",
           title: ["ผลผลิตนาปรังรายภาค", "Second-Crop by Region"],
           cols: [{ th: "ผลผลิต", en: "Production" }],
-          valueFn: (en, y) => Number(entryOf(en, "naprang", y).production) || 0,
+          valueFn: (en, y) => (S.rice === "jasmine" ? 0 : Number(entryOf(en, "naprang", y).production) || 0),
           fmt: (v) => compactNum(v, 2),
           unit: ["หน่วย: ตัน", "Unit: tons"],
           accent: "#14b8a6",
@@ -3612,7 +3612,7 @@
           icon: "📐",
           title: ["เนื้อที่นาปรังรายภาค", "Second-Crop Area by Region"],
           cols: [{ th: "เนื้อที่", en: "Area" }],
-          valueFn: (en, y) => Number(entryOf(en, "naprang", y).area) || 0,
+          valueFn: (en, y) => (S.rice === "jasmine" ? 0 : Number(entryOf(en, "naprang", y).area) || 0),
           fmt: (v) => compactNum(v, 2),
           unit: ["หน่วย: ไร่ · OAE", "Unit: rai · OAE"],
           accent: "#14b8a6",
@@ -3815,8 +3815,9 @@
         if (layer === "rainfall" || layer === "drought") return weatherValueOf(en, layer) ?? 0;
         if (layer === "mills") return millsValueOf(en);
         if (layer === "profit") return profitValueOf(en, rice, year) ?? 0;
-        if (layer === "naprang") return Number(entryOf(en, "naprang", year).production) || 0;
-        if (layer === "naprangArea") return Number(entryOf(en, "naprang", year).area) || 0;
+        // ข้าวหอมมะลิเป็นข้าวไวแสง ปลูกเฉพาะนาปี → ไม่มีข้าวนาปรัง (ฤดูแล้ง)
+        if (layer === "naprang") return rice === "jasmine" ? 0 : Number(entryOf(en, "naprang", year).production) || 0;
+        if (layer === "naprangArea") return rice === "jasmine" ? 0 : Number(entryOf(en, "naprang", year).area) || 0;
         if (layer === "straw") return strawValueOf(en, year) ?? 0;
         if (layer === "biomass") return biomassPlantsOf(en);
         const m = layerMeta[layer];
@@ -4810,6 +4811,21 @@
                 )
               : t("ปริมาณฝนสะสมตลอดฤดูนาปี (มิ.ย.–พ.ย.)", "Total seasonal precipitation Jun–Nov");
           refs.dataSourceNote.textContent = `${t(season, meta?.season_label?.split("·")[1]?.trim() || "Jun–Nov 2025")} · ${note} · Open-Meteo Archive API · ${covered} ${t("จว.", "prov.")}`;
+          return;
+        }
+        if (S.layer === "naprang" || S.layer === "naprangArea") {
+          if (S.rice === "jasmine") {
+            refs.dataSourceNote.textContent = t(
+              'ℹ️ ข้าวหอมมะลิเป็นข้าวไวแสง ปลูกได้เฉพาะฤดูนาปี — ไม่ปลูกในฤดูนาปรัง (ฤดูแล้ง) จึงไม่มีข้อมูลบนแผนที่ · เลือก "ข้าวขาว" เพื่อดูข้อมูลนาปรัง',
+              'ℹ️ Jasmine (Hom Mali) is photoperiod-sensitive — grown only in the main (wet) season, not the dry-season second crop, so there is no data to map · switch to "White Rice" to view second-crop data',
+            );
+            return;
+          }
+          const which = S.layer === "naprangArea" ? t("เนื้อที่เก็บเกี่ยว", "harvested area") : t("ผลผลิต", "production");
+          refs.dataSourceNote.textContent = t(
+            `ข้อมูล${which}ข้าวนาปรัง (ฤดูแล้ง) รายจังหวัด · สศก. (OAE) ปี ${S.year} · เป็นข้าวเจ้าไม่ไวแสง (รวมทุกพันธุ์ ไม่แยกหอมมะลิ) · ครอบคลุม ${covered} จังหวัด`,
+            `Second-crop (dry-season) rice ${which} by province · OAE ${S.year} · non-photoperiod rice (all varieties, not split by Hom Mali) · ${covered} provinces`,
+          );
           return;
         }
         const isEstYearNote = !LAYER_NO_TIMESERIES.has(S.layer) && S.layer !== "price" && S.year >= "2568";
@@ -5879,7 +5895,8 @@
         {
           const np = entryOf(en, "naprang", S.year);
           const npProd = Number(np.production) || 0;
-          if (npProd > 0) {
+          // ซ่อนเมื่อเลือกหอมมะลิ — ข้าวไวแสง ไม่ปลูกฤดูนาปรัง
+          if (npProd > 0 && S.rice !== "jasmine") {
             naprangHtml = `
             <div class="rice-card" style="grid-column:1/-1;background:rgba(20,184,166,.08);border:1px solid rgba(20,184,166,.25)">
               <div class="t">🌾 ${t("ข้าวนาปรัง (ฤดูแล้ง)", "Second Crop · Dry Season")} · ${S.year}</div>
