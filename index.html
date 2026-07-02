@@ -1986,6 +1986,10 @@
                 <span class="th-t">🌾 ผลผลิตข้าวนาปรัง</span>
                 <span class="en-t">🌾 Second-Crop Production</span>
               </button>
+              <button class="pill" data-layer="naprangArea" onclick="setLayer('naprangArea')">
+                <span class="th-t">🌾 เนื้อที่เก็บเกี่ยว นาปรัง</span>
+                <span class="en-t">🌾 Second-Crop Harvested Area</span>
+              </button>
               <button class="pill" data-layer="households" onclick="setLayer('households')">
                 <span class="th-t">ครัวเรือนเกษตรกร</span>
                 <span class="en-t">Farmer Households</span>
@@ -2845,6 +2849,16 @@
           summary: "ผลผลิตนาปรังรวม",
           summaryMode: "sum",
         },
+        naprangArea: {
+          th: "เนื้อที่เก็บเกี่ยวข้าวนาปรัง",
+          en: "Second-Crop Harvested Area",
+          unit: "ไร่/ปี",
+          unitEn: "rai/yr",
+          unitShort: "ไร่",
+          unitShortEn: "rai",
+          summary: "เนื้อที่นาปรังรวม",
+          summaryMode: "sum",
+        },
         straw: {
           th: "ฟางข้าว",
           en: "Rice Straw",
@@ -2981,6 +2995,12 @@
           palette: { lo: [255, 245, 157], mid: [38, 198, 218], hi: [0, 77, 64], accent: "#00bcd4" },
         },
         naprang: {
+          format: "bignum",
+          sourceTh: "สศก. (OAE)",
+          sourceEn: "OAE",
+          palette: { lo: [19, 78, 74], mid: [20, 130, 140], hi: [125, 211, 212], accent: "#14b8a6" },
+        },
+        naprangArea: {
           format: "bignum",
           sourceTh: "สศก. (OAE)",
           sourceEn: "OAE",
@@ -3425,6 +3445,7 @@
         if (layer === "waterlevel") return ["waterlevel"];
         if (layer === "profit") return PRICE_YEARS;
         if (layer === "naprang") return NAPRANG_YEARS;
+        if (layer === "naprangArea") return NAPRANG_YEARS;
         if (layer === "biomass") return ["biomass"];
         return layer === "price" ? PRICE_YEARS : PRODUCTION_YEARS;
       }
@@ -3584,6 +3605,16 @@
           valueFn: (en, y) => Number(entryOf(en, "naprang", y).production) || 0,
           fmt: (v) => compactNum(v, 2),
           unit: ["หน่วย: ตัน", "Unit: tons"],
+          accent: "#14b8a6",
+          border: "rgba(20,184,166,.32)",
+        },
+        naprangArea: {
+          icon: "📐",
+          title: ["เนื้อที่นาปรังรายภาค", "Second-Crop Area by Region"],
+          cols: [{ th: "เนื้อที่", en: "Area" }],
+          valueFn: (en, y) => Number(entryOf(en, "naprang", y).area) || 0,
+          fmt: (v) => compactNum(v, 2),
+          unit: ["หน่วย: ไร่ · OAE", "Unit: rai · OAE"],
           accent: "#14b8a6",
           border: "rgba(20,184,166,.32)",
         },
@@ -3785,6 +3816,7 @@
         if (layer === "mills") return millsValueOf(en);
         if (layer === "profit") return profitValueOf(en, rice, year) ?? 0;
         if (layer === "naprang") return Number(entryOf(en, "naprang", year).production) || 0;
+        if (layer === "naprangArea") return Number(entryOf(en, "naprang", year).area) || 0;
         if (layer === "straw") return strawValueOf(en, year) ?? 0;
         if (layer === "biomass") return biomassPlantsOf(en);
         const m = layerMeta[layer];
