@@ -38,7 +38,18 @@ PHENOLOGY_MONTHS = 12   # จำนวนเดือนย้อนหลัง
 # เพิ่มเงื่อนไข phenology ของนาข้าวจริง (ต้องผ่านทั้ง 3):
 FLOOD_EVI_MAX = 0.30   # น้ำท่วมขังต้องเกิดตอน canopy ยังโปร่ง (เตรียมดิน/ปักดำ) ไม่ใช่ป่าเขียวทึบ
 PEAK_MIN      = 0.40   # ต้องมีเดือนที่ต้นข้าวขึ้น canopy เขียวจริง → ตัดน้ำเปิด/บ่อกุ้ง/นาเกลือ
-AMP_MIN       = 0.20   # EVI แกว่งตามฤดูสูง → ตัดพืชยืนต้นเขียวคงที่ทั้งปี (ยาง ปาล์ม ป่า)
+AMP_MIN       = 0.25   # EVI แกว่งตามฤดูสูง → ตัดพืชยืนต้นเขียวคงที่ทั้งปี (ยาง ปาล์ม ป่า)
+MIN_EVI_MAX   = 0.20   # ต้องเคย "โล่ง/น้ำขัง" อย่างน้อย 1 เดือน (min EVI ต่ำ) → ตัวตัดยาง/ปาล์ม/ป่า
+                       # ที่ตรงจุดสุด: พืชยืนต้นเขียวตลอดปี ไม่เคยมีเดือนที่ EVI ต่ำขนาดนี้
+
+# ── GLAD-preferred (ลด overcount จาก cropland union) ─────────────────────────
+# GLAD∩phenology ใกล้ OAE กว่า union มาก (นครศรีฯ ~2× แทน ~13×) แต่ GLAD
+# under-represent จังหวัดเล็กภาคกลาง (อ่างทอง/สิงห์บุรี/ปทุมธานี) จึงเลือกแบบมีเงื่อนไข:
+#   - ถ้า GLAD มีข้อมูลพอ (≥GLAD_MIN_PIXELS) แต่ cropland-bonus เพิ่ม >GLAD_BONUS_RATIO×
+#     ของ GLAD → bonus ส่วนใหญ่น่าจะเป็นพืชอื่น (ยาง/ปาล์ม) → เชื่อเฉพาะแกน GLAD
+#   - ถ้า GLAD น้อย/ศูนย์ (จังหวัดเล็ก GLAD ขาด) → คง union ไว้ (bonus คือสัญญาณเดียว)
+GLAD_MIN_PIXELS  = 8    # GLAD ต่ำกว่านี้ = ถือว่า GLAD under-represent → คง union
+GLAD_BONUS_RATIO = 3.0  # bonus เกินสัดส่วนนี้ของ GLAD = น่าสงสัยว่าเป็นพืชอื่น
 
 # ── Stage trend threshold ────────────────────────────────────────────────────
 # EVI ขึ้นสูงสุดที่ "ออกรวง" แล้วลดลงตอนสร้างเมล็ด–สุกแก่ (senescence) จนเหลือ ~0.4
@@ -153,6 +164,7 @@ def build_rice_phenology_mask(current_start_iso, n_months=12):
                        = ระยะเตรียมดิน/ปักดำจริง (ไม่ใช่ LSWI>EVI จากป่าที่ EVI แกว่ง)
       2. evi_max ≥ PEAK_MIN     — มีเดือนที่ต้นข้าวขึ้น canopy เขียวจริง → ตัดน้ำเปิด/บ่อกุ้ง/นาเกลือ
       3. amplitude ≥ AMP_MIN    — EVI แกว่งตามฤดูสูง (max−min) → ตัดพืชยืนต้นเขียวคงที่ทั้งปี
+      4. evi_min ≤ MIN_EVI_MAX  — ต้องเคยโล่ง/น้ำขัง (min EVI ต่ำ) → ตัดยาง/ปาล์ม/ป่าที่เขียวตลอดปี
 
     แหล่งข้อมูล: MOD13A3 (EVI + LSWI จาก b02 NIR, b07 SWIR2), cloud-composited แล้ว
     - LSWI = (NIR − SWIR2) / (NIR + SWIR2)
@@ -207,6 +219,7 @@ def build_rice_phenology_mask(current_start_iso, n_months=12):
         flood_any
         .And(evi_max.gte(PEAK_MIN))
         .And(amplitude.gte(AMP_MIN))
+        .And(evi_min.lte(MIN_EVI_MAX))
         .rename("flooded")
     )
     window_str = f"{history[0][0][:7]} to {history[-1][0][:7]}"
@@ -294,13 +307,16 @@ def main():
     )
 
     # ── Apply masks ────────────────────────────────────────────────────────
-    # scan_evi       = EVI masked by UNION area (GLAD ∪ cropland)
-    # prev_in_scan   = previous-month EVI within UNION area (for trend)
-    # flood_in_scan  = rice confirmation within UNION area
+    # scan_evi       = EVI masked by UNION area (GLAD ∪ cropland) — ใช้นับ scan pixels
+    # flood_in_scan  = rice confirmation within UNION area (binary)
+    # rice_evi       = EVI เฉพาะพิกเซลนาที่ยืนยันแล้ว → mean = ความเขียวของ "นา" จริง
+    #                  (เดิมเฉลี่ยทั้ง union scan ทำให้ยาง/ปาล์มปนค่าความเขียว)
+    # prev_rice      = EVI เดือนก่อน เฉพาะพิกเซลนาที่ยืนยัน (สำหรับ trend ที่สะอาด)
     # glad_indicator = binary 1/0 per pixel: was this pixel in GLAD?
     scan_evi      = evi_img.updateMask(union_mask)
-    prev_in_scan  = prev_evi_img.updateMask(union_mask)
     flood_in_scan = flood_confirmation.updateMask(union_mask)
+    rice_evi      = evi_img.updateMask(flood_in_scan)
+    prev_rice     = prev_evi_img.updateMask(flood_in_scan)
     # glad_indicator: 1 = GLAD rice pixel, masked elsewhere
     # ถ้า GLAD ไม่มี → zero image (glad_sum = 0, bonus_pixels จะเป็น N/A)
     _glad_src      = glad_mask if glad_mask is not None else ee.Image(0)
@@ -339,19 +355,21 @@ def main():
     provinces = gaul_provinces.merge(bueng_kan_fc)
     print(f"✓ Provinces: GAUL 76 + Bueng Kan = 77 total")
 
-    # ── Combined reduceRegions: 4-band image ──────────────────────────────
-    # Band "EVI"     = EVI within union scan area (เดือนนี้)
-    # Band "EVIprev" = EVI เดือนก่อนหน้า (สำหรับ trend)
+    # ── Combined reduceRegions: 5-band image ──────────────────────────────
+    # Band "EVIscan" = EVI ทั้ง union scan (ใช้ count = scan pixels + mean diagnostic)
+    # Band "EVIrice" = EVI เฉพาะพิกเซลนายืนยัน (mean = ความเขียวของนาจริง — ใช้ทำ stage)
+    # Band "EVIprev" = EVI เดือนก่อน เฉพาะพิกเซลนายืนยัน (สำหรับ trend)
     # Band "flooded" = phenology confirmation (binary 0/1)
     # Band "glad"    = GLAD indicator (1 = GLAD rice pixel, 0 = MCD12Q1 only)
     #
     # Reducer เอา:
-    #   mean  → EVI_mean, EVIprev_mean, flooded_mean, glad_mean
-    #   count → EVI_count (= total scan pixels per province)
+    #   mean  → EVIscan_mean, EVIrice_mean, EVIprev_mean, flooded_mean, glad_mean
+    #   count → EVIscan_count (= total scan pixels per province)
     #   sum   → flooded_sum (= confirmed pixels), glad_sum (= GLAD-only pixels)
     combined_img = (
-        scan_evi.rename("EVI")
-        .addBands(prev_in_scan.rename("EVIprev"))
+        scan_evi.rename("EVIscan")
+        .addBands(rice_evi.rename("EVIrice"))
+        .addBands(prev_rice.rename("EVIprev"))
         .addBands(flood_in_scan.float().rename("flooded"))
         .addBands(glad_indicator.float().rename("glad"))
     )
@@ -367,7 +385,8 @@ def main():
     )
 
     features = result.select(
-        ["ADM1_NAME", "EVI_mean", "EVIprev_mean", "EVI_count", "flooded_sum", "glad_sum"]
+        ["ADM1_NAME", "EVIscan_mean", "EVIrice_mean", "EVIprev_mean",
+         "EVIscan_count", "flooded_sum", "glad_sum"]
     ).getInfo()["features"]
     print(f"  Got {len(features)} provinces from GEE")
 
@@ -378,36 +397,48 @@ def main():
     for f in features:
         props           = f["properties"]
         gaul_name       = props.get("ADM1_NAME", "")
-        evi_val         = props.get("EVI_mean")
+        evi_val         = props.get("EVIrice_mean")     # ความเขียวเฉพาะนายืนยัน
+        evi_scan_val    = props.get("EVIscan_mean")     # ความเขียวทั้ง scan (diagnostic)
         evi_prev_val    = props.get("EVIprev_mean")
-        scan_count      = int(props.get("EVI_count",    0) or 0)
+        scan_count      = int(props.get("EVIscan_count", 0) or 0)
         confirmed_count = int(props.get("flooded_sum",  0) or 0)
         glad_count      = int(props.get("glad_sum",     0) or 0)
 
         mapped = NAME_MAP.get(gaul_name, gaul_name)
 
-        if evi_val is not None and scan_count > 0:
+        # ต้องมีทั้งพื้นที่ scan และพิกเซลนายืนยัน (evi_val = rice-only mean)
+        if evi_val is not None and scan_count > 0 and confirmed_count > 0:
             evi_rounded   = round(float(evi_val), 4)
+            evi_scan_r    = round(float(evi_scan_val), 4) if evi_scan_val is not None else None
             evi_prev_r    = round(float(evi_prev_val), 4) if evi_prev_val is not None else None
             trend         = round(evi_rounded - evi_prev_r, 4) if evi_prev_r is not None else None
             # confidence = confirmed (phenology-verified rice) / total scan area
             confidence    = round(min(confirmed_count / scan_count, 1.0), 3)
             stage         = classify_evi(evi_rounded, evi_prev_r)
-            # rice_pixels/rice_rai = confirmed pixels (actual rice with flooding)
-            rice_area_rai = int(confirmed_count * 625)
-            scan_rai      = int(scan_count      * 625)
-            glad_rai      = int(glad_count      * 625)
             # bonus = pixels found by MCD12Q1 that GLAD missed
             bonus_count   = max(0, confirmed_count - glad_count)
+            # ── GLAD-preferred rice count (ลด overcount จากยาง/ปาล์มใน cropland) ──
+            if glad_count >= GLAD_MIN_PIXELS and bonus_count > GLAD_BONUS_RATIO * glad_count:
+                rice_count, rice_basis = glad_count, "glad"    # bonus มากผิดปกติ → เชื่อ GLAD
+            else:
+                rice_count, rice_basis = confirmed_count, "union"  # GLAD ขาด/bonus พอเชื่อ
+            rice_area_rai = int(rice_count    * 625)   # ไร่ นาข้าว (GLAD-preferred)
+            scan_rai      = int(scan_count    * 625)
+            glad_rai      = int(glad_count    * 625)
+            confirmed_rai = int(confirmed_count * 625) # union ∩ phenology (diagnostic)
 
             provinces_data[mapped] = {
-                "evi":          evi_rounded,
-                "evi_prev":     evi_prev_r,          # EVI เดือนก่อนหน้า (None ถ้าไม่มีข้อมูล)
+                "evi":          evi_rounded,         # ความเขียวเฉพาะพิกเซลนายืนยัน
+                "evi_scan":     evi_scan_r,          # ความเขียวทั้ง scan area (diagnostic)
+                "evi_prev":     evi_prev_r,          # EVI เดือนก่อนหน้า เฉพาะนายืนยัน (None ถ้าไม่มี)
                 "trend":        trend,               # Δ EVI = เดือนนี้ − เดือนก่อน (+ ขึ้น / − ลง)
                 "stage":        stage,
-                "rice_pixels":  confirmed_count,    # confirmed rice (phenology-gated)
-                "rice_rai":     rice_area_rai,       # ไร่ นาข้าวที่ยืนยันแล้ว
-                "confidence":   confidence,
+                "rice_pixels":  rice_count,          # GLAD-preferred rice pixels
+                "rice_rai":     rice_area_rai,       # ไร่ นาข้าว (GLAD-preferred)
+                "rice_basis":   rice_basis,          # "glad" = เชื่อแกน GLAD / "union" = รวม bonus
+                "confidence":   confidence,          # confirmed/scan (phenology pass rate)
+                "confirmed_pixels": confirmed_count, # union ∩ phenology (ก่อน GLAD-preferred)
+                "confirmed_rai":    confirmed_rai,
                 "scan_pixels":  scan_count,          # total union scan area
                 "scan_rai":     scan_rai,
                 "glad_pixels":  glad_count,          # GLAD rice pixels (subset; 0 if GLAD unavailable)
@@ -417,12 +448,16 @@ def main():
         else:
             provinces_data[mapped] = {
                 "evi":          None,
+                "evi_scan":     None,
                 "evi_prev":     None,
                 "trend":        None,
                 "stage":        None,
                 "rice_pixels":  0,
                 "rice_rai":     0,
+                "rice_basis":   None,
                 "confidence":   None,
+                "confirmed_pixels": 0,
+                "confirmed_rai":    0,
                 "scan_pixels":  0,
                 "scan_rai":     0,
                 "glad_pixels":  0,
@@ -445,26 +480,26 @@ def main():
         print(f"  Confidence avg:   {sum(conf_vals)/len(conf_vals):.1%}")
 
         # ── Hybrid mask effectiveness ──
-        total_glad   = sum(v["glad_pixels"]  for v in valid)
-        total_scan   = sum(v["scan_pixels"]  for v in valid)
-        total_conf   = sum(v["rice_pixels"] for v in valid)
-        total_bonus  = sum(v["bonus_pixels"] for v in valid)
-        print(f"  GLAD rice pixels:   {total_glad:,}")
-        print(f"  Union scan pixels:  {total_scan:,}")
-        print(f"  Confirmed rice:     {total_conf:,}  ({total_conf*625:,.0f} rai)")
-        print(f"  Bonus from MCD12Q1: +{total_bonus:,} pixels ({total_bonus*625:,.0f} rai)")
+        total_glad   = sum(v["glad_pixels"]      for v in valid)
+        total_scan   = sum(v["scan_pixels"]      for v in valid)
+        total_conf   = sum(v["confirmed_pixels"] for v in valid)
+        total_rice   = sum(v["rice_pixels"]      for v in valid)   # GLAD-preferred
+        total_bonus  = sum(v["bonus_pixels"]     for v in valid)
+        print(f"  GLAD rice pixels:      {total_glad:,}")
+        print(f"  Union scan pixels:     {total_scan:,}")
+        print(f"  Confirmed (union∩phen):{total_conf:,}  ({total_conf*625:,.0f} rai)")
+        print(f"  Rice (GLAD-preferred): {total_rice:,}  ({total_rice*625:,.0f} rai)")
+        print(f"  Bonus from MCD12Q1:    +{total_bonus:,} pixels ({total_bonus*625:,.0f} rai)")
 
-        # จังหวัดที่ได้ประโยชน์จาก hybrid mask มากที่สุด
-        boosted = [(k, v) for k, v in provinces_data.items()
-                   if v.get("bonus_pixels", 0) > 0]
-        if boosted:
-            boosted.sort(key=lambda x: x[1]["bonus_pixels"], reverse=True)
-            print("  📈 Provinces boosted by MCD12Q1:")
-            for name, v in boosted[:10]:
-                old_px = v["glad_pixels"]
-                new_px = v["rice_pixels"]
-                bonus  = v["bonus_pixels"]
-                print(f"     {name}: GLAD {old_px} → confirmed {new_px}  (+{bonus} bonus, +{bonus*625:,} rai)")
+        # จังหวัดที่ GLAD-preferred ตัด bonus ออก (bonus มากผิดปกติ → น่าจะพืชอื่น)
+        trimmed = [(k, v) for k, v in provinces_data.items()
+                   if v.get("rice_basis") == "glad"]
+        if trimmed:
+            trimmed.sort(key=lambda x: x[1]["confirmed_pixels"] - x[1]["rice_pixels"], reverse=True)
+            print(f"  ✂️  GLAD-preferred trimmed {len(trimmed)} provinces (bonus likely non-rice):")
+            for name, v in trimmed[:10]:
+                cut = (v["confirmed_pixels"] - v["rice_pixels"]) * 625
+                print(f"     {name}: {v['confirmed_rai']:,} → {v['rice_rai']:,} rai  (−{cut:,} rai trimmed)")
 
     stage_counts = {}
     for v in provinces_data.values():
@@ -483,10 +518,12 @@ def main():
             "method":     (
                 "Hybrid Union Mask (GLAD rice ∪ MCD12Q1 cropland) + "
                 "Rice phenology gate: flood ตอน canopy โปร่ง (LSWI>EVI & EVI<%.2f) "
-                "AND peak EVI≥%.2f AND seasonal amplitude≥%.2f จาก %d เดือน "
-                "(Xiao et al. 2005 + amplitude gate ตัดพืชยืนต้น). "
+                "AND peak EVI≥%.2f AND amplitude≥%.2f AND min EVI≤%.2f จาก %d เดือน "
+                "(Xiao et al. 2005 + amplitude/min-EVI gate ตัดยาง/ปาล์ม/ป่า). "
+                "ค่า EVI/stage เฉลี่ยเฉพาะพิกเซลนายืนยัน (ไม่ปนพืชยืนต้น). "
+                "rice_rai แบบ GLAD-preferred (ตัด cropland-bonus ที่มากผิดปกติ). "
                 "Stage แยกด้วยทิศทาง EVI (heading ขาขึ้น / ripening ขาลง)"
-                % (FLOOD_EVI_MAX, PEAK_MIN, AMP_MIN, PHENOLOGY_MONTHS)
+                % (FLOOD_EVI_MAX, PEAK_MIN, AMP_MIN, MIN_EVI_MAX, PHENOLOGY_MONTHS)
             ),
             "phenology_window":     pheno_window,
             "phenology_months":     PHENOLOGY_MONTHS,
@@ -494,6 +531,7 @@ def main():
                 "flood_evi_max": FLOOD_EVI_MAX,
                 "peak_min":      PEAK_MIN,
                 "amp_min":       AMP_MIN,
+                "min_evi_max":   MIN_EVI_MAX,
                 "trend_eps":     TREND_EPS,
             },
             "resolution":           "1 km / monthly composite",
@@ -508,12 +546,16 @@ def main():
                 f"stage ใช้ทิศทาง EVI: ค่าสูง=ออกรวง(ยอดเขียว) ไม่ใช่สุกแก่ — สุกแก่ EVI ลดลง"
             ),
             "fields": {
-                "evi":          "ค่าเฉลี่ย EVI เดือนนี้ (union scan area)",
-                "evi_prev":     "ค่าเฉลี่ย EVI เดือนก่อนหน้า (null ถ้าไม่มีข้อมูล)",
+                "evi":          "ค่าเฉลี่ย EVI เฉพาะพิกเซลนายืนยัน (ไม่ปนพืชยืนต้น)",
+                "evi_scan":     "ค่าเฉลี่ย EVI ทั้ง union scan (diagnostic — รวมพืชอื่น)",
+                "evi_prev":     "ค่าเฉลี่ย EVI เดือนก่อนหน้า เฉพาะนายืนยัน (null ถ้าไม่มีข้อมูล)",
                 "trend":        "Δ EVI = เดือนนี้ − เดือนก่อน (+ ขาขึ้น / − ขาลง)",
                 "stage":        "ระยะข้าวจาก EVI + ทิศทาง (heading ขาขึ้น / ripening ขาลง)",
-                "rice_pixels":  "pixel นาข้าวที่ผ่าน Phenology (confirmed)",
-                "rice_rai":     "พื้นที่นาข้าวยืนยัน (ไร่)",
+                "rice_pixels":  "pixel นาข้าว GLAD-preferred (ใช้แสดงผล)",
+                "rice_rai":     "พื้นที่นาข้าว GLAD-preferred (ไร่)",
+                "rice_basis":   "glad = เชื่อแกน GLAD (ตัด bonus) / union = รวม cropland bonus",
+                "confirmed_pixels": "pixel union∩phenology ก่อน GLAD-preferred (diagnostic)",
+                "confirmed_rai":    "พื้นที่ union∩phenology (ไร่, diagnostic)",
                 "confidence":   "สัดส่วน confirmed/scan (0-1)",
                 "scan_pixels":  "total union scan area (GLAD ∪ MCD12Q1)",
                 "scan_rai":     "พื้นที่ scan ทั้งหมด (ไร่)",

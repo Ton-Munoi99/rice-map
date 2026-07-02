@@ -5581,21 +5581,42 @@
             </div>`
                 : "";
             })()}
-            ${
-              riceRai > 0
-                ? `<div class="metric">
-              <div class="m-label">${t("พื้นที่นาข้าวที่ตรวจพบ", "Detected Rice Area")}</div>
-              <div class="m-value">${fmtNumber(riceRai)} <small>${t("ไร่", "rai")}</small></div>
+            ${(() => {
+              // พื้นที่ (ไร่): ยึด OAE เป็นตัวเลขจริง — EVI ดาวเทียม 1km มักเกินจริง
+              // (พิกเซล 625 ไร่ + อาจปนยาง/ปาล์ม) จึงแสดงเป็น diagnostic เทียบ OAE
+              const oaeRai = oaeMaxRiceRai(en);
+              const gladRai = riceEviProv.glad_rai || 0;
+              const overstate = oaeRai > 0 && riceRai > 0 ? riceRai / oaeRai : null;
+              const ovColor =
+                overstate == null ? "var(--muted)" : overstate <= 2 ? "#66bb6a" : overstate <= 5 ? "#ffa726" : "#ef5350";
+              const oaeMetric =
+                oaeRai > 0
+                  ? `<div class="metric">
+              <div class="m-label">${t("พื้นที่นาข้าว (OAE — ข้อมูลจริง)", "Rice area (OAE — official)")}</div>
+              <div class="m-value">${fmtNumber(oaeRai)} <small>${t("ไร่ · นาปี+นาปรัง", "rai · main+off-season")}</small></div>
             </div>`
-                : ""
-            }
+                  : "";
+              const diag =
+                riceRai > 0
+                  ? `<div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:7px;padding:6px 8px;margin-top:6px;font-size:9px;line-height:1.6">
+              <span style="font-weight:700;color:#9fb0c0">🛰️ ${t("พื้นที่ดาวเทียมตรวจจับ (diagnostic)", "Satellite-detected area (diagnostic)")}</span><br>
+              <div style="display:flex;justify-content:space-between;margin-top:2px"><span>${t("สแกนยืนยัน (GLAD∪cropland)", "Confirmed (GLAD∪cropland)")}</span><span style="color:#cdd6df">${fmtNumber(riceRai)} ${t("ไร่", "rai")}</span></div>
+              <div style="display:flex;justify-content:space-between"><span>${t("เฉพาะ GLAD (แม่นกว่า)", "GLAD-only (tighter)")}</span><span style="color:#cdd6df">${fmtNumber(gladRai)} ${t("ไร่", "rai")}</span></div>
+              ${
+                overstate != null
+                  ? `<div style="display:flex;justify-content:space-between;margin-top:2px"><span>${t("เทียบ OAE", "vs OAE")}</span><span style="color:${ovColor};font-weight:700">${overstate >= 10 ? overstate.toFixed(0) : overstate.toFixed(1)}× ${overstate > 5 ? t("(สูงมาก — อาจปนยาง/ปาล์ม)", "(very high — may include rubber/palm)") : overstate > 2 ? t("(ปนพืชอื่นบ้าง)", "(some non-rice)") : t("(ใกล้เคียง)", "(close)")}</span></div>`
+                  : ""
+              }
+              <div style="opacity:.65;margin-top:3px">${t("MODIS 1km (625 ไร่/พิกเซล) มักเกินจริง — ให้ยึดพื้นที่ OAE เป็นหลัก", "MODIS 1km (625 rai/pixel) overcounts — use OAE area as the reference")}</div>
+            </div>`
+                  : "";
+              return oaeMetric + diag;
+            })()}
             ${
               confidence != null
-                ? `<div class="metric">
-              <div class="m-label">📊 ${t("ความแม่นยำในการตรวจจับนา", "Rice Detection Accuracy")}</div>
-              <div class="m-value" style="color:${confColor}">${confPct}%
-                <small style="color:var(--muted);font-weight:400">${riceRai > 0 ? `· ${fmtNumber(riceRai)} ${t("ไร่", "rai")}` : ""}</small>
-              </div>
+                ? `<div class="metric" style="margin-top:6px">
+              <div class="m-label">📊 ${t("ความครอบคลุมนา (ผ่าน phenology)", "Rice coverage (phenology-passed)")}</div>
+              <div class="m-value" style="color:${confColor}">${confPct}%</div>
               ${confBar}
             </div>`
                 : ""
