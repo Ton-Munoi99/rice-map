@@ -2477,13 +2477,33 @@
       const GLAD_BOOSTED = new Set(["Pathum Thani", "Ang Thong", "Sing Buri", "Phra Nakhon Si Ayutthaya"]);
 
       // ── Rice EVI stage lookup (mirrors classify_evi() in fetch_rice_evi.py) ──
+      // ความเขียว (EVI) ขึ้นสูงสุดที่ "ออกรวง" แล้วลดลงตอนสร้างเมล็ด–สุกแก่
+      // ค่าสูงจึง = ออกรวง (ยอด canopy) ไม่ใช่ "สุกแก่/ใกล้เก็บเกี่ยว" (นั้น EVI ลดลง)
+      // stage ที่ pipeline ส่งมาแยกด้วยทิศทาง EVI แล้ว (heading ขาขึ้น / ripening ขาลง)
       const STAGE_MAP = {
         fallow: { th: "นาว่าง / เตรียมดิน", en: "Fallow / Land Prep", icon: "🟫", color: "#8d6e63" },
-        early: { th: "เพิ่งปักดำ / ต้นกล้า", en: "Transplanted / Seedling", icon: "🌱", color: "#ff9800" },
+        seedling: { th: "ต้นกล้า / ปักดำ", en: "Seedling / Transplanted", icon: "🌱", color: "#ff9800" },
+        tillering: { th: "แตกกอ / เจริญเติบโต", en: "Tillering / Growing", icon: "🌿", color: "#8bc34a" },
+        heading: { th: "ออกรวง / ออกดอก (ยอดเขียว)", en: "Heading / Flowering (peak canopy)", icon: "🌾", color: "#2e7d32" },
+        ripening: { th: "สร้างเมล็ด / สุกแก่ · ใกล้เก็บเกี่ยว", en: "Grain fill / Ripening · near harvest", icon: "🌾", color: "#c9a227" },
+        harvest: { th: "เก็บเกี่ยว / ตอซัง", en: "Harvest / Stubble", icon: "🌾", color: "#bfa76f" },
+        // ── aliases สำหรับ JSON เก่า (ก่อนเปลี่ยน classify) — label แก้ให้ถูกแล้ว ──
+        early: { th: "ต้นกล้า / ปักดำ", en: "Seedling / Transplanted", icon: "🌱", color: "#ff9800" },
         growing: { th: "แตกกอ / เจริญเติบโต", en: "Tillering / Growing", icon: "🌿", color: "#8bc34a" },
-        heading: { th: "ออกรวง / สร้างเมล็ด", en: "Heading / Grain Fill", icon: "🌾", color: "#4caf50" },
-        peak: { th: "สมบูรณ์เต็มที่", en: "Full Maturity", icon: "✨", color: "#2e7d32" },
+        peak: { th: "ออกรวง / ออกดอก (ยอดเขียว)", en: "Heading / Flowering (peak canopy)", icon: "🌾", color: "#2e7d32" },
       };
+
+      // ── EVI trend badge (ทิศทางความเขียว เทียบเดือนก่อน) ─────────────────────
+      // ใช้แยก ออกรวง (ขาขึ้น) จาก สร้างเมล็ด/สุกแก่ (ขาลง) ที่ค่า EVI เดียวกัน
+      function eviTrend(rp) {
+        const tr = rp?.trend;
+        if (tr == null) return null; // JSON เก่ายังไม่มี trend
+        if (tr >= 0.02)
+          return { icon: "▲", th: "ความเขียวเพิ่มขึ้น → เข้าสู่ออกรวง", en: "Greening up → toward heading", color: "#66bb6a", delta: tr };
+        if (tr <= -0.02)
+          return { icon: "▼", th: "ความเขียวลดลง → สร้างเมล็ด/สุกแก่ ใกล้เก็บเกี่ยว", en: "Greenness falling → grain-fill/ripening, near harvest", color: "#c9a227", delta: tr };
+        return { icon: "▬", th: "ความเขียวทรงตัว", en: "Greenness steady", color: "var(--muted)", delta: tr };
+      }
 
       // ── Rice season calendar by region ───────────────────────────────────────
       // ใช้ประกอบ tooltip + detail card: อธิบายว่า EVI ระยะนี้ = กำลังทำอะไร
@@ -2550,38 +2570,41 @@
 
       // ── Rice EVI tier thresholds (mirrors STAGE_MAP above) ───────────────────
       // labelTh/labelEn are static strings; call t(tier.labelTh, tier.labelEn) at render time
+      // tier = ระดับ "ความเขียว" (EVI magnitude) ซึ่งเป็นสิ่งที่สีบนแผนที่แทน
+      // ความเขียวสูงสุดคือ "ออกรวง" ไม่ใช่สุกแก่ — ระยะจริง (heading vs ripening)
+      // ต้องดูทิศทาง EVI ประกอบ (อยู่ใน stage/trend ที่ pipeline ส่งมา)
       const RICE_EVI_TIERS = [
         {
-          labelTh: "✨ สมบูรณ์เต็มที่ (≥0.55)",
-          labelEn: "✨ Full Maturity (≥0.55)",
+          labelTh: "🌾 เขียวจัด · ออกรวง/ออกดอก (≥0.55)",
+          labelEn: "🌾 Very green · Heading/Flowering (≥0.55)",
           min: 0.55,
           color: "#2e7d32",
-          descTh: "ข้าวเจริญเติบโตสมบูรณ์ ใกล้เก็บเกี่ยว",
-          descEn: "Fully grown rice, near harvest",
+          descTh: "ยอด canopy เขียวสุด = ออกรวง/ออกดอก (ไม่ใช่สุกแก่ — สุกแก่ EVI จะลดลง)",
+          descEn: "Peak canopy greenness = heading/flowering (not maturity — that comes as EVI falls)",
         },
         {
-          labelTh: "🌾 ออกรวง (0.40–0.55)",
-          labelEn: "🌾 Heading (0.40–0.55)",
+          labelTh: "🌾 เขียวหนา · ออกรวง หรือ สร้างเมล็ด (0.40–0.55)",
+          labelEn: "🌾 Dense green · Heading or grain-fill (0.40–0.55)",
           min: 0.4,
           color: "#4caf50",
-          descTh: "ข้าวออกรวง สร้างเมล็ด",
-          descEn: "Rice heading, grain filling",
+          descTh: "canopy หนาแน่น — ขาขึ้น = กำลังออกรวง / ขาลง = สร้างเมล็ด สุกแก่",
+          descEn: "Dense canopy — rising = heading / falling = grain-fill, ripening",
         },
         {
-          labelTh: "🌿 แตกกอ (0.25–0.40)",
-          labelEn: "🌿 Tillering (0.25–0.40)",
+          labelTh: "🌿 เขียวปานกลาง · แตกกอ หรือ สุกแก่ (0.25–0.40)",
+          labelEn: "🌿 Moderate · Tillering or ripening (0.25–0.40)",
           min: 0.25,
           color: "#8bc34a",
-          descTh: "ข้าวกำลังเจริญเติบโต แตกกอ",
-          descEn: "Tillering, active growth phase",
+          descTh: "ขาขึ้น = แตกกอ เจริญเติบโต / ขาลง = สุกแก่ ใกล้เก็บเกี่ยว",
+          descEn: "Rising = tillering / falling = ripening, near harvest",
         },
         {
-          labelTh: "🌱 ต้นกล้า (0.15–0.25)",
-          labelEn: "🌱 Seedling (0.15–0.25)",
+          labelTh: "🌱 เขียวน้อย · ต้นกล้า หรือ เก็บเกี่ยว (0.15–0.25)",
+          labelEn: "🌱 Low · Seedling or harvest (0.15–0.25)",
           min: 0.15,
           color: "#ff9800",
-          descTh: "เพิ่งปักดำ ต้นกล้าเริ่มตั้งตัว",
-          descEn: "Just transplanted, seedlings establishing",
+          descTh: "ขาขึ้น = เพิ่งปักดำ ต้นกล้า / ขาลง = เก็บเกี่ยว ตอซัง",
+          descEn: "Rising = just transplanted / falling = harvested, stubble",
         },
         {
           labelTh: "🟫 นาว่าง (<0.15)",
@@ -3657,7 +3680,46 @@
         return window.NDVI_DATA?.provinces?.[en] ?? null;
       }
 
+      // ── EVI rice-area sanity check ────────────────────────────────────────
+      // ปัญหา: หน้ากากนา EVI (GLAD ∪ cropland + phenology flooding gate) กรอง
+      // พืชยืนต้น/พื้นที่น้ำขัง (ยางพารา ปาล์ม สวนผลไม้ ป่าชายเลน บ่อเลี้ยงสัตว์น้ำ)
+      // ในจังหวัดที่แทบไม่มีนาข้าวออกไม่ได้ → จังหวัดเหล่านั้นขึ้น "เขียว" เป็น false
+      // positive (เช่น ภูเก็ต 41 ไร่จริง แต่ EVI นับ 19,375 ไร่ · จันทบุรีสวนทุเรียน
+      // 9,811 ไร่จริง แต่ EVI นับ 1 ล้านไร่). วิธีตัด: ถ้าพื้นที่ปลูกข้าวจริงจาก OAE
+      // (นาปี ขาว+มะลิ ∪ นาปรัง, มากสุดในทุกปีที่มีข้อมูล) ต่ำกว่าเกณฑ์ → ไม่เชื่อ EVI
+      const RICE_EVI_MIN_OAE_RAI = 15000; // ไร่ — ต่ำกว่านี้ถือว่าไม่ใช่พื้นที่นาข้าวสำคัญ
+      const RICE_EVI_MAX_OVERSTATE = 25; // เท่า — EVI นับพื้นที่นาเกิน OAE เกินนี้ = mask จับพืชอื่น
+
+      function oaeMaxRiceRai(en) {
+        const p = DATA[en];
+        if (!p) return 0;
+        let napi = 0;
+        for (const year of ALL_YEARS) {
+          let y = 0;
+          for (const rice of RICE_TYPES) y += p[rice]?.[year]?.area || 0;
+          if (y > napi) napi = y;
+        }
+        let naprang = 0;
+        for (const year of ALL_YEARS) {
+          const a = p.naprang?.[year]?.area || 0;
+          if (a > naprang) naprang = a;
+        }
+        return napi + naprang;
+      }
+
+      // false = จังหวัดนี้แทบไม่มีนาข้าวจริง → ค่า EVI น่าจะเป็นพืชอื่น อย่านำมาแสดงระยะข้าว
+      function riceEviReliable(en) {
+        if (DATA_META?.mode === "empty") return true; // DATA ยังไม่โหลด อย่าเพิ่งกรอง
+        const oae = oaeMaxRiceRai(en);
+        if (oae < RICE_EVI_MIN_OAE_RAI) return false; // แทบไม่มีข้าว → EVI = พืชอื่น
+        // mask จับพื้นที่นาเกินจริงหลายสิบเท่า → dominate ด้วยพืชยืนต้น (เช่น สุราษฎร์ฯ ปาล์ม)
+        const eviRai = window.RICE_EVI_DATA?.provinces?.[en]?.rice_rai || 0;
+        if (eviRai > oae * RICE_EVI_MAX_OVERSTATE) return false;
+        return true;
+      }
+
       function riceEviValueOf(en) {
+        if (!riceEviReliable(en)) return null; // ตัด false positive (พืชยืนต้น/พื้นที่น้ำขัง)
         return window.RICE_EVI_DATA?.provinces?.[en]?.evi ?? null;
       }
 
@@ -5155,12 +5217,12 @@
           // ── Rice EVI: stage-based tier grouping (uses module-level RICE_EVI_TIERS) ──
           let riceEviLegend = `<div style="background:rgba(255,255,255,.04);border-radius:10px;padding:8px 10px;margin-bottom:6px;font-size:9px;line-height:1.7;color:var(--muted)">
           <div style="font-weight:700;color:#ccc;margin-bottom:4px">🌾 ${t("ดัชนีความเขียวชอุ่มของนาข้าว คืออะไร?", "What is Rice EVI?")}</div>
-          <div>${t("EVI = ดัชนีความเขียวชอุ่มของนาข้าว (0–1) · สูง = ต้นข้าวสมบูรณ์ แข็งแรง · ต่ำ = นาว่าง หรืออยู่ระหว่างเตรียมดิน", "EVI = rice paddy greenness index (0–1) · High = healthy crop · Low = fallow or land preparation")}</div>
+          <div>${t("EVI = ดัชนีความเขียวชอุ่มของนาข้าว (0–1) · ความเขียวขึ้นสูงสุดตอน \"ออกรวง\" แล้วลดลงตอนสร้างเมล็ด–สุกแก่ · ค่าสูงจึง = ออกรวง ไม่ใช่ใกล้เก็บเกี่ยว", "EVI = rice paddy greenness (0–1) · peaks at heading, then falls through grain-fill to harvest · High = heading, NOT near-harvest")}</div>
           <div style="margin-top:5px;display:grid;grid-template-columns:1fr 1fr;gap:3px">
-            <div style="color:#2e7d32">● ≥0.55 ${t("สมบูรณ์", "Peak")}</div>
-            <div style="color:#4caf50">● 0.40–0.55 ${t("ออกรวง", "Heading")}</div>
-            <div style="color:#8bc34a">● 0.25–0.40 ${t("แตกกอ", "Tillering")}</div>
-            <div style="color:#ff9800">● 0.15–0.25 ${t("ต้นกล้า", "Seedling")}</div>
+            <div style="color:#2e7d32">● ≥0.55 ${t("ออกรวง (ยอดเขียว)", "Heading (peak)")}</div>
+            <div style="color:#4caf50">● 0.40–0.55 ${t("ออกรวง/สร้างเมล็ด", "Heading/grain-fill")}</div>
+            <div style="color:#8bc34a">● 0.25–0.40 ${t("แตกกอ/สุกแก่", "Tillering/ripening")}</div>
+            <div style="color:#ff9800">● 0.15–0.25 ${t("ต้นกล้า/เก็บเกี่ยว", "Seedling/harvest")}</div>
           </div>
           <div style="margin-top:6px;padding-top:5px;border-top:1px solid rgba(255,255,255,.08)">
             <div style="font-weight:700;color:#aaa;margin-bottom:3px">🗓️ ${t("ปฏิทินข้าวรายภาค", "Regional Rice Calendar")}</div>
@@ -5170,6 +5232,10 @@
               <span style="color:#64b5f6">กลาง/ตาก-พิษ</span><span>${t("นาปรัง ปลูก ธ.ค.–ก.พ. · เก็บ พ.ค.–มิ.ย. (ชลประทาน)", "Dry season: Plant Dec–Feb · Harvest May–Jun (irrigated)")}</span>
             </div>
           </div>
+          <div style="margin-top:5px;padding-top:5px;border-top:1px solid rgba(255,255,255,.08);opacity:.85">${t(
+            `⚠️ กรองจังหวัดที่พื้นที่ปลูกข้าวจริง (OAE) < ${fmtNumber(RICE_EVI_MIN_OAE_RAI)} ไร่ ออก (เช่น ภูเก็ต ระนอง จันทบุรี) เพราะ EVI มักจับพืชยืนต้น/ป่า/พื้นที่น้ำขัง ไม่ใช่ข้าว`,
+            `⚠️ Provinces with < ${fmtNumber(RICE_EVI_MIN_OAE_RAI)} rai of actual OAE rice (e.g. Phuket, Ranong, Chanthaburi) are filtered out — their EVI usually reflects perennial crops/forest/water, not rice`,
+          )}</div>
           <div style="margin-top:4px;opacity:.7">${t(`ข้อมูลเดือน ${window.RICE_EVI_DATA?.month || "—"} · อัปเดตทุกเดือน`, `Data: ${window.RICE_EVI_DATA?.month || "—"} · monthly update`)}</div>
         </div>`;
           let riceEviList = riceEviLegend;
@@ -5459,7 +5525,23 @@
         // ── Rice EVI detail card ─────────────────────────────────────────────
         let riceEviHtml = "";
         const riceEviProv = window.RICE_EVI_DATA?.provinces?.[en];
-        if (riceEviProv && riceEviProv.evi != null) {
+        if (riceEviProv && riceEviProv.evi != null && !riceEviReliable(en)) {
+          // จังหวัดที่แทบไม่มีนาข้าวจริง — EVI น่าจะเป็นพืชยืนต้น/พื้นที่น้ำขัง ไม่ใช่ข้าว
+          riceEviHtml = `
+          <div class="rice-card" style="grid-column:1/-1;background:rgba(141,110,99,.10);border:1px solid rgba(141,110,99,.30)">
+            <div class="t">🌾 ${t(`สภาพนาข้าว · ${window.RICE_EVI_DATA?.month || "—"}`, `Rice Paddy Status · ${window.RICE_EVI_DATA?.month || "—"}`)}</div>
+            <div style="font-size:10px;line-height:1.6;color:#d7ccc8">
+              <div style="font-weight:700;color:#bcaaa4;margin-bottom:3px">⚠️ ${t("ไม่ใช่พื้นที่นาข้าวสำคัญ", "Not a significant rice-growing area")}</div>
+              ${t(
+                `จังหวัดนี้มีพื้นที่ปลูกข้าวจริง (OAE) เพียง <strong>${fmtNumber(oaeMaxRiceRai(en))} ไร่</strong> ค่า EVI ที่ดาวเทียมจับได้ (${riceEviProv.evi.toFixed(3)}) จึงน่าจะเป็นพืชยืนต้น (ยางพารา ปาล์ม สวนผลไม้) ป่า หรือพื้นที่น้ำขัง ไม่ใช่นาข้าว — จึงไม่แสดงระยะการเจริญเติบโต`,
+                `OAE records only <strong>${fmtNumber(oaeMaxRiceRai(en))} rai</strong> of rice here. The satellite EVI reading (${riceEviProv.evi.toFixed(3)}) most likely reflects perennial crops (rubber, oil palm, orchards), forest, or standing water — not rice — so no growth stage is shown.`,
+              )}
+            </div>
+            <div style="font-size:9px;color:var(--muted);margin-top:6px;line-height:1.5">
+              📡 ${t("ดัชนีความเขียวชอุ่มของนาข้าว (EVI) · กรองด้วยพื้นที่ข้าว OAE", "Rice paddy greenness index (EVI) · filtered by OAE rice area")}
+            </div>
+          </div>`;
+        } else if (riceEviProv && riceEviProv.evi != null) {
           const eviVal = riceEviProv.evi;
           const eviMonth = window.RICE_EVI_DATA?.month || "—";
           const stage = riceEviProv.stage;
@@ -5490,6 +5572,15 @@
               <div class="m-label">${t("EVI เฉลี่ยเฉพาะนาข้าว", "Mean EVI (rice paddies only)")}</div>
               <div class="m-value" style="color:${stg.color}">${eviVal.toFixed(3)} ${stg.icon} <small style="color:${stg.color}">${t(stg.th, stg.en)}</small></div>
             </div>
+            ${(() => {
+              const tv = eviTrend(riceEviProv);
+              return tv
+                ? `<div class="metric">
+              <div class="m-label">${t("ทิศทางความเขียว (เทียบเดือนก่อน)", "Greenness trend (vs last month)")}</div>
+              <div class="m-value" style="color:${tv.color}">${tv.icon} ${tv.delta > 0 ? "+" : ""}${tv.delta.toFixed(3)} <small style="color:${tv.color};font-weight:400">${t(tv.th, tv.en)}</small></div>
+            </div>`
+                : "";
+            })()}
             ${
               riceRai > 0
                 ? `<div class="metric">
@@ -6758,6 +6849,10 @@ ${warningsHtml}
           const total = getVisibleProvinces().filter((n) => hasLayerValue(n)).length;
           if (!rp || rp.evi == null)
             return `<div class="th">${t(NM[en] || en, en)}</div><div class="en">${en}</div><div style="color:var(--muted);font-size:11px;margin-top:6px">${t("ไม่มีข้อมูลสภาพนาข้าว", "No rice paddy data")}</div>`;
+          if (!riceEviReliable(en))
+            return `<div class="th">${t(NM[en] || en, en)}</div><div class="en">${en}</div>
+              <div style="color:#bcaaa4;font-size:11px;font-weight:700;margin-top:6px">⚠️ ${t("ไม่ใช่พื้นที่นาข้าวสำคัญ", "Not a significant rice area")}</div>
+              <div style="color:var(--muted);font-size:9px;margin-top:3px;line-height:1.5">${t(`ข้าวจริง (OAE) เพียง ${fmtNumber(oaeMaxRiceRai(en))} ไร่ · EVI น่าจะเป็นพืชอื่น`, `Only ${fmtNumber(oaeMaxRiceRai(en))} rai of rice (OAE) · EVI likely non-rice`)}</div>`;
           const stg = STAGE_MAP[rp.stage] || STAGE_MAP.growing;
           const ctx = riceSeasonContext(en);
           const confPct = rp.confidence != null ? Math.round(rp.confidence * 100) : null;
@@ -6769,6 +6864,10 @@ ${warningsHtml}
     <div class="type">${t("สภาพนาข้าว", "Rice Paddy Status")} · ${window.RICE_EVI_DATA?.month || "—"}</div>
     <div class="value" style="color:${stg.color}">${rp.evi.toFixed(3)} EVI ${stg.icon}</div>
     <div style="font-size:11px;font-weight:700;color:${stg.color};margin:2px 0">${t(stg.th, stg.en)}</div>
+    ${(() => {
+      const tv = eviTrend(rp);
+      return tv ? `<div style="font-size:9px;color:${tv.color};margin:1px 0">${tv.icon} ${t(tv.th, tv.en)}</div>` : "";
+    })()}
     <div class="rank">${rank ? `${t("อันดับ", "Rank")} #${rank} / ${total}` : t("ไม่มีข้อมูล", "No data")}</div>
     ${confPct != null ? `<div style="font-size:10px;margin-top:3px"><span style="color:${confColor}">📊 ${t("ครอบคลุมนา", "Coverage")} ${confPct}%</span> · ${fmtNumber(rp.rice_rai || 0)} ${t("ไร่", "rai")}</div>` : ""}
     <div style="font-size:9px;color:var(--muted);margin-top:5px;line-height:1.5;border-top:1px solid rgba(255,255,255,.1);padding-top:4px">

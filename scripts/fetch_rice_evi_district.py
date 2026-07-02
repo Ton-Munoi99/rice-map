@@ -32,6 +32,12 @@ from riceutils import init_gee, GAUL_NAME_MAP as PROV_MAP
 
 PHENOLOGY_MONTHS = 12
 
+# ── Rice-refinement thresholds (mirror scripts/fetch_rice_evi.py) ─────────────
+FLOOD_EVI_MAX = 0.30   # น้ำท่วมขังต้องเกิดตอน canopy ยังโปร่ง (ตัดป่าเขียวทึบ)
+PEAK_MIN      = 0.40   # ต้องมีเดือน canopy เขียวจริง (ตัดน้ำเปิด/บ่อกุ้ง/นาเกลือ)
+AMP_MIN       = 0.20   # EVI แกว่งตามฤดูสูง (ตัดยาง/ปาล์ม/ป่า เขียวคงที่ทั้งปี)
+TREND_EPS     = 0.02   # |Δ EVI| ต่ำกว่านี้ = ทรงตัว (กัน noise รายเดือน)
+
 
 def get_last_month_dates():
     today = date.today()
@@ -83,21 +89,23 @@ def load_rice_mask():
         return ee.Image(1), None, "No mask (all pixels)"
 
 
-def build_flood_confirmation(current_start, n_months=12):
+def build_rice_phenology_mask(current_start, n_months=12):
+    """Rice-confirmation mask: flood(canopy โปร่ง) + peak EVI + seasonal amplitude
+    (mirror scripts/fetch_rice_evi.py) — ตัดพืชยืนต้น/พื้นที่น้ำออกจากนาข้าว"""
     history = get_history_months(current_start, n_months)
-    flood_imgs = []
+    evi_imgs, flood_imgs = [], []
     for s, e in history:
-        col = (ee.ImageCollection("MODIS/061/MOD13A3")
-               .filterDate(s, e)
-               .select(["EVI", "sur_refl_b02", "sur_refl_b07"]))
-        if col.size().getInfo() == 0:
-            continue
-        img  = col.first().multiply(0.0001)
+        img  = (ee.ImageCollection("MODIS/061/MOD13A3")
+                .filterDate(s, e)
+                .select(["EVI", "sur_refl_b02", "sur_refl_b07"])
+                .mosaic()               # all-masked ถ้าไม่มีข้อมูล → safe
+                .multiply(0.0001))
         evi  = img.select("EVI")
         nir  = img.select("sur_refl_b02")
         swir = img.select("sur_refl_b07")
         lswi = nir.subtract(swir).divide(nir.add(swir))
-        flood_imgs.append(lswi.gt(evi).rename("flooded"))
+        flood_imgs.append(lswi.gt(evi).And(evi.lt(FLOOD_EVI_MAX)).rename("flooded"))
+        evi_imgs.append(evi.rename("EVI"))
 
     if not flood_imgs:
         return ee.Image(0).rename("flooded"), "no data"
@@ -105,17 +113,26 @@ def build_flood_confirmation(current_start, n_months=12):
     flood_any = (ee.ImageCollection(flood_imgs)
                  .reduce(ee.Reducer.anyNonZero())
                  .rename("flooded"))
+    evi_col   = ee.ImageCollection(evi_imgs)
+    amplitude = evi_col.max().subtract(evi_col.min())
+    rice_confirm = (flood_any
+                    .And(evi_col.max().gte(PEAK_MIN))
+                    .And(amplitude.gte(AMP_MIN))
+                    .rename("flooded"))
     window_str = f"{history[0][0][:7]} to {history[-1][0][:7]}"
-    return flood_any, window_str
+    return rice_confirm, window_str
 
 
-def classify_evi(evi_val):
+def classify_evi(evi_val, evi_prev=None):
+    """ระยะข้าวจาก EVI + ทิศทาง (mirror scripts/fetch_rice_evi.py)
+    ค่าสูง = ออกรวง (ยอด canopy) ไม่ใช่สุกแก่ — สุกแก่ EVI ลดลง"""
     if evi_val is None:  return None
     if evi_val < 0.15:   return "fallow"
-    if evi_val < 0.25:   return "early"
-    if evi_val < 0.40:   return "growing"
-    if evi_val < 0.55:   return "heading"
-    return "peak"
+    rising = True if evi_prev is None else (evi_val - evi_prev) >= -TREND_EPS
+    if evi_val < 0.25:   return "seedling" if rising else "harvest"
+    if evi_val < 0.40:   return "tillering" if rising else "ripening"
+    if evi_val < 0.55:   return "heading" if rising else "ripening"
+    return "heading"
 
 
 def main():
@@ -145,16 +162,24 @@ def main():
 
     evi_img = collection.first().multiply(0.0001)
 
+    # ── Previous-month EVI (สำหรับ trend ขึ้น/ลง) ──────────────────────────────
+    prev_end_d   = date.fromisoformat(start) - timedelta(days=1)
+    prev_start_d = prev_end_d.replace(day=1)
+    prev_evi_img = (ee.ImageCollection("MODIS/061/MOD13A3")
+                    .filterDate(prev_start_d.isoformat(), prev_end_d.isoformat())
+                    .select("EVI").mosaic().multiply(0.0001))
+
     # ── Hybrid Mask + Phenology ───────────────────────────────────────────────
     union_mask, glad_mask, mask_source = load_rice_mask()
-    print(f"Building phenology mask ({PHENOLOGY_MONTHS} months)...")
-    flood_confirmation, pheno_window = build_flood_confirmation(start, PHENOLOGY_MONTHS)
+    print(f"Building rice phenology mask ({PHENOLOGY_MONTHS} months)...")
+    flood_confirmation, pheno_window = build_rice_phenology_mask(start, PHENOLOGY_MONTHS)
 
     scan_evi      = evi_img.updateMask(union_mask)
+    prev_in_scan  = prev_evi_img.updateMask(union_mask)
     flood_in_scan = flood_confirmation.updateMask(union_mask)
     _glad_src     = glad_mask if glad_mask is not None else ee.Image(0)
     glad_indicator = _glad_src.updateMask(union_mask)
-    print(f"✓ Applied {mask_source} + phenology ({pheno_window})")
+    print(f"✓ Applied {mask_source} + rice phenology ({pheno_window})")
 
     # ── FAO GAUL 2015 level2 — Thailand districts ────────────────────────────
     districts = (
@@ -166,6 +191,7 @@ def main():
     # ── Combined reduceRegions ────────────────────────────────────────────────
     combined_img = (
         scan_evi.rename("EVI")
+        .addBands(prev_in_scan.rename("EVIprev"))
         .addBands(flood_in_scan.float().rename("flooded"))
         .addBands(glad_indicator.float().rename("glad"))
     )
@@ -179,7 +205,7 @@ def main():
         scale=1000,
     )
     features = result.select(
-        ["ADM1_NAME", "ADM2_NAME", "EVI_mean", "EVI_count", "flooded_sum", "glad_sum"]
+        ["ADM1_NAME", "ADM2_NAME", "EVI_mean", "EVIprev_mean", "EVI_count", "flooded_sum", "glad_sum"]
     ).getInfo()["features"]
     print(f"  Got {len(features)} districts from GEE")
 
@@ -192,6 +218,7 @@ def main():
         prov_gaul   = props.get("ADM1_NAME", "")
         dist_name   = props.get("ADM2_NAME", "")
         evi_val     = props.get("EVI_mean")
+        evi_prev_v  = props.get("EVIprev_mean")
         scan_count  = int(props.get("EVI_count",    0) or 0)
         conf_count  = int(props.get("flooded_sum",  0) or 0)
 
@@ -201,17 +228,22 @@ def main():
 
         if evi_val is not None and scan_count > 0:
             evi_r      = round(float(evi_val), 4)
+            evi_prev_r = round(float(evi_prev_v), 4) if evi_prev_v is not None else None
+            trend      = round(evi_r - evi_prev_r, 4) if evi_prev_r is not None else None
             confidence = round(min(conf_count / scan_count, 1.0), 3)
             rice_rai   = int(conf_count * 625)
             provinces_data[prov_mapped][dist_name] = {
                 "evi":        evi_r,
-                "stage":      classify_evi(evi_r),
+                "evi_prev":   evi_prev_r,
+                "trend":      trend,
+                "stage":      classify_evi(evi_r, evi_prev_r),
                 "rice_rai":   rice_rai,
                 "confidence": confidence,
             }
         else:
             provinces_data[prov_mapped][dist_name] = {
-                "evi": None, "stage": None, "rice_rai": 0, "confidence": None,
+                "evi": None, "evi_prev": None, "trend": None,
+                "stage": None, "rice_rai": 0, "confidence": None,
             }
             null_districts.append(f"{prov_gaul}/{dist_name}")
 
@@ -240,7 +272,9 @@ def main():
         "_meta": {
             "source":            "NASA MODIS MOD13A3 via Google Earth Engine",
             "mask":              mask_source,
-            "method":            f"Hybrid Union Mask + Phenology ({PHENOLOGY_MONTHS}mo LSWI>EVI)",
+            "method":            (f"Hybrid Union Mask + Rice phenology ({PHENOLOGY_MONTHS}mo: "
+                                  f"flood<{FLOOD_EVI_MAX} + peak≥{PEAK_MIN} + amp≥{AMP_MIN}) · "
+                                  f"stage แยกด้วยทิศทาง EVI"),
             "regions":           "FAO GAUL 2015 level2",
             "resolution":        "1 km / monthly composite",
             "period":            f"{start} to {end}",
