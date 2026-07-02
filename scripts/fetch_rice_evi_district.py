@@ -39,6 +39,7 @@ AMP_MIN       = 0.25   # EVI แกว่งตามฤดูสูง (ตั�
 MIN_EVI_MAX   = 0.20   # ต้องเคยโล่ง/น้ำขัง (min EVI ต่ำ) → ตัดพืชยืนต้นเขียวตลอดปี
 GLAD_MIN_PIXELS  = 8    # GLAD-preferred: GLAD ต่ำกว่านี้ = คง union (GLAD ขาด)
 GLAD_BONUS_RATIO = 3.0  # bonus เกินสัดส่วนนี้ของ GLAD = น่าสงสัยพืชอื่น → เชื่อ GLAD
+RUBBER_ASSET     = ""   # asset ยาง (ปล่อยว่าง = ข้าม) — mirror province script
 TREND_EPS     = 0.02   # |Δ EVI| ต่ำกว่านี้ = ทรงตัว (กัน noise รายเดือน)
 
 
@@ -90,6 +91,30 @@ def load_rice_mask():
         return cropland_mask, None, "MCD12Q1 only"
     else:
         return ee.Image(1), None, "No mask (all pixels)"
+
+
+def load_exclusion_mask():
+    """mask ปาล์ม/ยาง สำหรับลบออกจาก scan (mirror province script) — คืน (Image|None, desc)"""
+    parts, names = [], []
+    try:
+        palm = (ee.ImageCollection("BIOPAMA/GlobalOilPalm/v1")
+                .select("classification").mosaic().lt(3).unmask(0))
+        parts.append(palm); names.append("oil palm (Descals)")
+        print("✓ Loaded oil-palm exclusion")
+    except Exception as e:
+        print(f"  ⚠️ oil-palm layer unavailable: {e}")
+    if RUBBER_ASSET:
+        try:
+            parts.append(ee.Image(RUBBER_ASSET).gt(0).unmask(0))
+            names.append("rubber")
+        except Exception as e:
+            print(f"  ⚠️ rubber layer unavailable: {e}")
+    if not parts:
+        return None, "none"
+    excl = parts[0]
+    for p in parts[1:]:
+        excl = excl.Or(p)
+    return excl.unmask(0), " ∪ ".join(names)
 
 
 def build_rice_phenology_mask(current_start, n_months=12):
@@ -176,6 +201,11 @@ def main():
 
     # ── Hybrid Mask + Phenology ───────────────────────────────────────────────
     union_mask, glad_mask, mask_source = load_rice_mask()
+    exclusion_mask, excl_desc = load_exclusion_mask()
+    if exclusion_mask is not None:
+        union_mask = union_mask.And(exclusion_mask.Not())
+        mask_source += f" − exclusion({excl_desc})"
+        print(f"✓ Excluded perennial crops: {excl_desc}")
     print(f"Building rice phenology mask ({PHENOLOGY_MONTHS} months)...")
     flood_confirmation, pheno_window = build_rice_phenology_mask(start, PHENOLOGY_MONTHS)
 
