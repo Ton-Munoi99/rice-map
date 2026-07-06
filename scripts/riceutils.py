@@ -97,6 +97,17 @@ def build_provinces():
     return gaul.merge(ee.FeatureCollection([bueng_kan]))
 
 
+# ── Province geometry from thailand-data.js ──────────────────────────────────
+def _load_geo(js_path=None):
+    """อ่าน thailand-data.js → GeoJSON dict (features รายจังหวัด, พิกัด lon/lat)"""
+    if js_path is None:
+        js_path = os.path.join(_ROOT, "thailand-data.js")
+    with open(js_path, encoding="utf-8") as f:
+        js = f.read()
+    js = re.sub(r"^window\.THAILAND_GEO\s*=\s*", "", js.strip().rstrip(";"))
+    return json.loads(js)
+
+
 # ── Province centroids from thailand-data.js ─────────────────────────────────
 def load_centroids(js_path=None, method="bbox"):
     """อ่าน thailand-data.js → { name: {lat, lon} } ต่อจังหวัด
@@ -104,12 +115,7 @@ def load_centroids(js_path=None, method="bbox"):
     method='bbox'   — จุดกึ่งกลาง bounding box (min+max)/2 — มาตรฐาน, ไม่เบี้ยวชายฝั่ง
     method='vertex' — ค่าเฉลี่ย vertex sum/len — ของเดิม (เผื่อ rollback)
     """
-    if js_path is None:
-        js_path = os.path.join(_ROOT, "thailand-data.js")
-    with open(js_path, encoding="utf-8") as f:
-        js = f.read()
-    js = re.sub(r"^window\.THAILAND_GEO\s*=\s*", "", js.strip().rstrip(";"))
-    geo = json.loads(js)
+    geo = _load_geo(js_path)
 
     centroids = {}
     for feat in geo["features"]:
@@ -139,3 +145,91 @@ def load_centroids(js_path=None, method="bbox"):
         if name in centroids:
             centroids[name] = dict(pt)
     return centroids
+
+
+# ── Multi-point sampling inside province polygons ────────────────────────────
+def _point_in_ring(lon, lat, ring):
+    """Ray casting — จุดอยู่ใน ring ไหม"""
+    inside = False
+    j = len(ring) - 1
+    for i in range(len(ring)):
+        xi, yi = ring[i][0], ring[i][1]
+        xj, yj = ring[j][0], ring[j][1]
+        if (yi > lat) != (yj > lat) and lon < (xj - xi) * (lat - yi) / (yj - yi) + xi:
+            inside = not inside
+        j = i
+    return inside
+
+
+def _point_in_geom(lon, lat, geom):
+    """จุดอยู่ในจังหวัดไหม — นับ parity ทุก ring (รองรับรูใน polygon) ทุกชิ้นของ MultiPolygon"""
+    polys = [geom["coordinates"]] if geom["type"] == "Polygon" else geom["coordinates"]
+    for poly in polys:
+        if sum(1 for ring in poly if _point_in_ring(lon, lat, ring)) % 2 == 1:
+            return True
+    return False
+
+
+def load_sample_points(js_path=None, max_pts=6, grid=5):
+    """จุดตัวอย่างหลายจุดกระจายในเขตจังหวัด → { name: [{lat, lon}, ...] }
+
+    Deterministic (ตาราง grid ตายตัว ไม่มี random) เพื่อให้ผลรันซ้ำได้เหมือนเดิม
+    ใช้จับฝนกระจุกเฉพาะจุด (เช่น orographic แถบเทือกเขา) ที่ centroid จุดเดียวพลาด
+    จังหวัดใน CENTROID_OVERRIDE (geometry เพี้ยน) ใช้จุด override จุดเดียว
+    """
+    geo = _load_geo(js_path)
+    centroids = load_centroids(js_path)
+    out = {}
+    for feat in geo["features"]:
+        name = feat["properties"]["name"]
+        c = centroids.get(name)
+        if name in CENTROID_OVERRIDE:
+            out[name] = [dict(CENTROID_OVERRIDE[name])]
+            continue
+        geom = feat["geometry"]
+        all_pts = []
+        if geom["type"] == "Polygon":
+            for ring in geom["coordinates"]:
+                all_pts.extend(ring)
+        elif geom["type"] == "MultiPolygon":
+            for poly in geom["coordinates"]:
+                for ring in poly:
+                    all_pts.extend(ring)
+        if not all_pts:
+            if c:
+                out[name] = [dict(c)]
+            continue
+        lons = [p[0] for p in all_pts]
+        lats = [p[1] for p in all_pts]
+        min_lon, max_lon = min(lons), max(lons)
+        min_lat, max_lat = min(lats), max(lats)
+
+        pts = []
+        if c and _point_in_geom(c["lon"], c["lat"], geom):
+            pts.append((c["lon"], c["lat"]))
+        candidates = []
+        for gi in range(grid):
+            for gj in range(grid):
+                lon = min_lon + (max_lon - min_lon) * (gi + 0.5) / grid
+                lat = min_lat + (max_lat - min_lat) * (gj + 0.5) / grid
+                if _point_in_geom(lon, lat, geom):
+                    candidates.append((lon, lat))
+        # เลือกกระจายเท่าๆ กันไม่เกิน max_pts (นับรวม centroid ที่ใส่ไปแล้ว)
+        need = max(0, max_pts - len(pts))
+        if candidates and need:
+            if len(candidates) <= need:
+                pts.extend(candidates)
+            else:
+                step = len(candidates) / need
+                pts.extend(candidates[int(k * step)] for k in range(need))
+        if not pts and c:
+            pts = [(c["lon"], c["lat"])]
+        # dedupe (centroid อาจตรงกับจุด grid พอดี) — รักษาลำดับเดิม
+        seen, uniq = set(), []
+        for lo, la in pts:
+            key = (round(lo, 4), round(la, 4))
+            if key not in seen:
+                seen.add(key)
+                uniq.append({"lat": key[1], "lon": key[0]})
+        out[name] = uniq
+    return out
