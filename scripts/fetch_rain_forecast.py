@@ -3,15 +3,22 @@
 Fetch 7-day FORECAST rainfall per province from Open-Meteo (free, no API key).
 Runs daily via GitHub Actions at 07:00 UTC (14:00 BKK).
 
-Uses Open-Meteo batch API — all 77 provinces in 2 API calls (~10 sec total).
+Multi-point sampling: แต่ละจังหวัดดึงพยากรณ์ ≤6 จุดกระจายในเขตจังหวัด
+(deterministic grid — riceutils.load_sample_points) แล้วสรุปรายวันด้วย p90
+ข้ามจุด เพื่อจับฝนกระจุกเฉพาะจุด (orographic เช่น กาญจนบุรี/ตาก แถบเทือกเขา
+ชายแดน) ที่ centroid จุดเดียวมองไม่เห็น — p90 ไวกว่าค่าเฉลี่ยแต่ไม่ตื่นตูมเท่า max
+
+Uses Open-Meteo batch API — ~440 points in ~11 API calls (~40 sec total).
 Variable: precipitation_sum (rain + showers + snow, daily sum in mm)
 
 Output: data/rain-forecast.json
+Shape ไม่เปลี่ยนจากเดิม: provinces[name] = {rain_7d, values[7]} — downstream
+(index.html, fetch_agri_warnings.py) ใช้ต่อได้โดยไม่ต้องแก้
 """
 import json, os, re, sys, time, io
 import requests
 from datetime import date
-from riceutils import load_centroids
+from riceutils import load_sample_points
 
 if sys.platform == "win32":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
@@ -19,17 +26,29 @@ if sys.platform == "win32":
 DAYS       = 7           # next N days forecast
 OUTPUT     = "data/rain-forecast.json"
 API_URL    = "https://api.open-meteo.com/v1/forecast"
-BATCH_SIZE = 40          # provinces per request (2 requests for 77 provinces)
+BATCH_SIZE = 40          # sample points per request
 MAX_RETRY  = 3
 TIMEOUT    = 60          # seconds per batch request
+PCTL       = 90          # percentile ข้ามจุดตัวอย่างรายวัน (100 = max)
 
 
+def percentile(values, p):
+    """Percentile แบบ linear interpolation (นิยามเดียวกับ numpy default) — pure python"""
+    vals = sorted(values)
+    if len(vals) == 1:
+        return vals[0]
+    rank = (p / 100) * (len(vals) - 1)
+    lo = int(rank)
+    hi = min(lo + 1, len(vals) - 1)
+    frac = rank - lo
+    return vals[lo] * (1 - frac) + vals[hi] * frac
 
 
-# ── Fetch one batch of provinces in a single API call ───────────────────────
-def fetch_batch(batch_names, centroids):
-    lats = ",".join(str(centroids[n]["lat"]) for n in batch_names)
-    lons = ",".join(str(centroids[n]["lon"]) for n in batch_names)
+# ── Fetch one batch of sample points in a single API call ───────────────────
+def fetch_batch(batch_pts):
+    """batch_pts: list of (province, {'lat','lon'}) → list of Open-Meteo results"""
+    lats = ",".join(str(pt["lat"]) for _, pt in batch_pts)
+    lons = ",".join(str(pt["lon"]) for _, pt in batch_pts)
 
     params = {
         "latitude":      lats,
@@ -69,40 +88,56 @@ def fetch_batch(batch_names, centroids):
 
 # ── Main ─────────────────────────────────────────────────────────────────────
 def main():
-    centroids   = load_centroids()
-    today       = date.today().isoformat()
-    names       = sorted(centroids.keys())
+    sample_pts = load_sample_points()
+    today      = date.today().isoformat()
+    names      = sorted(sample_pts.keys())
 
-    provinces_out = {}
-    shared_dates  = None
-    errors        = []
+    # flatten: [(province, {'lat','lon'}), ...] เรียงตามจังหวัดเพื่อความ deterministic
+    flat = [(name, pt) for name in names for pt in sample_pts[name]]
 
-    total_batches = (len(names) + BATCH_SIZE - 1) // BATCH_SIZE
-    print(f"Fetching {len(names)} provinces in {total_batches} batch(es) of ≤{BATCH_SIZE} ...")
+    # per-province daily series ของแต่ละจุด: {name: [[7 วัน], [7 วัน], ...]}
+    series       = {name: [] for name in names}
+    shared_dates = None
+    failed_provs = set()
 
-    for i in range(0, len(names), BATCH_SIZE):
-        batch = names[i : i + BATCH_SIZE]
+    total_batches = (len(flat) + BATCH_SIZE - 1) // BATCH_SIZE
+    print(f"Fetching {len(flat)} sample points across {len(names)} provinces "
+          f"in {total_batches} batch(es) of ≤{BATCH_SIZE} ...")
+
+    for i in range(0, len(flat), BATCH_SIZE):
+        batch = flat[i : i + BATCH_SIZE]
         batch_num = i // BATCH_SIZE + 1
-        print(f"\nBatch {batch_num}/{total_batches}: {batch[0]} … {batch[-1]} ({len(batch)} provinces)")
+        print(f"Batch {batch_num}/{total_batches}: {batch[0][0]} … {batch[-1][0]} ({len(batch)} pts)")
 
         try:
-            data = fetch_batch(batch, centroids)
-            for j, name in enumerate(batch):
+            data = fetch_batch(batch)
+            for j, (name, _pt) in enumerate(batch):
                 daily  = data[j]["daily"]
                 dates  = daily["time"][:DAYS]
-                values = [round(v, 1) if v is not None else 0.0
+                values = [v if v is not None else 0.0
                           for v in daily["precipitation_sum"][:DAYS]]
                 if shared_dates is None:
                     shared_dates = dates
-                rain_7d = round(sum(values), 1)
-                provinces_out[name] = {"rain_7d": rain_7d, "values": values}
-                print(f"  ✓ {name}: {rain_7d} mm (forecast)")
+                series[name].append(values)
         except Exception as e:
             print(f"  ✗ batch {batch_num} failed: {e}", file=sys.stderr)
-            errors.extend(batch)
+            failed_provs.update(name for name, _ in batch)
 
-        if i + BATCH_SIZE < len(names):
+        if i + BATCH_SIZE < len(flat):
             time.sleep(1)   # 1s pause between batches
+
+    # ── Aggregate: daily p90 across sample points per province ──────────────
+    provinces_out = {}
+    for name in names:
+        pt_series = series[name]
+        if not pt_series:
+            continue  # ทุกจุดของจังหวัดนี้ fail
+        n_days = min(DAYS, min(len(s) for s in pt_series))
+        values = [round(percentile([s[d] for s in pt_series], PCTL), 1)
+                  for d in range(n_days)]
+        rain_7d = round(sum(values), 1)
+        provinces_out[name] = {"rain_7d": rain_7d, "values": values, "n_pts": len(pt_series)}
+        print(f"  ✓ {name}: {rain_7d} mm (p{PCTL} of {len(pt_series)} pts)")
 
     if not provinces_out:
         print("ERROR: No data fetched!", file=sys.stderr)
@@ -114,8 +149,10 @@ def main():
             "updated": today,
             "days":    DAYS,
             "dates":   shared_dates or [],
+            "method":  f"p{PCTL} of ≤6 sample points per province (deterministic grid)",
             "note":    (
-                f"พยากรณ์ปริมาณฝนสะสม {DAYS} วันข้างหน้า รายจังหวัด (centroid) · "
+                f"พยากรณ์ปริมาณฝนสะสม {DAYS} วันข้างหน้า รายจังหวัด "
+                f"(p{PCTL} จากหลายจุดตัวอย่างในเขตจังหวัด — จับฝนกระจุกเฉพาะจุดได้) · "
                 "Open-Meteo Forecast API · ฟรี ไม่ต้อง API key · อัปเดตทุกวัน"
             ),
         },
@@ -126,12 +163,14 @@ def main():
     with open(OUTPUT, "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=2)
 
-    ok  = len(provinces_out)
-    err = len(errors)
+    ok      = len(provinces_out)
+    missing = sorted(set(names) - set(provinces_out))
     print(f"\n✅ Saved {ok} provinces → {OUTPUT}")
-    if errors:
-        print(f"⚠️  Failed ({err}): {', '.join(errors)}", file=sys.stderr)
-        if err > ok:
+    if failed_provs:
+        print(f"⚠️  Batches failed touching: {', '.join(sorted(failed_provs))}", file=sys.stderr)
+    if missing:
+        print(f"⚠️  Missing provinces ({len(missing)}): {', '.join(missing)}", file=sys.stderr)
+        if len(missing) > ok:
             sys.exit(1)
 
 
