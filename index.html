@@ -892,6 +892,21 @@
         font-size: 8px;
         color: var(--muted);
       }
+      /* scrollbar บาง กลืนกับธีมมืด — กล่องข่าวข้าว */
+      #riceNewsContent {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(245, 192, 101, 0.3) transparent;
+      }
+      #riceNewsContent::-webkit-scrollbar {
+        width: 6px;
+      }
+      #riceNewsContent::-webkit-scrollbar-thumb {
+        background: rgba(245, 192, 101, 0.3);
+        border-radius: 3px;
+      }
+      #riceNewsContent::-webkit-scrollbar-thumb:hover {
+        background: rgba(245, 192, 101, 0.5);
+      }
 
       .pill-row {
         display: flex;
@@ -2001,7 +2016,10 @@
               </span>
               <span id="riceNewsUpdated" style="font-size: 9px; opacity: 0.55; font-weight: 400"></span>
             </div>
-            <div id="riceNewsContent" style="display: flex; flex-direction: column; gap: 5px"></div>
+            <div
+              id="riceNewsContent"
+              style="display: flex; flex-direction: column; gap: 5px; max-height: 232px; overflow-y: auto; padding-right: 4px"
+            ></div>
           </section>
 
           <section class="panel-block">
