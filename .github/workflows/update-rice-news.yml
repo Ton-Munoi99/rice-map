@@ -1,0 +1,43 @@
+name: Update Rice News (Google News RSS)
+
+on:
+  schedule:
+    # ทุก 8 ชั่วโมง (03:00, 11:00, 19:00 UTC = 10:00, 18:00, 02:00 BKK)
+    - cron: '0 3,11,19 * * *'
+  workflow_dispatch:  # กด trigger manual ได้
+
+jobs:
+  update-rice-news:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      # ใช้ urllib จาก stdlib เท่านั้น — ไม่ต้อง pip install
+
+      - name: Fetch Thai rice news from Google News RSS
+        run: python scripts/fetch_rice_news.py
+
+      - name: Commit and push
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/rice-news.json
+          if git diff --quiet && git diff --staged --quiet; then
+            echo "No changes."
+          else
+            git commit -m "auto: update rice news $(date +'%Y-%m-%d %H:%M')"
+            for i in 1 2 3; do
+              git pull --rebase origin main && git push && break
+              echo "Push attempt $i failed, retrying in 10s..."
+              sleep 10
+            done
+          fi

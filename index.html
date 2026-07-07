@@ -866,6 +866,33 @@
         margin: 2px 0;
       }
 
+      /* ข่าวข้าว — แถวข่าวคลิกได้ (สไตล์เดียวกับ ww-row) */
+      .news-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 7px;
+        padding: 5px 7px;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.05);
+        line-height: 1.4;
+        text-decoration: none;
+        transition: 0.15s ease;
+      }
+      .news-row:hover {
+        background: rgba(245, 192, 101, 0.12);
+      }
+      .news-row .news-title {
+        flex: 1;
+        color: var(--text-soft);
+        font-size: 10px;
+      }
+      .news-row .news-meta {
+        display: block;
+        margin-top: 2px;
+        font-size: 8px;
+        color: var(--muted);
+      }
+
       .pill-row {
         display: flex;
         flex-wrap: wrap;
@@ -1962,6 +1989,19 @@
               id="weatherWatchContent"
               style="display: flex; flex-direction: column; gap: 5px; font-size: 10px"
             ></div>
+          </section>
+
+          <!-- ── ข่าวข้าว Card ──────────────────────────────────────────────── -->
+          <section class="panel-block" id="riceNewsPanel" style="display: none">
+            <div class="panel-label" style="display: flex; justify-content: space-between; align-items: center">
+              <span>
+                📰
+                <span class="th-t">ข่าวข้าวล่าสุด</span>
+                <span class="en-t">Rice News</span>
+              </span>
+              <span id="riceNewsUpdated" style="font-size: 9px; opacity: 0.55; font-weight: 400"></span>
+            </div>
+            <div id="riceNewsContent" style="display: flex; flex-direction: column; gap: 5px"></div>
           </section>
 
           <section class="panel-block">
@@ -7776,6 +7816,51 @@ ${warningsHtml}
         panel.style.display = "";
       }
 
+      // ── ข่าวข้าว (Google News RSS) ────────────────────────────────────────
+      async function fetchRiceNews() {
+        try {
+          const r = await fetch("data/rice-news.json?_=" + Date.now(), { cache: "no-store" });
+          if (!r.ok) return;
+          window.RICE_NEWS = await r.json();
+          renderRiceNews();
+        } catch (e) {
+          console.info("rice-news.json not available");
+        }
+      }
+
+      function renderRiceNews() {
+        const panel = document.getElementById("riceNewsPanel");
+        const content = document.getElementById("riceNewsContent");
+        const upd = document.getElementById("riceNewsUpdated");
+        if (!panel || !content) return;
+
+        const items = window.RICE_NEWS?.items || [];
+        if (items.length === 0) {
+          panel.style.display = "none";
+          return;
+        }
+
+        // escape ข้อความจากแหล่งภายนอกก่อนใส่ innerHTML (กัน HTML/quote พัง)
+        const esc = (s) =>
+          String(s ?? "").replace(
+            /[&<>"']/g,
+            (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
+          );
+
+        content.innerHTML = items
+          .map(
+            (n) => `<a class="news-row" href="${esc(n.url)}" target="_blank" rel="noopener noreferrer">
+          <span style="font-size:12px;line-height:1.2">${esc(n.icon || "📰")}</span>
+          <span class="news-title">${esc(n.title)}
+            <span class="news-meta">${esc(n.source)} · ${esc(n.date)}</span>
+          </span>
+        </a>`,
+          )
+          .join("");
+        if (upd && window.RICE_NEWS?._meta?.updated) upd.textContent = window.RICE_NEWS._meta.updated;
+        panel.style.display = "";
+      }
+
       async function init() {
         if (!window.THAILAND_GEO?.features?.length) {
           toast("โหลดข้อมูลแผนที่ไม่สำเร็จ");
@@ -7788,6 +7873,7 @@ ${warningsHtml}
         fetchMillsData();
         fetchHouseholds();
         fetchStormAlerts();
+        fetchRiceNews();
         fetchLayerData("ndvi.json", "NDVI_DATA", "ndvi");
         fetchLayerData("rice-evi.json", "RICE_EVI_DATA", "riceEvi");
         fetchLayerData("rain-daily.json", "RAIN_DATA", "rain");
