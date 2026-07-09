@@ -1646,20 +1646,6 @@
         z-index: 9999;
         user-select: none;
       }
-      /* ── Signature layer 2: CSS pseudo-element (ลบจาก HTML ไม่ได้) ── */
-      body::after {
-        content: "Created by Sponlapat";
-        position: fixed;
-        bottom: 10px;
-        left: 16px;
-        font-family: "IBM Plex Mono", monospace;
-        font-size: 10px;
-        letter-spacing: 0.08em;
-        color: rgba(255, 255, 255, 0.22);
-        pointer-events: none;
-        z-index: 9998;
-        user-select: none;
-      }
 
       /* ── Live Price Widget ── */
       .live-price-block {
@@ -2060,8 +2046,6 @@
                 <span class="th-t">🏭 โรงสีข้าว</span>
                 <span class="en-t">🏭 Rice Mills</span>
               </button>
-              <!-- profit layer hidden per request — code retained (valueOf/tooltip/detail card still handle 'profit') -->
-              <!-- <button class="pill" data-layer="profit" onclick="setLayer('profit')"><span class="th-t">💰 กำไร/ขาดทุน</span><span class="en-t">💰 Profit/Loss</span></button> -->
               <button class="pill" data-layer="straw" onclick="setLayer('straw')">
                 <span class="th-t">🌾 ฟางข้าว</span>
                 <span class="en-t">🌾 Rice Straw</span>
@@ -2102,11 +2086,6 @@
                 <span class="th-t">🌾 สภาพนาข้าว</span>
                 <span class="en-t">🌾 Rice Paddy Status</span>
               </button>
-              <!-- Hidden layers: code retained, buttons removed for cleaner UI -->
-              <!-- <button class="pill" data-layer="rainfall" onclick="setLayer('rainfall')"><span class="th-t">ปริมาณฝน (มม.)</span><span class="en-t">Season Rainfall</span></button> -->
-              <!-- <button class="pill" data-layer="drought" onclick="setLayer('drought')"><span class="th-t">ฝนเบี่ยงเบนจากปกติ</span><span class="en-t">Rainfall Anomaly</span></button> -->
-              <!-- <button class="pill" data-layer="ndvi" onclick="setLayer('ndvi')"><span class="th-t">🌿 ดัชนีพืชพรรณ</span><span class="en-t">🌿 Vegetation (NDVI)</span></button> -->
-              <!-- <button class="pill" data-layer="rain" onclick="setLayer('rain')"><span class="th-t">🌧 ฝน 7 วันล่าสุด</span><span class="en-t">🌧 Rain (7-Day)</span></button> -->
             </div>
           </section>
 
@@ -7522,43 +7501,6 @@ ${warningsHtml}
         toastTimer = setTimeout(() => refs.toast.classList.remove("show"), 2200);
       }
 
-      async function fetchBiomassData() {
-        try {
-          const res = await fetch("data/biomass-plants.json?_=" + Date.now(), { cache: "no-store" });
-          if (res.ok) {
-            window.BIOMASS_DATA = await res.json();
-            if (S.layer === "biomass") rerender();
-            else if (S.sel) selectProvince(S.sel);
-          }
-        } catch (e) {
-          console.info("biomass-plants.json not available");
-        }
-      }
-
-      async function fetchWaterLevelData() {
-        try {
-          const res = await fetch("data/water-level.json?_=" + Date.now(), { cache: "no-store" });
-          if (res.ok) {
-            window.WATERLEVEL_DATA = await res.json();
-            if (isPointLayer()) rerender();
-          }
-        } catch (e) {
-          console.info("water-level.json not available (local mode)");
-        }
-      }
-
-      async function fetchRainStationData() {
-        try {
-          const res = await fetch("data/rain-stations.json?_=" + Date.now(), { cache: "no-store" });
-          if (res.ok) {
-            window.RAINSTATION_DATA = await res.json();
-            if (isPointLayer()) rerender();
-          }
-        } catch (e) {
-          console.info("rain-stations.json not available (local mode)");
-        }
-      }
-
       async function fetchDamData() {
         try {
           const res = await fetch("data/dam-water.json?_=" + Date.now(), { cache: "no-store" });
@@ -7571,37 +7513,16 @@ ${warningsHtml}
       }
 
       // โหลดข้อมูล layer แบบมาตรฐาน: rerender ถ้ากำลังดู layer นั้น ไม่งั้นอัปเดต detail card
-      async function fetchLayerData(file, globalName, layerKey) {
+      async function fetchLayerData(file, globalName, layerKey, onLoad) {
         try {
           const r = await fetch(`data/${file}?_=` + Date.now(), { cache: "no-store" });
           if (!r.ok) return;
           window[globalName] = await r.json();
-          if (S.layer === layerKey) rerender();
+          if (onLoad) onLoad();
+          else if (S.layer === layerKey) rerender();
           else if (S.sel) selectProvince(S.sel);
         } catch (e) {
           console.info(`${file} not available`);
-        }
-      }
-
-      async function fetchSoilMoistureData() {
-        try {
-          const r = await fetch("data/soil-moisture.json?_=" + Date.now(), { cache: "no-store" });
-          if (!r.ok) return;
-          window.SOIL_DATA = await r.json();
-          if (S.layer === "soilMoisture") rerender();
-        } catch (e) {
-          console.info("soil-moisture.json not available");
-        }
-      }
-
-      async function fetchDiseaseData() {
-        try {
-          const r = await fetch("data/disease-risk.json?_=" + Date.now(), { cache: "no-store" });
-          if (!r.ok) return;
-          window.DISEASE_DATA = await r.json();
-          if (S.sel) selectProvince(S.sel);
-        } catch (e) {
-          console.info("disease-risk.json not available");
         }
       }
 
@@ -7898,11 +7819,19 @@ ${warningsHtml}
         fetchLayerData("rain-gsmap.json", "GSMAP_DATA", "gsmap");
         fetchLayerData("rain-forecast.json", "FORECAST_DATA", "forecast");
         fetchLayerData("agri-warnings.json", "ALERTS_DATA", "alerts");
-        fetchSoilMoistureData();
-        fetchWaterLevelData();
-        fetchRainStationData();
-        fetchBiomassData();
-        fetchDiseaseData();
+        fetchLayerData("soil-moisture.json", "SOIL_DATA", "soilMoisture", () => {
+          if (S.layer === "soilMoisture") rerender();
+        });
+        fetchLayerData("water-level.json", "WATERLEVEL_DATA", "waterlevel", () => {
+          if (isPointLayer()) rerender();
+        });
+        fetchLayerData("rain-stations.json", "RAINSTATION_DATA", "rainstation", () => {
+          if (isPointLayer()) rerender();
+        });
+        fetchLayerData("biomass-plants.json", "BIOMASS_DATA", "biomass");
+        fetchLayerData("disease-risk.json", "DISEASE_DATA", null, () => {
+          if (S.sel) selectProvince(S.sel);
+        });
         updateNationalFert();
 
         VIEW.features = window.THAILAND_GEO.features.filter((feature) => allEN.includes(feature.properties.name));
@@ -8230,46 +8159,5 @@ ${warningsHtml}
       init();
     </script>
     <div class="credit">Created by Sponlapat</div>
-    <!-- Signature layer 3: MutationObserver guard (re-injects if removed) -->
-    <script>
-      (function () {
-        var _txt = [
-          "C",
-          "r",
-          "e",
-          "a",
-          "t",
-          "e",
-          "d",
-          " ",
-          "b",
-          "y",
-          " ",
-          "S",
-          "p",
-          "o",
-          "n",
-          "l",
-          "a",
-          "p",
-          "a",
-          "t",
-        ].join("");
-        var _sty =
-          "position:fixed;bottom:10px;left:16px;font-family:IBM Plex Mono,monospace;font-size:10px;letter-spacing:.08em;color:rgba(255,255,255,.22);pointer-events:none;z-index:9999;user-select:none";
-        function _g() {
-          var el = document.querySelector(".credit");
-          if (!el) {
-            el = document.createElement("div");
-            el.className = "credit";
-            document.body.appendChild(el);
-          }
-          if (el.textContent !== _txt) el.textContent = _txt;
-          el.setAttribute("style", _sty);
-        }
-        _g();
-        new MutationObserver(_g).observe(document.body, { childList: true, subtree: true, characterData: true });
-      })();
-    </script>
   </body>
 </html>
