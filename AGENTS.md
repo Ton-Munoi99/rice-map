@@ -36,7 +36,7 @@ PDF price files: drop `price_DDMMYYYY.pdf` into `data/prices/` and push — GitH
 
 ## Architecture
 
-### Single-page app — `index.html` (~3,800 lines)
+### Single-page app — `index.html` (~8,200 lines)
 
 Everything is in one file: CSS (top), HTML structure (middle), JS (bottom, inside `<script>`). No framework.
 
@@ -69,6 +69,8 @@ Mutate `S` then call `rerender()`. Never read DOM state — always read from `S`
 
 **Data flow:** `valueOf(en, rice, year, layer)` → dispatches to per-layer value functions → `rerender()` → SVG fill colors via `getPalette()` + `lerp()`.
 
+**Current layers (18):** `production`, `yield`, `area`, `naprang`, `naprangArea`, `households`, `price`, `mills`, `straw`, `biomass`, `dam`, `gsmap`, `forecast`, `waterlevel`, `rainstation`, `alerts` (flood risk), `soilMoisture`, `riceEvi`. The `profit` layer's code exists but its button is hidden. Sidebar also has non-layer cards: Weather Watch (`storm-alerts.json`) and Rice News (`rice-news.json`).
+
 **Profit formula:** `(price ฿/ton × yield kg/rai / 1000) − COST_BASE[rice].oaeRaiCost`
 
 **Fertilizer ratio card:** shown in province detail when `layer !== "profit"` — bags of urea (46-0-0) per ton of rice = `ricePricePerTon / ureaMidPrice`; bags needed per rai = `FERT_DOA_RATES["46-0-0"] / 50 = 0.2`.
@@ -78,24 +80,27 @@ Mutate `S` then call `rerender()`. Never read DOM state — always read from `S`
 | File | Contents |
 |------|---------|
 | `rice-data.js` | Sets `window.RICE_DATA_ROWS` — ~4,000 rows, นาปี only (OAE Table 1.4), white + jasmine |
-| `thailand-data.js` | Sets `window.THAILAND_SVG_DATA` — SVG paths for all 77 provinces |
+| `naprang-data.js` | Sets `window.NAPRANG_DATA_ROWS` — second-crop (นาปรัง) production + harvested area by province, 2565–2568 (OAE naprang PDFs) |
+| `thailand-data.js` | Sets `window.THAILAND_GEO` — province polygons (GeoJSON) for all 77 provinces |
 
 ### JSON data files (`data/`)
 
-Auto-updated by GitHub Actions crons:
-- `dam-water.json` — RID dam levels (daily, 16:00 + 18:00 BKK)
-- `prices-live.json` — Thai Rice Millers Association prices
-- `trea-fob.json` — TREA FOB export prices
-- `weather-province.json` + `weather-forecast.json` — Open-Meteo rainfall data
-- `rice-mills.json` — DIT registered mills (built from Excel, not auto-updated)
+Auto-updated by GitHub Actions crons (23 files total). Key ones:
+- `prices-live.json` — Thai Rice Millers Association prices · `trea-fob.json` — TREA FOB export prices
+- `dam-water.json` — RID dam levels · `water-level.json` + `rain-stations.json` — ThaiWater station snapshots
+- `rain-daily.json` (Open-Meteo 7-day past) · `rain-forecast.json` (Open-Meteo 7-day forecast, multi-point p90) · `rain-gsmap.json` (JAXA GSMaP satellite)
+- `agri-warnings.json` — synthesized flood/drought risk · `storm-alerts.json` — GDACS storms · `disease-risk.json`
+- `soil-moisture.json` (NASA SMAP) · `ndvi.json` + `rice-evi.json` (+ `-district`/`-validation`) — MODIS/GLAD satellite
+- `rice-news.json` — Google News RSS (Thai rice news, 3×/day)
+- Not auto-updated: `rice-mills.json` (built from DIT Excel), `biomass-plants.json` (DEDE 2565 PDF), `districts-geo.json`
 
 ### GitHub Actions
 
-8 workflows in `.github/workflows/`. All commit directly to `main` using `git pull --rebase` before push to avoid conflicts with concurrent runs.
+14 workflows in `.github/workflows/`. All commit directly to `main` using `git pull --rebase` before push to avoid conflicts with concurrent runs.
 
 ## Important Constraints
 
-- **ข้อมูลนาปีเท่านั้น** — All `rice-data.js` data is main-season (นาปี) from OAE Table 1.4. No second-crop (นาปรัง) data exists in this repo.
+- **`rice-data.js` = นาปีเท่านั้น** — main-season (นาปี) from OAE Table 1.4. Second-crop (นาปรัง) data lives separately in `naprang-data.js` and drives the `naprang` / `naprangArea` layers.
 - **ข้าวขาว = OAE "ข้าวเจ้าอื่นๆ"** — excludes glutinous rice (ข้าวเหนียว) and Pathum Thani 1
 - **Year keys are Thai Buddhist Era strings** — `"2567"` not `2567` (number)
 - **Province keys are English names** — matching `NM` lookup map and `thailand-data.js`

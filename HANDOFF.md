@@ -1,6 +1,15 @@
 # Rice Map Handoff
 
-Last updated: 2026-07-09 by Codex
+Last updated: 2026-07-09 by Claude Code
+
+## Log
+
+- 2026-07-09 (Claude): Corrected stale facts in `AGENTS.md` — it had been copied
+  from an older `CLAUDE.md` and no longer matched the repo. Fixed: line count
+  (~3,800 → ~8,200), workflow count (8 → 14), the "no นาปรัง data" constraint
+  (naprang-data.js exists and drives the naprang/naprangArea layers), the JSON
+  data-file list (23 files), the `thailand-data.js` global (`THAILAND_GEO`, not
+  `THAILAND_SVG_DATA`), and added the current 18-layer list. Docs-only, no code.
 
 ## Read First
 
