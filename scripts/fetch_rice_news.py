@@ -9,7 +9,7 @@ then post-filter to drop off-topic hits (wheat/corn/foreign-market/food-dish),
 dedupe by normalized title, and keep the newest N.
 
 Output: data/rice-news.json
-  { _meta: {source, updated, query, count}, items: [{title, source, date, url, icon}] }
+  { _meta: {source, updated, query, count}, items: [{title, source, date, url}] }
 Headlines only (facts) + source attribution + link — no article text scraped.
 """
 import sys, io, os, re, json, html, urllib.parse, urllib.request
@@ -50,7 +50,7 @@ def strip_source_suffix(title, source):
     title = html.unescape(title).strip()
     if source and title.endswith(f"- {source}"):
         title = title[: -len(f"- {source}")].strip()
-    return re.sub(r"\s*-\s*[^-]+$", "", title) if title.count(" - ") == 0 and title.endswith(("-",)) else title
+    return title
 
 
 def norm(title):
@@ -111,7 +111,6 @@ def main():
             "source": source,
             "date": iso,
             "url": link,
-            "icon": "📰",
         })
 
     # newest first, keep top N

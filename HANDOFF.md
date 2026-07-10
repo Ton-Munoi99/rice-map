@@ -4,6 +4,14 @@ Last updated: 2026-07-09 by Claude Code
 
 ## Log
 
+- 2026-07-09 (Claude): Applied /ponytail-review cuts, all behavior-preserving:
+  stdlib `statistics.quantiles` replaces the hand-rolled percentile in
+  `fetch_rain_forecast.py` (proved identical on 4,500 random cases, p85/90/95,
+  2-6 points); dropped the unread `n_pts` field from rain-forecast output;
+  deleted a dead no-op ternary in `fetch_rice_news.py`; removed the constant
+  per-item `icon` field (renderer hardcodes it); inlined the never-passed
+  `grid` param in `load_sample_points` (sample points verified byte-identical
+  to main). Live rice-news run + JS syntax + py_compile all green.
 - 2026-07-09 (Claude): Corrected stale facts in `AGENTS.md` — it had been copied
   from an older `CLAUDE.md` and no longer matched the repo. Fixed: line count
   (~3,800 → ~8,200), workflow count (8 → 14), the "no นาปรัง data" constraint

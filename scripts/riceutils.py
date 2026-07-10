@@ -170,13 +170,14 @@ def _point_in_geom(lon, lat, geom):
     return False
 
 
-def load_sample_points(js_path=None, max_pts=6, grid=5):
+def load_sample_points(js_path=None, max_pts=6):
     """จุดตัวอย่างหลายจุดกระจายในเขตจังหวัด → { name: [{lat, lon}, ...] }
 
     Deterministic (ตาราง grid ตายตัว ไม่มี random) เพื่อให้ผลรันซ้ำได้เหมือนเดิม
     ใช้จับฝนกระจุกเฉพาะจุด (เช่น orographic แถบเทือกเขา) ที่ centroid จุดเดียวพลาด
     จังหวัดใน CENTROID_OVERRIDE (geometry เพี้ยน) ใช้จุด override จุดเดียว
     """
+    grid = 5  # 5×5 candidate grid ต่อจังหวัด
     geo = _load_geo(js_path)
     centroids = load_centroids(js_path)
     out = {}
