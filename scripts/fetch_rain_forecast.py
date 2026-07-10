@@ -15,7 +15,7 @@ Output: data/rain-forecast.json
 Shape ไม่เปลี่ยนจากเดิม: provinces[name] = {rain_7d, values[7]} — downstream
 (index.html, fetch_agri_warnings.py) ใช้ต่อได้โดยไม่ต้องแก้
 """
-import json, os, re, sys, time, io
+import json, os, re, statistics, sys, time, io
 import requests
 from datetime import date
 from riceutils import load_sample_points
@@ -33,15 +33,11 @@ PCTL       = 90          # percentile ข้ามจุดตัวอย่า
 
 
 def percentile(values, p):
-    """Percentile แบบ linear interpolation (นิยามเดียวกับ numpy default) — pure python"""
-    vals = sorted(values)
-    if len(vals) == 1:
-        return vals[0]
-    rank = (p / 100) * (len(vals) - 1)
-    lo = int(rank)
-    hi = min(lo + 1, len(vals) - 1)
-    frac = rank - lo
-    return vals[lo] * (1 - frac) + vals[hi] * frac
+    """Linear-interpolation percentile (นิยามเดียวกับ numpy default)"""
+    # ponytail: stdlib quantiles แทนสูตรเขียนเอง — พิสูจน์แล้วค่าตรงกันทุกกรณี 2-6 จุด
+    if len(values) == 1:
+        return values[0]
+    return statistics.quantiles(values, n=100, method="inclusive")[p - 1]
 
 
 # ── Fetch one batch of sample points in a single API call ───────────────────
@@ -136,7 +132,7 @@ def main():
         values = [round(percentile([s[d] for s in pt_series], PCTL), 1)
                   for d in range(n_days)]
         rain_7d = round(sum(values), 1)
-        provinces_out[name] = {"rain_7d": rain_7d, "values": values, "n_pts": len(pt_series)}
+        provinces_out[name] = {"rain_7d": rain_7d, "values": values}
         print(f"  ✓ {name}: {rain_7d} mm (p{PCTL} of {len(pt_series)} pts)")
 
     if not provinces_out:
