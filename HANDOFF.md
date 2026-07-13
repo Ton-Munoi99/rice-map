@@ -4,6 +4,12 @@ Last updated: 2026-07-09 by Claude Code
 
 ## Log
 
+- 2026-07-10 (Claude): Added data-freshness monitor. `scripts/check_data_freshness.py`
+  compares each data file's last git-commit age against a per-file threshold
+  (~3x its cron cadence); `check-data-freshness.yml` runs it daily at 12:00 UTC.
+  A stale file fails the run, and GitHub's failure email is the alert — no
+  issue-management code. 19 files monitored; manual/static files excluded.
+  Verified: live run all-fresh (exit 0) and simulated-stale exits 1.
 - 2026-07-09 (Claude): Applied /ponytail-review cuts, all behavior-preserving:
   stdlib `statistics.quantiles` replaces the hand-rolled percentile in
   `fetch_rain_forecast.py` (proved identical on 4,500 random cases, p85/90/95,
