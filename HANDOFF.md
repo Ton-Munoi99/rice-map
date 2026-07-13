@@ -4,6 +4,12 @@ Last updated: 2026-07-09 by Claude Code
 
 ## Log
 
+- 2026-07-13 (Claude): URL hash state — the app now reads `#layer=…&rice=…&year=…&reg=…&sel=…`
+  on load (`applyHash`, whitelist-validated against layerMeta/RICE_TYPES/REG_KEYS/allEN)
+  and writes it back on every state change (`syncHash` in rerender + selectProvince,
+  `history.replaceState`, defaults omitted so the base URL stays clean). Shareable
+  deep links, e.g. `#layer=forecast&sel=Trat`. Verified in Playwright: inbound apply,
+  click→hash update, garbage hash rejected without errors.
 - 2026-07-10 (Claude): Added data-freshness monitor. `scripts/check_data_freshness.py`
   compares each data file's last git-commit age against a per-file threshold
   (~3x its cron cadence); `check-data-freshness.yml` runs it daily at 12:00 UTC.
