@@ -5430,6 +5430,7 @@
 
       function selectProvince(en) {
         S.sel = en;
+        syncHash();
         hideTooltip();
         refs.detailCard.classList.add("show");
         refs.detailPlaceholder.style.display = "none";
@@ -7291,6 +7292,38 @@ ${warningsHtml}
         } else {
           renderMapLabels();
         }
+        syncHash();
+      }
+
+      // ── URL hash state — แชร์ลิงก์เจาะจง layer/จังหวัด/ปี ได้ ────────────────
+      let hashApplied = false; // กัน rerender เขียนทับ hash ขาเข้าก่อน applyHash รัน
+
+      function syncHash() {
+        if (!hashApplied) return;
+        const p = new URLSearchParams();
+        if (S.layer !== "production") p.set("layer", S.layer);
+        if (S.rice !== "white") p.set("rice", S.rice);
+        if (S.year !== yearsForLayer()[yearsForLayer().length - 1]) p.set("year", S.year);
+        if (S.reg !== "all") p.set("reg", S.reg);
+        if (S.sel) p.set("sel", S.sel);
+        const h = p.toString();
+        history.replaceState(null, "", h ? "#" + h : location.pathname + location.search);
+      }
+
+      function applyHash() {
+        const p = new URLSearchParams(location.hash.slice(1));
+        const layer = p.get("layer");
+        if (layer && layerMeta[layer]) S.layer = layer;
+        const rice = p.get("rice");
+        if (RICE_TYPES.includes(rice)) S.rice = rice;
+        const years = yearsForLayer();
+        const year = p.get("year");
+        S.year = years.includes(year) ? year : years[years.length - 1];
+        const reg = p.get("reg");
+        if (reg && (reg === "all" || REG_KEYS.includes(reg))) S.reg = reg;
+        const sel = p.get("sel");
+        if (sel && allEN.includes(sel) && getVisibleProvinces().includes(sel)) S.sel = sel;
+        hashApplied = true;
       }
 
       function resize() {
@@ -7836,6 +7869,7 @@ ${warningsHtml}
 
         VIEW.features = window.THAILAND_GEO.features.filter((feature) => allEN.includes(feature.properties.name));
         VIEW.featureMap = new Map(VIEW.features.map((feature) => [feature.properties.name, feature]));
+        applyHash();
         updateControls();
         initMapInteractions();
         resize();
