@@ -1,0 +1,20 @@
+name: Check Data Freshness
+
+on:
+  schedule:
+    # ทุกวัน 12:00 UTC (19:00 BKK) — หลังรอบ cron เช้าทั้งหมดควรรันจบแล้ว
+    - cron: '0 12 * * *'
+  workflow_dispatch:
+
+jobs:
+  check-freshness:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout with history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # ต้องมี git history เพื่ออ่านอายุ commit ของแต่ละไฟล์
+
+      # run แดง = มีไฟล์ stale → GitHub อีเมลแจ้งเจ้าของ repo อัตโนมัติ
+      - name: Check data file freshness
+        run: python scripts/check_data_freshness.py
