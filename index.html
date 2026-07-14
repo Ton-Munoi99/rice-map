@@ -7373,6 +7373,8 @@ ${warningsHtml}
 
       function setLayer(layer) {
         S.layer = layer;
+        // นาปรัง = ข้าวเจ้าไม่ไวแสง (รวมทุกพันธุ์) — หอมมะลิไม่มีนาปรัง จึงสลับเป็นข้าวขาวอัตโนมัติ
+        if ((layer === "naprang" || layer === "naprangArea") && S.rice === "jasmine") S.rice = "white";
         if (!yearsForLayer(layer).includes(S.year)) {
           S.year = yearsForLayer(layer)[yearsForLayer(layer).length - 1];
         }
