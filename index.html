@@ -3716,6 +3716,19 @@
           return;
         }
 
+        if ((S.layer === "naprang" || S.layer === "naprangArea") && S.rice === "jasmine") {
+          el.style.setProperty("--rst-accent", cfg.accent);
+          el.style.setProperty("--rst-border", cfg.border);
+          el.innerHTML = `
+        <h4>${cfg.icon} ${t(cfg.title[0], cfg.title[1])}</h4>
+        <div style="font-size:10px;line-height:1.5;max-width:220px">${t(
+          'ℹ️ ข้าวหอมมะลิเป็นข้าวไวแสง ปลูกได้เฉพาะฤดูนาปี ไม่มีข้อมูลนาปรัง เลือก "ข้าวขาว" เพื่อดู',
+          'ℹ️ Jasmine is photoperiod-sensitive, grown only in the main season — no second-crop data. Switch to "White Rice" to view.',
+        )}</div>`;
+          el.classList.add("show");
+          return;
+        }
+
         el.style.setProperty("--rst-accent", cfg.accent);
         el.style.setProperty("--rst-border", cfg.border);
 
