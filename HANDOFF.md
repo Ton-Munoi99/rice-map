@@ -4,6 +4,16 @@ Last updated: 2026-07-09 by Claude Code
 
 ## Log
 
+- 2026-07-14 (Claude): Alert scoreboard — `scripts/score_alerts.py` measures 7-day
+  rain-forecast accuracy against GSMaP satellite actual, matched by exact date
+  window (forecast for D..D+6 scored ~7 days later when GSMaP covers the same
+  dates; unmatched = never scored, no guessing). Runs as a step in
+  update-rain.yml (forecast+gsmap fresh in one run); writes
+  `data/alert-scoreboard.json` (rolling over last 60 windows). Sidebar card
+  🎯 shows heavy-alert precision/recall, any-rain accuracy, MAE/bias; hidden
+  until the first window matures (~7 days, rolling=null). Verified: confusion/
+  rollup unit math, end-to-end scoring (fc=actual → MAE 0, precision 1.0),
+  idempotent re-run, card shows/hides correctly, null-precision edge → "—".
 - 2026-07-13 (Claude): URL hash state — the app now reads `#layer=…&rice=…&year=…&reg=…&sel=…`
   on load (`applyHash`, whitelist-validated against layerMeta/RICE_TYPES/REG_KEYS/allEN)
   and writes it back on every state change (`syncHash` in rerender + selectProvince,

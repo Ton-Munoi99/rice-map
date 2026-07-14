@@ -2008,6 +2008,19 @@
             ></div>
           </section>
 
+          <!-- ── ความแม่นระบบเตือน Card ────────────────────────────────────────── -->
+          <section class="panel-block" id="scoreboardPanel" style="display: none">
+            <div class="panel-label" style="display: flex; justify-content: space-between; align-items: center">
+              <span>
+                🎯
+                <span class="th-t">ความแม่นระบบเตือน</span>
+                <span class="en-t">Forecast Accuracy</span>
+              </span>
+              <span id="scoreboardUpdated" style="font-size: 9px; opacity: 0.55; font-weight: 400"></span>
+            </div>
+            <div id="scoreboardContent" style="font-size: 10px; line-height: 1.5"></div>
+          </section>
+
           <section class="panel-block">
             <div class="panel-label">
               <span class="th-t">ชั้นข้อมูล</span>
@@ -7833,6 +7846,45 @@ ${warningsHtml}
         panel.style.display = "";
       }
 
+      // ── ความแม่นระบบเตือน (alert scoreboard) ──────────────────────────────
+      async function fetchScoreboard() {
+        try {
+          const r = await fetch("data/alert-scoreboard.json?_=" + Date.now(), { cache: "no-store" });
+          if (!r.ok) return;
+          window.SCOREBOARD = await r.json();
+          renderScoreboard();
+        } catch (e) {
+          console.info("alert-scoreboard.json not available");
+        }
+      }
+
+      function renderScoreboard() {
+        const panel = document.getElementById("scoreboardPanel");
+        const content = document.getElementById("scoreboardContent");
+        const upd = document.getElementById("scoreboardUpdated");
+        if (!panel || !content) return;
+
+        const r = window.SCOREBOARD?.rolling;
+        // ช่วง ~7 วันแรกยังไม่มี window ครบกำหนด → ซ่อน (rolling = null)
+        if (!r || !r.windows_scored) {
+          panel.style.display = "none";
+          return;
+        }
+
+        const pct = (v) => (v == null ? "—" : Math.round(v * 100) + "%");
+        const bias = r.bias_mm;
+        const biasTxt = bias == null ? "—" : (bias > 0 ? "+" : "") + bias + " มม.";
+        content.innerHTML = `
+          <div style="color:var(--muted);font-size:9px;margin-bottom:4px">${t("พยากรณ์ฝน 7 วัน เทียบฝนจริงดาวเทียม", "7-day forecast vs satellite actual")}</div>
+          <div style="display:flex;justify-content:space-between"><span>🔴 ${t("เตือนหนักแล้วตกจริง", "Heavy-alert hit")}</span><strong>${pct(r.heavy.precision)}</strong></div>
+          <div style="display:flex;justify-content:space-between"><span>${t("ตกหนักจริง เตือนทัน", "Caught heavy rain")}</span><strong>${pct(r.heavy.recall)}</strong></div>
+          <div style="display:flex;justify-content:space-between"><span>${t("มีฝน (≥30มม.) แม่น", "Any-rain accuracy")}</span><strong>${pct(r.any.accuracy)}</strong></div>
+          <div style="display:flex;justify-content:space-between;color:var(--muted);font-size:9px;margin-top:3px"><span>${t("คลาดเฉลี่ย / เอนเอียง", "MAE / bias")}</span><span>${r.mae_mm ?? "—"} / ${biasTxt}</span></div>
+          <div style="color:var(--muted);font-size:8px;margin-top:4px">${t(`อิง ${r.windows_scored} ช่วง · ${r.province_days} จังหวัด-วัน`, `${r.windows_scored} windows · ${r.province_days} province-days`)}</div>`;
+        if (upd && window.SCOREBOARD?._meta?.updated) upd.textContent = window.SCOREBOARD._meta.updated;
+        panel.style.display = "";
+      }
+
       async function init() {
         if (!window.THAILAND_GEO?.features?.length) {
           toast("โหลดข้อมูลแผนที่ไม่สำเร็จ");
@@ -7846,6 +7898,7 @@ ${warningsHtml}
         fetchHouseholds();
         fetchStormAlerts();
         fetchRiceNews();
+        fetchScoreboard();
         fetchLayerData("ndvi.json", "NDVI_DATA", "ndvi");
         fetchLayerData("rice-evi.json", "RICE_EVI_DATA", "riceEvi");
         fetchLayerData("rain-daily.json", "RAIN_DATA", "rain");
