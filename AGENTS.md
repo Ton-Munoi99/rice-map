@@ -32,8 +32,6 @@ python scripts/fetch_weather.py
 python scripts/fetch_weather_forecast.py
 ```
 
-PDF price files: drop `price_DDMMYYYY.pdf` into `data/prices/` and push — GitHub Actions auto-extracts via `process-pdf-prices.yml`.
-
 ## Architecture
 
 ### Single-page app — `index.html` (~8,200 lines)

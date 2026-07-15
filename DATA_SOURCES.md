@@ -82,8 +82,8 @@
 
 ### 🏭 โรงสีข้าว
 - **ข้อมูล:** **กรมการค้าภายใน (DIT)** — โรงสีจดทะเบียน (จำนวน + ขนาด ใหญ่/กลาง/เล็ก)
-- **ลิงก์ตรง (API):** <https://www.dit.go.th/api/RiceTradeApi/SearchRiceTrade> · เว็บ DIT <https://www.dit.go.th/>
-- **สคริปต์:** `scripts/fetch_rice_mills_api.py`
+- **ลิงก์:** เว็บ DIT <https://www.dit.go.th/> (ส่งออกเป็น Excel `thai_rice_mills_dit_YYYY-MM-DD.xlsx`)
+- **สคริปต์:** `scripts/build_rice_mills.py` (สร้าง `data/rice-mills.json` จาก Excel export)
 
 ### 👨‍🌾 ครัวเรือนเกษตรกร
 - **ข้อมูล:** **OAE ปี 2566** — จำนวนครัวเรือนเกษตรกร (รวมทุกสินค้า ไม่เฉพาะข้าว)
@@ -230,7 +230,7 @@
 | ราคาปุ๋ย / อัตราปุ๋ย | MOC / กรมการข้าว | ราชการ | [dit.go.th](https://www.dit.go.th/) · [ricethailand.go.th](https://www.ricethailand.go.th/) | (index.html) |
 | ฟางข้าว | OAE × RPR/SAF (พพ.) | คำนวณ | [kc.dede.go.th](https://kc.dede.go.th/) | (index.html) |
 | โรงไฟฟ้าชีวมวล | DEDE 2565 | ราชการ | [kc.dede…p=231](https://kc.dede.go.th/knowledge-view.aspx?p=231) | data/biomass-plants.json |
-| โรงสีข้าว | DIT | ราชการ (API) | [dit.go.th/api/RiceTradeApi](https://www.dit.go.th/api/RiceTradeApi/SearchRiceTrade) | fetch_rice_mills_api.py |
+| โรงสีข้าว | DIT (Excel export) | ราชการ | [dit.go.th](https://www.dit.go.th/) | build_rice_mills.py |
 | ครัวเรือนเกษตรกร | OAE 2566 | ราชการ | [catalog.oae.go.th](https://catalog.oae.go.th/) | data/farmer_households.csv |
 | พยากรณ์ฝน 7 วัน | Open-Meteo (p90) | โมเดล (API) | [api.open-meteo…forecast](https://api.open-meteo.com/v1/forecast) | fetch_rain_forecast.py |
 | ฝนรวม 7 วัน (ดาวเทียม) | JAXA GSMaP v8 | 🛰️ ดาวเทียม (GEE) | [GEE: GSMaP v8](https://developers.google.com/earth-engine/datasets/catalog/JAXA_GPM_L3_GSMaP_v8_operational) | fetch_rain_gsmap.py |
