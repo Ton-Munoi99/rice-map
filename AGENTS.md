@@ -17,10 +17,11 @@ No build step, no npm, no bundler. The app is a single HTML file with two compan
 All scripts live in `scripts/`. Run them from the repo root.
 
 ```bash
-# Rebuild the rice production dataset (rice-data.csv/js) — MULTI-STAGE, see warning below
-python scripts/build_rice_dataset.py          # base years 2565-2567 (OAE Table 1.4) + prices
-node   scripts/estimate_2568_2569.js          # fills empty 2568/2569 with trend estimates
-python scripts/clear_estimated_trend_prices.py # strips estimated price ranges
+# Rebuild the rice production dataset (rice-data.csv/js) — run the stages in order:
+python scripts/build_rice_dataset.py           # base 2565-2567 (OAE Table 1.4) + prices → csv+js
+python scripts/update_rice_data.py             # apply official 2568 (data/oae_extracted.json) → csv+js
+node   scripts/estimate_2568_2569.js           # fill remaining empty 2569 with trend estimates (js)
+python scripts/clear_estimated_trend_prices.py # strip estimated price ranges from csv (authoritative)
 
 # Rebuild rice mills JSON from DIT Excel export
 # Requires: thai_rice_mills_dit_YYYY-MM-DD.xlsx in repo root
@@ -34,17 +35,19 @@ python scripts/fetch_weather.py
 python scripts/fetch_weather_forecast.py
 ```
 
-> ⚠️ **rice-data.csv/js cannot be fully regenerated from scripts.** The official
-> **2568** production rows (`source: oae_stats_2568_table_1_4`) were added by a
-> manual data commit (`85dd87e`); no script produces them. `build_rice_dataset.py`
-> only writes 2565-2567, so running it against the live dataset **erases the 2568
-> official data**. If you must rebuild, re-apply the 2568 rows afterward (git-restore
-> them from the last data commit) before running `estimate_2568_2569.js`.
->
-> Note: `build_oae_rice_data.py` is an **older, superseded** rice-data builder
-> (`main()` output is not in the live data). Do **not** run it to rebuild rice-data —
-> but do **not** delete it either: `build_naprang_data.py` imports its parse helpers
-> (`extract_lines`, `clean_text`, `canon`, `SKIP_PREFIXES`) to build `naprang-data.js`.
+> **Notes on the rice-data pipeline:**
+> - The official **2568** rows (`source: oae_stats_2568_table_1_4`) come from
+>   `data/oae_extracted.json` (a committed artifact) applied by `update_rice_data.py`.
+>   To refresh from a newer OAE edition, run `scripts/extract_oae.py` first — it needs
+>   `สถิติการเกษตรของประเทศไทย ปี 2568.pdf` at repo root (or pass the path as argv[1]);
+>   its page ranges are calibrated to the Thai-language edition.
+> - `rice-data.csv` is authoritative (the app loads it first; `rice-data.js` is the
+>   fallback). `clear_estimated_trend_prices.py` clears estimated 2569 prices from the
+>   csv only, so csv and js legitimately differ on those cells.
+> - `build_oae_rice_data.py` is an **older, superseded** rice-data builder (`main()`
+>   output is not in the live data). Do **not** run it to rebuild rice-data — but do
+>   **not** delete it: `build_naprang_data.py` imports its parse helpers
+>   (`extract_lines`, `clean_text`, `canon`, `SKIP_PREFIXES`) to build `naprang-data.js`.
 
 ## Architecture
 

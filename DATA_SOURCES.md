@@ -22,7 +22,8 @@
   - หน้า dataset: <https://catalog.oae.go.th/dataset/ba103542-830f-418a-b614-9645ebbe1a93>
   - PDF สถิติที่ใช้ประมวลผล: <https://catalog.oae.go.th/dataset/ba103542-830f-418a-b614-9645ebbe1a93/resource/4d5d1421-bb3b-4635-a43d-f6167d619db1/download/fd747711b82231d4.pdf>
   - PDF ปี 2565: <https://catalog.oae.go.th/dataset/2d949230-33ba-4ffc-be18-04d2d779ec64/resource/415736c7-1027-4712-8fcd-f0c41d6c7f08/download/2565.pdf> · ปี 2566: <https://catalog.oae.go.th/dataset/2d949230-33ba-4ffc-be18-04d2d779ec64/resource/a0e1a68f-270f-4605-83ba-b70fbd5b87a0/download/2566.pdf>
-- **สคริปต์:** `scripts/build_rice_dataset.py` (builder ฐานตัวจริง: 2565-2567 + ราคา) → `scripts/estimate_2568_2569.js` (เติมประมาณการ 2569) → `scripts/clear_estimated_trend_prices.py` · ข้อมูล 2568 ทางการเติมด้วย commit มือ (`85dd87e`) ไม่มีสคริปต์สร้าง — ห้ามรัน builder ทับโดยไม่กู้ 2568 กลับก่อน (ดู AGENTS.md)
+- **สคริปต์ (เรียงตามลำดับ):** `scripts/build_rice_dataset.py` (ฐาน 2565-2567 + ราคา) → `scripts/update_rice_data.py` (เติม 2568 ทางการจาก `data/oae_extracted.json`) → `scripts/estimate_2568_2569.js` (ประมาณการ 2569) → `scripts/clear_estimated_trend_prices.py`
+  - ข้อมูล 2568 refresh ด้วย `scripts/extract_oae.py` (parse PDF สถิติ ปี 2568 → `data/oae_extracted.json`)
   - `build_oae_rice_data.py` เป็น builder เก่าที่ถูกแทนแล้ว เก็บไว้เพราะ `build_naprang_data.py` import ฟังก์ชัน parse จากมัน
 
 ### ผลผลิต / เนื้อที่เก็บเกี่ยว — นาปรัง (ฤดูแล้ง)
