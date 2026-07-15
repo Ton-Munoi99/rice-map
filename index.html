@@ -1737,8 +1737,19 @@
         }
 
         .top-bar {
-          flex-direction: column;
+          /* .top-bar is display:grid — collapse to one column so brand/title/
+             actions stack instead of overflowing the 3-col grid on mobile */
+          grid-template-columns: 1fr;
+          justify-items: start;
+        }
+
+        .top-center {
           align-items: flex-start;
+          text-align: left;
+        }
+
+        .top-center-title {
+          white-space: normal;
         }
 
         .brand {
@@ -1788,6 +1799,16 @@
         .map-panel,
         .side-panel {
           border-radius: 20px;
+        }
+
+        /* bigger tap targets for the layer/year pills on touch screens */
+        .pill {
+          min-height: 40px;
+          padding: 8px 13px;
+          font-size: 12px;
+        }
+        .pill-row.layer-grid .pill {
+          min-height: 44px;
         }
 
         .brand-copy h1 {
