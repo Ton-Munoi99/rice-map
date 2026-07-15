@@ -4,6 +4,14 @@ Last updated: 2026-07-15 by Claude Code
 
 ## Log
 
+- 2026-07-15 (Claude): Restored scripted regeneration of the official 2568 rice data,
+  closing the reproducibility gap found during the pipeline trace below. Recovered
+  `data/oae_extracted.json` (committed OAE 2568 Table 1.4 extraction) from commit
+  85dd87e, and restored portable `scripts/extract_oae.py` (PDF → json refresh) +
+  `scripts/update_rice_data.py` (json → rice-data.{csv,js}, reads authoritative csv,
+  writes both, LF). Verified: update_rice_data.py reproduces the committed csv
+  byte-for-byte and the 2568 js rows exactly; it also synced js to csv (cleared 60
+  stale estimated 2569 price cells). Full ordered pipeline now documented in AGENTS.md.
 - 2026-07-15 (Claude): Ponytail audit cleanup + rice-data pipeline trace.
   Removed dead code: `extract_pdf_prices.py` (orphan — its `process-pdf-prices.yml`
   never existed; prices come from fetch_miller_prices/fetch_oae_prices) and the dead
