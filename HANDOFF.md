@@ -1,9 +1,23 @@
 # Rice Map Handoff
 
-Last updated: 2026-07-09 by Claude Code
+Last updated: 2026-07-15 by Claude Code
 
 ## Log
 
+- 2026-07-15 (Claude): Ponytail audit cleanup + rice-data pipeline trace.
+  Removed dead code: `extract_pdf_prices.py` (orphan — its `process-pdf-prices.yml`
+  never existed; prices come from fetch_miller_prices/fetch_oae_prices) and the dead
+  `data/prices/` PDF-drop folder; `fetch_rice_mills_api.py` (abandoned DIT-API path,
+  mills reverted to Excel via build_rice_mills.py). Then traced the two "duplicate"
+  rice-data builders — they are NOT duplicates: `build_rice_dataset.py` is the real
+  base builder (emits source=oae_stats_table_1_4, present in live data), while
+  `build_oae_rice_data.py`'s main() is superseded (source=oae_pdf_direct, absent) but
+  it is a live parse-helper dependency of `build_naprang_data.py` — do not delete it.
+  Also found the official 2568 rows (oae_stats_2568_table_1_4) were added by a MANUAL
+  commit (85dd87e) with no generating script, so no builder can fully regenerate
+  rice-data.csv/js — running the base builder erases 2568. Documented all of this in
+  AGENTS.md + DATA_SOURCES.md. Also fixed a UX issue: selecting a naprang layer while
+  Jasmine is active now auto-switches to White Rice (jasmine has no second crop).
 - 2026-07-14 (Claude): Alert scoreboard — `scripts/score_alerts.py` measures 7-day
   rain-forecast accuracy against GSMaP satellite actual, matched by exact date
   window (forecast for D..D+6 scored ~7 days later when GSMaP covers the same
