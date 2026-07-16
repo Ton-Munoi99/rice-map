@@ -21,7 +21,7 @@ All scripts live in `scripts/`. Run them from the repo root.
 python scripts/build_rice_dataset.py           # base 2565-2567 (OAE Table 1.4) + prices → csv+js
 python scripts/update_rice_data.py             # apply official 2568 (data/oae_extracted.json) → csv+js
 node   scripts/estimate_2568_2569.js           # fill remaining empty 2569 with trend estimates (js)
-python scripts/clear_estimated_trend_prices.py # strip estimated price ranges from csv (authoritative)
+python scripts/clear_estimated_trend_prices.py # strip estimated prices + final csv/js sync
 
 # Rebuild rice mills JSON from DIT Excel export
 # Requires: thai_rice_mills_dit_YYYY-MM-DD.xlsx in repo root
@@ -42,8 +42,9 @@ python scripts/fetch_weather_forecast.py
 >   `สถิติการเกษตรของประเทศไทย ปี 2568.pdf` at repo root (or pass the path as argv[1]);
 >   its page ranges are calibrated to the Thai-language edition.
 > - `rice-data.csv` is authoritative (the app loads it first; `rice-data.js` is the
->   fallback). `clear_estimated_trend_prices.py` clears estimated 2569 prices from the
->   csv only, so csv and js legitimately differ on those cells.
+>   fallback). `clear_estimated_trend_prices.py` is the final sync stage: it clears
+>   estimated prices and rewrites BOTH csv and js from one row set, so after a full
+>   pipeline run the two files are always identical in content.
 > - `build_oae_rice_data.py` is an **older, superseded** rice-data builder (`main()`
 >   output is not in the live data). Do **not** run it to rebuild rice-data — but do
 >   **not** delete it: `build_naprang_data.py` imports its parse helpers
