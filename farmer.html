@@ -72,6 +72,19 @@
       .verdict.good { background: rgba(70, 192, 122, 0.14); color: #b8f0cf; }
       .verdict.bad { background: rgba(239, 111, 111, 0.14); color: #ffc9c9; }
       .muted { color: var(--muted); font-size: 12px; }
+      .aid-link {
+        display: flex; align-items: center; justify-content: space-between; gap: 10px;
+        background: rgba(70, 192, 122, 0.12); border: 1px solid rgba(70, 192, 122, 0.3);
+        border-radius: 12px; padding: 12px 14px; margin-bottom: 12px;
+        color: #b8f0cf; font-weight: 600; font-size: 15px; text-decoration: none;
+      }
+      .news { list-style: none; }
+      .news li { border-top: 1px dashed var(--line); }
+      .news li:first-child { border-top: none; }
+      .news a { display: block; padding: 10px 0; font-size: 14px; color: var(--text); text-decoration: none; font-weight: 500; }
+      /* หัวข้อข่าวบางแหล่งยาวมาก (มีแฮชแท็ก) — ตัดที่ 2 บรรทัดให้การ์ดเรียบร้อย */
+      .news .t { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+      .news .meta { display: block; font-size: 11px; color: var(--muted); margin-top: 3px; font-weight: 400; }
       .src { font-size: 11px; color: var(--muted); margin-top: 10px; opacity: 0.8; }
       .loading { text-align: center; color: var(--muted); padding: 40px 0; }
       footer { text-align: center; color: var(--muted); font-size: 11px; margin-top: 20px; line-height: 1.7; }
@@ -251,6 +264,23 @@
         return card(`<h2>💰 ราคา &amp; คุ้มทุน</h2>${rows}${extra}<div class="src">${date} · ต้นทุน/จุดคุ้มทุนอ้างอิง OAE ระดับประเทศ</div>`);
       }
 
+      // ข่าวหมวดสิทธิ์/เงินช่วยเหลือ — กรองเฉพาะโครงการช่วยเหลือจริง (ไม่เอาข่าวทุจริต/ทั่วไป)
+      const AID_KW = ["ไร่ละ", "เยียวยา", "เช็กสิทธิ์", "เช็คสิทธิ์", "ธ.ก.ส", "เงินช่วยเหลือ", "เงินถึงมือ", "โอนเงิน", "ประกันรายได้", "ประกันราคา"];
+
+      function renderAid() {
+        const items = (D.news?.items || []).filter((it) => AID_KW.some((k) => it.title.includes(k))).slice(0, 4);
+        const link = `<a class="aid-link" href="https://www.baac.or.th" target="_blank" rel="noopener">🏦 ตรวจสอบสิทธิ์/เงินโอน — ธ.ก.ส.<span>↗</span></a>`;
+        const news = items.length
+          ? `<ul class="news">${items
+              .map((it) => `<li><a href="${it.url}" target="_blank" rel="noopener"><span class="t">${it.title}</span><span class="meta">${it.source} · ${it.date}</span></a></li>`)
+              .join("")}</ul>`
+          : `<div class="muted">ยังไม่มีข่าวสิทธิ์/เงินช่วยเหลือล่าสุด</div>`;
+        return card(
+          `<h2>📋 สิทธิ์ &amp; เงินช่วยเหลือ</h2>${link}${news}` +
+            `<div class="src">ลิงก์ทางการ ธ.ก.ส. · ข่าวจาก Google News (หัวข้อ + ลิงก์ต้นฉบับ) · ตรวจสอบเงื่อนไขกับ ธ.ก.ส./เกษตรอำเภอก่อนเสมอ</div>`,
+        );
+      }
+
       function renderNearby(en, th) {
         const mills = D.mills?.provinces?.[th];
         const buyers = (D.biomass?.provinces?.[en]?.plants || []).filter((p) => p.rice_straw || p.rice_husks);
@@ -263,7 +293,7 @@
       function render(en) {
         const p = PROV.find((x) => x.en === en);
         if (!p) { $("cards").innerHTML = `<div class="loading">ไม่พบจังหวัด</div>`; return; }
-        $("cards").innerHTML = renderAdvice(en) + renderWeather(en) + renderPrice(en, p.th) + renderNearby(en, p.th);
+        $("cards").innerHTML = renderAdvice(en) + renderWeather(en) + renderPrice(en, p.th) + renderAid() + renderNearby(en, p.th);
         localStorage.setItem("farmer_prov", en);
         const u = new URL(location.href); u.searchParams.set("prov", en);
         history.replaceState(null, "", u);
@@ -276,7 +306,7 @@
       }
 
       (async function () {
-        const [csv, warn, forecast, rain, dam, prices, mills, biomass] = await Promise.all([
+        const [csv, warn, forecast, rain, dam, prices, mills, biomass, news] = await Promise.all([
           loadCSV("./rice-data.csv"),
           loadJSON("./data/agri-warnings.json"),
           loadJSON("./data/rain-forecast.json"),
@@ -285,9 +315,10 @@
           loadJSON("./data/prices-live.json"),
           loadJSON("./data/rice-mills.json"),
           loadJSON("./data/biomass-plants.json"),
+          loadJSON("./data/rice-news-archive.json"),
         ]);
         if (!csv) { $("cards").innerHTML = `<div class="loading">โหลดข้อมูลไม่สำเร็จ ลองรีเฟรชอีกครั้ง</div>`; return; }
-        Object.assign(D, { warn, forecast, rain, dam, prices, mills, biomass });
+        Object.assign(D, { warn, forecast, rain, dam, prices, mills, biomass, news });
         buildProvinces(csv);
         const url = new URLSearchParams(location.search).get("prov");
         const saved = localStorage.getItem("farmer_prov");
