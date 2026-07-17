@@ -21,7 +21,8 @@ if sys.platform == "win32":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
 OUTPUT   = "data/rice-news.json"
-MAX_ITEMS = 8            # เก็บข่าวใหม่สุดกี่ข่าว
+ARCHIVE  = "data/rice-news-archive.json"   # คลังข่าวสะสม ดูย้อนหลังได้ ไม่ลบของเก่า
+MAX_ITEMS = 8            # เก็บข่าวใหม่สุดกี่ข่าว (ไฟล์แสดงผล)
 WITHIN    = "14d"        # ช่วงเวลาข่าว (Google News when: operator)
 TIMEOUT   = 30
 
@@ -56,6 +57,40 @@ def strip_source_suffix(title, source):
 def norm(title):
     """normalize สำหรับ dedupe — ตัดช่องว่าง/เครื่องหมาย เทียบ 40 ตัวแรก"""
     return re.sub(r"[\s\W]+", "", title)[:40]
+
+
+def archive_news(relevant):
+    """สะสมข่าวที่ผ่าน filter ลง ARCHIVE (ไม่ลบของเก่า) — dedupe ด้วย title ที่ normalize แล้ว
+    เขียนไฟล์เฉพาะเมื่อมีข่าวใหม่จริง (กัน commit เปล่า)"""
+    prev = []
+    if os.path.exists(ARCHIVE):
+        try:
+            prev = json.load(open(ARCHIVE, encoding="utf-8")).get("items", [])
+        except (ValueError, OSError):
+            prev = []
+
+    seen = {norm(x["title"]) for x in prev}
+    added = 0
+    for it in relevant:
+        k = norm(it["title"])
+        if k in seen:
+            continue
+        seen.add(k)
+        prev.append({**it, "archived": date.today().isoformat()})
+        added += 1
+
+    if not added:
+        print(f"Archive: no new items ({len(prev)} total)")
+        return
+
+    prev.sort(key=lambda x: (x.get("date", ""), x.get("archived", "")), reverse=True)
+    with open(ARCHIVE, "w", encoding="utf-8") as f:
+        json.dump(
+            {"_meta": {"source": "Google News RSS", "updated": date.today().isoformat(),
+                       "count": len(prev), "note": "คลังข่าวข้าวไทยสะสม (ดูย้อนหลัง) · หัวข้อ + ลิงก์ต้นฉบับ"},
+             "items": prev},
+            f, ensure_ascii=False, indent=2)
+    print(f"Archive: +{added} new → {len(prev)} total in {ARCHIVE}")
 
 
 def fetch_items():
@@ -113,15 +148,17 @@ def main():
             "url": link,
         })
 
-    # newest first, keep top N
+    # newest first
     out.sort(key=lambda x: x["date"], reverse=True)
-    out = out[:MAX_ITEMS]
 
     if not out:
         print("[WARN] no relevant items after filtering — keeping previous file if present", file=sys.stderr)
         if os.path.exists(OUTPUT):
             sys.exit(0)   # อย่าเขียนทับด้วยไฟล์ว่าง
         sys.exit(1)
+
+    archive_news(out)          # สะสมข่าวทั้งหมดที่ผ่าน filter (ก่อนตัดเหลือ N)
+    out = out[:MAX_ITEMS]      # ไฟล์แสดงผลเก็บแค่ N ข่าวล่าสุด
 
     result = {
         "_meta": {
