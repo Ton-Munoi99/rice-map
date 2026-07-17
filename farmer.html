@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>จังหวัดฉัน · แผนที่ข้าวไทย</title>
+    <meta name="description" content="สรุปสถานการณ์ข้าวรายจังหวัดแบบอ่านง่าย — ฝน 7 วัน เตือนน้ำท่วม/แล้ง ควรทำอะไร ราคาข้าว โรงสีใกล้ตัว" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #0a1218;
+        --card: rgba(17, 31, 39, 0.9);
+        --card-2: rgba(13, 23, 29, 0.7);
+        --line: rgba(255, 255, 255, 0.1);
+        --text: #eaf2f0;
+        --muted: #8ba3a8;
+        --gold: #f5c065;
+        --green: #46c07a;
+        --red: #ef6f6f;
+        --orange: #f0a24b;
+        --blue: #57b6e0;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        background: radial-gradient(120% 90% at 50% 0%, #10222b 0%, var(--bg) 60%);
+        color: var(--text);
+        font-family: "Sarabun", sans-serif;
+        min-height: 100vh;
+        line-height: 1.5;
+        padding: env(safe-area-inset-top) 0 40px;
+      }
+      .wrap { max-width: 560px; margin: 0 auto; padding: 14px; }
+      header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+      .brand { font-size: 20px; font-weight: 700; letter-spacing: 0.01em; }
+      .brand small { display: block; font-size: 11px; font-weight: 500; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; }
+      .map-link { font-size: 13px; color: var(--gold); text-decoration: none; border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px; white-space: nowrap; }
+      .picker { position: relative; margin-bottom: 16px; }
+      .picker label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; letter-spacing: 0.08em; }
+      select {
+        width: 100%; font-family: inherit; font-size: 18px; font-weight: 600;
+        color: var(--text); background: var(--card); border: 1px solid var(--line);
+        border-radius: 14px; padding: 14px 16px; appearance: none; cursor: pointer;
+      }
+      .picker::after { content: "▾"; position: absolute; right: 18px; bottom: 15px; color: var(--gold); pointer-events: none; font-size: 16px; }
+      .card {
+        background: var(--card); border: 1px solid var(--line); border-radius: 18px;
+        padding: 16px; margin-bottom: 12px;
+      }
+      .card h2 { font-size: 13px; font-weight: 600; color: var(--muted); letter-spacing: 0.06em; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+      .big { font-size: 30px; font-weight: 700; line-height: 1.1; }
+      .big .unit { font-size: 14px; font-weight: 500; color: var(--muted); }
+      .row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); }
+      .row:first-of-type { border-top: none; }
+      .row .k { font-size: 14px; color: var(--muted); }
+      .row .v { font-size: 16px; font-weight: 600; text-align: right; }
+      .status { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; margin-bottom: 12px; font-weight: 600; }
+      .status .ic { font-size: 26px; line-height: 1; }
+      .status.high { background: rgba(239, 111, 111, 0.14); border: 1px solid rgba(239, 111, 111, 0.35); }
+      .status.medium { background: rgba(240, 162, 75, 0.14); border: 1px solid rgba(240, 162, 75, 0.35); }
+      .status.low { background: rgba(245, 192, 101, 0.12); border: 1px solid rgba(245, 192, 101, 0.3); }
+      .status.drought, .status.dam_low { background: rgba(87, 182, 224, 0.12); border: 1px solid rgba(87, 182, 224, 0.3); }
+      .status.normal { background: rgba(70, 192, 122, 0.12); border: 1px solid rgba(70, 192, 122, 0.3); }
+      .status .msg { font-size: 14px; font-weight: 500; }
+      .advice { list-style: none; }
+      .advice li { display: flex; gap: 10px; padding: 9px 0; font-size: 15px; border-top: 1px dashed var(--line); }
+      .advice li:first-child { border-top: none; }
+      .advice li .dot { color: var(--gold); font-weight: 700; }
+      .verdict { font-size: 15px; font-weight: 600; padding: 10px 12px; border-radius: 10px; margin-top: 10px; }
+      .verdict.good { background: rgba(70, 192, 122, 0.14); color: #b8f0cf; }
+      .verdict.bad { background: rgba(239, 111, 111, 0.14); color: #ffc9c9; }
+      .muted { color: var(--muted); font-size: 12px; }
+      .src { font-size: 11px; color: var(--muted); margin-top: 10px; opacity: 0.8; }
+      .loading { text-align: center; color: var(--muted); padding: 40px 0; }
+      footer { text-align: center; color: var(--muted); font-size: 11px; margin-top: 20px; line-height: 1.7; }
+      a { color: var(--gold); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <div class="brand">🌾 จังหวัดฉัน<small>Rice Map · Farmer</small></div>
+        <a class="map-link" href="./index.html">🗺️ แผนที่เต็ม</a>
+      </header>
+
+      <div class="picker">
+        <label for="prov">เลือกจังหวัดของคุณ</label>
+        <select id="prov"><option>กำลังโหลด…</option></select>
+      </div>
+
+      <div id="cards"><div class="loading">กำลังโหลดข้อมูล…</div></div>
+
+      <footer>
+        ข้อมูลราชการ (OAE · Open-Meteo · JAXA GSMaP · RID · สมาคมโรงสีข้าวไทย · พพ.)<br />
+        สรุปเพื่อการตัดสินใจเบื้องต้น — โปรดตรวจสอบกับเจ้าหน้าที่เกษตรในพื้นที่ประกอบ
+      </footer>
+    </div>
+
+    <script>
+      // ── ค่าคงที่ (มิเรอร์จาก index.html — แหล่งจริงอยู่ที่นั่น) ──────────────
+      const OAE_RAI_COST = { white: 6100, jasmine: 5150 }; // COST_BASE[x].oaeRaiCost ฿/ไร่
+      const UREA_MID = 1050; // FERT_MOC 46-0-0 กลางช่วง 900–1200 ฿/กระสอบ
+
+      // ── คำแนะนำการเพาะปลูกตามระดับเตือน (ต่อยอดจาก agri-warnings) ──────────
+      const ADVICE = {
+        flood_high: ["เร่งระบายน้ำออกจากแปลงนา ยกคันนากันน้ำหลาก", "งดใส่ปุ๋ย/ฉีดยาช่วงนี้ — ถูกน้ำชะล้าง เสียเปล่า", "ถ้าข้าวใกล้เก็บเกี่ยว เตรียมเก็บก่อนน้ำท่วมขัง"],
+        flood_medium: ["เฝ้าระวังระดับน้ำ เตรียมทางระบายให้พร้อม", "เลื่อนการใส่ปุ๋ยถ้าฝนยังตกหนัก รอฝนซาก่อน"],
+        flood_low: ["ฝนพอเหมาะ เดินหน้าตามแผนได้", "หลังฝนหยุด ดินชื้นกำลังดี — เหมาะกับใส่ปุ๋ย ปุ๋ยละลายดี"],
+        drought: ["ชะลอการหว่าน/ปักดำ จนกว่าจะมีน้ำแน่นอน", "งดหว่านแห้งถ้าไม่มีแหล่งน้ำสำรอง", "เลือกพันธุ์อายุสั้น/ทนแล้ง เก็บกักน้ำไว้ใช้"],
+        dam_low: ["น้ำต้นทุนในเขื่อนน้อย — ใช้น้ำอย่างประหยัด", "วางแผนรอบปลูกให้พอดีกับน้ำที่มี เลี่ยงปลูกเกินตัว"],
+        normal: ["สภาพอากาศเหมาะสม เดินหน้าตามแผนได้", "ช่วงดินชื้นเหมาะกับการเตรียมแปลงและใส่ปุ๋ย"],
+      };
+
+      const $ = (id) => document.getElementById(id);
+      const fmt = (n) => (n == null || isNaN(n) ? "—" : Math.round(n).toLocaleString("th-TH"));
+
+      // minimal CSV parser (handles quoted fields)
+      function parseCSV(text) {
+        const rows = [];
+        let row = [], field = "", q = false;
+        for (let i = 0; i < text.length; i++) {
+          const c = text[i];
+          if (q) {
+            if (c === '"' && text[i + 1] === '"') { field += '"'; i++; }
+            else if (c === '"') q = false;
+            else field += c;
+          } else if (c === '"') q = true;
+          else if (c === ",") { row.push(field); field = ""; }
+          else if (c === "\n") { row.push(field); rows.push(row); row = []; field = ""; }
+          else if (c !== "\r") field += c;
+        }
+        if (field.length || row.length) { row.push(field); rows.push(row); }
+        return rows;
+      }
+
+      const D = {}; // datasets
+      let PROV = []; // [{th, en, region}]
+      let RICE = {}; // en -> {yieldKg, priceCsv}
+
+      async function loadJSON(path) {
+        try { const r = await fetch(path, { cache: "no-store" }); return r.ok ? await r.json() : null; }
+        catch { return null; }
+      }
+
+      async function loadCSV(path) {
+        try { const r = await fetch(path, { cache: "no-store" }); return r.ok ? parseCSV(await r.text()) : null; }
+        catch { return null; }
+      }
+
+      function buildProvinces(csv) {
+        const head = csv[0].map((h) => h.replace(/^﻿/, "").trim());
+        const ix = (n) => head.indexOf(n);
+        const [iTh, iEn, iReg, iYr, iRice, iYield, iPrice] =
+          ["province_th", "province_en", "region", "year", "rice_type", "yield", "price"].map(ix);
+        const seen = new Set();
+        for (let r = 1; r < csv.length; r++) {
+          const row = csv[r];
+          if (!row || row.length < 5) continue;
+          const en = (row[iEn] || "").trim();
+          const th = (row[iTh] || "").trim();
+          if (!en || !th) continue;
+          if (!seen.has(en)) { seen.add(en); PROV.push({ th, en, region: (row[iReg] || "").trim() }); }
+          // เก็บ yield/price ปีล่าสุดของข้าวขาว (นาปี) เพื่อคำนวณจุดคุ้มทุน
+          if ((row[iRice] || "").trim() === "white") {
+            const y = Number(row[iYield]) || 0;
+            const rec = (RICE[en] = RICE[en] || { yieldKg: 0, priceCsv: 0 });
+            if (y > 0) rec.yieldKg = y; // ปีหลังมาทีหลัง → ค่าอัปเดตเป็นปีล่าสุดที่มี
+            const p = Number(row[iPrice]) || 0;
+            if (p > 0) rec.priceCsv = p;
+          }
+        }
+        PROV.sort((a, b) => a.th.localeCompare(b.th, "th"));
+      }
+
+      function livePrice(th) {
+        const d = D.prices?.provincial_prices?.data?.[th];
+        return d ? { white: d.white, jasmine: d.jasmine, date: d.date } : null;
+      }
+
+      function card(html) { return `<div class="card">${html}</div>`; }
+
+      function renderWeather(en) {
+        const fc = D.forecast?.provinces?.[en]?.rain_7d;
+        const past = D.rain?.provinces?.[en]?.rain_7d;
+        const dam = D.dam?.provinces?.[en]?.dam_level_pct;
+        let rows = "";
+        rows += `<div class="row"><span class="k">🌦️ ฝนคาด 7 วันข้างหน้า</span><span class="v">${fmt(fc)} <span class="unit">มม.</span></span></div>`;
+        if (past != null) rows += `<div class="row"><span class="k">🌧️ ฝนสะสม 7 วันที่ผ่านมา</span><span class="v">${fmt(past)} <span class="unit">มม.</span></span></div>`;
+        if (dam != null) rows += `<div class="row"><span class="k">💧 น้ำในเขื่อน (จังหวัด)</span><span class="v">${dam.toFixed(0)}<span class="unit">%</span></span></div>`;
+        return card(`<h2>⛈️ อากาศ &amp; น้ำ</h2>${rows}<div class="src">Open-Meteo · JAXA GSMaP · RID · อัปเดต ${D.forecast?._meta?.updated || "—"}</div>`);
+      }
+
+      function renderAdvice(en) {
+        const w = D.warn?.provinces?.[en];
+        const top = w?.warnings?.[0] || { type: "normal", level: "normal", icon: "✅", message_th: "ไม่มีข้อมูลเตือนภัย" };
+        // warning type/level → advice+style key. flood level = high/medium/low; type "dam" → dam_low
+        const key = top.type === "flood" ? "flood_" + top.level : top.type === "dam" ? "dam_low" : top.type;
+        const tips = ADVICE[key] || ADVICE.normal;
+        const cls = key.startsWith("flood_") ? top.level : key;
+        const status = `<div class="status ${cls}"><span class="ic">${top.icon}</span><span class="msg">${top.message_th}</span></div>`;
+        const list = `<ul class="advice">${tips.map((t) => `<li><span class="dot">➜</span><span>${t}</span></li>`).join("")}</ul>`;
+        return card(`<h2>✅ ควรทำอะไรตอนนี้</h2>${status}${list}`);
+      }
+
+      function renderPrice(en, th) {
+        const lp = livePrice(th);
+        const rice = RICE[en] || {};
+        const white = lp?.white ?? rice.priceCsv ?? null;
+        let rows = "";
+        if (white) rows += `<div class="row"><span class="k">🌾 ข้าวเปลือกเจ้า (ขาว)</span><span class="v">${fmt(white)} <span class="unit">฿/ตัน</span></span></div>`;
+        if (lp?.jasmine) rows += `<div class="row"><span class="k">🌸 ข้าวหอมมะลิ</span><span class="v">${fmt(lp.jasmine)} <span class="unit">฿/ตัน</span></span></div>`;
+        if (!rows) rows = `<div class="muted">ยังไม่มีราคาล่าสุดของจังหวัดนี้</div>`;
+        // ปุ๋ยเทียบ + จุดคุ้มทุน
+        let extra = "";
+        if (white) {
+          const bags = white / UREA_MID;
+          extra += `<div class="row"><span class="k">= ปุ๋ยยูเรีย (46-0-0)</span><span class="v">${bags.toFixed(1)} <span class="unit">กระสอบ/ตันข้าว</span></span></div>`;
+        }
+        if (rice.yieldKg > 0) {
+          const breakeven = (OAE_RAI_COST.white * 1000) / rice.yieldKg; // ฿/ตัน
+          const good = white && white >= breakeven;
+          extra += `<div class="row"><span class="k">จุดคุ้มทุน (ผลผลิต ${fmt(rice.yieldKg)} กก./ไร่)</span><span class="v">${fmt(breakeven)} <span class="unit">฿/ตัน</span></span></div>`;
+          if (white)
+            extra += `<div class="verdict ${good ? "good" : "bad"}">${good ? "✅ ราคาปัจจุบันสูงกว่าจุดคุ้มทุน — พอมีกำไร" : "⚠️ ราคาปัจจุบันต่ำกว่าจุดคุ้มทุน — เสี่ยงขาดทุน"}</div>`;
+        }
+        const date = lp?.date ? `ราคาสมาคมโรงสีฯ ${lp.date}` : "อ้างอิงราคาในชุดข้อมูล";
+        return card(`<h2>💰 ราคา &amp; คุ้มทุน</h2>${rows}${extra}<div class="src">${date} · ต้นทุน/จุดคุ้มทุนอ้างอิง OAE ระดับประเทศ</div>`);
+      }
+
+      function renderNearby(en, th) {
+        const mills = D.mills?.provinces?.[th];
+        const buyers = (D.biomass?.provinces?.[en]?.plants || []).filter((p) => p.rice_straw || p.rice_husks);
+        let rows = "";
+        if (mills?.count) rows += `<div class="row"><span class="k">🏭 โรงสีข้าวในจังหวัด</span><span class="v">${fmt(mills.count)} <span class="unit">แห่ง</span></span></div>`;
+        rows += `<div class="row"><span class="k">🔥 โรงไฟฟ้าฯ รับซื้อฟาง/แกลบ</span><span class="v">${buyers.length ? buyers.length + " แห่ง" : "ในจังหวัด: ไม่มี"}</span></div>`;
+        return card(`<h2>📍 จุดขายใกล้ตัว</h2>${rows}<div class="src">DIT (โรงสี) · พพ. (โรงไฟฟ้าชีวมวล 2565)</div>`);
+      }
+
+      function render(en) {
+        const p = PROV.find((x) => x.en === en);
+        if (!p) { $("cards").innerHTML = `<div class="loading">ไม่พบจังหวัด</div>`; return; }
+        $("cards").innerHTML = renderAdvice(en) + renderWeather(en) + renderPrice(en, p.th) + renderNearby(en, p.th);
+        localStorage.setItem("farmer_prov", en);
+        const u = new URL(location.href); u.searchParams.set("prov", en);
+        history.replaceState(null, "", u);
+      }
+
+      function initPicker(initial) {
+        const sel = $("prov");
+        sel.innerHTML = PROV.map((p) => `<option value="${p.en}"${p.en === initial ? " selected" : ""}>${p.th}</option>`).join("");
+        sel.onchange = () => render(sel.value);
+      }
+
+      (async function () {
+        const [csv, warn, forecast, rain, dam, prices, mills, biomass] = await Promise.all([
+          loadCSV("./rice-data.csv"),
+          loadJSON("./data/agri-warnings.json"),
+          loadJSON("./data/rain-forecast.json"),
+          loadJSON("./data/rain-daily.json"),
+          loadJSON("./data/dam-water.json"),
+          loadJSON("./data/prices-live.json"),
+          loadJSON("./data/rice-mills.json"),
+          loadJSON("./data/biomass-plants.json"),
+        ]);
+        if (!csv) { $("cards").innerHTML = `<div class="loading">โหลดข้อมูลไม่สำเร็จ ลองรีเฟรชอีกครั้ง</div>`; return; }
+        Object.assign(D, { warn, forecast, rain, dam, prices, mills, biomass });
+        buildProvinces(csv);
+        const url = new URLSearchParams(location.search).get("prov");
+        const saved = localStorage.getItem("farmer_prov");
+        const initial = PROV.find((p) => p.en === url)?.en || PROV.find((p) => p.en === saved)?.en || PROV[0].en;
+        initPicker(initial);
+        render(initial);
+      })();
+    </script>
+  </body>
+</html>
