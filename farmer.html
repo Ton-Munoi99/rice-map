@@ -55,6 +55,7 @@
       .row:first-of-type { border-top: none; }
       .row .k { font-size: 14px; color: var(--muted); }
       .row .v { font-size: 16px; font-weight: 600; text-align: right; }
+      .row .v .note { display: block; font-size: 12.5px; font-weight: 600; margin-top: 3px; }
       .status { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; margin-bottom: 12px; font-weight: 600; }
       .status .ic { font-size: 26px; line-height: 1; }
       .status.high { background: rgba(239, 111, 111, 0.14); border: 1px solid rgba(239, 111, 111, 0.35); }
@@ -180,14 +181,36 @@
 
       function card(html) { return `<div class="card">${html}</div>`; }
 
+      // แปลปริมาณฝนสะสม 7 วัน (มม.) เป็นคำอธิบาย — เกณฑ์เดียวกับ agri-warnings (30/60/120, แล้ง<5)
+      function rainLabel(mm) {
+        if (mm == null) return null;
+        if (mm >= 120) return { t: "🔴 ฝนหนักมาก เสี่ยงน้ำท่วม", c: "var(--red)" };
+        if (mm >= 60) return { t: "🟠 ฝนมาก เฝ้าระวังน้ำหลาก", c: "var(--orange)" };
+        if (mm >= 30) return { t: "🟡 ฝนปานกลาง พอเหมาะกับนา", c: "var(--gold)" };
+        if (mm >= 5) return { t: "ฝนน้อย ดินอาจไม่ชุ่มพอ", c: "var(--blue)" };
+        return { t: "🏜️ แทบไม่มีฝน เสี่ยงแล้ง", c: "var(--red)" };
+      }
+      // แปลระดับน้ำในเขื่อน (%) — เกณฑ์ dam_low 30 / drought_dam 40
+      function damLabel(pct) {
+        if (pct == null) return null;
+        if (pct < 30) return { t: "🔴 น้ำน้อยวิกฤต — ประหยัดน้ำ", c: "var(--red)" };
+        if (pct < 50) return { t: "🟠 น้ำค่อนข้างน้อย — วางแผนใช้น้ำ", c: "var(--orange)" };
+        if (pct < 80) return { t: "🟢 ระดับปกติ", c: "var(--green)" };
+        return { t: "🔵 น้ำมาก — เฝ้าระวังการระบาย", c: "var(--blue)" };
+      }
+      function valWithNote(value, unit, label) {
+        const note = label ? `<span class="note" style="color:${label.c}">${label.t}</span>` : "";
+        return `<span class="v">${value} <span class="unit">${unit}</span>${note}</span>`;
+      }
+
       function renderWeather(en) {
         const fc = D.forecast?.provinces?.[en]?.rain_7d;
         const past = D.rain?.provinces?.[en]?.rain_7d;
         const dam = D.dam?.provinces?.[en]?.dam_level_pct;
         let rows = "";
-        rows += `<div class="row"><span class="k">🌦️ ฝนคาด 7 วันข้างหน้า</span><span class="v">${fmt(fc)} <span class="unit">มม.</span></span></div>`;
-        if (past != null) rows += `<div class="row"><span class="k">🌧️ ฝนสะสม 7 วันที่ผ่านมา</span><span class="v">${fmt(past)} <span class="unit">มม.</span></span></div>`;
-        if (dam != null) rows += `<div class="row"><span class="k">💧 น้ำในเขื่อน (จังหวัด)</span><span class="v">${dam.toFixed(0)}<span class="unit">%</span></span></div>`;
+        rows += `<div class="row"><span class="k">🌦️ ฝนคาด 7 วันข้างหน้า</span>${valWithNote(fmt(fc), "มม.", rainLabel(fc))}</div>`;
+        if (past != null) rows += `<div class="row"><span class="k">🌧️ ฝนสะสม 7 วันที่ผ่านมา</span>${valWithNote(fmt(past), "มม.", rainLabel(past))}</div>`;
+        if (dam != null) rows += `<div class="row"><span class="k">💧 น้ำในเขื่อน (จังหวัด)</span>${valWithNote(dam.toFixed(0), "%", damLabel(dam))}</div>`;
         return card(`<h2>⛈️ อากาศ &amp; น้ำ</h2>${rows}<div class="src">Open-Meteo · JAXA GSMaP · RID · อัปเดต ${D.forecast?._meta?.updated || "—"}</div>`);
       }
 
