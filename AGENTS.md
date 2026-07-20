@@ -33,6 +33,13 @@ python scripts/fetch_miller_prices.py
 python scripts/fetch_trea_fob.py
 python scripts/fetch_weather.py
 python scripts/fetch_weather_forecast.py
+
+# Telegram alert bot — subscribe intake + level-change notify (cron every 15min)
+# Requires GitHub Actions secret TELEGRAM_BOT_TOKEN (create the bot via
+# @BotFather, then also set TELEGRAM_BOT_USERNAME in farmer.html so the
+# subscribe button goes live). No-ops silently if the secret is unset.
+python scripts/telegram_notify.py
+python scripts/test_telegram_notify.py   # offline self-check, no token needed
 ```
 
 > **Notes on the rice-data pipeline:**
