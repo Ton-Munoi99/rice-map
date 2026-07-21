@@ -3175,17 +3175,23 @@
         "15-15-15": 25, // สูตรรวม: ไม่มีอัตราทางการจากกรมการข้าว — ใช้ 25 กก./ไร่ เป็นค่าประมาณ
       };
       // MOC / DIT official fertilizer price survey — 23 April 2569
+      // ราคาแนะนำ (ceiling) ไม่ใช่ราคาตลาด — 3 สูตรนำเข้าอัปเดตตามประกาศ กกร. ฉบับที่ 7
+      // (11 มิ.ย. 2569, ยกเลิกฉบับที่ 4) ที่เหลือยังเป็นค่าจากฉบับที่ 4 เพราะไม่ได้ประกาศใหม่
       const FERT_MOC = {
-        updated: { th: "23 เมษายน 2569", en: "23 April 2026" },
+        updated: { th: "11 มิถุนายน 2569", en: "11 June 2026" },
+        srcNote: {
+          th: "3 สูตรนำเข้า (46-0-0, 18-46-0, 0-0-60) = ประกาศ กกร. ฉบับที่ 7 (11 มิ.ย. 69) · สูตรอื่นยังเป็นค่าฉบับที่ 4 (29 เม.ย. 69)",
+          en: "Imported formulas (46-0-0, 18-46-0, 0-0-60) from CCP announcement No.7 (11 Jun 2026); others still No.4 (29 Apr 2026)",
+        },
         items: [
           {
             formula: "46-0-0",
             th: "ยูเรีย",
             en: "Urea",
-            min: 900,
-            max: 1200,
+            min: 1408,
+            max: 1576,
             rice: true,
-            note: { th: "พบมากที่สุดในการสำรวจ", en: "Most commonly surveyed" },
+            note: { th: "ประกาศฯ ฉบับ 7 · ทั่วประเทศ", en: "Announcement No.7 · nationwide" },
           },
           {
             formula: "15-15-15",
@@ -3216,17 +3222,17 @@
             formula: "0-0-60",
             th: "โพแทสเซียมคลอไรด์",
             en: "Potassium Chloride",
-            min: 760,
-            max: 900,
-            note: { th: "โพแทสเซียมคลอไรด์", en: "Potassium Chloride" },
+            min: 858,
+            max: 1076,
+            note: { th: "ประกาศฯ ฉบับ 7 · ทั่วประเทศ", en: "Announcement No.7 · nationwide" },
           },
           {
             formula: "18-46-0",
             th: "DAP",
             en: "DAP",
-            min: 1450,
-            max: 1450,
-            note: { th: "พบที่พัทลุง/ขอนแก่น", en: "Phatthalung / Khon Kaen" },
+            min: 1483,
+            max: 1771,
+            note: { th: "ประกาศฯ ฉบับ 7 · ทั่วประเทศ", en: "Announcement No.7 · nationwide" },
           },
           {
             formula: "16-16-16",
@@ -8256,6 +8262,13 @@ ${warningsHtml}
             <span style="font-weight:600;color:var(--text-soft)">${t("หน่วย", "Unit")}: ฿/${t("กระสอบ 50 กก.", "50kg bag")}</span>
             &nbsp;·&nbsp;
             ${t("อัปเดต", "Updated")}: ${t(FERT_MOC.updated.th, FERT_MOC.updated.en)}
+          </div>
+          <div style="margin-bottom:3px">${t(FERT_MOC.srcNote.th, FERT_MOC.srcNote.en)}</div>
+          <div style="margin-bottom:3px">
+            ${t(
+              "เป็น “ราคาแนะนำ” (เพดาน) ไม่ใช่ราคาซื้อขายจริง — ราคาหน้าร้านอาจสูงกว่านี้",
+              "These are recommended ceiling prices, not actual market prices — shop prices may be higher",
+            )}
           </div>
           <div style="margin-bottom:3px">
             ${t(
