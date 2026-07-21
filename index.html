@@ -3227,7 +3227,7 @@
             en: "Balanced",
             min: 1380,
             max: 1380,
-            note: { th: "พบที่นครปฐม", en: "Nakhon Pathom" },
+            note: { th: "ราคาสำรวจจริง นครปฐม · เม.ย. 69", en: "Real survey price, Nakhon Pathom · Apr 2026" },
           },
           {
             formula: "25-7-7",
@@ -3235,10 +3235,64 @@
             en: "Fast Release",
             min: 1060,
             max: 1060,
-            note: { th: "พบที่นครปฐม", en: "Nakhon Pathom" },
+            note: { th: "ราคาสำรวจจริง นครปฐม · เม.ย. 69", en: "Real survey price, Nakhon Pathom · Apr 2026" },
           },
         ],
       };
+
+      // ราคาซื้อขายจริงหน้าร้าน (ไม่ใช่ราคาแนะนำ/เพดาน) — ตัวอย่างบางจังหวัด เก็บจากประกาศ
+      // สำนักงานพาณิชย์จังหวัด + สหกรณ์การเกษตร ไม่ใช่การสำรวจทั่วประเทศอย่างเป็นระบบ
+      // จึงไม่ใช่ตัวแทนราคาเฉลี่ยทั้งประเทศ — ใช้เพื่อดูเทรนด์/ระดับราคาจริงคร่าวๆ เทียบกับราคาแนะนำด้านบน
+      const FERT_REAL_SAMPLES = [
+        {
+          province: { th: "หนองคาย (ท่าบ่อ)", en: "Nong Khai (Tha Bo)" },
+          date: { th: "20 ก.ค. 2569", en: "20 Jul 2026" },
+          formula: "46-0-0",
+          price: { th: "1,300–1,470", en: "1,300–1,470" },
+          source: { th: "สหกรณ์การเกษตรท่าบ่อ (หลายแบรนด์ ตรากระต่าย/ยารา)", en: "Tha Bo Agri Co-op (multiple brands)" },
+          url: "https://www.coopthabo.com/thabo-2",
+        },
+        {
+          province: { th: "อุทัยธานี", en: "Uthai Thani" },
+          date: { th: "1 ก.ค. 2569", en: "1 Jul 2026" },
+          formula: "46-0-0",
+          price: { th: "1,245–1,250", en: "1,245–1,250" },
+          source: { th: "พาณิชย์จังหวัด (ตรากระต่าย, ลดจาก 1,260)", en: "Provincial Commerce Office (down from 1,260)" },
+          url: "https://uthaithani.moc.go.th/th/content/category/detail/id/3536/iid/172901",
+        },
+        {
+          province: { th: "ตรัง", en: "Trang" },
+          date: { th: "11 มิ.ย. 2569", en: "11 Jun 2026" },
+          formula: "18-46-0",
+          price: { th: "1,600", en: "1,600" },
+          source: { th: "พาณิชย์จังหวัด (46-0-0 ของหมดสต็อกวันสำรวจ)", en: "Provincial Commerce Office (46-0-0 out of stock)" },
+          url: "https://trang.moc.go.th/th/content/category/detail/id/161/iid/169293",
+        },
+        {
+          province: { th: "สิงห์บุรี", en: "Sing Buri" },
+          date: { th: "30 เม.ย. 2569", en: "30 Apr 2026" },
+          formula: "46-0-0",
+          price: { th: "900", en: "900" },
+          source: { th: "พาณิชย์จังหวัด (แบรนด์รอง/ตราสิงห์โต)", en: "Provincial Commerce Office (secondary brand)" },
+          url: "https://singburi.moc.go.th/th/content/category/detail/id/3536/iid/157398",
+        },
+        {
+          province: { th: "สกลนคร", en: "Sakon Nakhon" },
+          date: { th: "19 มี.ค. 2569", en: "19 Mar 2026" },
+          formula: "46-0-0",
+          price: { th: "850–1,150", en: "850–1,150" },
+          source: { th: "พาณิชย์จังหวัด (lot ใหม่ขึ้นจาก 1,000)", en: "Provincial Commerce Office (new lot up from 1,000)" },
+          url: "https://sakonnakhon.moc.go.th/th/content/category/detail/id/161/iid/154425",
+        },
+        {
+          province: { th: "ขอนแก่น", en: "Khon Kaen" },
+          date: { th: "10 มี.ค. 2569", en: "10 Mar 2026" },
+          formula: "46-0-0",
+          price: { th: "895–900", en: "895–900" },
+          source: { th: "พาณิชย์จังหวัด", en: "Provincial Commerce Office" },
+          url: "https://khonkaen.moc.go.th/th/content/category/detail/id/161/iid/152362",
+        },
+      ];
 
       const refs = {
         mapWrap: document.getElementById("mapWrap"),
@@ -8217,16 +8271,44 @@ ${warningsHtml}
               "These are recommended ceiling prices, not actual market prices — shop prices may be higher",
             )}
           </div>
-          <div style="margin-bottom:3px">
+          <div>
             ${t(
               "ที่มา: กระทรวงพาณิชย์ (MOC) และกรมการค้าภายใน (DIT)",
               "Source: Ministry of Commerce (MOC) & Dept. of Internal Trade (DIT)",
             )}
           </div>
-          <div style="color:var(--muted);font-style:italic">
+        </div>
+
+        <div style="margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,.08)">
+          <div style="font-size:9px;font-weight:700;color:var(--text-soft);margin-bottom:5px">
+            🧾 ${t("ราคาซื้อขายจริง — ตัวอย่างบางจังหวัด", "Real transaction prices — sample provinces")}
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:9.5px">
+            <thead>
+              <tr>
+                <th ${sFh("font-size:8.5px;color:var(--muted);font-weight:600")}>${t("จังหวัด", "Province")}</th>
+                <th ${sFh("font-size:8.5px;color:var(--muted);font-weight:600")}>${t("วันที่", "Date")}</th>
+                <th ${sFd("font-size:8.5px;color:var(--muted);font-weight:600")}>${t("ราคา", "Price")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${FERT_REAL_SAMPLES.map(
+                (r) => `<tr>
+                <td ${sFdL()}>
+                  <a href="${r.url}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;border-bottom:1px dotted var(--muted)">${t(r.province.th, r.province.en)}</a>
+                  <span style="font-size:8px;color:var(--muted)"> · ${r.formula}</span><br/>
+                  <span style="font-size:8px;color:var(--muted)">${t(r.source.th, r.source.en)}</span>
+                </td>
+                <td ${sFdL("font-size:8.5px;white-space:nowrap")}>${t(r.date.th, r.date.en)}</td>
+                <td ${sFd()}>${t(r.price.th, r.price.en)}</td>
+              </tr>`,
+              ).join("")}
+            </tbody>
+          </table>
+          <div style="margin-top:6px;font-size:8px;color:var(--muted);line-height:1.55;font-style:italic">
             ⚠️ ${t(
-              "ราคา ณ วันที่สำรวจ จากร้านค้าในเครือข่ายพาณิชย์จังหวัด ไม่ใช่ราคากลางบังคับ",
-              "Survey prices from provincial commerce network shops — not a nationally mandated price",
+              "เก็บจากประกาศสำนักงานพาณิชย์จังหวัด/สหกรณ์การเกษตรบางแห่งเท่านั้น ไม่ใช่การสำรวจทั่วประเทศอย่างเป็นระบบ ราคาต่างกันตามแบรนด์/ร้าน/วันที่ — ใช้ดูระดับ/เทรนด์ราคาจริงคร่าวๆ เทียบกับราคาแนะนำด้านบน ไม่ใช่ค่าเฉลี่ยทั้งประเทศ",
+              "Collected from individual provincial commerce office / co-op announcements only — not a systematic nationwide survey. Prices vary by brand/shop/date — use to gauge real-world levels/trend vs. the recommended prices above, not as a national average",
             )}
           </div>
         </div>
