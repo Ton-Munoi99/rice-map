@@ -32,7 +32,8 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/telegram-subscribers.json
+          # ไฟล์ยังไม่ถูกสร้างถ้า TELEGRAM_BOT_TOKEN ยังไม่ตั้ง (สคริปต์ no-op ตั้งแต่ก่อนเขียนไฟล์)
+          git add data/telegram-subscribers.json 2>/dev/null || true
           if git diff --quiet && git diff --staged --quiet; then
             echo "No changes."
           else
