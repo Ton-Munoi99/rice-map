@@ -45,6 +45,10 @@ STATIC_ROWS = [
      "formula": "46-0-0", "price": {"th": "895–900", "en": "895–900"},
      "source": {"th": "พาณิชย์จังหวัด", "en": "Provincial Commerce Office"},
      "url": "https://khonkaen.moc.go.th/th/content/category/detail/id/161/iid/152362", "live": False},
+    {"province": {"th": "เชียงราย", "en": "Chiang Rai"}, "date": {"th": "สัปดาห์ที่ 4 มี.ค. 2569", "en": "Wk4 Mar 2026"},
+     "formula": "46-0-0", "price": {"th": "870–1,150", "en": "870–1,150"},
+     "source": {"th": "พาณิชย์จังหวัด (อ.เมือง/อ.เทิง/อ.แม่จัน ตราหัววัวคันไถ)", "en": "Provincial Commerce Office (3 districts)"},
+     "url": "https://chiangrai.moc.go.th/th/file/get/file/202606053f1ffaf61275e889e2cfad5af3cbbb99135539.pdf", "live": False},
 ]
 
 # แหล่ง "ตารางราคาสด" URL คงที่ ที่รีเฟรชได้จริง — ดึงผ่าน Firecrawl
