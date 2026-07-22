@@ -40,6 +40,13 @@ python scripts/fetch_weather_forecast.py
 # subscribe button goes live). No-ops silently if the secret is unset.
 python scripts/telegram_notify.py
 python scripts/test_telegram_notify.py   # offline self-check, no token needed
+
+# Real fertilizer prices — weekly refresh (Mon 18:00 BKK) → data/fertilizer-prices.json
+# Scrapes maintained co-op/retailer price lists via Firecrawl (their prices are
+# buried in page-builder markup, so raw urllib can't read them). Requires GitHub
+# Actions secret FIRECRAWL_API_KEY. No-ops (keeps existing JSON) if unset.
+# Govt provincial-commerce announcements are one-off posts → kept as STATIC_ROWS.
+python scripts/fetch_fertilizer_prices.py
 ```
 
 > **Notes on the rice-data pipeline:**

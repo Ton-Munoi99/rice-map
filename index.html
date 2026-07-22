@@ -7991,6 +7991,7 @@ ${warningsHtml}
           if (S.sel) selectProvince(S.sel);
         });
         updateNationalFert();
+        fetchFertilizerPrices();
 
         VIEW.features = window.THAILAND_GEO.features.filter((feature) => allEN.includes(feature.properties.name));
         VIEW.featureMap = new Map(VIEW.features.map((feature) => [feature.properties.name, feature]));
@@ -8224,6 +8225,18 @@ ${warningsHtml}
         panel.style.display = "";
       }
 
+      // ราคาปุ๋ยจริง — โหลดไฟล์ที่ cron รีเฟรชทุกสัปดาห์ (fallback = ค่าฝังในโค้ด)
+      async function fetchFertilizerPrices() {
+        try {
+          const r = await fetch("data/fertilizer-prices.json?_=" + Date.now(), { cache: "no-store" });
+          if (!r.ok) return;
+          window.FERT_LIVE = await r.json();
+          updateNationalFert();
+        } catch (e) {
+          console.info("fertilizer-prices.json not available; using embedded samples");
+        }
+      }
+
       function updateNationalFert() {
         if (!refs.nationalFertBlock) return;
 
@@ -8233,31 +8246,37 @@ ${warningsHtml}
         const sFdL = (s) => `style="padding:2px 0;color:var(--text-soft);font-size:10px;${s || ""}"`;
 
         const ureaCeil = FERT_MOC.items.find((i) => i.formula === "46-0-0");
+        // ใช้ข้อมูลสด (รีเฟรชทุกสัปดาห์) ถ้าโหลดได้ · ไม่ได้ก็ fallback ค่าฝังในโค้ด
+        const fertRows = window.FERT_LIVE?.rows?.length ? window.FERT_LIVE.rows : FERT_REAL_SAMPLES;
+        const fertUpd = window.FERT_LIVE?._meta?.updated;
         refs.nationalFertBlock.innerHTML = `
         <div>
           <div style="font-size:9px;color:var(--muted);margin-bottom:6px;line-height:1.5">
-            🧾 ${t("ราคาซื้อขายจริงหน้าร้าน — ตัวอย่างบางจังหวัด (กดชื่อจังหวัดดูต้นทาง)", "Real shop prices — sample provinces (tap a province for the source)")}
+            🧾 ${t("ราคาซื้อขายจริงหน้าร้าน — ตัวอย่างบางแหล่ง (กดชื่อดูต้นทาง)", "Real shop prices — sample sources (tap a name for the source)")}
+            ${fertUpd ? `<span style="opacity:.6"> · ${t("อัปเดต", "upd.")} ${fertUpd}</span>` : ""}
           </div>
           <table style="width:100%;border-collapse:collapse;font-size:9.5px">
             <thead>
               <tr>
-                <th ${sFh("font-size:8.5px;color:var(--muted);font-weight:600")}>${t("จังหวัด", "Province")}</th>
+                <th ${sFh("font-size:8.5px;color:var(--muted);font-weight:600")}>${t("แหล่ง", "Source")}</th>
                 <th ${sFh("font-size:8.5px;color:var(--muted);font-weight:600")}>${t("วันที่", "Date")}</th>
                 <th ${sFd("font-size:8.5px;color:var(--muted);font-weight:600")}>${t("ราคา", "Price")}</th>
               </tr>
             </thead>
             <tbody>
-              ${FERT_REAL_SAMPLES.map(
-                (r) => `<tr>
+              ${fertRows
+                .map(
+                  (r) => `<tr>
                 <td ${sFdL()}>
-                  <a href="${r.url}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;border-bottom:1px dotted var(--muted)">${t(r.province.th, r.province.en)}</a>
+                  ${r.live ? `<span title="${t("รีเฟรชอัตโนมัติทุกสัปดาห์", "auto-refreshed weekly")}">🔄</span> ` : ""}<a href="${r.url}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;border-bottom:1px dotted var(--muted)">${t(r.province.th, r.province.en)}</a>
                   <span style="font-size:8px;color:var(--muted)"> · ${r.formula}</span><br/>
                   <span style="font-size:8px;color:var(--muted)">${t(r.source.th, r.source.en)}</span>
                 </td>
                 <td ${sFdL("font-size:8.5px;white-space:nowrap")}>${t(r.date.th, r.date.en)}</td>
                 <td ${sFd()}>${t(r.price.th, r.price.en)}</td>
               </tr>`,
-              ).join("")}
+                )
+                .join("")}
             </tbody>
           </table>
           <div style="margin-top:7px;padding-top:6px;border-top:1px solid rgba(255,255,255,.08);font-size:8px;color:var(--muted);line-height:1.6">
