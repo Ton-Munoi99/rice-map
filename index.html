@@ -2223,8 +2223,8 @@
           <section class="panel-block" id="nationalFertPanel">
             <div class="panel-label" id="nationalFertTitle">
               🌱
-              <span class="th-t">ราคาปุ๋ยเคมี (ช่วงราคาทั่วประเทศ)</span>
-              <span class="en-t">Fertilizer Prices · National Survey</span>
+              <span class="th-t">ราคาปุ๋ยเคมี (ราคาซื้อขายจริง)</span>
+              <span class="en-t">Fertilizer Prices · Real Shop Prices</span>
             </div>
             <div id="nationalFertBlock"></div>
           </section>
@@ -8232,56 +8232,11 @@ ${warningsHtml}
           `style="text-align:right;font-family:'IBM Plex Mono';font-size:10px;padding:2px 3px;${s || ""}"`;
         const sFdL = (s) => `style="padding:2px 0;color:var(--text-soft);font-size:10px;${s || ""}"`;
 
+        const ureaCeil = FERT_MOC.items.find((i) => i.formula === "46-0-0");
         refs.nationalFertBlock.innerHTML = `
-        <table style="width:100%;border-collapse:collapse;font-size:10px;margin-top:4px">
-          <thead>
-            <tr>
-              <th ${sFh("font-size:9px;color:var(--muted);font-weight:600;letter-spacing:.04em")}>${t("สูตรปุ๋ย", "Formula")}</th>
-              <th ${sFd("font-size:9px;color:var(--muted);font-weight:600")}>${t("ต่ำสุด", "Min")}</th>
-              <th ${sFd("font-size:9px;color:var(--muted);font-weight:600")}>${t("สูงสุด", "Max")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${FERT_MOC.items
-              .map((r) => {
-                const isRange = r.min !== r.max;
-                const accent = r.rice ? "color:#86efac" : "";
-                return `<tr>
-                <td ${sFdL()}>
-                  <span style="font-weight:700;${accent}">${r.formula}</span>
-                  <span style="font-size:8.5px;color:var(--text-soft)"> · ${t(r.note.th, r.note.en)}</span>
-                </td>
-                <td ${sFd(accent)}>${fmtNumber(r.min)}</td>
-                <td ${sFd(accent)}>${isRange ? fmtNumber(r.max) : "—"}</td>
-              </tr>`;
-              })
-              .join("")}
-          </tbody>
-        </table>
-        <div style="margin-top:7px;padding-top:6px;border-top:1px solid rgba(255,255,255,.08);font-size:8px;color:var(--muted);line-height:1.55">
-          <div style="margin-bottom:2px">
-            <span style="font-weight:600;color:var(--text-soft)">${t("หน่วย", "Unit")}: ฿/${t("กระสอบ 50 กก.", "50kg bag")}</span>
-            &nbsp;·&nbsp;
-            ${t("อัปเดต", "Updated")}: ${t(FERT_MOC.updated.th, FERT_MOC.updated.en)}
-          </div>
-          <div style="margin-bottom:3px">${t(FERT_MOC.srcNote.th, FERT_MOC.srcNote.en)}</div>
-          <div style="margin-bottom:3px">
-            ${t(
-              "เป็น “ราคาแนะนำ” (เพดาน) ไม่ใช่ราคาซื้อขายจริง — ราคาหน้าร้านอาจสูงกว่านี้",
-              "These are recommended ceiling prices, not actual market prices — shop prices may be higher",
-            )}
-          </div>
-          <div>
-            ${t(
-              "ที่มา: กระทรวงพาณิชย์ (MOC) และกรมการค้าภายใน (DIT)",
-              "Source: Ministry of Commerce (MOC) & Dept. of Internal Trade (DIT)",
-            )}
-          </div>
-        </div>
-
-        <div style="margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,.08)">
-          <div style="font-size:9px;font-weight:700;color:var(--text-soft);margin-bottom:5px">
-            🧾 ${t("ราคาซื้อขายจริง — ตัวอย่างบางจังหวัด", "Real transaction prices — sample provinces")}
+        <div>
+          <div style="font-size:9px;color:var(--muted);margin-bottom:6px;line-height:1.5">
+            🧾 ${t("ราคาซื้อขายจริงหน้าร้าน — ตัวอย่างบางจังหวัด (กดชื่อจังหวัดดูต้นทาง)", "Real shop prices — sample provinces (tap a province for the source)")}
           </div>
           <table style="width:100%;border-collapse:collapse;font-size:9.5px">
             <thead>
@@ -8305,11 +8260,19 @@ ${warningsHtml}
               ).join("")}
             </tbody>
           </table>
-          <div style="margin-top:6px;font-size:8px;color:var(--muted);line-height:1.55;font-style:italic">
-            ⚠️ ${t(
-              "เก็บจากประกาศสำนักงานพาณิชย์จังหวัด/สหกรณ์การเกษตรบางแห่งเท่านั้น ไม่ใช่การสำรวจทั่วประเทศอย่างเป็นระบบ ราคาต่างกันตามแบรนด์/ร้าน/วันที่ — ใช้ดูระดับ/เทรนด์ราคาจริงคร่าวๆ เทียบกับราคาแนะนำด้านบน ไม่ใช่ค่าเฉลี่ยทั้งประเทศ",
-              "Collected from individual provincial commerce office / co-op announcements only — not a systematic nationwide survey. Prices vary by brand/shop/date — use to gauge real-world levels/trend vs. the recommended prices above, not as a national average",
-            )}
+          <div style="margin-top:7px;padding-top:6px;border-top:1px solid rgba(255,255,255,.08);font-size:8px;color:var(--muted);line-height:1.6">
+            <div style="margin-bottom:3px">
+              📌 ${t(
+                `ราคาแนะนำทางการ (เพดาน) ยูเรีย 46-0-0: ${fmtNumber(ureaCeil.min)}–${fmtNumber(ureaCeil.max)} ฿/กระสอบ · ถ้าโดนคิดแพงเกินสมควร แจ้งสายด่วน 1569`,
+                `Official recommended ceiling, urea 46-0-0: ${fmtNumber(ureaCeil.min)}–${fmtNumber(ureaCeil.max)} ฿/bag · report overcharging to hotline 1569`,
+              )}
+            </div>
+            <div style="font-style:italic">
+              ⚠️ ${t(
+                "หน่วย ฿/กระสอบ 50 กก. · เก็บจากประกาศพาณิชย์จังหวัด/สหกรณ์การเกษตรบางแห่ง ไม่ใช่การสำรวจทั่วประเทศ ราคาต่างกันตามแบรนด์/ร้าน/วันที่ — ดูระดับ/เทรนด์ราคาจริง ไม่ใช่ค่าเฉลี่ยทั้งประเทศ",
+                "Unit ฿/50kg bag · from individual provincial commerce / co-op announcements, not a nationwide survey. Varies by brand/shop/date — gauge real-world level/trend, not a national average",
+              )}
+            </div>
           </div>
         </div>
       `;
