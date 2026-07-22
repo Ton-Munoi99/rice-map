@@ -32,40 +32,84 @@ TH_MONTHS = ["มกราคม", "กุมภาพันธ์", "มีน�
 EN_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
 # แถวอ้างอิงจากประกาศพาณิชย์จังหวัด (ราชการ) — คงที่ ไม่รีเฟรชอัตโนมัติ (โพสต์ครั้งเดียว)
+# แต่ละแถวโชว์ได้หลายสูตร (prices) จากแหล่งเดียวกัน — ไม่ใช่แค่ยูเรีย
 STATIC_ROWS = [
     {"province": {"th": "อุทัยธานี", "en": "Uthai Thani"}, "date": {"th": "1 ก.ค. 2569", "en": "1 Jul 2026"},
-     "formula": "46-0-0", "price": {"th": "1,245–1,250", "en": "1,245–1,250"},
+     "prices": [
+         {"formula": "46-0-0", "price": {"th": "1,245–1,250", "en": "1,245–1,250"}},
+         {"formula": "30-0-0", "price": {"th": "940", "en": "940"}},
+     ],
      "source": {"th": "พาณิชย์จังหวัด (ตรากระต่าย)", "en": "Provincial Commerce Office"},
      "url": "https://uthaithani.moc.go.th/th/content/category/detail/id/3536/iid/172901", "live": False},
     {"province": {"th": "ตรัง", "en": "Trang"}, "date": {"th": "11 มิ.ย. 2569", "en": "11 Jun 2026"},
-     "formula": "18-46-0", "price": {"th": "1,600", "en": "1,600"},
-     "source": {"th": "พาณิชย์จังหวัด (46-0-0 หมดสต็อก)", "en": "Provincial Commerce Office"},
+     "prices": [
+         {"formula": "18-46-0", "price": {"th": "1,600", "en": "1,600"}},
+         {"formula": "0-0-60", "price": {"th": "880–940", "en": "880–940"}},
+         {"formula": "21-0-0", "price": {"th": "700–780", "en": "700–780"}},
+         {"formula": "15-15-15", "price": {"th": "1,050–1,320", "en": "1,050–1,320"}},
+     ],
+     "source": {"th": "พาณิชย์จังหวัด (46-0-0 หมดสต็อก)", "en": "Provincial Commerce Office (46-0-0 out of stock)"},
      "url": "https://trang.moc.go.th/th/content/category/detail/id/161/iid/169293", "live": False},
     {"province": {"th": "ขอนแก่น", "en": "Khon Kaen"}, "date": {"th": "10 มี.ค. 2569", "en": "10 Mar 2026"},
-     "formula": "46-0-0", "price": {"th": "895–900", "en": "895–900"},
+     "prices": [
+         {"formula": "46-0-0", "price": {"th": "895–900", "en": "895–900"}},
+         {"formula": "18-46-0", "price": {"th": "1,450", "en": "1,450"}},
+         {"formula": "0-0-60", "price": {"th": "760–830", "en": "760–830"}},
+         {"formula": "21-0-0", "price": {"th": "515–540", "en": "515–540"}},
+         {"formula": "15-15-15", "price": {"th": "1,015–1,050", "en": "1,015–1,050"}},
+         {"formula": "16-20-0", "price": {"th": "895–920", "en": "895–920"}},
+     ],
      "source": {"th": "พาณิชย์จังหวัด", "en": "Provincial Commerce Office"},
      "url": "https://khonkaen.moc.go.th/th/content/category/detail/id/161/iid/152362", "live": False},
     {"province": {"th": "เชียงราย", "en": "Chiang Rai"}, "date": {"th": "สัปดาห์ที่ 4 มี.ค. 2569", "en": "Wk4 Mar 2026"},
-     "formula": "46-0-0", "price": {"th": "870–1,150", "en": "870–1,150"},
+     "prices": [
+         {"formula": "46-0-0", "price": {"th": "870–1,150", "en": "870–1,150"}},
+         {"formula": "16-20-0", "price": {"th": "900–1,070", "en": "900–1,070"}},
+         {"formula": "15-15-15", "price": {"th": "990–1,200", "en": "990–1,200"}},
+     ],
      "source": {"th": "พาณิชย์จังหวัด (อ.เมือง/อ.เทิง/อ.แม่จัน ตราหัววัวคันไถ)", "en": "Provincial Commerce Office (3 districts)"},
      "url": "https://chiangrai.moc.go.th/th/file/get/file/202606053f1ffaf61275e889e2cfad5af3cbbb99135539.pdf", "live": False},
+    {"province": {"th": "สกลนคร", "en": "Sakon Nakhon"}, "date": {"th": "19 มี.ค. 2569", "en": "19 Mar 2026"},
+     "prices": [
+         {"formula": "46-0-0", "price": {"th": "850–1,150", "en": "850–1,150"}},
+         {"formula": "0-0-60", "price": {"th": "850–900", "en": "850–900"}},
+         {"formula": "21-0-0", "price": {"th": "590–630", "en": "590–630"}},
+         {"formula": "15-15-15", "price": {"th": "1,020–1,070", "en": "1,020–1,070"}},
+         {"formula": "16-8-8", "price": {"th": "795–850", "en": "795–850"}},
+         {"formula": "29-5-18", "price": {"th": "1,120–1,250", "en": "1,120–1,250"}},
+     ],
+     "source": {"th": "พาณิชย์จังหวัด (lot ใหม่ขึ้นจาก 1,000)", "en": "Provincial Commerce Office (new lot up from 1,000)"},
+     "url": "https://sakonnakhon.moc.go.th/th/content/category/detail/id/161/iid/154425", "live": False},
+    {"province": {"th": "สิงห์บุรี", "en": "Sing Buri"}, "date": {"th": "30 เม.ย. 2569", "en": "30 Apr 2026"},
+     "prices": [
+         {"formula": "46-0-0", "price": {"th": "900", "en": "900"}},
+         {"formula": "16-20-0", "price": {"th": "935–1,040", "en": "935–1,040"}},
+         {"formula": "15-15-15", "price": {"th": "920–1,100", "en": "920–1,100"}},
+     ],
+     "source": {"th": "พาณิชย์จังหวัด (46-0-0 แบรนด์รอง/ตราสิงห์โต)", "en": "Provincial Commerce Office (46-0-0 secondary brand)"},
+     "url": "https://singburi.moc.go.th/th/content/category/detail/id/3536/iid/157398", "live": False},
 ]
 
 # แหล่ง "ตารางราคาสด" URL คงที่ ที่รีเฟรชได้จริง — ดึงผ่าน Firecrawl
+# type "block": ตัดเฉพาะบล็อกแบรนด์แรก (block_start→block_end) แล้วจับทุกคู่ "สูตร X ราคา Y บาท" ในนั้น (หลายสูตร)
+# type "single": จับสูตรเดียวด้วย regex ตรงๆ (ไม่มีบล็อกแบรนด์ให้ตัด)
 LIVE_SOURCES = [
     {
         "province": {"th": "หนองคาย (ท่าบ่อ)", "en": "Nong Khai (Tha Bo)"},
-        "source": {"th": "สหกรณ์การเกษตรท่าบ่อ (หลายแบรนด์)", "en": "Tha Bo Agri Co-op (multi-brand)"},
+        "source": {"th": "สหกรณ์การเกษตรท่าบ่อ (ตรากระต่าย)", "en": "Tha Bo Agri Co-op (Rabbit brand)"},
         "url": "https://www.coopthabo.com/thabo-2",
-        "formula": "46-0-0",
-        # ราคา: จับ "สูตร 46 - 0 - 0 ราคา <n> บาท" ทุกแบรนด์ → ช่วง min–max
-        "price_re": r"46\s*-\s*0\s*-\s*0\s*ราคา\s*([\d,]+)\s*บาท",
+        "type": "block",
+        "block_start": "ปุ๋ยตรากระต่าย",
+        "block_end": r"!\[|ปุ๋ยตรา",  # ตัดที่รูปถัดไป หรือหัวข้อแบรนด์ถัดไป
+        # ต้นทางบางบรรทัดมี ** (markdown bold) แทรกกลาง เช่น "สูตร****16 - 20 -0" — ยอมรับ * คั่นได้
+        "formula_re": r"สูตร[\s*]*([\d\s\-]+?)\s*ราคา\s*([\d,]+|\*[^*]*\*)\s*บาท",
         "date_re": r"update\s*วันที่\s*(\d{1,2})\s*(" + "|".join(TH_MONTHS) + r")",
     },
     {
         "province": {"th": "ทั่วไป (แบรนด์ดัง)", "en": "General (major brands)"},
         "source": {"th": "svpolysack — ตรากระต่าย/หัววัว/ม้าบิน/มงกุฎ", "en": "svpolysack — major brands"},
         "url": "https://svpolysack.com/fertilizer-price/",
+        "type": "single",
         "formula": "46-0-0",
         "price_re": r"46\s*0\s*0[^\n]*?([\d,]{4,5})\s*[-–]\s*([\d,]{4,5})\s*บาท",
         "date_re": None,  # บทความไม่มีวันที่ชัด → ใช้วันดึงข้อมูล
@@ -86,7 +130,13 @@ def firecrawl_markdown(url):
     return data["data"]["markdown"]
 
 
-def parse_prices(md, price_re):
+def norm_formula(raw):
+    """'46 - 0 - 0' / '46  0  0' → '46-0-0'"""
+    parts = [p for p in re.split(r"[\s\-]+", raw.strip()) if p]
+    return "-".join(parts)
+
+
+def parse_prices_single(md, price_re):
     nums = []
     for m in re.findall(price_re, md):
         for part in (m if isinstance(m, tuple) else (m,)):
@@ -94,6 +144,27 @@ def parse_prices(md, price_re):
             if 500 <= n <= 3000:  # กันเลขขยะ (ราคาปุ๋ยจริงอยู่ในช่วงนี้)
                 nums.append(n)
     return nums
+
+
+def parse_prices_block(md, block_start, block_end, formula_re):
+    """ตัดข้อความเฉพาะบล็อกแบรนด์แรก แล้วจับทุกคู่ (สูตร, ราคา) ในนั้น"""
+    i = md.find(block_start)
+    if i < 0:
+        raise RuntimeError(f"block_start not found: {block_start!r}")
+    rest = md[i + len(block_start):]
+    m_end = re.search(block_end, rest)
+    block = rest[: m_end.start()] if m_end else rest[:800]
+
+    out = []
+    for formula_raw, price_raw in re.findall(formula_re, block):
+        formula = norm_formula(formula_raw)
+        digits = re.sub(r"[^\d]", "", price_raw)
+        if not digits:
+            continue  # เช่น "*สินค้าหมด*" — ข้าม
+        n = int(digits)
+        if 500 <= n <= 3000:
+            out.append((formula, n))
+    return out
 
 
 def parse_date(md, date_re):
@@ -109,14 +180,23 @@ def parse_date(md, date_re):
 
 def fetch_live_row(src):
     md = firecrawl_markdown(src["url"])
-    nums = parse_prices(md, src["price_re"])
-    if not nums:
-        raise RuntimeError("no plausible price parsed")
-    lo, hi = min(nums), max(nums)
-    price_str = f"{lo:,}" if lo == hi else f"{lo:,}–{hi:,}"
     d = parse_date(md, src["date_re"]) or {"th": f"ดึงล่าสุด {date.today().isoformat()}", "en": f"as of {date.today().isoformat()}"}
-    return {"province": src["province"], "date": d, "formula": src["formula"],
-            "price": {"th": price_str, "en": price_str}, "source": src["source"], "url": src["url"], "live": True}
+
+    if src["type"] == "block":
+        pairs = parse_prices_block(md, src["block_start"], src["block_end"], src["formula_re"])
+        if not pairs:
+            raise RuntimeError("no plausible price parsed")
+        prices = [{"formula": f, "price": {"th": f"{n:,}", "en": f"{n:,}"}} for f, n in pairs]
+    else:  # single
+        nums = parse_prices_single(md, src["price_re"])
+        if not nums:
+            raise RuntimeError("no plausible price parsed")
+        lo, hi = min(nums), max(nums)
+        price_str = f"{lo:,}" if lo == hi else f"{lo:,}–{hi:,}"
+        prices = [{"formula": src["formula"], "price": {"th": price_str, "en": price_str}}]
+
+    return {"province": src["province"], "date": d, "prices": prices,
+            "source": src["source"], "url": src["url"], "live": True}
 
 
 def load_prev():
