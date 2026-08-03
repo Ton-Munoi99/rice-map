@@ -27,13 +27,18 @@ WITHIN    = "14d"        # ช่วงเวลาข่าว (Google News whe
 TIMEOUT   = 30
 
 # คำค้น (ต้องมีคำใดคำหนึ่ง) — เน้นเศรษฐกิจ/การเกษตรข้าวของไทย
+# "ปุ๋ย" เพิ่มเข้ามาเพื่อดักข่าวปุ๋ย — กรองต่อด้วย FERT_CONTEXT ด้านล่าง (ดู is_relevant())
 QUERY = (
     'ราคาข้าว OR ส่งออกข้าว OR ข้าวเปลือก OR ข้าวนาปรัง OR ข้าวนาปี '
-    'OR ข้าวหอมมะลิ OR ชาวนา OR "นโยบายข้าว" OR "ประกันราคาข้าว"'
+    'OR ข้าวหอมมะลิ OR ชาวนา OR "นโยบายข้าว" OR "ประกันราคาข้าว" OR ปุ๋ย'
 )
 
 # ต้องมีคำใดคำหนึ่งใน title จึงถือว่าเกี่ยวข้าวไทยจริง
 MUST_INCLUDE = ["ข้าว", "ชาวนา", "นาปรัง", "นาปี"]
+
+# ข่าวปุ๋ย ("ปุ๋ย" ใน title) ส่วนใหญ่ไม่เขียนคำว่า "ข้าว" ตรงๆ (ใช้ "เกษตรกร" กว้างๆ
+# แทน แม้บริบทจะเป็นปุ๋ยนาข้าวจริง) จึงกรองแยก: ปุ๋ย + คำบ่งชี้เกษตรกร/ต้นทุนการผลิต
+FERT_CONTEXT = ["เกษตรกร", "ชาวนา", "ชาวไร่", "ต้นทุนการผลิต", "ปัจจัยการผลิต", "ไทยช่วยไทย"]
 
 # ตัดทิ้งถ้า title มีคำเหล่านี้ — "ชาวนา/ข้าว" กว้างไป เจอในหวย/เพลง/นิทาน/ชาวนาเกลือ-กุ้ง
 EXCLUDE = [
@@ -129,7 +134,9 @@ def main():
         # relevance filter
         if source in SOURCE_EXCLUDE:
             continue
-        if not any(k in title for k in MUST_INCLUDE):
+        is_rice = any(k in title for k in MUST_INCLUDE)
+        is_fert = "ปุ๋ย" in title and any(k in title for k in FERT_CONTEXT)
+        if not (is_rice or is_fert):
             continue
         if any(bad in title for bad in EXCLUDE):
             continue
