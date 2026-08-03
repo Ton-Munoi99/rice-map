@@ -112,9 +112,6 @@
     </div>
 
     <script>
-      // ── ค่าคงที่ (มิเรอร์จาก index.html — แหล่งจริงอยู่ที่นั่น) ──────────────
-      const OAE_RAI_COST = { white: 6100, jasmine: 5150 }; // COST_BASE[x].oaeRaiCost ฿/ไร่
-      const UREA_MID = 1492; // FERT_MOC 46-0-0 กลางช่วง 1,408–1,576 ฿/กระสอบ (ประกาศ กกร. ฉบับ 7 · 11 มิ.ย. 69)
       const TELEGRAM_BOT_USERNAME = ""; // ใส่ username บอทจาก @BotFather เช่น "RiceMapAlertBot" แล้วปุ่มจะใช้งานได้
 
       // ── คำแนะนำการเพาะปลูกตามระดับเตือน (ต่อยอดจาก agri-warnings) ──────────
@@ -151,7 +148,6 @@
 
       const D = {}; // datasets
       let PROV = []; // [{th, en, region}]
-      let RICE = {}; // en -> {yieldKg, priceCsv}
 
       async function loadJSON(path) {
         try { const r = await fetch(path, { cache: "no-store" }); return r.ok ? await r.json() : null; }
@@ -166,8 +162,7 @@
       function buildProvinces(csv) {
         const head = csv[0].map((h) => h.replace(/^﻿/, "").trim());
         const ix = (n) => head.indexOf(n);
-        const [iTh, iEn, iReg, iYr, iRice, iYield, iPrice] =
-          ["province_th", "province_en", "region", "year", "rice_type", "yield", "price"].map(ix);
+        const [iTh, iEn, iReg] = ["province_th", "province_en", "region"].map(ix);
         const seen = new Set();
         for (let r = 1; r < csv.length; r++) {
           const row = csv[r];
@@ -176,21 +171,8 @@
           const th = (row[iTh] || "").trim();
           if (!en || !th) continue;
           if (!seen.has(en)) { seen.add(en); PROV.push({ th, en, region: (row[iReg] || "").trim() }); }
-          // เก็บ yield/price ปีล่าสุดของข้าวขาว (นาปี) เพื่อคำนวณจุดคุ้มทุน
-          if ((row[iRice] || "").trim() === "white") {
-            const y = Number(row[iYield]) || 0;
-            const rec = (RICE[en] = RICE[en] || { yieldKg: 0, priceCsv: 0 });
-            if (y > 0) rec.yieldKg = y; // ปีหลังมาทีหลัง → ค่าอัปเดตเป็นปีล่าสุดที่มี
-            const p = Number(row[iPrice]) || 0;
-            if (p > 0) rec.priceCsv = p;
-          }
         }
         PROV.sort((a, b) => a.th.localeCompare(b.th, "th"));
-      }
-
-      function livePrice(th) {
-        const d = D.prices?.provincial_prices?.data?.[th];
-        return d ? { white: d.white, jasmine: d.jasmine, date: d.date } : null;
       }
 
       function card(html) { return `<div class="card">${html}</div>`; }
@@ -240,31 +222,6 @@
         return card(`<h2>✅ ควรทำอะไรตอนนี้</h2>${status}${list}`);
       }
 
-      function renderPrice(en, th) {
-        const lp = livePrice(th);
-        const rice = RICE[en] || {};
-        const white = lp?.white ?? rice.priceCsv ?? null;
-        let rows = "";
-        if (white) rows += `<div class="row"><span class="k">🌾 ข้าวเปลือกเจ้า (ขาว)</span><span class="v">${fmt(white)} <span class="unit">฿/ตัน</span></span></div>`;
-        if (lp?.jasmine) rows += `<div class="row"><span class="k">🌸 ข้าวหอมมะลิ</span><span class="v">${fmt(lp.jasmine)} <span class="unit">฿/ตัน</span></span></div>`;
-        if (!rows) rows = `<div class="muted">ยังไม่มีราคาล่าสุดของจังหวัดนี้</div>`;
-        // ปุ๋ยเทียบ + จุดคุ้มทุน
-        let extra = "";
-        if (white) {
-          const bags = white / UREA_MID;
-          extra += `<div class="row"><span class="k">= ปุ๋ยยูเรีย (46-0-0)</span><span class="v">${bags.toFixed(1)} <span class="unit">กระสอบ/ตันข้าว</span></span></div>`;
-        }
-        if (rice.yieldKg > 0) {
-          const breakeven = (OAE_RAI_COST.white * 1000) / rice.yieldKg; // ฿/ตัน
-          const good = white && white >= breakeven;
-          extra += `<div class="row"><span class="k">จุดคุ้มทุน (ผลผลิต ${fmt(rice.yieldKg)} กก./ไร่)</span><span class="v">${fmt(breakeven)} <span class="unit">฿/ตัน</span></span></div>`;
-          if (white)
-            extra += `<div class="verdict ${good ? "good" : "bad"}">${good ? "✅ ราคาปัจจุบันสูงกว่าจุดคุ้มทุน — พอมีกำไร" : "⚠️ ราคาปัจจุบันต่ำกว่าจุดคุ้มทุน — เสี่ยงขาดทุน"}</div>`;
-        }
-        const date = lp?.date ? `ราคาสมาคมโรงสีฯ ${lp.date}` : "อ้างอิงราคาในชุดข้อมูล";
-        return card(`<h2>💰 ราคา &amp; คุ้มทุน</h2>${rows}${extra}<div class="src">${date} · ต้นทุน/จุดคุ้มทุนอ้างอิง OAE ระดับประเทศ</div>`);
-      }
-
       // ข่าวหมวดสิทธิ์/เงินช่วยเหลือ — กรองเฉพาะโครงการช่วยเหลือจริง (ไม่เอาข่าวทุจริต/ทั่วไป)
       const AID_KW = ["ไร่ละ", "เยียวยา", "เช็กสิทธิ์", "เช็คสิทธิ์", "ธ.ก.ส", "เงินช่วยเหลือ", "เงินถึงมือ", "โอนเงิน", "ประกันรายได้", "ประกันราคา"];
 
@@ -308,7 +265,7 @@
         const p = PROV.find((x) => x.en === en);
         if (!p) { $("cards").innerHTML = `<div class="loading">ไม่พบจังหวัด</div>`; return; }
         $("cards").innerHTML =
-          renderAdvice(en) + renderTelegram(en, p.th) + renderWeather(en) + renderPrice(en, p.th) + renderAid() + renderNearby(en, p.th);
+          renderAdvice(en) + renderTelegram(en, p.th) + renderWeather(en) + renderAid() + renderNearby(en, p.th);
         localStorage.setItem("farmer_prov", en);
         const u = new URL(location.href); u.searchParams.set("prov", en);
         history.replaceState(null, "", u);
@@ -321,19 +278,18 @@
       }
 
       (async function () {
-        const [csv, warn, forecast, rain, dam, prices, mills, biomass, news] = await Promise.all([
+        const [csv, warn, forecast, rain, dam, mills, biomass, news] = await Promise.all([
           loadCSV("./rice-data.csv"),
           loadJSON("./data/agri-warnings.json"),
           loadJSON("./data/rain-forecast.json"),
           loadJSON("./data/rain-daily.json"),
           loadJSON("./data/dam-water.json"),
-          loadJSON("./data/prices-live.json"),
           loadJSON("./data/rice-mills.json"),
           loadJSON("./data/biomass-plants.json"),
           loadJSON("./data/rice-news-archive.json"),
         ]);
         if (!csv) { $("cards").innerHTML = `<div class="loading">โหลดข้อมูลไม่สำเร็จ ลองรีเฟรชอีกครั้ง</div>`; return; }
-        Object.assign(D, { warn, forecast, rain, dam, prices, mills, biomass, news });
+        Object.assign(D, { warn, forecast, rain, dam, mills, biomass, news });
         buildProvinces(csv);
         const url = new URLSearchParams(location.search).get("prov");
         const saved = localStorage.getItem("farmer_prov");
