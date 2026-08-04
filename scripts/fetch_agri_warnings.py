@@ -20,10 +20,14 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(SCRIPT_DIR)
 DATA_DIR = os.path.join(ROOT_DIR, "data")
 
-FORECAST_PATH = os.path.join(DATA_DIR, "rain-forecast.json")
-GSMAP_PATH    = os.path.join(DATA_DIR, "rain-gsmap.json")
-DAM_PATH      = os.path.join(DATA_DIR, "dam-water.json")
-OUTPUT_PATH   = os.path.join(DATA_DIR, "agri-warnings.json")
+FORECAST_PATH   = os.path.join(DATA_DIR, "rain-forecast.json")
+GSMAP_PATH      = os.path.join(DATA_DIR, "rain-gsmap.json")
+DAM_PATH        = os.path.join(DATA_DIR, "dam-water.json")
+SCOREBOARD_PATH = os.path.join(DATA_DIR, "alert-scoreboard.json")
+OUTPUT_PATH     = os.path.join(DATA_DIR, "agri-warnings.json")
+
+# ต้องมีอย่างน้อยเท่านี้ window ก่อนเชื่อ bias (กัน overcorrect จากข้อมูลน้อย/สุ่ม)
+MIN_WINDOWS_FOR_CALIBRATION = 5
 
 # ---------------------------------------------------------------------------
 # Thresholds
@@ -79,18 +83,31 @@ def round2(v):
     return round(float(v), 2) if v is not None else None
 
 
+def load_forecast_bias():
+    """ดึง bias สะสมของพยากรณ์ (พยากรณ์ - ฝนจริง GSMaP) จาก alert-scoreboard.json
+    ถ้าพยากรณ์ over-predict เป็นระบบ (bias > 0) ค่านี้จะถูกหักออกก่อนตัดสินระดับเตือน
+    เพื่อลด false positive โดยไม่ต้องแก้สูตรพยากรณ์เอง"""
+    d = load_json(SCOREBOARD_PATH)
+    rolling = (d or {}).get("rolling")
+    if not rolling or rolling.get("windows_scored", 0) < MIN_WINDOWS_FOR_CALIBRATION:
+        return 0.0
+    return rolling.get("bias_mm") or 0.0
+
+
 # ---------------------------------------------------------------------------
 # Warning generation per province
 # ---------------------------------------------------------------------------
 
-def build_warnings(prov_name, fc_7d, gs_7d, dam_pct):
+def build_warnings(prov_name, fc_7d, gs_7d, dam_pct, fc_bias=0.0):
     """
     Return list of warning dicts for a province.
     fc_7d  : 7-day forecast rain (mm) or None
     gs_7d  : 7-day GSMaP satellite rain (mm) or None
     dam_pct: dam level (% capacity) or None
+    fc_bias: ค่าเฉลี่ย (พยากรณ์ - จริง) สะสม — หักออกจาก fc_7d ก่อนตัดสินระดับ (ไม่กระทบข้อความที่แสดง)
     """
     warnings = []
+    fc_7d_adj = max(0.0, fc_7d - fc_bias) if fc_7d is not None else None
 
     # -----------------------------------------------------------------------
     # Flood warnings (check both forecast and gsmap, use highest trigger)
@@ -107,7 +124,7 @@ def build_warnings(prov_name, fc_7d, gs_7d, dam_pct):
             return "flood_low"
         return None
 
-    fc_level  = flood_level(fc_7d)
+    fc_level  = flood_level(fc_7d_adj)
     gs_level  = flood_level(gs_7d)
 
     # Priority order for flood levels
@@ -256,6 +273,10 @@ def main():
     all_provinces = sorted(fc_provs.keys())
     print(f"Processing {len(all_provinces)} provinces...")
 
+    fc_bias = load_forecast_bias()
+    if fc_bias:
+        print(f"Calibrating forecast: -{fc_bias:.1f}mm (measured over-prediction bias from alert-scoreboard.json)")
+
     result_provinces = {}
     summary = {"high": 0, "medium": 0, "low": 0, "drought": 0, "dam_low": 0, "none": 0}
 
@@ -268,7 +289,7 @@ def main():
         gs_7d  = gs_entry.get("rain_7d")
         dam_pct = dam_entry.get("dam_level_pct")
 
-        warnings = build_warnings(prov, fc_7d, gs_7d, dam_pct)
+        warnings = build_warnings(prov, fc_7d, gs_7d, dam_pct, fc_bias)
         level_str, level_num = top_level(warnings)
 
         result_provinces[prov] = {
@@ -296,6 +317,7 @@ def main():
                 "drought_dam_pct": DROUGHT_DAM,
                 "dam_low_pct":    DAM_LOW_PCT,
             },
+            "forecast_bias_correction_mm": round(fc_bias, 1),
         },
         "summary": {
             "high":    summary.get("high", 0),
@@ -334,5 +356,26 @@ def main():
             shown += 1
 
 
+def _selftest():
+    """assert-based check: bias correction must move borderline cases without
+    breaking obviously-safe or obviously-severe ones"""
+    # 130mm forecast, 46.8 bias → adjusted 83.2mm → drops from flood_high to flood_med
+    w = build_warnings("Test", fc_7d=130, gs_7d=None, dam_pct=None, fc_bias=46.8)
+    assert w[0]["level"] == "medium", w
+    # far above threshold even after correction → still high
+    w = build_warnings("Test", fc_7d=300, gs_7d=None, dam_pct=None, fc_bias=46.8)
+    assert w[0]["level"] == "high", w
+    # bias can't push below zero
+    w = build_warnings("Test", fc_7d=10, gs_7d=None, dam_pct=None, fc_bias=46.8)
+    assert w[0]["level"] == "normal", w
+    # zero bias = unchanged behavior (calibration not yet trusted)
+    w = build_warnings("Test", fc_7d=130, gs_7d=None, dam_pct=None, fc_bias=0.0)
+    assert w[0]["level"] == "high", w
+    print("✅ _selftest passed")
+
+
 if __name__ == "__main__":
+    if "--selftest" in sys.argv:
+        _selftest()
+        sys.exit(0)
     main()
