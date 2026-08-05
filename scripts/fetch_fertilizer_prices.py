@@ -223,7 +223,8 @@ def main():
         for src in LIVE_SOURCES:
             try:
                 live_rows.append(fetch_live_row(src))
-                print(f"✓ {src['url']} → {live_rows[-1]['price']['th']}")
+                got = ", ".join(f"{p['formula']}={p['price']['th']}" for p in live_rows[-1]["prices"])
+                print(f"✓ {src['url']} → {got}")
             except Exception as e:
                 print(f"[WARN] {src['url']}: {e} — keeping previous if any", file=sys.stderr)
                 if src["url"] in prev_live:
