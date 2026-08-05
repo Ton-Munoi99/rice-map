@@ -29,18 +29,8 @@ jobs:
       - name: 🔄 Fetch OAE prices
         run: python scripts/fetch_oae_prices.py
 
-      - name: 📤 Commit & Push if changed
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/prices-live.json
-          if git diff --staged --quiet; then
-            echo "No changes."
-          else
-            git commit -m "🤖 Auto-update: OAE national prices $(date +'%Y-%m-%d')"
-            for i in 1 2 3; do
-              git pull --rebase origin main && git push && break
-              echo "Push attempt $i failed, retrying in 10s..."
-              sleep 10
-            done
-          fi
+      - name: Commit and push
+        uses: ./.github/actions/commit-data
+        with:
+          paths: data/prices-live.json
+          message: "🤖 Auto-update: OAE national prices"

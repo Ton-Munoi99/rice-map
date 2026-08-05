@@ -51,19 +51,8 @@ jobs:
         run: python scripts/validate_rice_evi.py
 
       - name: Commit and push
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/ndvi.json data/rice-evi.json \
-                  data/ndvi-district.json data/rice-evi-district.json \
-                  data/rice-evi-validation.json
-          if git diff --quiet && git diff --staged --quiet; then
-            echo "No changes."
-          else
-            git commit -m "auto: update NDVI + Rice EVI (province+district) $(date +'%Y-%m')"
-            for i in 1 2 3; do
-              git pull --rebase origin main && git push && break
-              echo "Push attempt $i failed, retrying in 10s..."
-              sleep 10
-            done
-          fi
+        uses: ./.github/actions/commit-data
+        with:
+          paths: data/ndvi.json data/rice-evi.json data/ndvi-district.json data/rice-evi-district.json data/rice-evi-validation.json
+          message: "auto: update NDVI + Rice EVI (province+district)"
+          date-format: "%Y-%m"

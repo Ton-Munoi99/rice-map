@@ -29,10 +29,8 @@ jobs:
         run: python scripts/fetch_weather_forecast.py
 
       - name: Commit and push
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/weather-forecast.json
-          git diff --quiet && git diff --staged --quiet || \
-            (git commit -m "auto: update seasonal weather forecast (ECMWF IFS)" && \
-             git pull --rebase origin main && git push)
+        uses: ./.github/actions/commit-data
+        with:
+          paths: data/weather-forecast.json
+          message: "auto: update seasonal weather forecast (ECMWF IFS)"
+          date-format: ""

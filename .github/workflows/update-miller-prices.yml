@@ -33,18 +33,8 @@ jobs:
       - name: 🔄 Fetch latest PDF and extract prices
         run: python scripts/fetch_miller_prices.py
 
-      - name: 📤 Commit & Push if changed
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/prices-live.json
-          if git diff --staged --quiet; then
-            echo "No changes — prices already up to date."
-          else
-            git commit -m "🤖 Auto-update: Thai Rice Millers prices $(date +'%Y-%m-%d')"
-            for i in 1 2 3; do
-              git pull --rebase origin main && git push && break
-              echo "Push attempt $i failed, retrying in 10s..."
-              sleep 10
-            done
-          fi
+      - name: Commit and push
+        uses: ./.github/actions/commit-data
+        with:
+          paths: data/prices-live.json
+          message: "🤖 Auto-update: Thai Rice Millers prices"

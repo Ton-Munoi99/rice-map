@@ -1,0 +1,57 @@
+name: Commit data files
+description: Stage the given data files, commit if anything changed, then push with rebase-retry.
+
+inputs:
+  paths:
+    description: Space-separated file paths to stage.
+    required: true
+  message:
+    description: Commit message (a date suffix is appended unless date-format is empty).
+    required: true
+  date-format:
+    description: strftime format appended to the message. Set to '' to omit the date.
+    required: false
+    default: "%Y-%m-%d"
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        # ผ่าน env เพื่อไม่ให้ค่า input ถูก interpolate ลงใน shell โดยตรง
+        IN_PATHS: ${{ inputs.paths }}
+        IN_MESSAGE: ${{ inputs.message }}
+        IN_DATE_FORMAT: ${{ inputs.date-format }}
+      run: |
+        set -euo pipefail
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+
+        # add ทีละไฟล์ — git add เป็น atomic ถ้าใส่รวมกันแล้วมีไฟล์ที่ยังไม่ถูกสร้าง
+        # (บาง workflow เขียนไฟล์เฉพาะเมื่อมี secret) จะไม่ stage ให้สักไฟล์เลย
+        for p in $IN_PATHS; do
+          git add -- "$p" 2>/dev/null || echo "skip (not created): $p"
+        done
+
+        # เช็คเฉพาะที่ stage ไว้ — เราคอมมิตแค่ไฟล์ใน paths ไฟล์อื่นที่เปลี่ยนไม่เกี่ยว
+        if git diff --staged --quiet; then
+          echo "No changes."
+          exit 0
+        fi
+
+        msg="$IN_MESSAGE"
+        if [ -n "$IN_DATE_FORMAT" ]; then
+          msg="$msg $(date +"$IN_DATE_FORMAT")"
+        fi
+        git commit -m "$msg"
+
+        # cron หลายตัวรันพร้อมกัน — rebase ก่อน push กัน non-fast-forward
+        for i in 1 2 3; do
+          if git pull --rebase origin main && git push; then
+            exit 0
+          fi
+          echo "Push attempt $i failed, retrying in 10s..."
+          sleep 10
+        done
+        echo "::error::push failed after 3 attempts"
+        exit 1
