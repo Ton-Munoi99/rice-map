@@ -9,9 +9,8 @@ Source: JAXA/GPM_L3/GSMaP/v8/operational (Near Real-Time, ~4hr lag, ~0.1° = 11 
 Auth:   GEE Service Account (GEE_SERVICE_ACCOUNT_KEY env var)
 Output: data/rain-gsmap.json
 """
-import sys, io
-if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+import sys
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 import ee
 import json

@@ -13,9 +13,7 @@
 Output: rice_mills_distance_analysis.xlsx
 Run:    python scripts/build_mills_distance_excel.py
 """
-import io
 import json
-import math
 import os
 import sys
 import time
@@ -23,12 +21,13 @@ import urllib.parse
 import urllib.request
 from collections import defaultdict
 
+from riceutils import haversine_km
+
 import openpyxl
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
-if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC_XLSX = os.path.join(ROOT, "thai_rice_mills_dit_2026-04-23.xlsx")
@@ -128,16 +127,6 @@ def resolve_tambon(key, prov, dist, tam, cache, th2en, bbox):
     res = geocode_validated([(q_tam, "tambon"), (q_dist, "district")], prov, th2en, bbox)
     cache[key] = res
     return res
-
-
-# ── geometry ─────────────────────────────────────────────────────────────────
-def haversine_km(a_lat, a_lon, b_lat, b_lon):
-    R = 6371.0
-    dlat, dlon = math.radians(b_lat - a_lat), math.radians(b_lon - a_lon)
-    h = (math.sin(dlat / 2) ** 2
-         + math.cos(math.radians(a_lat)) * math.cos(math.radians(b_lat)) * math.sin(dlon / 2) ** 2)
-    return 2 * R * math.asin(math.sqrt(h))
-
 
 # ── load mills ───────────────────────────────────────────────────────────────
 def load_mills():

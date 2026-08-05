@@ -17,8 +17,7 @@ import xml.etree.ElementTree as ET
 from datetime import date, datetime, timezone
 from email.utils import parsedate_to_datetime
 
-if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 OUTPUT   = "data/rice-news.json"
 ARCHIVE  = "data/rice-news-archive.json"   # คลังข่าวสะสม ดูย้อนหลังได้ ไม่ลบของเก่า

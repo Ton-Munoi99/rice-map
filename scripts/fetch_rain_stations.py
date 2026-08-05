@@ -13,12 +13,11 @@ rain_level (เกณฑ์ TMD กรมอุตุนิยมวิทยา
 
 Output: data/rain-stations.json
 """
-import json, sys, io, requests
+import json, sys, requests
 from datetime import datetime, timezone
 from collections import Counter
 
-if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 API_URL = "https://api-v3.thaiwater.net/api/v1/thaiwater30/public/rain_24h"
 OUTPUT  = "data/rain-stations.json"

@@ -12,10 +12,9 @@ Run:  python scripts/validate_rice_evi.py            (รายงาน + เ�
 ใช้ต่อท้าย fetch_rice_evi.py ใน workflow เพื่อ monitor ทุกครั้งที่อัปเดต EVI
 เกณฑ์ ratio = rice_rai (EVI, GLAD-preferred) / พื้นที่ข้าว OAE (นาปี+นาปรัง, max ทุกปี)
 """
-import sys, io, os, re, json
+import sys, os, re, json
 
-if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 

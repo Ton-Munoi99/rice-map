@@ -23,9 +23,8 @@ Format:
 Simplification: maxError=3000m (3km) — พอสำหรับ mini map แสดงบนหน้าจอ
 File size target: ~500KB–1MB
 """
-import sys, io
-if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+import sys
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 import ee
 import json

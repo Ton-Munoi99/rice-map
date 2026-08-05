@@ -12,9 +12,20 @@ import ได้ทันทีเมื่อรัน `python scripts/fetch_X.
 import os
 import re
 import json
+import math
 
 # โปรเจกต์ Google Earth Engine
 GEE_PROJECT = "agriculture-monitoring-497007"
+
+
+def haversine_km(lat1, lon1, lat2, lon2):
+    """ระยะทางวงกลมใหญ่ระหว่างสองพิกัด (กม.)"""
+    R = 6371.0
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+    a = (math.sin(dlat / 2) ** 2
+         + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2)
+    return 2 * R * math.asin(math.sqrt(a))
 
 # ── Province name mapping: GAUL → rice-map ─────────────────────────────────
 # superset 19 entries (รวม Bueng Kan) ใช้ได้ทั้ง GEE province + district scripts

@@ -10,12 +10,11 @@ situation_level: 5=ล้นตลิ่ง 4=มาก 3=ปกติ 2=น้�
 
 Output: data/water-level.json
 """
-import json, sys, io, requests
+import json, sys, requests
 from datetime import datetime, timezone
 from collections import Counter
 
-if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 API_URL = "https://api-v3.thaiwater.net/api/v1/thaiwater30/public/waterlevel_load"
 OUTPUT  = "data/water-level.json"

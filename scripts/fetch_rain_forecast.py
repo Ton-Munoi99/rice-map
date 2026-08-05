@@ -15,13 +15,12 @@ Output: data/rain-forecast.json
 Shape ไม่เปลี่ยนจากเดิม: provinces[name] = {rain_7d, values[7]} — downstream
 (index.html, fetch_agri_warnings.py) ใช้ต่อได้โดยไม่ต้องแก้
 """
-import json, os, re, statistics, sys, time, io
+import json, os, re, statistics, sys, time
 import requests
 from datetime import date
 from riceutils import load_sample_points
 
-if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 DAYS       = 7           # next N days forecast
 OUTPUT     = "data/rain-forecast.json"

@@ -16,13 +16,11 @@ and writes BOTH rice-data.csv and rice-data.js so they stay in sync.
 Run from repo root:  python scripts/update_rice_data.py
 """
 import csv
-import io
 import json
 import sys
 from pathlib import Path
 
-if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 ROOT = Path(__file__).resolve().parents[1]
 RICE_JS = ROOT / "rice-data.js"

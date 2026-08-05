@@ -3,12 +3,12 @@
 Fetch active tropical cyclone alerts near Thailand from GDACS (free RSS, no API key).
 Output: data/storm-alerts.json
 """
-import os, sys, io, math, json, requests
+import os, sys, math, json, requests
 import xml.etree.ElementTree as ET
 from datetime import date
+from riceutils import haversine_km
 
-if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(ROOT, "data")
@@ -47,14 +47,6 @@ NS = {
     "gdacs":  "http://www.gdacs.org",
     "georss": "http://www.georss.org/georss",
 }
-
-
-def haversine_km(lat1, lon1, lat2, lon2):
-    R = 6371
-    dlat = math.radians(lat2 - lat1)
-    dlon = math.radians(lon2 - lon1)
-    a = math.sin(dlat/2)**2 + math.cos(math.radians(lat1))*math.cos(math.radians(lat2))*math.sin(dlon/2)**2
-    return 2 * R * math.asin(math.sqrt(a))
 
 
 def fetch_gdacs_storms():

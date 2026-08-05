@@ -9,12 +9,11 @@ Useful for comparing with the current/upcoming season.
 
 Output: data/weather-forecast.json
 """
-import json, os, re, sys, time, requests, io
+import json, os, re, sys, time, requests
 from datetime import date, datetime
 from riceutils import load_centroids
 
-if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 SEASON_MONTH_START = 6   # June
 SEASON_MONTH_END   = 11  # November

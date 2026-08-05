@@ -14,11 +14,10 @@ Alert scoreboard — วัดความแม่นของพยากร�
 Output: data/alert-scoreboard.json
   rolling accuracy (60 window ล่าสุด) + recent + _pending (สำหรับ match รอบหน้า)
 """
-import json, os, sys, io
+import json, os, sys
 from datetime import date
 
-if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 FORECAST  = "data/rain-forecast.json"
 GSMAP     = "data/rain-gsmap.json"

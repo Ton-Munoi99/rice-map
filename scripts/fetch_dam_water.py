@@ -5,11 +5,10 @@ Free, no API key. 35 large dams updated daily.
 
 Output: data/dam-water.json
 """
-import json, sys, io, requests
+import json, sys, requests
 from datetime import datetime
 
-if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 API_URL = "https://app.rid.go.th/reservoir/api/dam/public"
 OUTPUT  = "data/dam-water.json"

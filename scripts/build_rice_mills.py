@@ -11,13 +11,12 @@ Build data/rice-mills.json from the DIT Excel export (primary source):
 Deduplication key: name + district + province (keeps highest-capacity entry).
 Output: data/rice-mills.json
 """
-import json, os, sys, io
+import json, os, sys
 from datetime import date
 
 import pandas as pd
 
-if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 HERE   = os.path.dirname(__file__)
 ROOT   = os.path.join(HERE, "..")

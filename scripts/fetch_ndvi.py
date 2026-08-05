@@ -8,9 +8,8 @@ scripts/fetch_ndvi.py
 Source: MODIS/061/MOD13A3 — Monthly NDVI Composite (1km)
 Auth:   GEE Service Account (GEE_SERVICE_ACCOUNT_KEY env var)
 """
-import sys, io
-if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+import sys
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 import ee
 import json

@@ -17,15 +17,13 @@ Outputs per province:
 Note: page ranges and column layout below are calibrated to the Thai-language
 2568 edition. A different edition/layout will need them re-checked.
 """
-import io
 import json
 import sys
 from pathlib import Path
 
 import pdfplumber
 
-if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 ROOT = Path(__file__).resolve().parents[1]
 PDF_PATH = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "สถิติการเกษตรของประเทศไทย ปี 2568.pdf"

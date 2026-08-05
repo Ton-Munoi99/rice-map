@@ -18,14 +18,12 @@ import os
 import re
 import ssl
 import sys
-import io
 import urllib.request
 
 import requests
 from bs4 import BeautifulSoup
 
-if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 
 def _normalize(s: str) -> str:

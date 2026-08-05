@@ -20,14 +20,12 @@ Expected local source files in repo root:
 
 from __future__ import annotations
 
-import io
 import json
 import re
 import sys
 from pathlib import Path
 
-if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 from build_oae_rice_data import SKIP_PREFIXES, canon, clean_text, extract_lines
 

@@ -7,11 +7,9 @@ Output: data/agri-warnings.json
 import json
 import os
 import sys
-import io
 from datetime import date
 
-if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 # ---------------------------------------------------------------------------
 # Paths

@@ -13,13 +13,12 @@ Disease risk thresholds (published scientific literature):
 
 Output: data/disease-risk.json
 """
-import json, os, re, sys, time, io
+import json, os, re, sys, time
 import requests
 from datetime import date
 from riceutils import load_centroids
 
-if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 DAYS       = 7           # 6 past days + today = 7 total
 OUTPUT     = "data/disease-risk.json"

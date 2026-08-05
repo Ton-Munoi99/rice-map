@@ -9,9 +9,8 @@ Regions: FAO GAUL 2015 level2 (813 อำเภอ)
 Output:  data/ndvi-district.json
 Format:  { provinces: { "Chiang Mai": { "Mueang Chiang Mai": 0.523, ... } } }
 """
-import sys, io
-if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+import sys
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 import ee
 import json

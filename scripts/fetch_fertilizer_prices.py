@@ -12,7 +12,6 @@ cleanly if the key is unset, keeping the last committed JSON.
 
 Run: python scripts/fetch_fertilizer_prices.py
 """
-import io
 import json
 import os
 import re
@@ -20,8 +19,7 @@ import sys
 import urllib.request
 from datetime import date
 
-if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 OUT = "data/fertilizer-prices.json"
 FIRECRAWL_KEY = os.environ.get("FIRECRAWL_API_KEY", "")

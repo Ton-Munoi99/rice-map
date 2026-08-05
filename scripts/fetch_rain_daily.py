@@ -7,13 +7,12 @@ Uses Open-Meteo batch API — all 77 provinces in 2 API calls (~10 sec total).
 
 Output: data/rain-daily.json
 """
-import json, os, re, sys, time, io
+import json, os, re, sys, time
 import requests
 from datetime import date
 from riceutils import load_centroids
 
-if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 DAYS       = 7           # past N days + today (7 total)
 OUTPUT     = "data/rain-daily.json"

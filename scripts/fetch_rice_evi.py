@@ -16,9 +16,8 @@ Method:  Hybrid Union Mask + Phenology flooding confirmation
          เฉพาะ pixel ที่ผ่าน Phenology จึงนับเป็น rice (confirmed)
 → บันทึกที่ data/rice-evi.json
 """
-import sys, io
-if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+import sys
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 import calendar
 import ee

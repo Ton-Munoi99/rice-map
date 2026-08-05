@@ -14,7 +14,6 @@ it against data/agri-warnings.json provinces, and registers the chat.
 Requires env var TELEGRAM_BOT_TOKEN (GitHub Actions secret).
 Run: python scripts/telegram_notify.py
 """
-import io
 import json
 import os
 import re
@@ -24,8 +23,7 @@ import urllib.parse
 import urllib.request
 from datetime import date
 
-if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 API = f"https://api.telegram.org/bot{TOKEN}"
