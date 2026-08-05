@@ -218,8 +218,7 @@
           0 10px 26px rgba(217, 160, 255, 0.18);
       }
 
-      .action-btn,
-      .import-btn {
+      .action-btn {
         display: inline-flex;
         align-items: center;
         gap: 6px;
@@ -236,8 +235,7 @@
         letter-spacing: 0.07em;
       }
 
-      .action-btn:hover,
-      .import-btn:hover {
+      .action-btn:hover {
         border-color: var(--line-strong);
         transform: translateY(-1px);
       }
@@ -267,10 +265,6 @@
         transform: translateY(-1px);
       }
 
-      .import-btn input {
-        display: none;
-      }
-
       .main {
         flex: 1;
         min-height: 0;
@@ -295,43 +289,6 @@
         padding: 8px;
         gap: 6px;
         overflow: hidden;
-      }
-
-      .map-head {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) repeat(3, minmax(120px, 1fr));
-        gap: 10px;
-        align-items: stretch;
-      }
-
-      .headline {
-        padding: 14px 16px;
-        border-radius: 18px;
-        background: linear-gradient(145deg, rgba(15, 29, 35, 0.95), rgba(12, 24, 30, 0.76));
-        border: 1px solid var(--line);
-      }
-
-      .headline .eyebrow {
-        font-family: "IBM Plex Mono", monospace;
-        font-size: 10px;
-        letter-spacing: 0.18em;
-        text-transform: uppercase;
-        color: var(--muted);
-        margin-bottom: 8px;
-      }
-
-      .headline h2 {
-        font-family: "Cormorant Garamond", serif;
-        font-size: 28px;
-        line-height: 1;
-        margin-bottom: 8px;
-      }
-
-      .headline p {
-        font-size: 13px;
-        line-height: 1.5;
-        color: var(--text-soft);
-        max-width: 54ch;
       }
 
       .stat-chip {
@@ -872,23 +829,6 @@
       .ww-storm {
         background: rgba(198, 40, 40, 0.15);
         border: 1px solid rgba(198, 40, 40, 0.4);
-      }
-      .ww-high {
-        background: rgba(198, 40, 40, 0.1);
-      }
-      .ww-med {
-        background: rgba(230, 81, 0, 0.1);
-      }
-      .ww-low {
-        background: rgba(249, 168, 37, 0.1);
-      }
-      .ww-ok {
-        background: rgba(102, 187, 106, 0.08);
-      }
-      .ww-divider {
-        height: 1px;
-        background: rgba(255, 255, 255, 0.08);
-        margin: 2px 0;
       }
 
       /* ข่าวข้าว — แถวข่าวคลิกได้ (สไตล์เดียวกับ ww-row) */
@@ -3412,20 +3352,6 @@
       let toastTimer = null;
       let mapInteractionsReady = false;
 
-      function hsh(str) {
-        let h = 0;
-        for (let i = 0; i < str.length; i += 1) {
-          h = (h << 5) - h + str.charCodeAt(i);
-          h |= 0;
-        }
-        return Math.abs(h);
-      }
-
-      function srand(seed) {
-        const x = Math.sin(seed) * 10000;
-        return x - Math.floor(x);
-      }
-
       const _regionWarned = new Set();
       function regionOf(en) {
         for (const [region, list] of Object.entries(REG)) {
@@ -4054,11 +3980,6 @@
         return layer === "price"
           ? t("ข้าวเปลือกเจ้าหอมมะลิ", "Hom Mali Paddy")
           : t("ข้าวเจ้าหอมมะลิ (ในพื้นที่ + นอกพื้นที่)", "Hom Mali (in + outside area)");
-      }
-
-      function metricDisplay(en, rice = S.rice, year = S.year, layer = S.layer) {
-        if (layer === "price") return priceRange(entryOf(en, rice, year));
-        return fmtValue(valueOf(en, rice, year, layer), layer);
       }
 
       function getPalette() {
