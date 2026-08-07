@@ -257,8 +257,8 @@
         const buyers = (D.biomass?.provinces?.[en]?.plants || []).filter((p) => p.rice_straw || p.rice_husks);
         let rows = "";
         if (mills?.count) rows += `<div class="row"><span class="k">🏭 โรงสีข้าวในจังหวัด</span><span class="v">${fmt(mills.count)} <span class="unit">แห่ง</span></span></div>`;
-        rows += `<div class="row"><span class="k">🔥 โรงไฟฟ้าฯ รับซื้อฟาง/แกลบ</span><span class="v">${buyers.length ? buyers.length + " แห่ง" : "ในจังหวัด: ไม่มี"}</span></div>`;
-        return card(`<h2>📍 จุดขายใกล้ตัว</h2>${rows}<div class="src">DIT (โรงสี) · พพ. (โรงไฟฟ้าชีวมวล 2565)</div>`);
+        rows += `<div class="row"><span class="k">🔥 โรงไฟฟ้าฯ ใช้ฟาง/แกลบ</span><span class="v">${buyers.length ? buyers.length + " แห่ง" : "ในจังหวัด: ไม่มี"}</span></div>`;
+        return card(`<h2>📍 จุดขายใกล้ตัว</h2>${rows}<div class="src">DIT (โรงสี) · พพ. (ทะเบียนโรงไฟฟ้าชีวมวล ธ.ค. 2568)</div>`);
       }
 
       function render(en) {

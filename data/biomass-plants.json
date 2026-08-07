@@ -1,267 +1,3159 @@
 {
   "_meta": {
-    "source": "กรมพัฒนาพลังงานทดแทนและอนุรักษ์พลังงาน (DEDE)",
+    "source": "กรมพัฒนาพลังงานทดแทนและอนุรักษ์พลังงาน (พพ./DEDE)",
     "source_en": "Dept. of Alternative Energy Development and Efficiency (DEDE)",
-    "year": "2565",
-    "total": 79,
-    "updated": "2566-01-16",
-    "note": "ข้อมูลเบื้องต้น ได้จากโรงไฟฟ้าที่ตอบแบบสอบถามเท่านั้น",
-    "note_en": "Preliminary data — respondent power plants only (2565 survey)"
+    "source_layer": "gisdede:9000_2569_biomassdec68",
+    "source_url": "https://gis.dede.go.th/geoserver/wfs",
+    "year": "2569",
+    "as_of": "ธันวาคม 2568",
+    "as_of_en": "Dec 2025",
+    "total": 230,
+    "total_mw": 3518.84,
+    "provinces_covered": 54,
+    "rice_fuel_plants": 84,
+    "unspecified_fuel": 46,
+    "duplicate_names": 3,
+    "note": "ทะเบียนโรงไฟฟ้าชีวมวลที่ขายไฟเข้าระบบ 230 โรง 54 จังหวัด · ระบุเชื้อเพลิงจากข้าว (แกลบ/ฟาง) 84 โรง · อีก 46 โรงไม่ระบุชนิดเชื้อเพลิงในต้นทาง",
+    "note_en": "On-grid biomass power plants: 230 plants across 54 provinces · 84 report rice fuel (husk/straw) · 46 have no fuel type stated at source"
   },
   "provinces": {
-    "Uttaradit": {
+    "Buri Ram": {
+      "count": 7,
+      "plants": [
+        {
+          "name": "บริษัท ศรีเจริญไบโอเพาเวอร์ จำกัด",
+          "mw": 9.9,
+          "rice_straw": false,
+          "rice_husks": true,
+          "fuel": "แกลบ",
+          "amphoe": "อำเภอประโคนชัย",
+          "tambon": "ตำบลโคกมะขาม",
+          "lat": 14.6095127,
+          "lon": 103.10611632,
+          "fuel_src": "dede2569"
+        },
+        {
+          "name": "บริษัท บุรีรัมย์พลังงาน จำกัด",
+          "mw": 9.9,
+          "rice_straw": true,
+          "rice_husks": true,
+          "fuel": "Biomass",
+          "amphoe": "อำเภอคูเมือง",
+          "tambon": "ตำบลหินเหล็กไฟ",
+          "lat": 15.2284303,
+          "lon": 103.07231593,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท ศรีวัฒนา กรีนพาวเวอร์ จำกัด",
+          "mw": 9.9,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เปลือกไม้สับ",
+          "amphoe": "อำเภอเฉลิมพระเกียรติ",
+          "tambon": "ตำบลอีสานเขต",
+          "lat": 14.61459626,
+          "lon": 102.90554243
+        },
+        {
+          "name": "บริษัท เวลล์ โคราช เอ็นเนอร์ยี่ จำกัด",
+          "mw": 9.9,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เศษวัสดุ",
+          "amphoe": "อำเภอหนองกี่",
+          "tambon": "ตำบลเมืองไผ่",
+          "lat": 14.79346255,
+          "lon": 102.59563803
+        },
+        {
+          "name": "บริษัท ยูดับบลิวซี อำพัน ไบโอแมส จำกัด (เดิมบริษัท แอ๊ดวานซ์ ไบโอพาวเวอร์ )จำกัด",
+          "mw": 9.5,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เศษไม้",
+          "amphoe": "อำเภอสตึก",
+          "tambon": "ตำบลดอนมนต์",
+          "lat": 15.18840215,
+          "lon": 103.19790214
+        },
+        {
+          "name": "บริษัท บุรีรัมย์เพาเวอร์ จำกัด",
+          "mw": 9.5,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอคูเมือง",
+          "tambon": "ตำบลหินเหล็กไฟ",
+          "lat": 15.22798926,
+          "lon": 103.07226098
+        },
+        {
+          "name": "บริษัท แอ๊บโซลูท คลีน เอ็นจิเนียริ่ง แอนด์ เซอร์วิส จำกัด เดิมชื่อ บริษัท สตึกไบโอแมส จำกัด",
+          "mw": 7.5,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอสตึก",
+          "tambon": "ตำบลดอนมนต์",
+          "lat": 15.18848552,
+          "lon": 103.19545473
+        }
+      ]
+    },
+    "Chai Nat": {
       "count": 3,
       "plants": [
-        {"name": "บริษัทพิชัยธัญชาติ จำกัด", "mw": 4.9, "rice_straw": true, "rice_husks": false},
-        {"name": "บริษัท ไทยเอกลักษณ์เพาเวอร์ จำกัด", "mw": 50.0, "rice_straw": true, "rice_husks": true},
-        {"name": "บริษัท น้ำตาลไทยเอกลักษณ์ จำกัด", "mw": 21.5, "rice_straw": true, "rice_husks": true}
+        {
+          "name": "บริษัท บีเอ็มพี เอ็นเนอร์ยี่ จำกัด (มหาชน)",
+          "mw": 6.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอวัดสิงห์",
+          "tambon": "ตำบลมะขามเฒ่า",
+          "lat": 15.23310351,
+          "lon": 100.01849781
+        },
+        {
+          "name": "บริษัท บีเอ็มพี เอ็นเนอร์ยี่ จำกัด (มหาชน)(เดิมบริษัท ไบโอแมส เพาเวอร์ จำกัด)",
+          "mw": 3.5,
+          "rice_straw": false,
+          "rice_husks": true,
+          "fuel": "แกลบ",
+          "amphoe": "อำเภอวัดสิงห์",
+          "tambon": "ตำบลมะขามเฒ่า",
+          "lat": 15.21594265,
+          "lon": 100.05450369,
+          "fuel_src": "dede2569"
+        },
+        {
+          "name": "บริษัท เอเชีย กรีน เพาเวอร์ จำกัด",
+          "mw": 0.92,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เศษไม้",
+          "amphoe": "อำเภอเนินขาม",
+          "tambon": "ตำบลสุขเดือนห้า",
+          "lat": 14.97047077,
+          "lon": 99.77359642
+        }
+      ]
+    },
+    "Chaiyaphum": {
+      "count": 5,
+      "plants": [
+        {
+          "name": "บริษัท มิตรผล ไบโอ-เพาเวอร์ จำกัด (โครงการ 1) เดิมชื่อ ภูเขียว ไบโอ-เอ็นเนอร์ยี",
+          "mw": 56.9,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอภูเขียว",
+          "tambon": "ตำบลโคกสะอาด",
+          "lat": 16.48149,
+          "lon": 102.1203026
+        },
+        {
+          "name": "บริษัท น้ำตาลระยอง จำกัด (SRY-N)",
+          "mw": 40.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอจัตุรัส",
+          "tambon": "ตำบลบ้านขาม",
+          "lat": 15.42993998,
+          "lon": 101.81062
+        },
+        {
+          "name": "บริษัท มิตรผล ไบโอ เพาเวอร์ (ภูเขียว ไบโอ-เอ็นเนอร์ยี่) จำกัด",
+          "mw": 12.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เศษวัสดุ",
+          "amphoe": "อำเภอภูเขียว",
+          "tambon": "ตำบลโคกสะอาด",
+          "lat": 16.46903369,
+          "lon": 102.12854859
+        },
+        {
+          "name": "บริษัท มิตรผล ไบโอ เพาเวอร์ จำกัด (โครงการ 2) เดิมชื่อ ภูเขียว ไบโอ-เอ็นเนอร์ยี",
+          "mw": 11.4,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอภูเขียว",
+          "tambon": "ตำบลโคกสะอาด",
+          "lat": 16.46950129,
+          "lon": 102.10868464
+        },
+        {
+          "name": "บริษัท เคพี เอ็นเนอร์ยี กรุ๊ป จำกัด",
+          "mw": 0.56,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เศษวัสดุ",
+          "amphoe": "อำเภอหนองบัวระเหว",
+          "tambon": "ตำบลหนองบัวระเหว",
+          "lat": 15.73341305,
+          "lon": 101.75196807
+        }
+      ]
+    },
+    "Chiang Rai": {
+      "count": 1,
+      "plants": [
+        {
+          "name": "บริษัท ซูพรีม รีนิวเอเบิล เอ็นเนอร์ยี่ จำกัด (ไม่ขาย)0.16/0.135",
+          "mw": 0.16,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "ซังข้าวโพด",
+          "amphoe": "อำเภอเวียงแก่น",
+          "tambon": "ตำบลหล่ายงาว",
+          "lat": 20.11474379,
+          "lon": 100.48189301
+        }
+      ]
+    },
+    "Chon Buri": {
+      "count": 9,
+      "plants": [
+        {
+          "name": "บริษัท น้ำตาลระยอง จำกัด",
+          "mw": 18.0,
+          "rice_straw": true,
+          "rice_husks": true,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอบ่อทอง",
+          "tambon": "ตำบลธาตุทอง",
+          "lat": 13.27733997,
+          "lon": 101.38705003,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท แอ๊ดวานซ์ คลีน เพาเวอร์ จำกัด",
+          "mw": 9.9,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เศษวัสดุ",
+          "amphoe": "อำเภอบ้านบึง",
+          "tambon": "ตำบลหนองอิรุณ",
+          "lat": 13.24476632,
+          "lon": 101.30769499
+        },
+        {
+          "name": "บริษัท สุขสมบูรณ์กรีน เพาเวอร์ จำกัด",
+          "mw": 9.5,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "วัสดุเหลือใช้",
+          "amphoe": "อำเภอหนองใหญ่",
+          "tambon": "ตำบลห้างสูง",
+          "lat": 13.18036394,
+          "lon": 101.31605475
+        },
+        {
+          "name": "บริษัท น้ำตาลนิวกว้างสุ้นหลี จำกัด",
+          "mw": 8.5,
+          "rice_straw": true,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอพนัสนิคม",
+          "tambon": null,
+          "lat": 13.41479999,
+          "lon": 101.21004997,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท สหการน้ำตาล ชลบุรี จำกัด",
+          "mw": 8.0,
+          "rice_straw": true,
+          "rice_husks": false,
+          "fuel": "วัสดุเหลือใช้",
+          "amphoe": "อำเภอบ้านบึง",
+          "tambon": "ตำบลหนองไผ่แก้ว",
+          "lat": 13.19420763,
+          "lon": 101.24908071,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท คัมมอนน์ เพาเวอร์ จำกัด",
+          "mw": 0.99,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เปลือกไม้ เศษไม้",
+          "amphoe": "อำเภอพนัสนิคม",
+          "tambon": "ตำบลนาวังหิน",
+          "lat": 13.43595981,
+          "lon": 101.24942034
+        },
+        {
+          "name": "บริษัท ไบโอกรีน เอนเนอร์ยี 1 จำกัด",
+          "mw": 0.99,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เปลือกไม้ เศษไม้",
+          "amphoe": "อำเภอพนัสนิคม",
+          "tambon": "ตำบลนาวังหิน",
+          "lat": 13.43455581,
+          "lon": 101.24777697
+        },
+        {
+          "name": "บริษัท แอ๊บโซลูทเอ็นเนอร์จี จำกัด",
+          "mw": 0.99,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "ไม้ชิ้นไม้สับ เศษไม้",
+          "amphoe": "อำเภอพนัสนิคม",
+          "tambon": "ตำบลนาวังหิน",
+          "lat": 13.46974161,
+          "lon": 101.14240667
+        },
+        {
+          "name": "บริษัท ไบโอโกกรีน จำกัด",
+          "mw": 0.99,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "ไม้ชิ้นไม้สับ เศษไม้",
+          "amphoe": "อำเภอพนัสนิคม",
+          "tambon": "ตำบลนาวังหิน",
+          "lat": 13.44713979,
+          "lon": 101.24106626
+        }
+      ]
+    },
+    "Chumphon": {
+      "count": 3,
+      "plants": [
+        {
+          "name": "บริษัท ทรัพย์อนันต์ ไบโอแมส จำกัด (โครงการ 1)",
+          "mw": 9.5,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กากปาล์ม",
+          "amphoe": "อำเภอท่าแซะ",
+          "tambon": "ตำบลทรัพย์อนันต์",
+          "lat": 10.69228228,
+          "lon": 99.19479537
+        },
+        {
+          "name": "บริษัท กลุ่มปาล์มธรรมชาติ จำกัด (ปาล์มน้ำมันธรรมชาติชุมพร)",
+          "mw": 9.4,
+          "rice_straw": false,
+          "rice_husks": true,
+          "fuel": "กากปาล์ม",
+          "amphoe": "อำเภอท่าแซะ",
+          "tambon": "ตำบลทรัพย์อนันต์",
+          "lat": 10.31713104,
+          "lon": 99.01659366,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท นครราชสีมาเพาเวอร์กรีน จำกัด",
+          "mw": 7.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "วัสดุเหลือใช้จากการผลิตน้ำมันปาล์ม",
+          "amphoe": "อำเภอเมืองชุมพร",
+          "tambon": "ตำบลวังใหม่",
+          "lat": 10.52739427,
+          "lon": 99.00458259
+        }
+      ]
+    },
+    "Kalasin": {
+      "count": 6,
+      "plants": [
+        {
+          "name": "บริษํท มิตรผล ไบโอ-เพาเวอร์ (กุฉินารายณ์) จำกัด เดิมชื่อ บริษัท มิตรผล ไบโอ-เพาเวอร์ (กาฬสินธุ",
+          "mw": 39.4,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอกุฉินารายณ์",
+          "tambon": "ตำบลสมสะอาด",
+          "lat": 16.46617777,
+          "lon": 104.03699756
+        },
+        {
+          "name": "บริษัท มิตรผล ไบโอ-เพาเวอร์ (กาฬสินธุ์) จำกัด",
+          "mw": 32.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอกุฉินารายณ์",
+          "tambon": "ตำบลสมสะอาด",
+          "lat": 16.44787514,
+          "lon": 104.05240624
+        },
+        {
+          "name": "บริษัท อุตสาหกรรมน้ำตาลอีสาน จำกัด",
+          "mw": 15.5,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอสามชัย",
+          "tambon": "ตำบลสำราญ",
+          "lat": 16.9286766,
+          "lon": 103.54395153
+        },
+        {
+          "name": "บริษัท อีสานไบโอเพาเวอร์ จำกัด",
+          "mw": 12.0,
+          "rice_straw": false,
+          "rice_husks": true,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอสามชัย",
+          "tambon": "ตำบลสำราญ",
+          "lat": 16.95776412,
+          "lon": 103.51953206,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท มิตรผล ไบโอ-เพาเวอร์ (กุฉินารายณ์) จำกัด เดิมชื่อ บริษัท น้ำตาลมิตรกาฬสินธุ์ จำกัด (โค",
+          "mw": 10.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เศษวัสดุ",
+          "amphoe": "อำเภอกุฉินารายณ์",
+          "tambon": "ตำบลสมสะอาด",
+          "lat": 16.46756837,
+          "lon": 104.03836891
+        },
+        {
+          "name": "บริษัท กมลาไสย ไบโอเพาเวอร์ 2010 จำกัด",
+          "mw": 9.0,
+          "rice_straw": true,
+          "rice_husks": true,
+          "fuel": "แกลบ",
+          "amphoe": "อำเภอกมลาไสย",
+          "tambon": "ตำบลกมลาไสย",
+          "lat": 16.3151829,
+          "lon": 103.57199783,
+          "fuel_src": "both"
+        }
+      ]
+    },
+    "Kamphaeng Phet": {
+      "count": 14,
+      "plants": [
+        {
+          "name": "บริษัท ทิพย์กำแพงเพชร ไบโอเอนเนอยี่ จำกัด  (โครงการ 2)",
+          "mw": 61.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอบึงสามัคคี",
+          "tambon": "ตำบลเทพนิมิต",
+          "lat": 16.22321619,
+          "lon": 99.88574007
+        },
+        {
+          "name": "บริษัท ทิพย์กำแพงเพชร ไบโอเอนเนอยี่ จำกัด",
+          "mw": 36.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เศษวัสดุ",
+          "amphoe": "อำเภอบึงสามัคคี",
+          "tambon": "ตำบลเทพนิมิต",
+          "lat": 16.22273692,
+          "lon": 99.88578471
+        },
+        {
+          "name": "บริษัท น้ำตาลนครเพชร จำกัด",
+          "mw": 22.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอเมืองกำแพงเพชร",
+          "tambon": "ตำบลเทพนคร",
+          "lat": 16.36781231,
+          "lon": 99.60953025
+        },
+        {
+          "name": "บริษัท น้ำตาลทรายกำแพงเพชร จำกัด",
+          "mw": 21.0,
+          "rice_straw": true,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอเมืองกำแพงเพชร",
+          "tambon": "ตำบลไตรตรึงษ์",
+          "lat": 16.32964299,
+          "lon": 99.56542538,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท ไบโอ เพาเวอร์ แพลนท์ จำกัด",
+          "mw": 20.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอคลองขลุง",
+          "tambon": "ตำบลคลองขลุง",
+          "lat": 16.23925848,
+          "lon": 99.69200049
+        },
+        {
+          "name": "บริษัท กำแพงเพชรกรีน เอ็นเนอร์ยี่ จำกัด",
+          "mw": 9.9,
+          "rice_straw": true,
+          "rice_husks": true,
+          "fuel": "แกลบ",
+          "amphoe": "อำเภอเมืองกำแพงเพชร",
+          "tambon": "ตำบลอ่างทอง",
+          "lat": 16.41817288,
+          "lon": 99.52202235,
+          "fuel_src": "both"
+        },
+        {
+          "name": "บริษัท กำแพงเพชรไบโอเพาเวอร์ จำกัด",
+          "mw": 9.9,
+          "rice_straw": false,
+          "rice_husks": true,
+          "fuel": "แกลบ",
+          "amphoe": "อำเภอคลองขลุง",
+          "tambon": "ตำบลคลองขลุง",
+          "lat": 16.18158308,
+          "lon": 99.71725264,
+          "fuel_src": "dede2569"
+        },
+        {
+          "name": "บริษัท แอ๊ดวานซ์ คลีน เพาเวอร์ จำกัด",
+          "mw": 9.9,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "ไม้ ชิ้นไม้สับ เปลือกไม้",
+          "amphoe": "อำเภอคลองขลุง",
+          "tambon": "ตำบลคลองขลุง",
+          "lat": 16.21643656,
+          "lon": 99.68822604
+        },
+        {
+          "name": "บริษัท สหกรีน ฟอเรส จำกัด",
+          "mw": 9.5,
+          "rice_straw": true,
+          "rice_husks": true,
+          "fuel": "เศษวัสดุ",
+          "amphoe": "อำเภอพรานกระต่าย",
+          "tambon": "ตำบลคุยบ้านโอง",
+          "lat": 16.68145896,
+          "lon": 99.67588293,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท นครเพชรกรีนเนอร์ยี่ จำกัด",
+          "mw": 9.5,
+          "rice_straw": true,
+          "rice_husks": true,
+          "fuel": "เศษวัสดุ",
+          "amphoe": "อำเภอเมืองกำแพงเพชร",
+          "tambon": "ตำบลเทพนคร",
+          "lat": 16.36863111,
+          "lon": 99.61084367,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท ไทยเสรีเจนเนอเรติ้ง จำกัด",
+          "mw": 6.0,
+          "rice_straw": false,
+          "rice_husks": true,
+          "fuel": "แกลบ",
+          "amphoe": "อำเภอคลองขลุง",
+          "tambon": "ตำบลคลองขลุง",
+          "lat": 16.18028881,
+          "lon": 99.71504034,
+          "fuel_src": "dede2569"
+        },
+        {
+          "name": "บริษัท ที.เอส.เพาเวอร์ แพลนท์ จำกัด",
+          "mw": 6.0,
+          "rice_straw": true,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอคลองขลุง",
+          "tambon": "ตำบลคลองขลุง",
+          "lat": 16.15874407,
+          "lon": 99.68013468,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท กำแพงเพชรผลิตไฟฟ้า จำกัด",
+          "mw": 3.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เหง้ามัน",
+          "amphoe": "อำเภอเมืองกำแพงเพชร",
+          "tambon": "ตำบลอ่างทอง",
+          "lat": 16.38428018,
+          "lon": 99.54795539
+        },
+        {
+          "name": "บริษัท หวังดี เอ็นเนอยี จำกัด",
+          "mw": 0.97,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "วัสดุเหลือใช้จากการผลิตน้ำมันปาล์ม",
+          "amphoe": "อำเภอคลองขลุง",
+          "tambon": "ตำบลคลองขลุง",
+          "lat": 16.21643656,
+          "lon": 99.68822604
+        }
+      ]
+    },
+    "Kanchanaburi": {
+      "count": 16,
+      "plants": [
+        {
+          "name": "บริษัท โรงไฟฟ้าน้ำตาลขอนแก่น จำกัด (โครงการ 2)",
+          "mw": 65.0,
+          "rice_straw": true,
+          "rice_husks": false,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอบ่อพลอย",
+          "tambon": "ตำบลหลุมรัง",
+          "lat": 14.5038795,
+          "lon": 99.52517219,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท น้ำตาลท่ามะกา จำกัด",
+          "mw": 33.0,
+          "rice_straw": true,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอท่ามะกา",
+          "tambon": "ตำบลท่ามะกา",
+          "lat": 13.91141701,
+          "lon": 99.77028803,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท ไทยเพิ่มพูนอุตสาหกรรม จำกัด",
+          "mw": 25.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอท่าม่วง",
+          "tambon": "ตำบลวังศาลา",
+          "lat": 13.95446474,
+          "lon": 99.72248597
+        },
+        {
+          "name": "บริษัท อุตสาหกรรมมิตรเกษตร จำกัด",
+          "mw": 20.5,
+          "rice_straw": true,
+          "rice_husks": true,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอท่ามะกา",
+          "tambon": "ตำบลดอนขมิ้น",
+          "lat": 13.87209084,
+          "lon": 99.81653071,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท กาญจนบุรีไบโอ - เอ็นเนอร์ยี่ จำกัด โครงการ 2",
+          "mw": 20.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "วัสดุเหลือใช้",
+          "amphoe": "อำเภอเมืองกาญจนบุรี",
+          "tambon": "ตำบลบ้านเก่า",
+          "lat": 13.92506429,
+          "lon": 99.23176007
+        },
+        {
+          "name": "บริษัท ไทยอุตสาหกรรมน้ำตาล จำกัด",
+          "mw": 19.0,
+          "rice_straw": true,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอท่ามะกา",
+          "tambon": "ตำบลตะคร้ำเอน",
+          "lat": 14.00262419,
+          "lon": 99.76504454,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท ประจวบอุตสาหกรรม จำกัด (โครงการ 2)",
+          "mw": 16.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอท่ามะกา",
+          "tambon": "ตำบลท่ามะกา",
+          "lat": 13.93659415,
+          "lon": 99.75096919
+        },
+        {
+          "name": "บริษัท ไทยเคนเปเปอร์ จำกัด (มหาชน) สำนักงานใหญ่",
+          "mw": 14.2,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "ชีวมวล+ถ่านหิน",
+          "amphoe": "อำเภอท่าม่วง",
+          "tambon": "ตำบลวังขนาย",
+          "lat": 13.94752054,
+          "lon": 99.67214144
+        },
+        {
+          "name": "บริษัท แอ๊ดวานซ์ คลีน เพาเวอร์ จำกัด",
+          "mw": 9.9,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เปลือกไม้",
+          "amphoe": "อำเภอเมืองกาญจนบุรี",
+          "tambon": "ตำบลบ้านเก่า",
+          "lat": 13.92506429,
+          "lon": 99.23176007
+        },
+        {
+          "name": "บริษัท ไทยเบฟเวอเรจ เอ็นเนอร์ยี่ จำกัด",
+          "mw": 9.5,
+          "rice_straw": true,
+          "rice_husks": false,
+          "fuel": "กากส่าและกะลาปาล์ม",
+          "amphoe": "อำเภอท่าม่วง",
+          "tambon": "ตำบลวังขนาย",
+          "lat": 13.95619082,
+          "lon": 99.65910758,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท ประจวบอุตสาหกรรม จำกัด",
+          "mw": 8.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอท่ามะกา",
+          "tambon": "ตำบลท่ามะกา",
+          "lat": 13.93538051,
+          "lon": 99.75165027
+        },
+        {
+          "name": "บริษัท ไทยกาญจนบุรี เพาเวอร์ จำกัด",
+          "mw": 8.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอท่ามะกา",
+          "tambon": "ตำบลท่าไม้",
+          "lat": 13.92574716,
+          "lon": 99.79017177
+        },
+        {
+          "name": "บริษัท สินไชยศรี จำกัด",
+          "mw": 4.9,
+          "rice_straw": false,
+          "rice_husks": true,
+          "fuel": "แกลบ",
+          "amphoe": "อำเภอพนมทวน",
+          "tambon": "ตำบลหนองสาหร่าย",
+          "lat": 14.09098643,
+          "lon": 99.72634994,
+          "fuel_src": "dede2569"
+        },
+        {
+          "name": "บริษัท เอช วี กรีน จำกัด",
+          "mw": 1.11,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เศษวัสดุ",
+          "amphoe": "อำเภอทองผาภูมิ",
+          "tambon": "ตำบลท่าขนุน",
+          "lat": 14.69745467,
+          "lon": 98.66706505
+        },
+        {
+          "name": "บริษัท โรงไฟฟ้าสระลงเรือ จำกัด",
+          "mw": 0.99,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "วัสดุเหลือใช้",
+          "amphoe": "อำเภอห้วยกระเจา",
+          "tambon": "ตำบลสระลงเรือ",
+          "lat": 14.3633115,
+          "lon": 99.77067229
+        },
+        {
+          "name": "นางสาวธัญญดา เลิศวิชัย {0.2/0.18}",
+          "mw": 0.2,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เศษวัสดุ",
+          "amphoe": "อำเภอท่าม่วง",
+          "tambon": "ตำบลหนองตากยา",
+          "lat": 13.82973004,
+          "lon": 99.55116002
+        }
+      ]
+    },
+    "Khon Kaen": {
+      "count": 8,
+      "plants": [
+        {
+          "name": "บริษัท โรงไฟฟ้าน้ำตาลขอนแก่น จำกัด โครงการ 1",
+          "mw": 30.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอน้ำพอง",
+          "tambon": "ตำบลน้ำพอง",
+          "lat": 16.76028892,
+          "lon": 102.81872547
+        },
+        {
+          "name": "บริษัท มิตรผล ไบโอ-เพาเวอร์ (ภูเวียง) จำกัด เดิมชื่อ น้ำตาลมิตรภูเวียง",
+          "mw": 27.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอหนองเรือ",
+          "tambon": "ตำบลหนองเรือ",
+          "lat": 16.50777529,
+          "lon": 102.47667214
+        },
+        {
+          "name": "บริษัท มิตรผล ไบโอ-เพาเวอร์ (ภูเวียง) จำกัด",
+          "mw": 24.0,
+          "rice_straw": false,
+          "rice_husks": true,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอหนองเรือ",
+          "tambon": "ตำบลหนองเรือ",
+          "lat": 16.51437314,
+          "lon": 102.44948347,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท มิตรผล ไบโอ เพาเวอร์ จำกัด (น้ำตาลมิตรภูเวียง)",
+          "mw": 14.0,
+          "rice_straw": false,
+          "rice_husks": true,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอหนองเรือ",
+          "tambon": "ตำบลหนองเรือ",
+          "lat": 16.50055811,
+          "lon": 102.46233169,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท แอ๊ดวานซ์ เอเชีย เพาเวอร์ แพลนท์ จำกัด",
+          "mw": 9.9,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เศษวัสดุ",
+          "amphoe": "อำเภอน้ำพอง",
+          "tambon": "ตำบลม่วงหวาน",
+          "lat": 16.63482956,
+          "lon": 102.80669446
+        },
+        {
+          "name": "บริษัท พลพาวเวอร์ซัพพลาย จำกัด",
+          "mw": 9.9,
+          "rice_straw": false,
+          "rice_husks": true,
+          "fuel": "แกลบ",
+          "amphoe": "อำเภอพล",
+          "tambon": "ตำบลเก่างิ้ว",
+          "lat": 15.85616859,
+          "lon": 102.61884985,
+          "fuel_src": "dede2569"
+        },
+        {
+          "name": "บริษัท ขอนแก่นกรีนพาวเวอร์ จำกัด",
+          "mw": 9.9,
+          "rice_straw": true,
+          "rice_husks": true,
+          "fuel": "แกลบ",
+          "amphoe": "อำเภอพล",
+          "tambon": "ตำบลเก่างิ้ว",
+          "lat": 15.85310719,
+          "lon": 102.61896303,
+          "fuel_src": "both"
+        },
+        {
+          "name": "บริษัท อัลไลแอนซ์ คลีน เพาเวอร์ จำกัด",
+          "mw": 6.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เปลือกไม้สับ",
+          "amphoe": "อำเภอเมืองขอนแก่น",
+          "tambon": "ตำบลโนนท่อน",
+          "lat": 16.59196476,
+          "lon": 102.83493808
+        }
+      ]
+    },
+    "Krabi": {
+      "count": 4,
+      "plants": [
+        {
+          "name": "บริษัท ซาราฟเอ็นเนอร์ยี จำกัด",
+          "mw": 9.5,
+          "rice_straw": true,
+          "rice_husks": false,
+          "fuel": "กากปาล์ม",
+          "amphoe": "อำเภอเขาพนม",
+          "tambon": "ตำบลเขาพนม",
+          "lat": 8.22655359,
+          "lon": 99.0341573,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท ชอบทอง จำกัด",
+          "mw": 9.24,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "วัสดุเหลือใช้จากการผลิตน้ำมันปาล์ม",
+          "amphoe": "อำเภอลำทับ",
+          "tambon": "ตำบลลำทับ",
+          "lat": 8.07302196,
+          "lon": 99.32478835
+        },
+        {
+          "name": "บริษัท ไทยศรีทอง จำกัด",
+          "mw": 9.1,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เศษวัสดุ",
+          "amphoe": "อำเภอลำทับ",
+          "tambon": "ตำบลลำทับ",
+          "lat": 8.07048824,
+          "lon": 99.32832411
+        },
+        {
+          "name": "บมจ.สหอุตสาหกรรมน้ำมันปาล์ม",
+          "mw": 2.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เศษวัสดุ",
+          "amphoe": "อำเภอเหนือคลอง",
+          "tambon": "ตำบลห้วยยูง",
+          "lat": 8.15408208,
+          "lon": 99.02301161
+        }
+      ]
+    },
+    "Lampang": {
+      "count": 1,
+      "plants": [
+        {
+          "name": "บริษัท แอ็ดวานซ์ไบโอเอเชีย จำกัด",
+          "mw": 9.9,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เศษไม้",
+          "amphoe": "อำเภอเถิน",
+          "tambon": "ตำบลแม่ถอด",
+          "lat": 17.77008326,
+          "lon": 99.19964785
+        }
       ]
     },
     "Lamphun": {
       "count": 1,
       "plants": [
-        {"name": "บริษัท สหโคเจน กรีน จำกัด", "mw": 9.9, "rice_straw": true, "rice_husks": true}
+        {
+          "name": "บริษัท สหโคเจน กรีน จำกัด",
+          "mw": 9.6,
+          "rice_straw": true,
+          "rice_husks": true,
+          "fuel": "เศษไม้",
+          "amphoe": "อำเภอเมืองลำพูน",
+          "tambon": "ตำบลป่าสัก",
+          "lat": 18.54433993,
+          "lon": 99.01825021,
+          "fuel_src": "survey2565"
+        }
       ]
     },
-    "Phrae": {
-      "count": 1,
-      "plants": [
-        {"name": "โรงไฟฟ้า บริษัท แม่กระทิงเพาเวอร์ จำกัด", "mw": 9.9, "rice_straw": true, "rice_husks": true}
-      ]
-    },
-    "Kanchanaburi": {
-      "count": 6,
-      "plants": [
-        {"name": "บริษัทไทยเบฟเวอเรจ เอ็นเนอร์จี่ จำกัด", "mw": 9.8, "rice_straw": true, "rice_husks": false, "lat": 13.9457, "lon": 99.6525},
-        {"name": "บริษัทไทยเคน เปเปอร์ จำกัด (มหาชน)", "mw": 14.2, "rice_straw": true, "rice_husks": false},
-        {"name": "บริษัท โรงไฟฟ้าน้ำตาลขอนแก่น จำกัด (โครงการ 2)", "mw": 90.0, "rice_straw": true, "rice_husks": false, "lat": 14.4403, "lon": 99.5222},
-        {"name": "บริษัท ไทยอุตสาหกรรมน้ำตาล จำกัด", "mw": 19.0, "rice_straw": true, "rice_husks": false},
-        {"name": "บริษัท อุตสาหกรรมมิตรเกษตร จำกัด", "mw": 20.5, "rice_straw": true, "rice_husks": true, "lat": 13.8725, "lon": 99.8097},
-        {"name": "บริษัทน้ำตาลท่ามะกา จำกัด", "mw": 33.0, "rice_straw": true, "rice_husks": false, "lat": 13.9326, "lon": 99.7531}
-      ]
-    },
-    "Prachuap Khiri Khan": {
+    "Loei": {
       "count": 2,
       "plants": [
-        {"name": "บริษัท ซีพีพี จำกัด", "mw": 6.2, "rice_straw": true, "rice_husks": true},
-        {"name": "บริษัทอุตสาหกรรมน้ำตาลปราณบุรี", "mw": 9.5, "rice_straw": true, "rice_husks": false}
-      ]
-    },
-    "Tak": {
-      "count": 1,
-      "plants": [
-        {"name": "บริษัท แม่สอดพลังงานสะอาด จำกัด", "mw": 16.0, "rice_straw": true, "rice_husks": true}
-      ]
-    },
-    "Ratchaburi": {
-      "count": 1,
-      "plants": [
-        {"name": "บริษัท น้ำตาลราชบุรี จำกัด", "mw": 28.5, "rice_straw": true, "rice_husks": false}
-      ]
-    },
-    "Chon Buri": {
-      "count": 3,
-      "plants": [
-        {"name": "บริษัท สหการน้ำตาลชลบุรี จำกัด", "mw": 19.0, "rice_straw": true, "rice_husks": false},
-        {"name": "บ.น้ำตาลนิวกวางสุนหลี จำกัด", "mw": 8.0, "rice_straw": true, "rice_husks": false, "lat": 13.4167, "lon": 101.2102},
-        {"name": "บริษัทน้ำตาลระยอง จำกัด", "mw": 18.0, "rice_straw": true, "rice_husks": true}
-      ]
-    },
-    "Sa Kaeo": {
-      "count": 4,
-      "plants": [
-        {"name": "บริษัท กรีน เพาเวอร์ 2 จำกัด", "mw": 9.9, "rice_straw": true, "rice_husks": false, "lat": 13.8838, "lon": 101.9780},
-        {"name": "บริษัท น้ำตาลและอ้อยตะวันออก จำกัด (มหาชน)", "mw": 32.0, "rice_straw": true, "rice_husks": false, "lat": 13.7808, "lon": 102.2036},
-        {"name": "บริษัท อีเอส พลังงาน จำกัด (สัญญา 1)", "mw": 9.9, "rice_straw": false, "rice_husks": false, "lat": 13.7866, "lon": 102.2001},
-        {"name": "บริษัท อีเอส พลังงาน จำกัด (สัญญา 2)", "mw": 68.1, "rice_straw": false, "rice_husks": false, "lat": 13.7866, "lon": 102.2001}
-      ]
-    },
-    "Kamphaeng Phet": {
-      "count": 7,
-      "plants": [
-        {"name": "บริษัท นครเพชรกรีนเนอยี่ จำกัด", "mw": 9.5, "rice_straw": true, "rice_husks": true},
-        {"name": "บริษัท กำแพงเพชรกรีนเอ็นเนอยี่ จำกัด", "mw": 9.9, "rice_straw": true, "rice_husks": false},
-        {"name": "ทิพย์กำแพงเพชรไบโอเอนเนอยี่ จำกัด (สัญญา 1)", "mw": 36.0, "rice_straw": false, "rice_husks": false},
-        {"name": "ทิพย์กำแพงเพชรไบโอเอนเนอยี่ จำกัด (สัญญา 2)", "mw": 25.0, "rice_straw": false, "rice_husks": false},
-        {"name": "บริษัท สหกรีน ฟอเรสท์", "mw": 7.5, "rice_straw": true, "rice_husks": true, "lat": 16.6829, "lon": 99.6748},
-        {"name": "บริษัท น้ำตาลทรายกำแพงเพชร จำกัด", "mw": 21.0, "rice_straw": true, "rice_husks": false, "lat": 16.3550, "lon": 99.5966},
-        {"name": "บริษัท ที.เอส. เพาเวอร์ แพลนท์ จำกัด", "mw": 6.0, "rice_straw": true, "rice_husks": false}
-      ]
-    },
-    "Uthai Thani": {
-      "count": 3,
-      "plants": [
-        {"name": "บ้านไร่ผลิตไฟฟ้า (สัญญา 1)", "mw": 9.9, "rice_straw": false, "rice_husks": false, "lat": 15.0130, "lon": 99.6236},
-        {"name": "บ้านไร่ผลิตไฟฟ้า (โครงการ 2)", "mw": 27.0, "rice_straw": false, "rice_husks": false, "lat": 15.0130, "lon": 99.6236},
-        {"name": "บริษัท อุทัยธานี ไบโอเอนเนอยี่ จำกัด", "mw": 35.0, "rice_straw": true, "rice_husks": true}
-      ]
-    },
-    "Suphan Buri": {
-      "count": 3,
-      "plants": [
-        {"name": "บจก.มิตรผล ไบโอ-เพาเวอร์ ด่านช้าง (สัญญา 1)", "mw": 36.0, "rice_straw": false, "rice_husks": false, "lat": 14.8403, "lon": 99.7635},
-        {"name": "บจก.มิตรผล ไบโอ-เพาเวอร์ ด่านช้าง (สัญญา 2)", "mw": 25.0, "rice_straw": false, "rice_husks": false},
-        {"name": "บจก.มิตรผล ไบโอ-เพาเวอร์ ด่านช้าง (สัญญา 3)", "mw": 23.43, "rice_straw": false, "rice_husks": false}
-      ]
-    },
-    "Sukhothai": {
-      "count": 1,
-      "plants": [
-        {"name": "บริษัท ทิพย์สุโขทัย ไบโอเอนเนอยี่", "mw": 54.0, "rice_straw": true, "rice_husks": true}
+        {
+          "name": "บริษัท มิตรผลไบโอ - เพาเวอร์ (ภูหลวง) จำกัด (โครงการ 1)",
+          "mw": 41.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอวังสะพุง",
+          "tambon": "ตำบลโคกขมิ้น",
+          "lat": 17.18599092,
+          "lon": 101.93328953
+        },
+        {
+          "name": "บริษัท มิตรผลไบโอ-เพาเวอร์ (ภูหลวง) จำกัด โครงการ 2",
+          "mw": 26.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอวังสะพุง",
+          "tambon": "ตำบลโคกขมิ้น",
+          "lat": 17.19678,
+          "lon": 101.83097004
+        }
       ]
     },
     "Lop Buri": {
+      "count": 5,
+      "plants": [
+        {
+          "name": "บริษัท อุตสาหกรรมน้ำตาล ทีเอ็น จำกัด",
+          "mw": 36.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอท่าหลวง",
+          "tambon": "ตำบลแก่งผักกูด",
+          "lat": 15.04921525,
+          "lon": 101.09118519
+        },
+        {
+          "name": "บริษัท เอเวอร์กรีน พลัส จำกัด",
+          "mw": 9.8,
+          "rice_straw": true,
+          "rice_husks": false,
+          "fuel": "เศษวัสดุ",
+          "amphoe": "อำเภอพัฒนานิคม",
+          "tambon": "ตำบลหนองบัว",
+          "lat": 14.82418836,
+          "lon": 101.07953356,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท เอสเอ็มที ไบโอแมส จำกัด",
+          "mw": 9.4,
+          "rice_straw": false,
+          "rice_husks": true,
+          "fuel": "แกลบ",
+          "amphoe": "อำเภอท่าวุ้ง",
+          "tambon": "ตำบลเขาสมอคอน",
+          "lat": 14.89621725,
+          "lon": 100.46893483,
+          "fuel_src": "dede2569"
+        },
+        {
+          "name": "บริษัท ทรูเอ็นเนอร์จี เพาเวอร์ ลพบุรี จำกัด",
+          "mw": 7.5,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เศษวัสดุ",
+          "amphoe": "อำเภอพัฒนานิคม",
+          "tambon": "ตำบลหนองบัว",
+          "lat": 14.82970902,
+          "lon": 101.07257307
+        },
+        {
+          "name": "บริษัท เอพลัส พาวเวอร์ จำกัด",
+          "mw": 1.8,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เศษวัสดุ",
+          "amphoe": "อำเภอหนองม่วง",
+          "tambon": "ตำบลดงดินแดง",
+          "lat": 15.42166425,
+          "lon": 100.67788436
+        }
+      ]
+    },
+    "Maha Sarakham": {
       "count": 1,
       "plants": [
-        {"name": "บริษัท เอเวอร์กรีน พลัส จำกัด", "mw": 9.8, "rice_straw": true, "rice_husks": false}
-      ]
-    },
-    "Nakhon Pathom": {
-      "count": 1,
-      "plants": [
-        {"name": "บริษัท สินเอกพาณิชย์ จำกัด", "mw": 9.9, "rice_straw": true, "rice_husks": true}
-      ]
-    },
-    "Phra Nakhon Si Ayutthaya": {
-      "count": 1,
-      "plants": [
-        {"name": "บริษัท เพาเวอร์พรอสเพค จำกัด", "mw": 9.9, "rice_straw": true, "rice_husks": true, "lat": 14.5457, "lon": 100.7028}
-      ]
-    },
-    "Ubon Ratchathani": {
-      "count": 2,
-      "plants": [
-        {"name": "บริษัท ก้าวหน้าเพาเวอร์ซัพพลาย จำกัด", "mw": 17.9, "rice_straw": true, "rice_husks": true},
-        {"name": "บริษัทอัลไลแอนซ์ คลีน เพาเวอร์ จำกัด (สิรินธร)", "mw": 9.9, "rice_straw": false, "rice_husks": true, "lat": 15.1711, "lon": 105.3477}
-      ]
-    },
-    "Udon Thani": {
-      "count": 3,
-      "plants": [
-        {"name": "โรงงานน้ำตาลเกษตรผล", "mw": 45.0, "rice_straw": false, "rice_husks": true},
-        {"name": "บริษัท โรงงานน้ำตาลทรายขาวเริ่มอุดม จำกัด", "mw": 25.0, "rice_straw": true, "rice_husks": false},
-        {"name": "บริษัท บัวสมหมายไบโอแมส จำกัด", "mw": 9.9, "rice_straw": true, "rice_husks": true, "lat": 17.3385, "lon": 102.8926}
-      ]
-    },
-    "Buri Ram": {
-      "count": 1,
-      "plants": [
-        {"name": "บริษัทบุรีรัมย์พลังงาน", "mw": 9.9, "rice_straw": true, "rice_husks": true}
-      ]
-    },
-    "Surin": {
-      "count": 3,
-      "plants": [
-        {"name": "บริษัท ไฟฟ้าสุรินทร์จำกัด", "mw": 30.0, "rice_straw": true, "rice_husks": false},
-        {"name": "บริษัท มุ่งเจริญไบโอแมส จำกัด", "mw": 17.7, "rice_straw": false, "rice_husks": true, "lat": 14.8708, "lon": 103.6105},
-        {"name": "บ มุ่งเจริญกรีนเพาเวอร์ จำกัด", "mw": 9.9, "rice_straw": true, "rice_husks": true, "lat": 14.8738, "lon": 103.6029}
-      ]
-    },
-    "Khon Kaen": {
-      "count": 3,
-      "plants": [
-        {"name": "บริษัท มิตรผล ไบโอเพาเวอร์ (ภูเวียง) จำกัด", "mw": 70.0, "rice_straw": false, "rice_husks": true},
-        {"name": "พลพาวเวอร์ซัพพลาย จำกัด", "mw": 9.6, "rice_straw": false, "rice_husks": false},
-        {"name": "ขอนแก่นกรีนพาวเวอร์ จำกัด", "mw": 9.6, "rice_straw": true, "rice_husks": false}
-      ]
-    },
-    "Nong Khai": {
-      "count": 1,
-      "plants": [
-        {"name": "โรงไฟฟ้าพลังงานสะอาดศรีเชียงใหม่", "mw": 9.9, "rice_straw": false, "rice_husks": true, "lat": 17.9622, "lon": 102.4582}
-      ]
-    },
-    "Roi Et": {
-      "count": 3,
-      "plants": [
-        {"name": "บริษัท บัวสมหมาย จำกัด", "mw": 6.0, "rice_straw": true, "rice_husks": false, "lat": 16.0837, "lon": 103.6445},
-        {"name": "บริษัท บัวสมหมายผลิตไฟฟ้า จำกัด (โครงการ 3)", "mw": 9.9, "rice_straw": true, "rice_husks": false, "lat": 16.0850, "lon": 103.6412},
-        {"name": "บริษัท บัวสมหมายผลิตไฟฟ้า จำกัด (โครงการ 2)", "mw": 9.9, "rice_straw": true, "rice_husks": true, "lat": 15.6129, "lon": 103.8309}
-      ]
-    },
-    "Kalasin": {
-      "count": 3,
-      "plants": [
-        {"name": "อีสานไบโอเพาเวอร์", "mw": 12.0, "rice_straw": false, "rice_husks": true, "lat": 16.9271, "lon": 103.5412},
-        {"name": "อุตสาหกรรมน้ำตาลอีสาน", "mw": 12.5, "rice_straw": false, "rice_husks": false, "lat": 16.9287, "lon": 103.5427},
-        {"name": "บริษัท กมลาไสย ไบโอ เพาเวอร์ 2010 จำกัด", "mw": 9.9, "rice_straw": true, "rice_husks": false, "lat": 16.3169, "lon": 103.5715}
-      ]
-    },
-    "Nakhon Ratchasima": {
-      "count": 4,
-      "plants": [
-        {"name": "บริษัท เจียเมง จำกัด", "mw": 2.4, "rice_straw": true, "rice_husks": false, "lat": 15.0810, "lon": 102.2299},
-        {"name": "ยูนิ พาวเวอร์ เทค", "mw": 9.9, "rice_straw": false, "rice_husks": true, "lat": 14.9001, "lon": 101.7005},
-        {"name": "ผลิตไฟฟ้าครบุรี (สัญญา 1)", "mw": 36.0, "rice_straw": false, "rice_husks": false},
-        {"name": "ผลิตไฟฟ้าครบุรี (สัญญา 2)", "mw": 37.0, "rice_straw": false, "rice_husks": false}
-      ]
-    },
-    "Si Sa Ket": {
-      "count": 1,
-      "plants": [
-        {"name": "บริษัทตั้งแซเยี้ยง กรีนพาวเวอร์ จำกัด", "mw": 9.5, "rice_straw": true, "rice_husks": true, "lat": 14.8818, "lon": 104.7103}
+        {
+          "name": "บริษัท น้ำตาลวังขนาย จำกัด",
+          "mw": 18.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอโกสุมพิสัย",
+          "tambon": "ตำบลแก้งแก",
+          "lat": 16.19164413,
+          "lon": 103.11717503
+        }
       ]
     },
     "Mukdahan": {
       "count": 2,
       "plants": [
-        {"name": "บริษัท สหเรือง จำกัด (โครงการ 1)", "mw": 9.0, "rice_straw": false, "rice_husks": false, "lat": 16.6002, "lon": 104.6952},
-        {"name": "บริษัท สหเรือง จำกัด (โครงการ 2)", "mw": 30.0, "rice_straw": false, "rice_husks": false, "lat": 16.6002, "lon": 104.6952}
+        {
+          "name": "บริษัท สหเรือง จำกัด (โครงการ 1)",
+          "mw": 24.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอเมืองมุกดาหาร",
+          "tambon": "ตำบลบางทรายใหญ่",
+          "lat": 16.59729226,
+          "lon": 104.69514814
+        },
+        {
+          "name": "บริษัท สหเรือง จำกัด (โครงการ 2)",
+          "mw": 15.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอเมืองมุกดาหาร",
+          "tambon": "ตำบลบางทรายใหญ่",
+          "lat": 16.59737949,
+          "lon": 104.69656044
+        }
       ]
     },
-    "Surat Thani": {
+    "Nakhon Pathom": {
       "count": 2,
       "plants": [
-        {"name": "บริษัท สุราษฎร์ธานี กรีน เอ็นเนอยี่ จำกัด", "mw": 9.95, "rice_straw": false, "rice_husks": true},
-        {"name": "บริษัท ไทยทาโลว์ แอนด์ออยล์ จำกัด", "mw": 2.5, "rice_straw": true, "rice_husks": false}
+        {
+          "name": "บริษัท สินเอกพาณิชย์ จำกัด",
+          "mw": 9.9,
+          "rice_straw": true,
+          "rice_husks": true,
+          "fuel": "แกลบ",
+          "amphoe": "อำเภอบางเลน",
+          "tambon": "ตำบลบางไทรป่า",
+          "lat": 14.04986193,
+          "lon": 100.16632625,
+          "fuel_src": "both"
+        },
+        {
+          "name": "บริษัท นครปฐมไบโอแมส จำกัด",
+          "mw": 9.5,
+          "rice_straw": false,
+          "rice_husks": true,
+          "fuel": "แกลบ",
+          "amphoe": "อำเภอเมืองนครปฐม",
+          "tambon": "ตำบลตาก้อง",
+          "lat": 13.87100221,
+          "lon": 100.03915541,
+          "fuel_src": "dede2569"
+        }
       ]
     },
-    "Yala": {
-      "count": 4,
-      "plants": [
-        {"name": "บริษัท ทีพีซีเอช เพาเวอร์ 1 จำกัด", "mw": 9.9, "rice_straw": true, "rice_husks": false},
-        {"name": "บริษัท ทีพีซีเอช เพาเวอร์ 2 จำกัด", "mw": 9.9, "rice_straw": true, "rice_husks": false},
-        {"name": "ยะลากรีนเอ็นเนอยี่", "mw": 9.9, "rice_straw": true, "rice_husks": false},
-        {"name": "โรงไฟฟ้าเบตง กรีน เพาเวอร์ จำกัด", "mw": 7.5, "rice_straw": false, "rice_husks": true, "lat": 5.8821, "lon": 101.1360}
-      ]
-    },
-    "Narathiwat": {
+    "Nakhon Phanom": {
       "count": 1,
       "plants": [
-        {"name": "บริษัท ทีพีซีเอช เพาเวอร์ 5 จำกัด", "mw": 6.3, "rice_straw": true, "rice_husks": false}
+        {
+          "name": "โรงไฟฟ้าชีวมวลบ้านหนองฮี (เดิมชื่อ อบจ.นครพนม)",
+          "mw": 0.4,
+          "rice_straw": false,
+          "rice_husks": true,
+          "fuel": "แกลบ",
+          "amphoe": "อำเภอปลาปาก",
+          "tambon": "ตำบลหนองฮี",
+          "lat": 17.12634002,
+          "lon": 104.57629255,
+          "fuel_src": "dede2569"
+        }
       ]
     },
-    "Chumphon": {
-      "count": 1,
+    "Nakhon Ratchasima": {
+      "count": 13,
       "plants": [
-        {"name": "บริษัท กลุ่มปาล์มธรรมชาติ จำกัด", "mw": 9.4, "rice_straw": false, "rice_husks": true}
+        {
+          "name": "บริษัท บัวใหญ่ ไบโอ เพาเวอร์ จำกัด",
+          "mw": 55.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอบัวใหญ่",
+          "tambon": "ตำบลด่านช้าง",
+          "lat": 15.65426804,
+          "lon": 102.41198705
+        },
+        {
+          "name": "บริษัท ผลิตไฟฟ้าครบุรี จำกัด (KHB-F)",
+          "mw": 35.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอครบุรี",
+          "tambon": "ตำบลจระเข้หิน",
+          "lat": 14.49908498,
+          "lon": 102.16708425
+        },
+        {
+          "name": "บริษัท อุตสาหกรรมอ่างเวียน จำกัด",
+          "mw": 34.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอแก้งสนามนาง",
+          "tambon": "ตำบลแก้งสนามนาง",
+          "lat": 15.72871706,
+          "lon": 102.26615858
+        },
+        {
+          "name": "บริษัท อุตสาหกรรมโคราช จำกัด",
+          "mw": 22.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอพิมาย",
+          "tambon": "ตำบลหนองระเวียง",
+          "lat": 15.09193981,
+          "lon": 102.45752088
+        },
+        {
+          "name": "บริษัท ผลิตไฟฟ้าครบุรี จำกัด (เดิมบริษัท น้ำตาลครบุรี จำกัด)",
+          "mw": 15.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอครบุรี",
+          "tambon": "ตำบลจระเข้หิน",
+          "lat": 14.50027447,
+          "lon": 102.16592413
+        },
+        {
+          "name": "บริษัท อุตสาหกรรมโคราชจำกัด จำกัด (โครงการ1)",
+          "mw": 15.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอพิมาย",
+          "tambon": "ตำบลหนองระเวียง",
+          "lat": 15.12490877,
+          "lon": 102.44551616
+        },
+        {
+          "name": "บริษัท ผลิตไฟฟ้าครบุรี จำกัด",
+          "mw": 15.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอครบุรี",
+          "tambon": "ตำบลจระเข้หิน",
+          "lat": 14.50027447,
+          "lon": 102.16592413
+        },
+        {
+          "name": "บริษัท อุตสาหกรรมโคราชจำกัด จำกัด (โครงการ2)",
+          "mw": 12.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอพิมาย",
+          "tambon": "ตำบลหนองระเวียง",
+          "lat": 15.12345226,
+          "lon": 102.44572492
+        },
+        {
+          "name": "บริษัท ยูดับบลิวซี โกเมน ไบโอแมส จำกัด (เดิมบริษัท ทีอาร์ซี คลีน เอ็นเนอร์ยี่ จำกัด)",
+          "mw": 9.9,
+          "rice_straw": false,
+          "rice_husks": true,
+          "fuel": "แกลบ",
+          "amphoe": "อำเภอเมืองนครราชสีมา",
+          "tambon": "ตำบลบ้านโพธิ์",
+          "lat": 15.03890388,
+          "lon": 102.19213165,
+          "fuel_src": "dede2569"
+        },
+        {
+          "name": "บริษัท แอ๊ดวานซ์ อะโกร เพาเวอร์ แพลนท์ จำกัด (อ.โชคชัย)",
+          "mw": 9.9,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เศษวัสดุ",
+          "amphoe": "อำเภอโชคชัย",
+          "tambon": "ตำบลโชคชัย",
+          "lat": 14.75607905,
+          "lon": 102.19856417
+        },
+        {
+          "name": "บริษัท ยูนิ พาวเวอร์ เทค จำกัด",
+          "mw": 9.9,
+          "rice_straw": false,
+          "rice_husks": true,
+          "fuel": "ไม้ชิ้นไม้สับ เศษไม้",
+          "amphoe": "อำเภอสี่คิ้ว",
+          "tambon": "ตำบลสี่คิ้ว",
+          "lat": 14.90230976,
+          "lon": 101.69520006,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท บัวใหญ่ไบโอเพาเวอร์ จำกัด",
+          "mw": 7.5,
+          "rice_straw": false,
+          "rice_husks": true,
+          "fuel": "แกลบ",
+          "amphoe": "อำเภอบัวใหญ่",
+          "tambon": "ตำบลด่านช้าง",
+          "lat": 15.6064678,
+          "lon": 102.40576452,
+          "fuel_src": "dede2569"
+        },
+        {
+          "name": "บริษัท เจียเม้ง จำกัด",
+          "mw": 2.5,
+          "rice_straw": true,
+          "rice_husks": true,
+          "fuel": "แกลบ",
+          "amphoe": "อำเภอเฉลิมพระเกียรติ",
+          "tambon": "ตำบลหนองงูเหลือม",
+          "lat": 15.0793275,
+          "lon": 102.22899719,
+          "fuel_src": "both"
+        }
+      ]
+    },
+    "Nakhon Sawan": {
+      "count": 9,
+      "plants": [
+        {
+          "name": "บริษัท จีจีซี เคทิส ไบโออินดัสเทรียล จำกัด",
+          "mw": 85.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอตาคลี",
+          "tambon": null,
+          "lat": 15.40357262,
+          "lon": 100.34387597
+        },
+        {
+          "name": "บริษัท เกษตรไทยไบโอเพาเวอร์ จำกัด",
+          "mw": 60.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอตาคลี",
+          "tambon": "ตำบลหนองโพ",
+          "lat": 15.43081808,
+          "lon": 100.28543137
+        },
+        {
+          "name": "บริษัท เกษตรไทยอินเตอร์เนชั่นแนล ชูการ์ คอร์ปอเรชั่น จำกัด เปลี่ยนจากบริษัท น้ำตาลเกษตรไ",
+          "mw": 32.5,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอเมืองนครสวรรค์",
+          "tambon": "ตำบลบ้านมะเกลือ",
+          "lat": 15.80143383,
+          "lon": 100.11898389
+        },
+        {
+          "name": "บริษัท รวมผลไบโอเพาเวอร์ จำกัด (โครงการ 1) (RPEP-N1)",
+          "mw": 25.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอเมืองนครสวรรค์",
+          "tambon": "ตำบลบ้านมะเกลือ",
+          "lat": 15.80571773,
+          "lon": 100.12610281
+        },
+        {
+          "name": "บริษัท รวมผลไบโอเพาวเอร์ จำกัด (โครงการ 2) (RPEP-N2)",
+          "mw": 25.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอเมืองนครสวรรค์",
+          "tambon": "ตำบลบ้านมะเกลือ",
+          "lat": 15.80541219,
+          "lon": 100.14306832
+        },
+        {
+          "name": "บริษัท แม่วงศ์ เอ็นเนอยี่ จำกัด",
+          "mw": 9.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เศษวัสดุ",
+          "amphoe": "อำเภอแม่วงก์",
+          "tambon": "ตำบลวังซ่าน",
+          "lat": 15.859205,
+          "lon": 99.63352238
+        },
+        {
+          "name": "บริษัท เกษตรไทยอินเตอร์เนชั่นแนล ชูการ์ คอร์ปอเรชั่น จำกัด เดิมชื่อ บริษัท รวมผลอุตสาหกรร",
+          "mw": 8.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอตาคลี",
+          "tambon": "ตำบลหนองโพ",
+          "lat": 15.37449663,
+          "lon": 100.24077881
+        },
+        {
+          "name": "บริษัท เกษตรไทย อินเตอร์เนชั่นแนล ชูการ์ คอร์ปอเรชั่น (เดิมบริษัท เกษตรไทยอุตสาหกรรมน้ำตา",
+          "mw": 8.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอตาคลี",
+          "tambon": "ตำบลหนองโพ",
+          "lat": 15.41328721,
+          "lon": 100.27678842
+        },
+        {
+          "name": "บริษัท หนองบัว กรีนพาวเวอร์ จำกัด",
+          "mw": 1.8,
+          "rice_straw": false,
+          "rice_husks": true,
+          "fuel": "แกลบ",
+          "amphoe": "อำเภอหนองบัว",
+          "tambon": "ตำบลหนองบัว",
+          "lat": 15.86093101,
+          "lon": 100.61904279,
+          "fuel_src": "dede2569"
+        }
       ]
     },
     "Nakhon Si Thammarat": {
-      "count": 2,
+      "count": 6,
       "plants": [
-        {"name": "บริษัท ไทยทาโลว์ แอนด์ ออยล์ จำกัด", "mw": 7.5, "rice_straw": true, "rice_husks": false},
-        {"name": "บจก.นครศรีพาราวูด", "mw": 2.5, "rice_straw": true, "rice_husks": false}
+        {
+          "name": "บริษัท ออสการ์ เซฟ เดอะ เวิลด์ จำกัด (โครงการ 1)",
+          "mw": 9.9,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เปลือกไม้, เศษไม้",
+          "amphoe": "อำเภอฉวาง",
+          "tambon": "ตำบลนาเขลียง",
+          "lat": 8.53464525,
+          "lon": 99.49842626
+        },
+        {
+          "name": "บริษัท ออสการ์ เซฟ เดอะ เวิลด์ จำกัด (สาขานาเฉลียง)",
+          "mw": 9.9,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "ไม้ชิ้นไม้สับ เศษไม้",
+          "amphoe": "อำเภอฉวาง",
+          "tambon": "ตำบลนาเขลียง",
+          "lat": 8.43582774,
+          "lon": 99.54069583
+        },
+        {
+          "name": "บริษัท ช้างแรก ไบโอเพาเวอร์ จำกัด",
+          "mw": 9.5,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เศษวัสดุ",
+          "amphoe": "อำเภอทุ่งสง",
+          "tambon": "ตำบลนาโพธิ์",
+          "lat": 8.20938014,
+          "lon": 99.5766014
+        },
+        {
+          "name": "บริษัท ทุ่งสัง กรีน จำกัด",
+          "mw": 9.5,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เศษวัสดุ",
+          "amphoe": "อำเภอทุ่งใหญ่",
+          "tambon": "ตำบลทุ่งสัง",
+          "lat": 8.37181806,
+          "lon": 99.3340762
+        },
+        {
+          "name": "บริษัท เอส.พี.โอ อะโกรอินดัสตรี้ส์ จำกัด (อ.สิชล)",
+          "mw": 8.4,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เศษวัสดุ",
+          "amphoe": "อำเภอสิชล",
+          "tambon": "ตำบลทุ่งปรัง",
+          "lat": 8.96959841,
+          "lon": 99.86816565
+        },
+        {
+          "name": "บริษัท ไทยทาโลว์แอนด์ออยล์ จำกัด",
+          "mw": 6.9,
+          "rice_straw": true,
+          "rice_husks": false,
+          "fuel": "กะลาปาล์ม",
+          "amphoe": "อำเภอเชียรใหญ่",
+          "tambon": "ตำบลการะเกด",
+          "lat": 8.07487249,
+          "lon": 100.14877619,
+          "fuel_src": "survey2565"
+        }
       ]
     },
-    "Songkhla": {
+    "Narathiwat": {
       "count": 2,
       "plants": [
-        {"name": "โรงไฟฟ้ากัลฟ์จะนะกรีน", "mw": 25.0, "rice_straw": true, "rice_husks": false},
-        {"name": "บริษัท สงขลาไบโอแมส จำกัด", "mw": 9.9, "rice_straw": true, "rice_husks": false}
+        {
+          "name": "บริษัท ไพร์ซ ออฟ วู้ด กรีน เอนเนอร์จี จำกัด (เดิมบริษัท ไพร์ซ วัด กรีน เอนเนอร์จี จำกัด",
+          "mw": 7.5,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เศษไม้",
+          "amphoe": "อำเภอแว้ง",
+          "tambon": "ตำบลกายูคละ",
+          "lat": 5.97251348,
+          "lon": 101.9121061
+        },
+        {
+          "name": "บริษัท ทีพีซีเอช เพาเวอร์ 5 จำกัด",
+          "mw": 6.3,
+          "rice_straw": true,
+          "rice_husks": false,
+          "fuel": "ชิ้นไม้สับ",
+          "amphoe": "อำเภอเมืองนราธิวาส",
+          "tambon": "ตำบลบางปอ",
+          "lat": 6.34579531,
+          "lon": 101.83428476,
+          "fuel_src": "survey2565"
+        }
       ]
     },
-    "Krabi": {
+    "Nong Bua Lam Phu": {
+      "count": 4,
+      "plants": [
+        {
+          "name": "บริษัท เอราวัณเพาเวอร์ จำกัด (โครงการ 1)",
+          "mw": 15.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอนากลาง",
+          "tambon": "ตำบลนากลาง",
+          "lat": 17.28379439,
+          "lon": 102.25425388
+        },
+        {
+          "name": "บริษัท เอราวัณ เพาเวอร์ จำกัด (โครงการ 3)",
+          "mw": 15.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอนากลาง",
+          "tambon": "ตำบลนากลาง",
+          "lat": 17.28355459,
+          "lon": 102.25512352
+        },
+        {
+          "name": "บริษัท เอราวัณ เพาเวอร์ จำกัด",
+          "mw": 15.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอนากลาง",
+          "tambon": "ตำบลนากลาง",
+          "lat": 17.32580465,
+          "lon": 102.21587167
+        },
+        {
+          "name": "บริษัท เอราวัณ เพาเวอร์ จำกัด (โครงการ 2)",
+          "mw": 9.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอนากลาง",
+          "tambon": "ตำบลนากลาง",
+          "lat": 17.28514382,
+          "lon": 102.25610284
+        }
+      ]
+    },
+    "Pattani": {
+      "count": 2,
+      "plants": [
+        {
+          "name": "บริษัท ปัตตานี กรีน จำกัด",
+          "mw": 23.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอหนองจิก",
+          "tambon": "ตำบลสิปะสะโง",
+          "lat": 6.81080889,
+          "lon": 101.22422709
+        },
+        {
+          "name": "บริษัท ประชารัฐชีวมวล  แม่ลาน จำกัด",
+          "mw": 3.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เปลือกไม้ เศษไม้",
+          "amphoe": "อำเภอแม่ลาน",
+          "tambon": "ตำบลป่าไร่",
+          "lat": 6.697047,
+          "lon": 101.21208728
+        }
+      ]
+    },
+    "Phatthalung": {
       "count": 1,
       "plants": [
-        {"name": "บริษัทซาราฟ เอ็นเนอยี จำกัด", "mw": 9.5, "rice_straw": true, "rice_husks": false}
+        {
+          "name": "บริษัท พัทลุง กรีน เพาเวอร์ จำกัด (เดิมบริษัท พัทลุงกรีน จำกัด)",
+          "mw": 9.9,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เปลือกไม้",
+          "amphoe": "อำเภอป่าบอน",
+          "tambon": "ตำบลป่าบอน",
+          "lat": 7.31247001,
+          "lon": 100.15235001
+        }
+      ]
+    },
+    "Phetchabun": {
+      "count": 3,
+      "plants": [
+        {
+          "name": "บริษัท ไทยรุ่งเรืองอุตสาหกรรม จำกัด",
+          "mw": 29.5,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอศรีเทพ",
+          "tambon": "ตำบลศรีเทพ",
+          "lat": 15.46434879,
+          "lon": 101.1873486
+        },
+        {
+          "name": "บริษัท ไทยรุ่งเรืองผลิตไฟฟ้า จำกัด (โครงการ 2)",
+          "mw": 28.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอศรีเทพ",
+          "tambon": "ตำบลศรีเทพ",
+          "lat": 15.46227879,
+          "lon": 101.10919623
+        },
+        {
+          "name": "บริษัท ไทยรุ่งเรืองผลิตไฟฟ้า จำกัด",
+          "mw": 27.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เศษวัสดุ",
+          "amphoe": "อำเภอศรีเทพ",
+          "tambon": "ตำบลศรีเทพ",
+          "lat": 15.45896022,
+          "lon": 101.10946076
+        }
+      ]
+    },
+    "Phichit": {
+      "count": 3,
+      "plants": [
+        {
+          "name": "บริษัท ทิพย์พิจิตร ไฮบริด เอนเนอยี่ จำกัด",
+          "mw": 26.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอตะพานหิน",
+          "tambon": "ตําบลทุ่งโพธิ์",
+          "lat": 16.1329102,
+          "lon": 100.50184172
+        },
+        {
+          "name": "บริษัท เอ.ที. ไบโอพาวเวอร์ จำกัด",
+          "mw": 22.5,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอบางมูลนาก",
+          "tambon": "ตำบลบางไผ่",
+          "lat": 16.12484011,
+          "lon": 100.40738811
+        },
+        {
+          "name": "บริษัท พิจิตรไบโอเพาเวอร์ จำกัด",
+          "mw": 9.8,
+          "rice_straw": false,
+          "rice_husks": true,
+          "fuel": "แกลบ",
+          "amphoe": "อำเภอโพทะเล",
+          "tambon": "ตำบลท้ายน้ำ",
+          "lat": 16.11697488,
+          "lon": 100.20540525,
+          "fuel_src": "dede2569"
+        }
+      ]
+    },
+    "Phitsanulok": {
+      "count": 1,
+      "plants": [
+        {
+          "name": "บริษัท น้ำตาลพิษณุโลก จำกัด",
+          "mw": 18.5,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอบางกระทุ่ม",
+          "tambon": "ตำบลไผ่ล้อม",
+          "lat": 16.56090626,
+          "lon": 100.34569474
+        }
+      ]
+    },
+    "Phra Nakhon Si Ayutthaya": {
+      "count": 1,
+      "plants": [
+        {
+          "name": "บริษัท เพาเวอร์พรอสเพค จำกัด",
+          "mw": 10.0,
+          "rice_straw": true,
+          "rice_husks": true,
+          "fuel": "แกลบ",
+          "amphoe": "อำเภอท่าเรือ",
+          "tambon": "ตำบลศาลาลอย",
+          "lat": 14.54540809,
+          "lon": 100.70286038,
+          "fuel_src": "both"
+        }
+      ]
+    },
+    "Phrae": {
+      "count": 4,
+      "plants": [
+        {
+          "name": "บริษัท แม่กระทิง เพาเวอร์ จำกัด",
+          "mw": 9.9,
+          "rice_straw": true,
+          "rice_husks": true,
+          "fuel": "ชิ้นไม้สับ",
+          "amphoe": "อำเภอร้องกวาง",
+          "tambon": "ตำบลไผ่โทน",
+          "lat": 18.3438811,
+          "lon": 100.42588698,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท โคลเว่อร์ พาวเว่อร์ จำกัด",
+          "mw": 9.4,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "วัสดุเหลือใช้",
+          "amphoe": "อำเภอวังชิ้น",
+          "tambon": "ตำบลนาพูน",
+          "lat": 17.83923965,
+          "lon": 99.87563875
+        },
+        {
+          "name": "บริษัท ชุมชนพลังงานสะอาด จำกัด",
+          "mw": 1.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "หญ้าเนเปียร์,ต้นข้าวโพด",
+          "amphoe": "อำเภอสอง",
+          "tambon": "ตำบลห้วยหม้าย",
+          "lat": 18.45885004,
+          "lon": 100.14155004
+        },
+        {
+          "name": "บริษัท เซฟ เอนเนอร์จี (แพร่) จำกัด (เดิมบริษัท บิน่า พูรี่ พาวเวอร์ (ไทยแลนด์)จำกัด)",
+          "mw": 1.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เศษไม้ ซังข้าวโพด",
+          "amphoe": "อำเภอลอง",
+          "tambon": "ตำบลปากกาง",
+          "lat": 18.03520844,
+          "lon": 99.80890398
+        }
+      ]
+    },
+    "Prachin Buri": {
+      "count": 2,
+      "plants": [
+        {
+          "name": "บริษัท เนชั่นแนล เพาเวอร์ แพลนท์ 5 จำกัด (แอ๊ดวานซ์ อะโกร 1)",
+          "mw": 87.2,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอศรีมหาโพธิ์",
+          "tambon": "ตำบลท่าตูม",
+          "lat": 13.91089169,
+          "lon": 101.59592493
+        },
+        {
+          "name": "บริษัท เนชั่นแนล เพาเวอร์ แพลนท์ 5 จำกัด (โครงการ 2)",
+          "mw": 32.9,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอศรีมหาโพธิ์",
+          "tambon": "ตำบลท่าตูม",
+          "lat": 13.90276316,
+          "lon": 101.57785751
+        }
+      ]
+    },
+    "Prachuap Khiri Khan": {
+      "count": 5,
+      "plants": [
+        {
+          "name": "บริษัท ปราณบุรี ไบโอเอ็นเนอร์ยี จำกัด",
+          "mw": 9.5,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอปราณบุรี",
+          "tambon": "ตำบลเขาน้อย",
+          "lat": 12.43588168,
+          "lon": 99.88135092
+        },
+        {
+          "name": "บริษัท แอพคอน รีนิวเอเบิล เอ็นเนอร์ยี จำกัด(เดิมบริษัท ทีพีอุตสาหกรรมเหรียญชัย (พลังงานสะอ",
+          "mw": 9.4,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "ขุยมะพร้าว",
+          "amphoe": "อำเภอทับสะแก",
+          "tambon": "ตำบลห้วยยาง",
+          "lat": 11.60547128,
+          "lon": 99.65043068
+        },
+        {
+          "name": "บริษัท อุตสาหกรรมน้ำตาลปราณบุรี จำกัด",
+          "mw": 8.0,
+          "rice_straw": true,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอปราณบุรี",
+          "tambon": "ตำบลเขาน้อย",
+          "lat": 12.39798692,
+          "lon": 99.89765629,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท ซีพีพี จำกัด",
+          "mw": 6.2,
+          "rice_straw": true,
+          "rice_husks": true,
+          "fuel": "วัสดุเหลือใช้",
+          "amphoe": "อำเภอบางสะพานน้อย",
+          "tambon": "ตำบลทรายทอง",
+          "lat": 11.01681596,
+          "lon": 99.45198907,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท เอเอสทีปาล์มออยล์ จำกัด",
+          "mw": 1.5,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กากปาล์ม",
+          "amphoe": "อำเภอบางสะพานน้อย",
+          "tambon": "ตำบลทรายทอง",
+          "lat": 11.01115992,
+          "lon": 99.39638213
+        }
+      ]
+    },
+    "Ratchaburi": {
+      "count": 3,
+      "plants": [
+        {
+          "name": "บริษัท น้ำตาลบ้านโป่ง จำกัด",
+          "mw": 30.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอบ้านโป่ง",
+          "tambon": "ตำบลท่าผา",
+          "lat": 13.86061607,
+          "lon": 99.83833843
+        },
+        {
+          "name": "บริษัท น้ำตาลราชบุรี จำกัด",
+          "mw": 28.5,
+          "rice_straw": true,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอบ้านโป่ง",
+          "tambon": "ตำบลเบิกไพร",
+          "lat": 13.83567667,
+          "lon": 99.86027025,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท น้ำตาลราชบุรี จำกัด",
+          "mw": 28.5,
+          "rice_straw": true,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอจอมบึง",
+          "tambon": "ตำบลเบิกไพร",
+          "lat": 13.8194699,
+          "lon": 99.85130573,
+          "fuel_src": "survey2565"
+        }
+      ]
+    },
+    "Roi Et": {
+      "count": 6,
+      "plants": [
+        {
+          "name": "บริษัท ศรีแสงดาวไบโอเพาเวอร์ จำกัด",
+          "mw": 9.9,
+          "rice_straw": false,
+          "rice_husks": true,
+          "fuel": "แกลบ",
+          "amphoe": "อำเภอสุวรรณภูมิ",
+          "tambon": "ตำบลสระคู",
+          "lat": 15.61625968,
+          "lon": 103.78293252,
+          "fuel_src": "dede2569"
+        },
+        {
+          "name": "บริษัท แอ๊ดวานซ์ คลีน เพาเวอร์ จำกัด (อ.โพนทอง)",
+          "mw": 9.9,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เศษวัสดุ",
+          "amphoe": "อำเภอโพนทอง",
+          "tambon": "ตำบลวังสามัคคี",
+          "lat": 16.27629766,
+          "lon": 104.01242928
+        },
+        {
+          "name": "บริษัท บัวสมหมายผลิตไฟฟ้า จำกัด (โครงการ 3)",
+          "mw": 9.0,
+          "rice_straw": true,
+          "rice_husks": true,
+          "fuel": "แกลบ",
+          "amphoe": "อำเภอเมืองร้อยเอ็ด",
+          "tambon": "ตำบลเหนือเมือง",
+          "lat": 15.61578145,
+          "lon": 103.83061526,
+          "fuel_src": "both"
+        },
+        {
+          "name": "บริษัท บัวสมหมายผลิตไฟฟ้า จำกัด (โครงการ 3)",
+          "mw": 9.0,
+          "rice_straw": true,
+          "rice_husks": true,
+          "fuel": "แกลบ",
+          "amphoe": "อำเภอเมืองร้อยเอ็ด",
+          "tambon": "ตำบลเหนือเมือง",
+          "lat": 16.08398817,
+          "lon": 103.64228648,
+          "fuel_src": "both"
+        },
+        {
+          "name": "บริษัท บัวสมหมาย จำกัด (โครงการ 1)",
+          "mw": 6.0,
+          "rice_straw": true,
+          "rice_husks": true,
+          "fuel": "แกลบ",
+          "amphoe": "อำเภอเมืองร้อยเอ็ด",
+          "tambon": "ตำบลเหนือเมือง",
+          "lat": 16.08547238,
+          "lon": 103.64202264,
+          "fuel_src": "both"
+        },
+        {
+          "name": "บริษัท สลักเพชร รีนิวเอเบิล เอ็นเนอร์ยี่ จำกัด",
+          "mw": 0.5,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "หญ้าเนเปียร์+ไม้ยูคา",
+          "amphoe": "อำเภอเมืองร้อยเอ็ด",
+          "tambon": "ตำบลโนนตาล",
+          "lat": 15.96555208,
+          "lon": 103.67742207
+        }
+      ]
+    },
+    "Sa Kaeo": {
+      "count": 6,
+      "plants": [
+        {
+          "name": "บริษัท โรงไฟฟ้าน้ำตาลขอนแก่น จำกัด",
+          "mw": 80.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอตาพระยา",
+          "tambon": "ตำบลโคคลาน",
+          "lat": 13.98047532,
+          "lon": 102.64143595
+        },
+        {
+          "name": "บริษัท อี เอส พลังงาน จำกัด (โครงการ 2) (ESE-N2)",
+          "mw": 55.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอวัฒนานคร",
+          "tambon": "ตำบลห้วยโจด",
+          "lat": 13.76549003,
+          "lon": 102.26850425
+        },
+        {
+          "name": "บริษัท น้ำตาลและอ้อยตะวันออก จำกัด (มหาชน)",
+          "mw": 32.0,
+          "rice_straw": true,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอวัฒนานคร",
+          "tambon": "ตำบลห้วยโจด",
+          "lat": 13.78445623,
+          "lon": 102.20780175,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท อีเอส พลังงาน จำกัด",
+          "mw": 23.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอวัฒนานคร",
+          "tambon": "ตำบลห้วยโจด",
+          "lat": 13.76547727,
+          "lon": 102.25174746
+        },
+        {
+          "name": "บริษัท กรีน เพาเวอร์ 2 จำกัด",
+          "mw": 9.9,
+          "rice_straw": true,
+          "rice_husks": false,
+          "fuel": "เปลือกไม้, เศษไม้",
+          "amphoe": "อำเภอเมืองสระแก้ว",
+          "tambon": "ตำบลศาลาลำดวน",
+          "lat": 13.87671258,
+          "lon": 101.9750115,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท ไออีซี สระแก้ว 1 จำกัด (เดิมบริษัท แก้วลำดวน เพาเวอร์ซัพพลาย จำกัด)",
+          "mw": 9.6,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เศษวัสดุ",
+          "amphoe": "อำเภอเมืองสระแก้ว",
+          "tambon": "ตำบลโคกปี่ฆ้อง",
+          "lat": 13.8904272,
+          "lon": 101.99452514
+        }
+      ]
+    },
+    "Sakon Nakhon": {
+      "count": 1,
+      "plants": [
+        {
+          "name": "บริษัท นอร์ทอีสท์ กรีนเอนเนอร์จี จำกัด (1.2/0.99)",
+          "mw": 0.99,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เศษวัสดุ",
+          "amphoe": "อำเภอเมืองสกลนคร",
+          "tambon": "ตำบลพังขว้าง",
+          "lat": 17.19372282,
+          "lon": 104.06192898
+        }
+      ]
+    },
+    "Samut Sakhon": {
+      "count": 1,
+      "plants": [
+        {
+          "name": "บริษัท มหาชัย กรีน เพาเวอร์ จำกัด",
+          "mw": 9.5,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "ทางมะพร้าว, น้ำมันดีเซล",
+          "amphoe": "อำเภอเมืองสมุทรสาคร",
+          "tambon": "ตำบลชัยมงคล",
+          "lat": 13.54665364,
+          "lon": 100.1715723
+        }
+      ]
+    },
+    "Saraburi": {
+      "count": 3,
+      "plants": [
+        {
+          "name": "บริษัท น้ำตาลสระบุรี จำกัด",
+          "mw": 29.5,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอวังม่วง",
+          "tambon": "ตำบลคำพราน",
+          "lat": 14.81975742,
+          "lon": 101.10177257
+        },
+        {
+          "name": "บริษัท ร่วมกำลาภเพาเวอร์ จำกัด (RKP-N) เปลี่ยนชื่อจาก ไทยรุ่งเรืองพลังงาน",
+          "mw": 20.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอวังม่วง",
+          "tambon": "ตำบลคำพราน",
+          "lat": 14.81716833,
+          "lon": 101.11511906
+        },
+        {
+          "name": "บริษัท สุเพิร์บ พาวเวอร์ จำกัด",
+          "mw": 1.36,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เศษวัสดุ",
+          "amphoe": "อำเภอหนองแค",
+          "tambon": "ตำบลโคกแย้",
+          "lat": 14.39020144,
+          "lon": 100.90924656
+        }
       ]
     },
     "Satun": {
       "count": 1,
       "plants": [
-        {"name": "โรงไฟฟ้าสตูลกรีนเพาเวอร์", "mw": 10.41, "rice_straw": true, "rice_husks": false, "lat": 6.8538, "lon": 100.0474}
+        {
+          "name": "บริษัท สตูล กรีน เพาเวอร์ จำกัด",
+          "mw": 9.9,
+          "rice_straw": true,
+          "rice_husks": false,
+          "fuel": "เศษไม้",
+          "amphoe": "อำเภอควนกาหลง",
+          "tambon": "ตำบลควนกาหลง",
+          "lat": 7.02452804,
+          "lon": 100.00701123,
+          "fuel_src": "survey2565"
+        }
+      ]
+    },
+    "Si Sa Ket": {
+      "count": 1,
+      "plants": [
+        {
+          "name": "บริษัท ตั้งแซเยี้ยง กรีนเพาเวอร์ จำกัด",
+          "mw": 9.5,
+          "rice_straw": true,
+          "rice_husks": true,
+          "fuel": "เศษวัสดุ",
+          "amphoe": "อำเภอโนนคูณ",
+          "tambon": "ตำบลโนนค้อ",
+          "lat": 14.89200377,
+          "lon": 104.7115398,
+          "fuel_src": "survey2565"
+        }
+      ]
+    },
+    "Sing Buri": {
+      "count": 2,
+      "plants": [
+        {
+          "name": "บริษัท น้ำตาลสิงห์บุรี จำกัด",
+          "mw": 12.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอบางระจัน",
+          "tambon": "ตำบลไม้ดัด",
+          "lat": 14.861958,
+          "lon": 100.35772732
+        },
+        {
+          "name": "บริษัท น้ำตาลสิงห์บุรี จำกัด โครงการ 2",
+          "mw": 9.9,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอบางระจัน",
+          "tambon": "ตำบลไม้ดัด",
+          "lat": 14.86246574,
+          "lon": 100.35899441
+        }
+      ]
+    },
+    "Songkhla": {
+      "count": 6,
+      "plants": [
+        {
+          "name": "บริษัท กัลฟ์ จะนะ กรีน จำกัด",
+          "mw": 23.0,
+          "rice_straw": true,
+          "rice_husks": false,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอจะนะ",
+          "tambon": "ตำบลคู",
+          "lat": 6.83694238,
+          "lon": 100.69123334,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท สงขลาไบโอแมส จำกัด",
+          "mw": 9.9,
+          "rice_straw": true,
+          "rice_husks": false,
+          "fuel": "ไม้สับ",
+          "amphoe": "อำเภอจะนะ",
+          "tambon": "ตำบลขุนตัดหวาย",
+          "lat": 6.79109471,
+          "lon": 100.69775852,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท สงขลาไบโอเพาเวอร์ จำกัด",
+          "mw": 9.9,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "ไม้ชิ้นไม้สับ เศษไม้",
+          "amphoe": "อำเภอจะนะ",
+          "tambon": "ตำบลขุนตัดหวาย",
+          "lat": 6.79806849,
+          "lon": 100.70687969
+        },
+        {
+          "name": "บริษัท รุ่งทิวา ไบโอแมส",
+          "mw": 9.9,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กะลาปาล์ม",
+          "amphoe": "อำเภอสะบ้าย้อย",
+          "tambon": "ตำบลสะบ้าย้อย",
+          "lat": 6.67335153,
+          "lon": 100.96078438
+        },
+        {
+          "name": "บริษัท โกลบอลกรีนโฮลดิ้ง จำกัด",
+          "mw": 9.5,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เศษวัสดุ",
+          "amphoe": "อำเภอเทพา",
+          "tambon": "ตำบลเทพา",
+          "lat": 6.82529921,
+          "lon": 100.94191513
+        },
+        {
+          "name": "บริษัท เอ.พี.เค. กรีนเอ็นเนอร์จี จำกัด",
+          "mw": 8.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เศษวัสดุ",
+          "amphoe": "อำเภอหาดใหญ่",
+          "tambon": "ตำบลควนลัง",
+          "lat": 6.94872551,
+          "lon": 100.39604239
+        }
+      ]
+    },
+    "Sukhothai": {
+      "count": 2,
+      "plants": [
+        {
+          "name": "บริษัท ทิพย์สุโขทัย ไบโอเอ็นเนอยี่ จำกัด",
+          "mw": 36.0,
+          "rice_straw": true,
+          "rice_husks": true,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอศรีสัชนาลัย",
+          "tambon": "ตำบลบ้านตึก",
+          "lat": 17.55902294,
+          "lon": 99.85935664,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท ทิพย์สุโขทัย ไฮบริดเอนเนอยี จำกัด",
+          "mw": 17.0,
+          "rice_straw": true,
+          "rice_husks": true,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอศรีสัชนาลัย",
+          "tambon": null,
+          "lat": 17.6870574,
+          "lon": 99.61008723,
+          "fuel_src": "survey2565"
+        }
+      ]
+    },
+    "Suphan Buri": {
+      "count": 9,
+      "plants": [
+        {
+          "name": "บริษัท มิตรผล ไบโอ-เพาเวอร์ (ด่านช้าง) จำกัด (โครงการ 1) เดิมชื่อ บริษัท ด่านช้าง ไบโอ-เอ็นเนอร์",
+          "mw": 48.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอด่านช้าง",
+          "tambon": "ตำบลหนองมะค่าโมง",
+          "lat": 14.87735241,
+          "lon": 99.70941209
+        },
+        {
+          "name": "บริษัท มิตรผล ไบโอ-เพาเวอร์ (ด่านช้าง) จำกัด (โครงการ 3) เดิมชื่อ บริษัท ด่านช้าง ไบโอ-เอ็นเนอร์",
+          "mw": 32.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอด่านช้าง",
+          "tambon": "ตำบลหนองมะค่าโมง",
+          "lat": 14.89269942,
+          "lon": 99.71654989
+        },
+        {
+          "name": "บริษัท อู่ทองกรีนพาวเวอร์ จำกัด",
+          "mw": 25.9,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "Renewable",
+          "amphoe": "อำเภออู่ทอง",
+          "tambon": "ตำบลจรเข้สามพัน",
+          "lat": 14.32555874,
+          "lon": 99.85197003
+        },
+        {
+          "name": "บริษัท น้ำตาลรีไฟน์ชัยมงคล จำกัด",
+          "mw": 18.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "Renewable",
+          "amphoe": "อำเภออู่ทอง",
+          "tambon": "ตำบลหนองโอ่ง",
+          "lat": 14.42193937,
+          "lon": 99.89926747
+        },
+        {
+          "name": "บริษัท มิตรผล ไบโอ-พาวเวอร์ (ด่านช้าง) จำกัด โครงการ 2 เดิมชื่อ บริษัท ด่านช้าง ไบโอ-เอ็นเนอร์",
+          "mw": 11.4,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอด่านช้าง",
+          "tambon": "ตำบลหนองมะค่าโมง",
+          "lat": 14.88522516,
+          "lon": 99.71288019
+        },
+        {
+          "name": "บริษัท อู่ทอง ไบโอ พาวเวอร์ จำกัด",
+          "mw": 9.0,
+          "rice_straw": false,
+          "rice_husks": true,
+          "fuel": "แกลบ",
+          "amphoe": "อำเภออู่ทอง",
+          "tambon": "ตำบลพลับพลาไชย",
+          "lat": 14.51138187,
+          "lon": 99.91248666,
+          "fuel_src": "dede2569"
+        },
+        {
+          "name": "บริษัท อู่ทองไบโอแมส จำกัด",
+          "mw": 7.5,
+          "rice_straw": false,
+          "rice_husks": true,
+          "fuel": "แกลบ",
+          "amphoe": "อำเภออู่ทอง",
+          "tambon": "ตำบลพลับพลาไชย",
+          "lat": 14.51267465,
+          "lon": 99.91249195,
+          "fuel_src": "dede2569"
+        },
+        {
+          "name": "บริษัท ทิพย์สุพรรณบุรี ไบโอเอนเนอยี่ จำกัด",
+          "mw": 6.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอสามชุก",
+          "tambon": "ตำบลย่านยาว",
+          "lat": 14.71667521,
+          "lon": 100.09961114
+        },
+        {
+          "name": "บริษัท เดชา ไบโอกรีน จำกัด (เดิมสาลี ไบโอแมส จำกัด)",
+          "mw": 3.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เศษไม้",
+          "amphoe": "อำเภอบางปลาม้า",
+          "tambon": "ตำบลสาลี",
+          "lat": 14.2960769,
+          "lon": 100.22646952
+        }
+      ]
+    },
+    "Surat Thani": {
+      "count": 8,
+      "plants": [
+        {
+          "name": "บริษัท สุราษฏร์ธานี กรีน เอ็นเนอยี่ จำกัด",
+          "mw": 9.9,
+          "rice_straw": false,
+          "rice_husks": true,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอพุนพิน",
+          "tambon": "ตำบลบางงอน",
+          "lat": 9.12142293,
+          "lon": 99.06269186,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท ท่าฉาง กรีน เอ็นเนอร์ยี่ จำกัด (เดิมบริษัท ท่าฉางสวนปาล์มน้ำมันอุตสาหกรรม จำกัด",
+          "mw": 9.9,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กะลาปาล์ม",
+          "amphoe": "อำเภอท่าฉาง",
+          "tambon": "ตำบลเสวียด",
+          "lat": 9.27986026,
+          "lon": 99.13968347
+        },
+        {
+          "name": "บริษัท ท่าฉาง พาวเวอร์ กรีน จำกัด",
+          "mw": 9.9,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "วัสดุเหลือใช้จากการผลิตน้ำมันปาล์ม",
+          "amphoe": "อำเภอท่าฉาง",
+          "tambon": "ตำบลท่าฉาง",
+          "lat": 9.26285616,
+          "lon": 99.13872622
+        },
+        {
+          "name": "บริษัท แสงศิริอุตสาหกรรมเกษตร จำกัด COD 08/2559",
+          "mw": 7.5,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กากปาล์ม",
+          "amphoe": "อำเภอกาญจนดิษฐ์",
+          "tambon": "ตำบลทุ่งรัง",
+          "lat": 9.07503449,
+          "lon": 99.41619617
+        },
+        {
+          "name": "บริษัท ไฟฟ้าธรรมชาติ จำกัด",
+          "mw": 6.5,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เศษวัสดุ",
+          "amphoe": "อำเภอพระแสง",
+          "tambon": "ตำบลสินเจริญ",
+          "lat": 8.3907616,
+          "lon": 99.23028922
+        },
+        {
+          "name": "บริษัท บางสวรรค์ กรีน จำกัด",
+          "mw": 6.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เปลือกไม้",
+          "amphoe": "อำเภอพระแสง",
+          "tambon": "ตำบลบางสวรรค์",
+          "lat": 8.64822548,
+          "lon": 98.96601196
+        },
+        {
+          "name": "บริษัท ท่าฉางไบโอเพาเวอร์ จำกัด",
+          "mw": 3.8,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "วัสดุเหลือใช้จากการผลิตน้ำมันปาล์ม",
+          "amphoe": "อำเภอท่าฉาง",
+          "tambon": "ตำบลเสวียด",
+          "lat": 9.28073754,
+          "lon": 99.13989415
+        },
+        {
+          "name": "บริษัท เอส.พี.โอ.อะโกรอินดัสตรี้ส์ จำกัด",
+          "mw": 1.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กากปาล์ม",
+          "amphoe": "อำเภอพระแสง",
+          "tambon": "ตำบลสินปุน",
+          "lat": 8.5186723,
+          "lon": 99.22636357
+        }
+      ]
+    },
+    "Surin": {
+      "count": 6,
+      "plants": [
+        {
+          "name": "บริษัท ไฟฟ้าสุรินทร์ จำกัด",
+          "mw": 30.0,
+          "rice_straw": true,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอปราสาท",
+          "tambon": "ตำบลปรือ",
+          "lat": 14.58094884,
+          "lon": 103.34333281,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท ไฟฟ้าสุรินทร์ จำกัด",
+          "mw": 22.0,
+          "rice_straw": true,
+          "rice_husks": false,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอปราสาท",
+          "tambon": "ตำบลปรือ",
+          "lat": 14.62860856,
+          "lon": 103.35416893,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท มุ่งเจริญ ไบโอแมส จำกัด",
+          "mw": 17.0,
+          "rice_straw": false,
+          "rice_husks": true,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอเมืองสุรินทร์",
+          "tambon": "ตำบลราม",
+          "lat": 14.85047679,
+          "lon": 103.64586379,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท ไฟฟ้าสุรินทร์ จำกัด (โครงการ 2)",
+          "mw": 10.0,
+          "rice_straw": true,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอปราสาท",
+          "tambon": "ตำบลปรือ",
+          "lat": 14.57994469,
+          "lon": 103.34059054,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท มุ่งเจริญกรีนเพาเวอร์ จำกัด",
+          "mw": 9.9,
+          "rice_straw": true,
+          "rice_husks": true,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอเมืองสุรินทร์",
+          "tambon": "ตำบลบุฤาษี",
+          "lat": 14.90827575,
+          "lon": 103.5945125,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท แอ๊ดวานซ์ อะโกร เพาเวอร์ แพลนท์ จำกัด (อ.ปราสาท)",
+          "mw": 9.9,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เศษวัสดุ",
+          "amphoe": "อำเภอปราสาท",
+          "tambon": "ตำบลตานี",
+          "lat": 14.61342999,
+          "lon": 103.25961834
+        }
+      ]
+    },
+    "Tak": {
+      "count": 1,
+      "plants": [
+        {
+          "name": "บริษัท แม่สอดพลังงานสะอาด จำกัด",
+          "mw": 16.0,
+          "rice_straw": true,
+          "rice_husks": true,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอแม่สอด",
+          "tambon": "ตำบลแม่ตาว",
+          "lat": 16.6587597,
+          "lon": 98.53759068,
+          "fuel_src": "survey2565"
+        }
+      ]
+    },
+    "Trang": {
+      "count": 1,
+      "plants": [
+        {
+          "name": "บริษัท โอทาโก้ จำกัด (โครงการ 2)",
+          "mw": 7.5,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กากปาล์ม",
+          "amphoe": "อำเภอสิเกา",
+          "tambon": "ตำบลกะลาเส",
+          "lat": 7.72312908,
+          "lon": 99.32255454
+        }
+      ]
+    },
+    "Ubon Ratchathani": {
+      "count": 4,
+      "plants": [
+        {
+          "name": "บริษัท ก้าวหน้าเพาเวอร์ซัพพลาย จำกัด (โครงการ 1)",
+          "mw": 9.9,
+          "rice_straw": true,
+          "rice_husks": true,
+          "fuel": "แกลบ",
+          "amphoe": "อำเภอสำโรง",
+          "tambon": "ตำบลสำโรง",
+          "lat": 15.04037825,
+          "lon": 104.77958144,
+          "fuel_src": "both"
+        },
+        {
+          "name": "บริษัท ก้าวหน้าเพาเวอร์ซัพพลาย จำกัด (โครงการ 2)",
+          "mw": 9.9,
+          "rice_straw": true,
+          "rice_husks": true,
+          "fuel": "แกลบ",
+          "amphoe": "อำเภอสำโรง",
+          "tambon": "ตำบลสำโรง",
+          "lat": 15.03851222,
+          "lon": 104.77863257,
+          "fuel_src": "both"
+        },
+        {
+          "name": "บริษัท อัลไลแอนซ์ คลีน เพาเวอร์ จำกัด 2",
+          "mw": 9.9,
+          "rice_straw": false,
+          "rice_husks": true,
+          "fuel": "เศษวัสดุ",
+          "amphoe": "อำเภอสิรินธร",
+          "tambon": "ตำบลฝางคำ",
+          "lat": 15.16389169,
+          "lon": 105.34795371,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท ไบโอกรีน เอนเนอร์ยี 3 จำกัด",
+          "mw": 0.99,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เศษวัสดุ",
+          "amphoe": "อำเภอน้ำยืน",
+          "tambon": "ตำบลโซง",
+          "lat": 14.46499872,
+          "lon": 104.94782835
+        }
+      ]
+    },
+    "Udon Thani": {
+      "count": 5,
+      "plants": [
+        {
+          "name": "บริษัท โรงงานน้ำตาลทรายขาวเริ่มอุดม จำกัด",
+          "mw": 16.0,
+          "rice_straw": true,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอหนองหาน",
+          "tambon": "ตำบลหนองสระปลา",
+          "lat": 17.37367548,
+          "lon": 103.26184812,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท น้ำตาลเกษตรผล จำกัด",
+          "mw": 15.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอกุมภวาปี",
+          "tambon": "ตำบลปะโค",
+          "lat": 17.07218287,
+          "lon": 102.92161542
+        },
+        {
+          "name": "บริษัท บัวสมหมายไบโอแมส จำกัด",
+          "mw": 9.9,
+          "rice_straw": true,
+          "rice_husks": true,
+          "fuel": "ไม้สับ",
+          "amphoe": "อำเภอเมืองอุดรธานี",
+          "tambon": "ตำบลหนองนาคำ",
+          "lat": 17.33950156,
+          "lon": 102.89331098,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท ไทยอุดรธานี เพาเวอร์ จำกัด",
+          "mw": 8.1,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอบ้านผือ",
+          "tambon": "ตำบลคำบง",
+          "lat": 17.61344088,
+          "lon": 102.56119969
+        },
+        {
+          "name": "บริษัท ยู อาร์ ซี พาวเวอร์ จำกัด  (1/1)",
+          "mw": 0.99,
+          "rice_straw": false,
+          "rice_husks": true,
+          "fuel": "แกลบ",
+          "amphoe": "อำเภอหนองหาน",
+          "tambon": "ตำบลหนองเม็ก",
+          "lat": 17.37421944,
+          "lon": 103.18074761,
+          "fuel_src": "dede2569"
+        }
+      ]
+    },
+    "Uthai Thani": {
+      "count": 5,
+      "plants": [
+        {
+          "name": "บริษัท อุตสาหกรรมน้ำตาลบ้านไร่ จำกัด (โครงการ 1)",
+          "mw": 41.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอบ้านไร่",
+          "tambon": "ตำบลทัพหลวง",
+          "lat": 15.01311256,
+          "lon": 99.62423509
+        },
+        {
+          "name": "บริษัท บ้านไร่ผลิตไฟฟ้า จำกัด (โครงการ 2)",
+          "mw": 27.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอบ้านไร่",
+          "tambon": "ตำบลทัพหลวง",
+          "lat": 15.01079973,
+          "lon": 99.62365167
+        },
+        {
+          "name": "บริษัท อุทัยธานี ไบโอ เอเนอยี่ จำกัด",
+          "mw": 20.0,
+          "rice_straw": true,
+          "rice_husks": true,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอสว่างอารมณ์",
+          "tambon": "ตำบลไผ่เขียว",
+          "lat": 15.64270839,
+          "lon": 99.71122111,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท บ้านไร่ผลิตไฟฟ้า จำกัด",
+          "mw": 9.9,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอบ้านไร่",
+          "tambon": "ตำบลทัพหลวง",
+          "lat": 15.01216887,
+          "lon": 99.62219527
+        },
+        {
+          "name": "บริษัท วิทัยไบโอเพาเวอร์ จำกัด",
+          "mw": 9.5,
+          "rice_straw": false,
+          "rice_husks": true,
+          "fuel": "แกลบ",
+          "amphoe": "อำเภอสว่างอารมณ์",
+          "tambon": "ตำบลบ่อยาง",
+          "lat": 15.61793527,
+          "lon": 99.84008871,
+          "fuel_src": "dede2569"
+        }
+      ]
+    },
+    "Uttaradit": {
+      "count": 5,
+      "plants": [
+        {
+          "name": "บริษัท ไทยเอกลักษณ์เพาเวอร์ จำกัด (TEP-N)",
+          "mw": 50.0,
+          "rice_straw": true,
+          "rice_husks": true,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอเมืองอุตรดิตถ์",
+          "tambon": "ตำบลคุ้งตะเภา",
+          "lat": 17.64300456,
+          "lon": 100.16879828,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท น้ำตาลไทยเอกลักษณ์ จำกัด {23/3}",
+          "mw": 23.0,
+          "rice_straw": true,
+          "rice_husks": true,
+          "fuel": "กากอ้อย",
+          "amphoe": "อำเภอเมืองอุตรดิตถ์",
+          "tambon": "ตำบลคุ้งตะเภา",
+          "lat": 17.66168319,
+          "lon": 100.20507315,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท อุตรดิตถ์ กรีน เพาเวอร์ จำกัด",
+          "mw": 9.5,
+          "rice_straw": true,
+          "rice_husks": true,
+          "fuel": "แกลบ,ฟางข้าว,ซังข้าวโพด",
+          "amphoe": "อำเภอเมืองอุตรดิตถ์",
+          "tambon": "ตำบลตรอน",
+          "lat": 17.49207656,
+          "lon": 100.08635374,
+          "fuel_src": "dede2569"
+        },
+        {
+          "name": "บริษัท พิชัยธัญชาติ จำกัด",
+          "mw": 4.9,
+          "rice_straw": true,
+          "rice_husks": true,
+          "fuel": "แกลบ",
+          "amphoe": "อำเภอพิชัย",
+          "tambon": "ตำบลไร่อ้อย",
+          "lat": 17.34763485,
+          "lon": 100.08452401,
+          "fuel_src": "both"
+        },
+        {
+          "name": "บริษัท คนปั่นไฟ จำกัด",
+          "mw": 0.3,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "ไม้โตเร็ว",
+          "amphoe": "อำเภอทองแสนขัน",
+          "tambon": "ตำบลผักขวง",
+          "lat": 17.53605557,
+          "lon": 100.40401667
+        }
+      ]
+    },
+    "Yala": {
+      "count": 7,
+      "plants": [
+        {
+          "name": "บริษัท กัลฟ์ ยะลา กรีน จำกัด",
+          "mw": 23.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "Renewable",
+          "amphoe": "อำเภอเมืองยะลา",
+          "tambon": "ตำบลพร่อน",
+          "lat": 6.56372877,
+          "lon": 101.23086685
+        },
+        {
+          "name": "บริษัท ยะลากรีนเอ็นเนอยี่ จำกัด",
+          "mw": 9.9,
+          "rice_straw": true,
+          "rice_husks": false,
+          "fuel": "เศษวัสดุ",
+          "amphoe": "อำเภอเมืองยะลา",
+          "tambon": "ตำบลหน้าถ้ำ",
+          "lat": 5.85242531,
+          "lon": 101.08078051,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท ทีพีซีเอช เพาเวอร์ 1 จำกัด",
+          "mw": 9.9,
+          "rice_straw": true,
+          "rice_husks": false,
+          "fuel": "ชิ้นไม้สับ",
+          "amphoe": "อำเภอเมืองยะลา",
+          "tambon": "ตำบลบุดี",
+          "lat": 6.48642567,
+          "lon": 101.31685326,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท ทีพีซีเอช เพาวเวอร์ 2 จำกัด",
+          "mw": 9.9,
+          "rice_straw": true,
+          "rice_husks": false,
+          "fuel": "ชิ้นไม้สับ",
+          "amphoe": "อำเภอเมืองยะลา",
+          "tambon": "ตำบลบุดี",
+          "lat": 6.48711205,
+          "lon": 101.31757303,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท เบตง กรีน เพาเวอร์ จำกัด",
+          "mw": 7.5,
+          "rice_straw": false,
+          "rice_husks": true,
+          "fuel": "ไม้ชิ้นไม้สับ เศษไม้",
+          "amphoe": "อำเภอเบตง",
+          "tambon": "ตำบลตะเนาะแมเราะ",
+          "lat": 5.85242531,
+          "lon": 101.08078051,
+          "fuel_src": "survey2565"
+        },
+        {
+          "name": "บริษัท พี.ซี.เบตงกรีนเอ็นเนอร์ยี่ จำกัด",
+          "mw": 6.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "ไม้ ชิ้นไม้สับ เปลือกไม้",
+          "amphoe": "อำเภอเบตง",
+          "tambon": "ตำบลตาเนาะแมเราะ",
+          "lat": 5.84869011,
+          "lon": 101.12556005
+        },
+        {
+          "name": "บริษัท ประชารัฐชีวมวล บันนังสตา จำกัด",
+          "mw": 3.0,
+          "rice_straw": false,
+          "rice_husks": false,
+          "fuel": "เปลือกไม้ รากไม้",
+          "amphoe": "อำเภอบังนังสตา",
+          "tambon": "ตำบลถ้ำทะลุ",
+          "lat": 6.27191302,
+          "lon": 101.11485829
+        }
       ]
     }
+  },
+  "_survey2565_flags": {
+    "Uttaradit|พิชัยธัญชาติ": [
+      true,
+      false
+    ],
+    "Uttaradit|ไทยเอกลักษณ์เพาเวอร์": [
+      true,
+      true
+    ],
+    "Uttaradit|น้ำตาลไทยเอกลักษณ์": [
+      true,
+      true
+    ],
+    "Lamphun|สหโคเจนกรีน": [
+      true,
+      true
+    ],
+    "Phrae|แม่กระทิงเพาเวอร์": [
+      true,
+      true
+    ],
+    "Kanchanaburi|ไทยเบฟเวอเรจเอ็นเนอร์จี่": [
+      true,
+      false
+    ],
+    "Kanchanaburi|ไทยเคนเปเปอร์": [
+      true,
+      false
+    ],
+    "Kanchanaburi|น้ำตาลขอนแก่น": [
+      true,
+      false
+    ],
+    "Kanchanaburi|ไทยอุตสาหกรรมน้ำตาล": [
+      true,
+      false
+    ],
+    "Kanchanaburi|อุตสาหกรรมมิตรเกษตร": [
+      true,
+      true
+    ],
+    "Kanchanaburi|น้ำตาลท่ามะกา": [
+      true,
+      false
+    ],
+    "Prachuap Khiri Khan|ซีพีพี": [
+      true,
+      true
+    ],
+    "Prachuap Khiri Khan|อุตสาหกรรมน้ำตาลปราณบุรี": [
+      true,
+      false
+    ],
+    "Tak|แม่สอดพลังงานสะอาด": [
+      true,
+      true
+    ],
+    "Ratchaburi|น้ำตาลราชบุรี": [
+      true,
+      false
+    ],
+    "Chon Buri|สหการน้ำตาลชลบุรี": [
+      true,
+      false
+    ],
+    "Chon Buri|บน้ำตาลนิวกวางสุนหลี": [
+      true,
+      false
+    ],
+    "Chon Buri|น้ำตาลระยอง": [
+      true,
+      true
+    ],
+    "Sa Kaeo|กรีนเพาเวอร์2": [
+      true,
+      false
+    ],
+    "Sa Kaeo|น้ำตาลและอ้อยตะวันออก": [
+      true,
+      false
+    ],
+    "Kamphaeng Phet|นครเพชรกรีนเนอยี่": [
+      true,
+      true
+    ],
+    "Kamphaeng Phet|กำแพงเพชรกรีนเอ็นเนอยี่": [
+      true,
+      false
+    ],
+    "Kamphaeng Phet|สหกรีนฟอเรสท์": [
+      true,
+      true
+    ],
+    "Kamphaeng Phet|น้ำตาลทรายกำแพงเพชร": [
+      true,
+      false
+    ],
+    "Kamphaeng Phet|ทีเอสเพาเวอร์แพลนท์": [
+      true,
+      false
+    ],
+    "Uthai Thani|อุทัยธานีไบโอเอนเนอยี่": [
+      true,
+      true
+    ],
+    "Sukhothai|ทิพย์สุโขทัยไบโอเอนเนอยี่": [
+      true,
+      true
+    ],
+    "Lop Buri|เอเวอร์กรีนพลัส": [
+      true,
+      false
+    ],
+    "Nakhon Pathom|สินเอกพาณิชย์": [
+      true,
+      true
+    ],
+    "Phra Nakhon Si Ayutthaya|เพาเวอร์พรอสเพค": [
+      true,
+      true
+    ],
+    "Ubon Ratchathani|ก้าวหน้าเพาเวอร์ซัพพลาย": [
+      true,
+      true
+    ],
+    "Ubon Ratchathani|อัลไลแอนซ์คลีนเพาเวอร์": [
+      false,
+      true
+    ],
+    "Udon Thani|โรงงานน้ำตาลเกษตรผล": [
+      false,
+      true
+    ],
+    "Udon Thani|โรงงานน้ำตาลทรายขาวเริ่มอุดม": [
+      true,
+      false
+    ],
+    "Udon Thani|บัวสมหมายไบโอแมส": [
+      true,
+      true
+    ],
+    "Buri Ram|บุรีรัมย์พลังงาน": [
+      true,
+      true
+    ],
+    "Surin|ไฟฟ้าสุรินทร์": [
+      true,
+      false
+    ],
+    "Surin|มุ่งเจริญไบโอแมส": [
+      false,
+      true
+    ],
+    "Surin|บมุ่งเจริญกรีนเพาเวอร์": [
+      true,
+      true
+    ],
+    "Khon Kaen|มิตรผลไบโอเพาเวอร์": [
+      false,
+      true
+    ],
+    "Khon Kaen|ขอนแก่นกรีนพาวเวอร์": [
+      true,
+      false
+    ],
+    "Nong Khai|พลังงานสะอาดศรีเชียงใหม่": [
+      false,
+      true
+    ],
+    "Roi Et|บัวสมหมาย": [
+      true,
+      false
+    ],
+    "Roi Et|บัวสมหมายผลิตไฟฟ้า": [
+      true,
+      true
+    ],
+    "Kalasin|อีสานไบโอเพาเวอร์": [
+      false,
+      true
+    ],
+    "Kalasin|กมลาไสยไบโอเพาเวอร์2010": [
+      true,
+      false
+    ],
+    "Nakhon Ratchasima|เจียเมง": [
+      true,
+      false
+    ],
+    "Nakhon Ratchasima|ยูนิพาวเวอร์เทค": [
+      false,
+      true
+    ],
+    "Si Sa Ket|ตั้งแซเยี้ยงกรีนพาวเวอร์": [
+      true,
+      true
+    ],
+    "Surat Thani|สุราษฎร์ธานีกรีนเอ็นเนอยี่": [
+      false,
+      true
+    ],
+    "Surat Thani|ไทยทาโลว์แอนด์ออยล์": [
+      true,
+      false
+    ],
+    "Yala|ทีพีซีเอชเพาเวอร์1": [
+      true,
+      false
+    ],
+    "Yala|ทีพีซีเอชเพาเวอร์2": [
+      true,
+      false
+    ],
+    "Yala|ยะลากรีนเอ็นเนอยี่": [
+      true,
+      false
+    ],
+    "Yala|เบตงกรีนเพาเวอร์": [
+      false,
+      true
+    ],
+    "Narathiwat|ทีพีซีเอชเพาเวอร์5": [
+      true,
+      false
+    ],
+    "Chumphon|กลุ่มปาล์มธรรมชาติ": [
+      false,
+      true
+    ],
+    "Nakhon Si Thammarat|ไทยทาโลว์แอนด์ออยล์": [
+      true,
+      false
+    ],
+    "Nakhon Si Thammarat|นครศรีพาราวูด": [
+      true,
+      false
+    ],
+    "Songkhla|กัลฟ์จะนะกรีน": [
+      true,
+      false
+    ],
+    "Songkhla|สงขลาไบโอแมส": [
+      true,
+      false
+    ],
+    "Krabi|ซาราฟเอ็นเนอยี": [
+      true,
+      false
+    ],
+    "Satun|สตูลกรีนเพาเวอร์": [
+      true,
+      false
+    ]
   }
 }

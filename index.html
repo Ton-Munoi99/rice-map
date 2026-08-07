@@ -3041,8 +3041,8 @@
         },
         biomass: {
           format: "int",
-          sourceTh: "พพ. (DEDE) 2565",
-          sourceEn: "DEDE 2565",
+          sourceTh: "ทะเบียน พพ. (DEDE) ธ.ค. 2568",
+          sourceEn: "DEDE registry, Dec 2025",
           palette: { lo: [254, 243, 199], mid: [251, 146, 60], hi: [180, 83, 9], accent: "#f59e0b" },
         },
       }).forEach(([k, cfg]) => Object.assign(layerMeta[k], cfg));
@@ -3623,9 +3623,23 @@
         const total = strawProductionBase(en, year).total * STRAW.rpr;
         return total > 0 ? Math.round(total) : null;
       }
-      // ── โรงไฟฟ้าชีวมวล (DEDE 2565) ───────────────────────────────────────────────
+      // ── โรงไฟฟ้าชีวมวล (ทะเบียน DEDE) ────────────────────────────────────────────
       function biomassPlantsOf(en) {
         return window.BIOMASS_DATA?.provinces?.[en]?.count ?? 0;
+      }
+
+      // ป้ายเชื้อเพลิงจากข้าว — fuel_src บอกว่ามาจากทะเบียน DEDE หรือแบบสอบถามปี 2565
+      // (2565 = โรงเคยแจ้งว่ารับซื้อ ไม่ได้แปลว่าตอนนี้ยังใช้อยู่ จึงต้องแยกให้เห็น)
+      function riceFuelTags(p) {
+        if (!p.rice_straw && !p.rice_husks) return [];
+        const old = p.fuel_src === "survey2565";
+        const mark = old ? "*" : "";
+        const tags = [];
+        if (p.rice_straw)
+          tags.push(`<span title="${old ? t("จากแบบสอบถามปี 2565", "from 2022 survey") : t("ทะเบียน DEDE", "DEDE registry")}" style="background:rgba(212,160,23,${old ? ".1" : ".18"});color:#b8860b;padding:1px 5px;border-radius:8px;font-size:9px">🌾 ${t("ฟาง", "straw")}${mark}</span>`);
+        if (p.rice_husks)
+          tags.push(`<span title="${old ? t("จากแบบสอบถามปี 2565", "from 2022 survey") : t("ทะเบียน DEDE", "DEDE registry")}" style="background:rgba(76,175,80,${old ? ".08" : ".15"});color:#388e3c;padding:1px 5px;border-radius:8px;font-size:9px">🌾 ${t("แกลบ", "husk")}${mark}</span>`);
+        return tags;
       }
 
       // ฟางเหลือใช้ (พลังงาน/เสี่ยงเผา) = ฟางทั้งหมด × SAF 0.583
@@ -3634,7 +3648,7 @@
         return s == null ? null : Math.round(s * STRAW.saf);
       }
 
-      // จับคู่ supply (ฟางเหลือใช้) กับ demand (โรงไฟฟ้าที่รับซื้อฟาง/แกลบ) ระดับจังหวัด/ภาค
+      // จับคู่ supply (ฟางเหลือใช้) กับ demand (โรงไฟฟ้าที่ใช้เชื้อเพลิงจากข้าว) ระดับจังหวัด/ภาค
       function strawBuyerMarket(en) {
         const riceBuyers = (provEn) => (window.BIOMASS_DATA?.provinces?.[provEn]?.plants || []).filter((p) => p.rice_straw || p.rice_husks);
         const ownPlants = riceBuyers(en);
@@ -3745,7 +3759,7 @@
           cols: [{ th: "จำนวนโรงไฟฟ้า", en: "Plants" }],
           valueFn: (en) => biomassPlantsOf(en) || 0,
           fmt: (v) => v.toString(),
-          unit: ["หน่วย: แห่ง · DEDE 2565", "Unit: plants · DEDE 2565"],
+          unit: ["หน่วย: แห่ง · ทะเบียน DEDE ธ.ค. 2568", "Unit: plants · DEDE registry Dec 2025"],
           accent: "#f59e0b",
           border: "rgba(245,158,11,.32)",
         },
@@ -4913,8 +4927,8 @@
         if (S.layer === "biomass") {
           const meta = window.BIOMASS_DATA?._meta;
           refs.dataSourceNote.textContent = t(
-            `⚡ โรงไฟฟ้าชีวมวล ${meta?.total || 79} แห่งทั่วประเทศ · สำรวจโดย กรมพัฒนาพลังงานทดแทนและอนุรักษ์พลังงาน (พพ./DEDE) ปี 2565 · ครอบคลุม ${covered} จังหวัด · ข้อมูลเบื้องต้น ได้จากโรงไฟฟ้าที่ตอบแบบสอบถาม`,
-            `⚡ ${meta?.total || 79} biomass power plants nationwide · Surveyed by DEDE (Dept. of Alternative Energy Development and Efficiency) 2022 · ${covered} provinces · Preliminary data from survey respondents`,
+            `⚡ โรงไฟฟ้าชีวมวลที่ขายไฟเข้าระบบ ${meta?.total || 230} แห่ง (${(meta?.total_mw || 0).toLocaleString()} MW) · ทะเบียน กรมพัฒนาพลังงานทดแทนและอนุรักษ์พลังงาน (พพ./DEDE) ข้อมูล ณ ${meta?.as_of || "ธ.ค. 2568"} · ครอบคลุม ${covered} จังหวัด · ใช้เชื้อเพลิงจากข้าว ${meta?.rice_fuel_plants || 0} แห่ง (อีก ${meta?.unspecified_fuel || 0} แห่งต้นทางไม่ระบุเชื้อเพลิง)`,
+            `⚡ ${meta?.total || 230} on-grid biomass power plants (${(meta?.total_mw || 0).toLocaleString()} MW) · DEDE registry as of ${meta?.as_of_en || "Dec 2025"} · ${covered} provinces · ${meta?.rice_fuel_plants || 0} use rice fuel (${meta?.unspecified_fuel || 0} have no fuel type stated at source)`,
           );
           return;
         }
@@ -5979,7 +5993,7 @@
         }
         // ─────────────────────────────────────────────────────────────────────
 
-        // ── ตลาดรับซื้อฟาง/แกลบ — จับคู่ supply (ฟางเหลือใช้) กับ demand (โรงไฟฟ้าชีวมวล) ──
+        // ── ตลาดฟาง/แกลบ — จับคู่ supply (ฟางเหลือใช้) กับ demand (โรงไฟฟ้าชีวมวล) ──
         let strawMarketHtml = "";
         if (window.BIOMASS_DATA && strawSurplusOf(en, S.year) != null) {
           const market = strawBuyerMarket(en);
@@ -6003,9 +6017,9 @@
           }
           strawMarketHtml = `
           <div class="rice-card" style="grid-column:1/-1;background:rgba(139,195,74,.07);border:1px solid rgba(139,195,74,.25)">
-            <div class="t">🔗 ${t("ตลาดรับซื้อฟาง/แกลบ", "Straw/Husk Buyer Market")}</div>
+            <div class="t">🔗 ${t("ตลาดฟาง/แกลบ", "Straw/Husk Market")}</div>
             ${statusHtml}
-            <div style="font-size:9px;color:var(--muted);margin-top:6px">${t("จับคู่ฟางเหลือใช้กับโรงไฟฟ้าชีวมวลที่รับซื้อ · ระดับจังหวัด/ภาค (ยังไม่คำนวณระยะทางจริง)", "Matches surplus straw with biomass plants that buy it · province/region level (real distance not yet calculated)")}</div>
+            <div style="font-size:9px;color:var(--muted);margin-top:6px">${t("จับคู่ฟางเหลือใช้กับโรงไฟฟ้าชีวมวลที่ใช้เชื้อเพลิงจากข้าว · ระดับจังหวัด/ภาค (ยังไม่คำนวณระยะทางจริง) · * = จากแบบสอบถามปี 2565 ไม่ใช่ทะเบียนปัจจุบัน", "Matches surplus straw with rice-fuelled biomass plants · province/region level (real distance not yet calculated) · * = from the 2022 survey, not the current registry")}</div>
           </div>`;
         }
         // ─────────────────────────────────────────────────────────────────────
@@ -6362,11 +6376,9 @@
             const totalMw = plants.reduce((s, p) => s + (p.mw || 0), 0);
             const plantRows = plants
               .map((p) => {
-                const fuelTags = [];
-                if (p.rice_straw) fuelTags.push(`<span style="background:rgba(212,160,23,.18);color:#b8860b;padding:1px 5px;border-radius:8px;font-size:9px">🌾 ฟาง</span>`);
-                if (p.rice_husks) fuelTags.push(`<span style="background:rgba(76,175,80,.15);color:#388e3c;padding:1px 5px;border-radius:8px;font-size:9px">🌾 แกลบ</span>`);
+                const fuelTags = riceFuelTags(p);
                 return `<div style="padding:4px 0;border-bottom:1px solid rgba(245,158,11,.1);display:flex;justify-content:space-between;align-items:flex-start;gap:4px">
-                  <span style="font-size:10px;flex:1;line-height:1.4">${p.name}</span>
+                  <span style="font-size:10px;flex:1;line-height:1.4">${p.name}${p.fuel && !/^(Renewable|Biomass)$/.test(p.fuel) ? `<span style="color:var(--muted);font-size:9px"> · ${p.fuel}</span>` : ""}</span>
                   <span style="white-space:nowrap;font-size:10px;color:var(--muted);margin-left:4px">${p.mw} MW</span>
                   ${fuelTags.length ? `<span style="white-space:nowrap">${fuelTags.join(" ")}</span>` : ""}
                 </div>`;
@@ -6374,7 +6386,7 @@
               .join("");
             biomassHtml = `
             <div class="rice-card" style="grid-column:1/-1;background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.28)">
-              <div class="t">⚡ ${t("โรงไฟฟ้าชีวมวล", "Biomass Power Plants")} · DEDE 2565</div>
+              <div class="t">⚡ ${t("โรงไฟฟ้าชีวมวล", "Biomass Power Plants")} · ${t("ทะเบียน DEDE ธ.ค. 2568", "DEDE registry Dec 2025")}</div>
               <div style="display:flex;gap:12px;margin-bottom:8px">
                 <div class="metric" style="flex:1">
                   <div class="m-label">${t("จำนวนโรงไฟฟ้า", "Power Plants")}</div>
@@ -6385,7 +6397,7 @@
                   <div class="m-value" style="font-size:13px;color:#d97706">${totalMw.toFixed(1)} <small>MW</small></div>
                 </div>
                 <div class="metric" style="flex:1">
-                  <div class="m-label">${t("รับซื้อฟาง/แกลบ", "Buys Rice Biomass")}</div>
+                  <div class="m-label">${t("ใช้เชื้อเพลิงจากข้าว", "Rice-fuelled")}</div>
                   <div class="m-value" style="font-size:13px;color:#388e3c">${riceCount} <small>${t("แห่ง", "plants")}</small></div>
                 </div>
               </div>
@@ -6790,19 +6802,17 @@
           const totalMw = plants.reduce((s, p) => s + (p.mw || 0), 0);
           const plantListHtml = plants
             .map((p) => {
-              const fuelTags = [];
-              if (p.rice_straw) fuelTags.push(`<span style="background:rgba(212,160,23,.18);color:#b8860b;padding:1px 5px;border-radius:8px;font-size:9px">🌾 ฟาง</span>`);
-              if (p.rice_husks) fuelTags.push(`<span style="background:rgba(76,175,80,.15);color:#388e3c;padding:1px 5px;border-radius:8px;font-size:9px">🌾 แกลบ</span>`);
+              const fuelTags = riceFuelTags(p);
               return `<div style="font-size:9px;color:var(--muted);margin-top:3px;display:flex;justify-content:space-between;gap:4px"><span>· ${p.name}</span><span style="white-space:nowrap">${p.mw} MW ${fuelTags.join(" ")}</span></div>`;
             })
             .join("");
           return `
     <div class="th">${t(NM[en] || en, en)}</div>
     <div class="en">${en}</div>
-    <div class="type">${t("โรงไฟฟ้าชีวมวล · DEDE 2565", "Biomass Power Plants · DEDE 2565")}</div>
+    <div class="type">${t("โรงไฟฟ้าชีวมวล · ทะเบียน DEDE ธ.ค. 2568", "Biomass Power Plants · DEDE registry Dec 2025")}</div>
     <div class="metric-name">${t("จำนวนโรงไฟฟ้า", "Number of Plants")}</div>
     <div class="value">${prov.count} <small style="font-size:12px;color:var(--muted)">${t("แห่ง", "plants")}</small></div>
-    <div class="rank">${rank ? `${t("อันดับ", "Rank")} #${rank} / ${total}` : t("ไม่มีข้อมูล", "No data")} &nbsp;·&nbsp; ${t(`กำลังผลิตรวม ${totalMw.toFixed(1)} MW · รับซื้อฟาง/แกลบ ${riceCount} แห่ง`, `Total ${totalMw.toFixed(1)} MW · ${riceCount} buy rice straw/husks`)}</div>
+    <div class="rank">${rank ? `${t("อันดับ", "Rank")} #${rank} / ${total}` : t("ไม่มีข้อมูล", "No data")} &nbsp;·&nbsp; ${t(`กำลังผลิตรวม ${totalMw.toFixed(1)} MW · ใช้เชื้อเพลิงจากข้าว ${riceCount} แห่ง`, `Total ${totalMw.toFixed(1)} MW · ${riceCount} rice-fuelled`)}</div>
     ${plantListHtml}
   `;
         }

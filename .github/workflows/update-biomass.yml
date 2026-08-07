@@ -1,0 +1,32 @@
+name: Update Biomass Power Plants (DEDE WFS, yearly)
+
+on:
+  schedule:
+    # 15 ก.พ. 09:00 UTC (16:00 BKK) — พพ. ออกทะเบียนรอบใหม่ราวต้นปี
+    - cron: '0 9 15 2 *'
+  workflow_dispatch:
+
+jobs:
+  update-biomass:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Fetch biomass plants from DEDE GeoServer WFS
+        run: python scripts/fetch_biomass_plants.py
+
+      - name: Commit and push
+        uses: ./.github/actions/commit-data
+        with:
+          paths: data/biomass-plants.json
+          message: "auto: update biomass power plants (DEDE)"

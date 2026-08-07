@@ -77,12 +77,21 @@
 - **อ้างอิง:** ค่า RPR/SAF จาก **กรมพัฒนาพลังงานทดแทนและอนุรักษ์พลังงาน (พพ./DEDE)** — <https://www.dede.go.th/> · ศูนย์องค์ความรู้ฯ <https://kc.dede.go.th/>
 
 ### ⚡ โรงไฟฟ้าชีวมวล
-- **คืออะไร:** โรงไฟฟ้าชีวมวล 79 แห่งทั่วประเทศ + ธงว่ารับซื้อฟางข้าว/แกลบไหม · การ์ด "ตลาดรับซื้อฟาง/แกลบ" จับคู่ฟางเหลือใช้ของจังหวัดกับโรงที่รับซื้อ (ระดับจังหวัด/ภาค)
-- **ข้อมูล:** **DEDE** — "ข้อมูลการรับซื้อเชื้อเพลิงชีวมวลของโรงไฟฟ้าในประเทศไทย ปี 2565" (79 โรง, ข้อมูลเบื้องต้นจากโรงที่ตอบแบบสอบถาม)
+- **คืออะไร:** ทะเบียนโรงไฟฟ้าชีวมวลที่ขายไฟเข้าระบบ **230 แห่ง 54 จังหวัด รวม 3,518.84 MW** พร้อมชื่อโรง พิกัด ตำบล/อำเภอ และชนิดเชื้อเพลิง · การ์ด "ตลาดฟาง/แกลบ" จับคู่ฟางเหลือใช้ของจังหวัดกับโรงที่ใช้เชื้อเพลิงจากข้าว (ระดับจังหวัด/ภาค)
+- **ข้อมูล:** **DEDE** — layer `gisdede:9000_2569_biomassdec68` ข้อมูล ณ ธันวาคม 2568 ดึงผ่าน **GeoServer WFS** เป็น GeoJSON
 - **ลิงก์ตรง:**
-  - หน้าองค์ความรู้ + ไฟล์ PDF: <https://kc.dede.go.th/knowledge-view.aspx?p=231>
-  - แผนที่พิกัดโรงไฟฟ้าชีวมวล (GIS DEDE): <https://gis.dede.go.th/gallery-map-view.aspx?p=77>
-- **สคริปต์/ข้อมูล:** `data/biomass-plants.json` (สกัดจาก PDF ด้วยมือ)
+  - WFS endpoint: <https://gis.dede.go.th/geoserver/wfs> (`request=GetFeature&typeName=gisdede:9000_2569_biomassdec68&outputFormat=application/json`)
+  - หน้าชุดข้อมูลใน Data Catalog: <https://pei.dede.go.th/dataset/gis-002>
+  - แผนที่ PDF (ภาพ ไม่มี text layer): <https://gis.dede.go.th/gallery-map-list.aspx>
+- **สคริปต์/ข้อมูล:** `scripts/fetch_biomass_plants.py` → `data/biomass-plants.json` (workflow `update-biomass.yml` รันปีละครั้ง)
+
+**ข้อควรรู้เรื่องความแม่น:**
+- **46 โรง (20%) ต้นทางไม่ระบุชนิดเชื้อเพลิง** (ฟิลด์เป็นค่า default `Renewable`/`Biomass`) และกินกำลังผลิตราว 40% ของทั้งหมด — โรงเหล่านี้อาจใช้ฟาง/แกลบจริงแต่ไม่ปรากฏในตัวเลข 84 โรง
+- ธง `rice_straw`/`rice_husks` มาจาก 2 ที่ ดูได้จากฟิลด์ `fuel_src`:
+  `dede2569` = ทะเบียนระบุแกลบ/ฟางเอง · `survey2565` = ยกมาจากแบบสอบถามปี 2565 (โรงเคยแจ้งว่ารับซื้อ ไม่ยืนยันว่าตอนนี้ยังใช้) · `both` = ตรงกันทั้งคู่ · ในเว็บติดดอกจัน `*` กำกับตัวที่มาจากสำรวจ 2565
+- การยกธงจากปี 2565 จับคู่ด้วยชื่อ **ภายในจังหวัดเดียวกันเท่านั้น** — ถ้า fuzzy ข้ามจังหวัดจะจับ "มิตรผล ด่านช้าง" (สุพรรณบุรี) ไปชนกับ "มิตรผล ภูเวียง" (ขอนแก่น) ซึ่งคนละโรง
+- ต้นทางมี **ชื่อโรงซ้ำในจังหวัดเดียวกัน 3 คู่** (คนละหน่วยผลิต/คนละพิกัด) — ไม่ตัดออก เพราะยอดรวมต้องตรงกับที่ พพ. ประกาศ (230 โรง)
+- ข้อมูลชุดเดิม (สำรวจ 2565) มีเพียง 79 โรง 35 จังหวัด 1,461 MW เพราะนับเฉพาะโรงที่ตอบแบบสอบถาม — ต่ำกว่าความจริงราว 3 เท่า
 
 ### 🏭 โรงสีข้าว
 - **ข้อมูล:** **กรมการค้าภายใน (DIT)** — โรงสีจดทะเบียน (จำนวน + ขนาด ใหญ่/กลาง/เล็ก)
@@ -233,7 +242,7 @@
 | กำไร/ขาดทุน | คำนวณ (ราคา×ผลผลิต−ต้นทุน) | คำนวณ | — | (index.html) |
 | ราคาปุ๋ย / อัตราปุ๋ย | MOC / กรมการข้าว | ราชการ | [dit.go.th](https://www.dit.go.th/) · [ricethailand.go.th](https://www.ricethailand.go.th/) | (index.html) |
 | ฟางข้าว | OAE × RPR/SAF (พพ.) | คำนวณ | [kc.dede.go.th](https://kc.dede.go.th/) | (index.html) |
-| โรงไฟฟ้าชีวมวล | DEDE 2565 | ราชการ | [kc.dede…p=231](https://kc.dede.go.th/knowledge-view.aspx?p=231) | data/biomass-plants.json |
+| โรงไฟฟ้าชีวมวล | DEDE ธ.ค. 2568 | ราชการ | [gis.dede WFS](https://gis.dede.go.th/geoserver/wfs) · [pei.dede gis-002](https://pei.dede.go.th/dataset/gis-002) | data/biomass-plants.json |
 | โรงสีข้าว | DIT (Excel export) | ราชการ | [dit.go.th](https://www.dit.go.th/) | build_rice_mills.py |
 | ครัวเรือนเกษตรกร | OAE 2566 | ราชการ | [catalog.oae.go.th](https://catalog.oae.go.th/) | data/farmer_households.csv |
 | พยากรณ์ฝน 7 วัน | Open-Meteo (p90) | โมเดล (API) | [api.open-meteo…forecast](https://api.open-meteo.com/v1/forecast) | fetch_rain_forecast.py |
