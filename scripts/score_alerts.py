@@ -25,6 +25,7 @@ OUT       = "data/alert-scoreboard.json"
 
 HEAVY_MM  = 120   # เกณฑ์ 🔴 เสี่ยงสูง (เท่า agri-warnings FLOOD_HIGH_MM)
 ANY_MM    = 30    # เกณฑ์ 🟡 เริ่มเฝ้าระวัง (เท่า FLOOD_LOW_MM)
+MIN_WINDOWS_FOR_CALIBRATION = 5  # ต้องตรงกับ fetch_agri_warnings.py
 KEEP_WINDOWS = 60  # rolling อิงกี่ window ล่าสุด
 KEEP_PENDING_DAYS = 16  # snapshot ที่ไม่ถูก match เกินนี้ = ทิ้ง (GSMaP window เลยไปแล้ว)
 
@@ -46,25 +47,36 @@ def confusion(pairs, thr):
     return {"tp": tp, "fp": fp, "fn": fn, "tn": tn}
 
 
-def score_window(fc, actual):
-    """fc/actual: {province: mm} → เมตริกของ window นี้"""
+def score_window(fc, actual, bias=None):
+    """fc/actual: {province: mm} → เมตริกของ window นี้
+
+    bias = ค่าที่ fetch_agri_warnings หักออกจากพยากรณ์ "ณ วันที่ snapshot"
+    (ไม่ใช่ค่าปัจจุบัน — ใช้ค่าปัจจุบันย้อนหลังจะเป็น lookahead) ถ้ามี จะให้คะแนน
+    เพิ่มอีกชุดว่าถ้าหัก bias แล้วเตือน 🔴 แม่นขึ้นจริงไหม
+    """
     provs = sorted(set(fc) & set(actual))
     pairs = [(fc[p], actual[p]) for p in provs]
     n = len(pairs)
     mae = round(sum(abs(pr - ac) for pr, ac in pairs) / n, 1) if n else 0.0
-    bias = round(sum(pr - ac for pr, ac in pairs) / n, 1) if n else 0.0
-    return {
+    bias_mm = round(sum(pr - ac for pr, ac in pairs) / n, 1) if n else 0.0
+    out = {
         "province_days": n,
         "heavy": confusion(pairs, HEAVY_MM),
         "any": confusion(pairs, ANY_MM),
         "mae_mm": mae,
-        "bias_mm": bias,
+        "bias_mm": bias_mm,
     }
+    if bias:
+        adj = [(max(0.0, pr - bias), ac) for pr, ac in pairs]
+        out["heavy_cal"] = confusion(adj, HEAVY_MM)
+        out["bias_applied"] = round(bias, 1)
+    return out
 
 
 def rollup(windows):
     """รวมหลาย window → precision/recall/accuracy + MAE/bias ถ่วงน้ำหนักด้วยจำนวน"""
-    agg = {k: 0 for k in ("h_tp", "h_fp", "h_fn", "a_tp", "a_fp", "a_fn", "a_tn", "pd")}
+    agg = {k: 0 for k in ("h_tp", "h_fp", "h_fn", "a_tp", "a_fp", "a_fn", "a_tn", "pd",
+                          "c_tp", "c_fp", "c_fn", "c_windows", "c_pd")}
     mae_sum = bias_sum = 0.0
     for w in windows:
         h, a, pd = w["heavy"], w["any"], w["province_days"]
@@ -73,11 +85,24 @@ def rollup(windows):
         agg["pd"] += pd
         mae_sum += w["mae_mm"] * pd
         bias_sum += w["bias_mm"] * pd
+        c = w.get("heavy_cal")   # มีเฉพาะ window ที่ snapshot หลังเปิด calibration
+        if c:
+            agg["c_tp"] += c["tp"]; agg["c_fp"] += c["fp"]; agg["c_fn"] += c["fn"]
+            agg["c_windows"] += 1; agg["c_pd"] += pd
 
     def ratio(num, den):
         return round(num / den, 3) if den else None
 
     pd = agg["pd"]
+    result_cal = None
+    if agg["c_windows"]:
+        result_cal = {
+            "windows_scored": agg["c_windows"],
+            "province_days": agg["c_pd"],
+            "precision": ratio(agg["c_tp"], agg["c_tp"] + agg["c_fp"]),
+            "recall":    ratio(agg["c_tp"], agg["c_tp"] + agg["c_fn"]),
+            "tp": agg["c_tp"], "fp": agg["c_fp"], "fn": agg["c_fn"],
+        }
     return {
         "windows_scored": len(windows),
         "province_days": pd,
@@ -86,6 +111,9 @@ def rollup(windows):
             "recall":    ratio(agg["h_tp"], agg["h_tp"] + agg["h_fn"]),  # ที่ตกหนักจริง เตือนทันกี่ %
             "tp": agg["h_tp"], "fp": agg["h_fp"], "fn": agg["h_fn"],
         },
+        # เตือน 🔴 หลังหัก bias — เทียบกับ heavy ตรงๆ ว่า calibration ช่วยจริงไหม
+        # นับเฉพาะ window ที่ snapshot หลังเปิด calibration (ไม่ย้อนหลัง = ไม่ lookahead)
+        "heavy_calibrated": result_cal,
         "any": {  # >=30mm — มีฝนน่ากังวลไหม
             "accuracy": ratio(agg["a_tp"] + agg["a_tn"], pd),
             "tp": agg["a_tp"], "tn": agg["a_tn"], "fp": agg["a_fp"], "fn": agg["a_fn"],
@@ -104,13 +132,21 @@ def main():
     pending = board.get("_pending", [])
     recent = board.get("recent", [])
 
+    # bias ที่ fetch_agri_warnings ใช้ "วันนี้" — อ่านจาก board ก่อนอัปเดต ซึ่งเป็นไฟล์
+    # เดียวกับที่มันอ่านไปเมื่อครู่ใน workflow เดียวกัน (มันรันก่อนสคริปต์นี้)
+    prev_rolling = board.get("rolling") or {}
+    bias_today = 0.0
+    if prev_rolling.get("windows_scored", 0) >= MIN_WINDOWS_FOR_CALIBRATION:
+        bias_today = prev_rolling.get("bias_mm") or 0.0
+
     # 1) snapshot พยากรณ์วันนี้ (D..D+6) ถ้ายังไม่มี window เดียวกัน
     fc_dates = fc_data["_meta"].get("dates", [])
     fc_key = ",".join(fc_dates)
     fc_prov = {n: v["rain_7d"] for n, v in fc_data["provinces"].items()}
     if fc_dates and not any(p["window"] == fc_key for p in pending):
-        pending.append({"snapped": today, "window": fc_key, "fc": fc_prov})
-        print(f"snapshot forecast for {fc_dates[0]}..{fc_dates[-1]} ({len(fc_prov)} provinces)")
+        pending.append({"snapped": today, "window": fc_key, "fc": fc_prov, "bias": bias_today})
+        print(f"snapshot forecast for {fc_dates[0]}..{fc_dates[-1]} "
+              f"({len(fc_prov)} provinces, bias in effect {bias_today:.1f}mm)")
 
     # 2) จับคู่ snapshot ที่ window ตรงกับ GSMaP วันนี้เป๊ะ → ให้คะแนน
     gs_key = ",".join(gs_data["_meta"].get("dates", []))
@@ -119,7 +155,7 @@ def main():
     still_pending = []
     for snap in pending:
         if snap["window"] == gs_key and gs_key and snap["window"] not in scored_keys:
-            m = score_window(snap["fc"], gs_prov)
+            m = score_window(snap["fc"], gs_prov, snap.get("bias"))
             m["window_end"] = snap["window"].split(",")[-1]
             m["window"] = snap["window"]
             recent.append(m)
