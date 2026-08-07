@@ -6402,7 +6402,7 @@
                 </div>
               </div>
               <div style="margin-top:4px">${plantRows}</div>
-              <div style="font-size:9px;color:var(--muted);margin-top:6px">⚡ ${t("ที่มา: กรมพัฒนาพลังงานทดแทนและอนุรักษ์พลังงาน (พพ.) · ข้อมูลปี 2565 · 🌾 = รับซื้อฟางข้าว/แกลบ (เชื่อมโยงกับชาวนา)", "Source: DEDE Thailand · 2022 survey · 🌾 = accepts rice straw/husks (rice farmer linkage)")}</div>
+              <div style="font-size:9px;color:var(--muted);margin-top:6px">⚡ ${t(`ที่มา: กรมพัฒนาพลังงานทดแทนและอนุรักษ์พลังงาน (พพ.) · ทะเบียนโรงไฟฟ้า ข้อมูล ณ ${window.BIOMASS_DATA?._meta?.as_of || "ธ.ค. 2568"} · 🌾 = ใช้เชื้อเพลิงจากข้าว (* = จากแบบสอบถามปี 2565)`, `Source: DEDE Thailand · plant registry as of ${window.BIOMASS_DATA?._meta?.as_of_en || "Dec 2025"} · 🌾 = rice-fuelled (* = from the 2022 survey)`)}</div>
             </div>`;
           }
         }
@@ -7270,7 +7270,7 @@ ${warningsHtml}
           return;
         }
         if (S.layer === "biomass") {
-          refs.yearButtons.innerHTML = `<button class="pill on" data-year="biomass">⚡ DEDE ${t("ข้อมูลปี", "Survey Year")} 2565</button>`;
+          refs.yearButtons.innerHTML = `<button class="pill on" data-year="biomass">⚡ DEDE ${t("ข้อมูล ณ", "as of")} ${t(window.BIOMASS_DATA?._meta?.as_of || "ธ.ค. 2568", window.BIOMASS_DATA?._meta?.as_of_en || "Dec 2025")}</button>`;
           return;
         }
         if (S.layer === "profit") {
