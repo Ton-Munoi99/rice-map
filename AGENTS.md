@@ -66,7 +66,7 @@ python scripts/fetch_fertilizer_prices.py
 
 ## Architecture
 
-### Single-page app — `index.html` (~8,200 lines)
+### Single-page app — `index.html` (~8,300 lines)
 
 Everything is in one file: CSS (top), HTML structure (middle), JS (bottom, inside `<script>`). No framework.
 
@@ -122,11 +122,16 @@ Auto-updated by GitHub Actions crons (23 files total). Key ones:
 - `agri-warnings.json` — synthesized flood/drought risk · `storm-alerts.json` — GDACS storms · `disease-risk.json`
 - `soil-moisture.json` (NASA SMAP) · `ndvi.json` + `rice-evi.json` (+ `-district`/`-validation`) — MODIS/GLAD satellite
 - `rice-news.json` — Google News RSS (Thai rice news, 3×/day)
-- Not auto-updated: `rice-mills.json` (built from DIT Excel), `biomass-plants.json` (DEDE 2565 PDF), `districts-geo.json`
+- `biomass-plants.json` — DEDE plant registry via GeoServer WFS (`fetch_biomass_plants.py`, yearly)
+- Not auto-updated: `rice-mills.json` (built from DIT Excel), `districts-geo.json`, `oae_extracted.json`
 
 ### GitHub Actions
 
-14 workflows in `.github/workflows/`. All commit directly to `main` using `git pull --rebase` before push to avoid conflicts with concurrent runs.
+18 workflows in `.github/workflows/`. All commit directly to `main` through the shared
+`./.github/actions/commit-data` composite action, which stages the listed paths, skips the
+commit when nothing changed, and retries `git pull --rebase` + push up to 3× so concurrent
+cron runs do not collide. Add new data workflows by calling that action rather than
+re-inlining the git block.
 
 ## Important Constraints
 

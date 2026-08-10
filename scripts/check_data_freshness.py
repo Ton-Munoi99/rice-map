@@ -26,6 +26,8 @@ MAX_AGE_DAYS = {
     "prices-live.json":      3,   # OAE รายวัน + โรงสี 3 ครั้ง/วัน
     "trea-fob.json":         7,   # จ-ศ ×3 (เผื่อวันหยุดยาว)
     "soil-moisture.json":    10,  # รายสัปดาห์ (จันทร์)
+    "fertilizer-prices.json": 10,  # รายสัปดาห์ (จันทร์) — ต้องมี FIRECRAWL_API_KEY
+    "alert-scoreboard.json":  3,   # ต่อท้าย update-rain รายวัน
     "ndvi.json":             45,  # รายเดือน (วันที่ 8)
     "ndvi-district.json":    45,
     "rice-evi.json":         45,
@@ -33,7 +35,11 @@ MAX_AGE_DAYS = {
     "weather-province.json": 45,  # รายเดือน (วันที่ 1)
     "weather-forecast.json": 45,
 }
-# ไม่เฝ้า: biomass-plants, rice-mills, districts-geo, rice-evi-validation (อัปเดตด้วยมือ)
+# ไม่เฝ้า: rice-mills, districts-geo, oae_extracted, rice-evi-validation (สร้างด้วยมือ)
+# biomass-plants อัปเดตปีละครั้ง — เกณฑ์อายุจะหลวมเกินจนไม่มีประโยชน์ ตรวจตอนรัน workflow แทน
+#
+# เพิ่ม workflow ที่เขียนไฟล์ใหม่เมื่อไหร่ ให้เพิ่มไฟล์นั้นที่นี่ด้วย — fertilizer-prices
+# เคยหลุดรายการนี้ ทำให้ FIRECRAWL_API_KEY หายไปเงียบๆ 2 สัปดาห์โดยไม่มีอะไรเตือน
 
 
 def last_commit_ts(path):
