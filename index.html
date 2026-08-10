@@ -2717,16 +2717,6 @@
           summary: "ครัวเรือนเกษตรกรรวม",
           summaryMode: "sum",
         },
-        fertilizer: {
-          th: "ราคาปุ๋ยเคมีรายจังหวัด",
-          en: "Fertilizer Price",
-          unit: "บาท/กระสอบ 50 กก.",
-          unitEn: "฿/50kg bag",
-          unitShort: "฿/กระสอบ",
-          unitShortEn: "฿/bag",
-          summary: "ราคาปุ๋ยเฉลี่ย",
-          summaryMode: "avg_nonzero",
-        },
         dam: {
           th: "ระดับน้ำในเขื่อน",
           en: "Dam Water Level",
@@ -2899,8 +2889,8 @@
         biomass: {
           th: "โรงไฟฟ้าชีวมวล",
           en: "Biomass Power Plants",
-          unit: "แห่ง (ปี 2565)",
-          unitEn: "plants (2565)",
+          unit: "แห่ง",
+          unitEn: "plants",
           unitShort: "แห่ง",
           unitShortEn: "plants",
           summary: "โรงไฟฟ้าชีวมวล",
@@ -2940,7 +2930,6 @@
         area: { format: "bignum" },
         price: { format: "int" },
         households: { format: "households" },
-        fertilizer: { format: "int" },
         dam: {
           format: "pct1",
           valueFn: damValueOf,
@@ -4719,7 +4708,6 @@
           !LAYER_NO_TIMESERIES.has(S.layer) &&
           S.layer !== "price" &&
           S.layer !== "households" &&
-          S.layer !== "fertilizer" &&
           S.year >= "2568";
         refs.latestBadge.textContent =
           S.layer === "mills"
@@ -4730,8 +4718,6 @@
                 ? `${t("ราคาอ้างอิง", "Price Ref")}: ${entryOf(getVisibleProvinces().find((en) => hasLayerValue(en)) || allEN[0]).source_date || S.year}`
                 : S.layer === "households"
                   ? `👨‍🌾 ${t("ครัวเรือนเกษตรกร", "Farm Households")} OAE 2566`
-                  : S.layer === "fertilizer"
-                    ? `🌱 ${t("ราคาปุ๋ยเคมีรายจังหวัด", "Fertilizer Price by Province")} MOC 2567`
                     : S.layer === "dam"
                       ? `💧 ${t("ระดับน้ำในเขื่อน", "Dam Level")} RID ${window.DAM_DATA?._meta?.updated || ""}`
                       : S.layer === "rainfall"
@@ -4792,19 +4778,31 @@
         refs.dataStatus.textContent = DATA_META.label;
         const visible = getVisibleProvinces();
         const covered = visible.filter((en) => hasLayerValue(en)).length;
+        // สอง layer นี้เป็นหมุดสถานี ไม่ใช่ choropleth รายจังหวัด — ต้องเซ็ต note เองก่อน return
+        // ไม่งั้นข้อความจะค้างจาก layer ก่อนหน้า (เคยโชว์ "ประมาณการ YoY" บนข้อมูลสถานีจริง)
         if (S.layer === "rainstation") {
           if (refs.dataSourceLabel) refs.dataSourceLabel.textContent = "ThaiWater (สสน./HII)";
+          const m = window.RAINSTATION_DATA?._meta;
+          refs.dataSourceNote.textContent = t(
+            `🌧 สถานีวัดน้ำฝนอัตโนมัติ ${m?.total ?? "—"} สถานี ฝน 24 ชม. · ThaiWater (สสน./HII) · ฝนหนัก ${m?.n_heavy ?? 0} สถานี · อัปเดต ${fmtDateISO(m?.updated_at)}`,
+            `🌧 ${m?.total ?? "—"} automatic rain gauges, 24h rainfall · ThaiWater (HII) · ${m?.n_heavy ?? 0} reporting heavy rain · updated ${fmtDateISO(m?.updated_at)}`,
+          );
           return;
         }
         if (S.layer === "waterlevel") {
           if (refs.dataSourceLabel) refs.dataSourceLabel.textContent = "ThaiWater (สสน./HII)";
+          const m = window.WATERLEVEL_DATA?._meta;
+          refs.dataSourceNote.textContent = t(
+            `💧 สถานีวัดระดับน้ำในแม่น้ำ/คลอง ${m?.total ?? "—"} สถานี · ThaiWater (สสน./HII) · เฝ้าระวัง/ล้นตลิ่ง ${m?.n_alert ?? 0} สถานี · อัปเดต ${fmtDateISO(m?.updated_at)}`,
+            `💧 ${m?.total ?? "—"} river/canal water-level stations · ThaiWater (HII) · ${m?.n_alert ?? 0} at warning or overbank · updated ${fmtDateISO(m?.updated_at)}`,
+          );
           return;
         }
         if (S.layer === "dam") {
           const updated = window.DAM_DATA?._meta?.updated || "—";
           refs.dataSourceNote.textContent = t(
-            `ข้อมูลระดับน้ำในเขื่อนขนาดใหญ่ 35 แห่ง จากกรมชลประทาน (RID) อัปเดต ${updated} ครอบคลุม ${covered} จังหวัด`,
-            `Large dam water levels (35 dams) from Royal Irrigation Dept. (RID). Updated ${updated}. Covers ${covered} provinces.`,
+            `ข้อมูลระดับน้ำในเขื่อนขนาดใหญ่ 35 แห่ง จากกรมชลประทาน (RID) อัปเดต ${fmtDateISO(updated)} ครอบคลุม ${covered} จังหวัด`,
+            `Large dam water levels (35 dams) from Royal Irrigation Dept. (RID). Updated ${fmtDateISO(updated)}. Covers ${covered} provinces.`,
           );
           return;
         }
@@ -4919,8 +4917,8 @@
         if (S.layer === "mills") {
           const meta = RICE_MILLS_DATA?._meta;
           refs.dataSourceNote.textContent = t(
-            `ข้อมูลโรงสีข้าวจดทะเบียน กรมการค้าภายใน (DIT) อัปเดต ${meta?.updated || "23 เมษายน 2569"} ครอบคลุม ${covered} จังหวัด จากทั้งหมด ${meta?.total_mills || 903} แห่ง`,
-            `Registered rice mills, Dept. of Internal Trade (DIT). Updated ${meta?.updated || "23 Apr 2026"}. Covers ${covered} provinces, ${meta?.total_mills || 903} mills total.`,
+            `ข้อมูลโรงสีข้าวจดทะเบียน กรมการค้าภายใน (DIT) อัปเดต ${fmtDateISO(meta?.updated)} ครอบคลุม ${covered} จังหวัด จากทั้งหมด ${meta?.total_mills ?? "—"} แห่ง`,
+            `Registered rice mills, Dept. of Internal Trade (DIT). Updated ${fmtDateISO(meta?.updated)}. Covers ${covered} provinces, ${meta?.total_mills ?? "—"} mills total.`,
           );
           return;
         }
@@ -5048,23 +5046,23 @@
               )
             : S.layer === "rain"
               ? t(
-                  `อัปเดต ${window.RAIN_DATA?._meta?.updated || "—"}`,
-                  `Updated ${window.RAIN_DATA?._meta?.updated || "—"}`,
+                  `อัปเดต ${fmtDateISO(window.RAIN_DATA?._meta?.updated)}`,
+                  `Updated ${fmtDateISO(window.RAIN_DATA?._meta?.updated)}`,
                 )
               : S.layer === "forecast"
                 ? t(
-                    `อัปเดต ${window.FORECAST_DATA?._meta?.updated || "—"}`,
-                    `Updated ${window.FORECAST_DATA?._meta?.updated || "—"}`,
+                    `อัปเดต ${fmtDateISO(window.FORECAST_DATA?._meta?.updated)}`,
+                    `Updated ${fmtDateISO(window.FORECAST_DATA?._meta?.updated)}`,
                   )
                 : S.layer === "alerts"
                   ? t(
-                      `อัปเดต ${window.ALERTS_DATA?._meta?.updated || "—"}`,
-                      `Updated ${window.ALERTS_DATA?._meta?.updated || "—"}`,
+                      `อัปเดต ${fmtDateISO(window.ALERTS_DATA?._meta?.updated)}`,
+                      `Updated ${fmtDateISO(window.ALERTS_DATA?._meta?.updated)}`,
                     )
                   : S.layer === "soilMoisture"
                     ? t(
-                        `อัปเดต ${window.SOIL_DATA?._meta?.updated || "—"}`,
-                        `Updated ${window.SOIL_DATA?._meta?.updated || "—"}`,
+                        `อัปเดต ${fmtDateISO(window.SOIL_DATA?._meta?.updated)}`,
+                        `Updated ${fmtDateISO(window.SOIL_DATA?._meta?.updated)}`,
                       )
                     : t("ยังไม่มีฐานเทียบ", "No prior year");
         if (
@@ -5155,8 +5153,8 @@
                   )
                 : S.layer === "mills"
                   ? t(
-                      `โรงสีข้าวจดทะเบียนกับกรมการค้าภายใน (DIT) จำนวน ${RICE_MILLS_DATA?._meta?.total_mills || 903} แห่ง ใน ${RICE_MILLS_DATA?._meta?.provinces_covered || 60} จังหวัด จำแนกตามขนาด (ใหญ่/กลาง/เล็ก) ข้อมูล ณ เม.ย. 2569`,
-                      `Registered rice mills with Dept. of Internal Trade (DIT): ${RICE_MILLS_DATA?._meta?.total_mills || 903} mills in ${RICE_MILLS_DATA?._meta?.provinces_covered || 60} provinces, classified by size (large/medium/small). Data as of Apr 2026.`,
+                      `โรงสีข้าวจดทะเบียนกับกรมการค้าภายใน (DIT) จำนวน ${RICE_MILLS_DATA?._meta?.total_mills ?? "—"} แห่ง ใน ${RICE_MILLS_DATA?._meta?.provinces_covered ?? "—"} จังหวัด จำแนกตามขนาด (ใหญ่/กลาง/เล็ก) ข้อมูล ณ ${fmtDateISO(RICE_MILLS_DATA?._meta?.updated)}`,
+                      `Registered rice mills with Dept. of Internal Trade (DIT): ${RICE_MILLS_DATA?._meta?.total_mills ?? "—"} mills in ${RICE_MILLS_DATA?._meta?.provinces_covered ?? "—"} provinces, classified by size (large/medium/small). Data as of ${fmtDateISO(RICE_MILLS_DATA?._meta?.updated)}.`,
                     )
                   : S.layer === "profit"
                     ? t(
@@ -5175,8 +5173,8 @@
                           )
                         : S.layer === "rain"
                           ? t(
-                              `ปริมาณฝนสะสม 7 วันล่าสุดรายจังหวัด จาก Open-Meteo · อัปเดตทุกวัน · ใช้ centroid จังหวัด · สีเข้ม = ฝนมาก · ข้อมูลล่าสุด ${window.RAIN_DATA?._meta?.updated || "—"}`,
-                              `7-day cumulative rainfall by province via Open-Meteo · Daily update · Province centroid · Dark = heavy rain · Latest: ${window.RAIN_DATA?._meta?.updated || "—"}`,
+                              `ปริมาณฝนสะสม 7 วันล่าสุดรายจังหวัด จาก Open-Meteo · อัปเดตทุกวัน · ใช้ centroid จังหวัด · สีเข้ม = ฝนมาก · ข้อมูลล่าสุด ${fmtDateISO(window.RAIN_DATA?._meta?.updated)}`,
+                              `7-day cumulative rainfall by province via Open-Meteo · Daily update · Province centroid · Dark = heavy rain · Latest: ${fmtDateISO(window.RAIN_DATA?._meta?.updated)}`,
                             )
                           : S.layer === "gsmap"
                             ? t(
@@ -5185,8 +5183,8 @@
                               )
                             : S.layer === "forecast"
                               ? t(
-                                  `พยากรณ์ปริมาณฝนสะสม 7 วันข้างหน้ารายจังหวัด จาก Open-Meteo Forecast API · อัปเดตทุกวัน · สีเข้ม = ฝนมาก · ข้อมูลล่าสุด ${window.FORECAST_DATA?._meta?.updated || "—"}`,
-                                  `7-day cumulative rain forecast by province via Open-Meteo Forecast API · Daily update · Dark = heavy rain · Latest: ${window.FORECAST_DATA?._meta?.updated || "—"}`,
+                                  `พยากรณ์ปริมาณฝนสะสม 7 วันข้างหน้ารายจังหวัด จาก Open-Meteo Forecast API · อัปเดตทุกวัน · สีเข้ม = ฝนมาก · ข้อมูลล่าสุด ${fmtDateISO(window.FORECAST_DATA?._meta?.updated)}`,
+                                  `7-day cumulative rain forecast by province via Open-Meteo Forecast API · Daily update · Dark = heavy rain · Latest: ${fmtDateISO(window.FORECAST_DATA?._meta?.updated)}`,
                                 )
                               : S.layer === "alerts"
                                 ? t(
@@ -5271,15 +5269,15 @@
             : S.layer === "profit"
               ? `${riceLabel} &nbsp;·&nbsp; ${metaLabel}<br>${yearLabel} · ${t("ประมาณการ", "Est.")}`
               : S.layer === "rain"
-                ? `${metaLabel}<br>${t(`Open-Meteo · อัปเดต ${window.RAIN_DATA?._meta?.updated || "—"}`, `Open-Meteo · Updated ${window.RAIN_DATA?._meta?.updated || "—"}`)}`
+                ? `${metaLabel}<br>${t(`Open-Meteo · อัปเดต ${fmtDateISO(window.RAIN_DATA?._meta?.updated)}`, `Open-Meteo · Updated ${fmtDateISO(window.RAIN_DATA?._meta?.updated)}`)}`
                 : S.layer === "gsmap"
                   ? `${metaLabel}<br>${t(`ดาวเทียม · ข้อมูลถึง ${window.GSMAP_DATA?._meta?.period_end || "—"}`, `Satellite · Through ${window.GSMAP_DATA?._meta?.period_end || "—"}`)}`
                   : S.layer === "forecast"
-                    ? `${metaLabel}<br>${t(`Open-Meteo · อัปเดต ${window.FORECAST_DATA?._meta?.updated || "—"}`, `Open-Meteo · Updated ${window.FORECAST_DATA?._meta?.updated || "—"}`)}`
+                    ? `${metaLabel}<br>${t(`Open-Meteo · อัปเดต ${fmtDateISO(window.FORECAST_DATA?._meta?.updated)}`, `Open-Meteo · Updated ${fmtDateISO(window.FORECAST_DATA?._meta?.updated)}`)}`
                     : S.layer === "alerts"
-                      ? `${metaLabel}<br>${t(`อัปเดต ${window.ALERTS_DATA?._meta?.updated || "—"}`, `Updated ${window.ALERTS_DATA?._meta?.updated || "—"}`)}`
+                      ? `${metaLabel}<br>${t(`อัปเดต ${fmtDateISO(window.ALERTS_DATA?._meta?.updated)}`, `Updated ${fmtDateISO(window.ALERTS_DATA?._meta?.updated)}`)}`
                       : S.layer === "soilMoisture"
-                        ? `${metaLabel}<br>${t(`NASA SMAP 10km · อัปเดต ${window.SOIL_DATA?._meta?.updated || "—"}`, `NASA SMAP 10km · Updated ${window.SOIL_DATA?._meta?.updated || "—"}`)}`
+                        ? `${metaLabel}<br>${t(`NASA SMAP 10km · อัปเดต ${fmtDateISO(window.SOIL_DATA?._meta?.updated)}`, `NASA SMAP 10km · Updated ${fmtDateISO(window.SOIL_DATA?._meta?.updated)}`)}`
                         : S.layer === "riceEvi"
                           ? `${metaLabel}<br>${t(`ดัชนีความเขียวชอุ่ม EVI · ${window.RICE_EVI_DATA?.month || "—"}`, `Rice Paddy EVI · ${window.RICE_EVI_DATA?.month || "—"}`)}`
                           : `${riceLabel} &nbsp;·&nbsp; ${metaLabel}<br>${yearLabel}`;
@@ -6281,7 +6279,7 @@
           </div>
           <div class="m-label" style="color:${smColor2};font-weight:600">${smIcon2} ${smLabel2}</div>
           <div style="font-size:10px;color:var(--muted);margin-top:5px;line-height:1.5">${t(smCrops2_th, smCrops2_en)}</div>
-          <div style="font-size:9px;color:var(--muted);margin-top:6px;opacity:.7">${t(`ที่มา: NASA SMAP 10km · อัปเดต ${window.SOIL_DATA?._meta?.updated || "—"}`, `Source: NASA SMAP 10km · Updated ${window.SOIL_DATA?._meta?.updated || "—"}`)}</div>
+          <div style="font-size:9px;color:var(--muted);margin-top:6px;opacity:.7">${t(`ที่มา: NASA SMAP 10km · อัปเดต ${fmtDateISO(window.SOIL_DATA?._meta?.updated)}`, `Source: NASA SMAP 10km · Updated ${fmtDateISO(window.SOIL_DATA?._meta?.updated)}`)}</div>
         </div>`;
         }
         // ── Flood Risk Areas detail card ──────────────────────────────────────────
@@ -6309,7 +6307,7 @@
           <div class="t">🚨 ${t("พื้นที่เสี่ยงน้ำท่วม", "Flood Risk Areas")}</div>
           <div class="metric"><span class="val" style="color:${levelColor}">${alertsProv.level === "high" ? t("เสี่ยงสูง", "High Risk") : alertsProv.level === "medium" ? t("เสี่ยงปานกลาง", "Medium Risk") : alertsProv.level === "drought" ? t("เสี่ยงแล้ง", "Drought Risk") : t("เฝ้าระวัง", "Watch")}</span></div>
           ${warningItems}
-          <div style="font-size:9px;color:var(--muted);margin-top:8px">${t(`ที่มา: ${(window.ALERTS_DATA?._meta?.sources || []).join(" + ")} · อัปเดต ${window.ALERTS_DATA?._meta?.updated || "—"}`, `Source: ${(window.ALERTS_DATA?._meta?.sources || []).join(" + ")} · Updated ${window.ALERTS_DATA?._meta?.updated || "—"}`)}</div>
+          <div style="font-size:9px;color:var(--muted);margin-top:8px">${t(`ที่มา: ${(window.ALERTS_DATA?._meta?.sources || []).join(" + ")} · อัปเดต ${fmtDateISO(window.ALERTS_DATA?._meta?.updated)}`, `Source: ${(window.ALERTS_DATA?._meta?.sources || []).join(" + ")} · Updated ${fmtDateISO(window.ALERTS_DATA?._meta?.updated)}`)}</div>
         </div>`;
         }
         // ── Disease risk card ────────────────────────────────────────────────────
@@ -6351,7 +6349,7 @@
           ${dRow("🦗", "เพลี้ยกระโดดสีน้ำตาล", "Brown Planthopper", dp_disease.days_bph ?? 0, rBph)}
           ${dRow("🍂", "โรคกาบใบแห้ง", "Sheath Blight", dp_disease.days_sheath ?? 0, rSheath)}
           ${dRow("🌊", "โรคขอบใบแห้ง", "Bacterial Blight", dp_disease.days_strong_wind ?? 0, rBlight)}
-          <div style="font-size:9px;color:var(--muted);margin-top:8px">${t(`ที่มา: Open-Meteo · อัปเดต ${window.DISEASE_DATA?._meta?.updated || "—"}`, `Source: Open-Meteo · Updated ${window.DISEASE_DATA?._meta?.updated || "—"}`)}</div>
+          <div style="font-size:9px;color:var(--muted);margin-top:8px">${t(`ที่มา: Open-Meteo · อัปเดต ${fmtDateISO(window.DISEASE_DATA?._meta?.updated)}`, `Source: Open-Meteo · Updated ${fmtDateISO(window.DISEASE_DATA?._meta?.updated)}`)}</div>
         </div>`;
         }
         // ── Carousel panes — แต่ละ pane เป็น 100% width, scroll ซ้าย-ขวา
@@ -8277,6 +8275,19 @@ ${warningsHtml}
       let WEATHER_FORECAST = null;
 
       const toBE = (y) => y + 543; // ค.ศ. → พ.ศ.
+
+      // "2026-05-08" → "8 พฤษภาคม 2569" / "8 May 2026"
+      // th-TH ของ Intl ใช้ปฏิทินพุทธอยู่แล้ว จึงได้ พ.ศ. โดยไม่ต้องบวก 543 เอง
+      // คืนค่าเดิมถ้า parse ไม่ได้ ดีกว่าโชว์ Invalid Date
+      function fmtDateISO(iso) {
+        const d = new Date(iso);
+        if (!iso || isNaN(d)) return iso || "—";
+        return new Intl.DateTimeFormat(t("th-TH", "en-GB"), {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        }).format(d);
+      }
 
       async function fetchWeatherData() {
         try {
