@@ -35,8 +35,11 @@ MAX_AGE_DAYS = {
     "weather-province.json": 45,  # รายเดือน (วันที่ 1)
     "weather-forecast.json": 45,
 }
-# ไม่เฝ้า: rice-mills, districts-geo, oae_extracted, rice-evi-validation (สร้างด้วยมือ)
-# biomass-plants อัปเดตปีละครั้ง — เกณฑ์อายุจะหลวมเกินจนไม่มีประโยชน์ ตรวจตอนรัน workflow แทน
+# ตั้งใจไม่เฝ้า (ระบุไว้เพื่อให้ audit แยกออกว่าไม่ใช่ของที่ลืม):
+#   rice-mills, districts-geo, oae_extracted — สร้างด้วยมือ ไม่มี cron
+#   rice-evi-validation      — เขียนพร้อม rice-evi.json ที่เฝ้าอยู่แล้ว
+#   rice-news-archive        — โตเฉพาะตอนมีข่าวใหม่จริง เฝ้า rice-news.json แทน
+#   biomass-plants           — ปีละครั้ง เกณฑ์อายุจะหลวมจนไม่มีประโยชน์
 #
 # เพิ่ม workflow ที่เขียนไฟล์ใหม่เมื่อไหร่ ให้เพิ่มไฟล์นั้นที่นี่ด้วย — fertilizer-prices
 # เคยหลุดรายการนี้ ทำให้ FIRECRAWL_API_KEY หายไปเงียบๆ 2 สัปดาห์โดยไม่มีอะไรเตือน
