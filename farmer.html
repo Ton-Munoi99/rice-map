@@ -112,8 +112,6 @@
     </div>
 
     <script>
-      const TELEGRAM_BOT_USERNAME = ""; // ใส่ username บอทจาก @BotFather เช่น "RiceMapAlertBot" แล้วปุ่มจะใช้งานได้
-
       // ── คำแนะนำการเพาะปลูกตามระดับเตือน (ต่อยอดจาก agri-warnings) ──────────
       const ADVICE = {
         flood_high: ["เร่งระบายน้ำออกจากแปลงนา ยกคันนากันน้ำหลาก", "งดใส่ปุ๋ย/ฉีดยาช่วงนี้ — ถูกน้ำชะล้าง เสียเปล่า", "ถ้าข้าวใกล้เก็บเกี่ยว เตรียมเก็บก่อนน้ำท่วมขัง"],
@@ -239,19 +237,6 @@
         );
       }
 
-      function renderTelegram(en, th) {
-        if (!TELEGRAM_BOT_USERNAME) {
-          return card(`<h2>🔔 แจ้งเตือนผ่าน Telegram</h2><div class="muted">ระบบแจ้งเตือนยังไม่เปิดให้บริการ เร็วๆ นี้</div>`);
-        }
-        const slug = en.replace(/\s+/g, "_");
-        const url = `https://t.me/${TELEGRAM_BOT_USERNAME}?start=${slug}`;
-        return card(
-          `<h2>🔔 แจ้งเตือนผ่าน Telegram</h2>` +
-            `<a class="aid-link" href="${url}" target="_blank" rel="noopener">🔔 รับเตือน${th}อัตโนมัติ<span>↗</span></a>` +
-            `<div class="src">แจ้งเมื่อระดับความเสี่ยงน้ำท่วม/แล้งของจังหวัดเปลี่ยนแปลง · พิมพ์ /stop ในแชทเพื่อยกเลิกได้ตลอดเวลา</div>`,
-        );
-      }
-
       function renderNearby(en, th) {
         const mills = D.mills?.provinces?.[th];
         const buyers = (D.biomass?.provinces?.[en]?.plants || []).filter((p) => p.rice_straw || p.rice_husks);
@@ -265,7 +250,7 @@
         const p = PROV.find((x) => x.en === en);
         if (!p) { $("cards").innerHTML = `<div class="loading">ไม่พบจังหวัด</div>`; return; }
         $("cards").innerHTML =
-          renderAdvice(en) + renderTelegram(en, p.th) + renderWeather(en) + renderAid() + renderNearby(en, p.th);
+          renderAdvice(en) + renderWeather(en) + renderAid() + renderNearby(en, p.th);
         localStorage.setItem("farmer_prov", en);
         const u = new URL(location.href); u.searchParams.set("prov", en);
         history.replaceState(null, "", u);

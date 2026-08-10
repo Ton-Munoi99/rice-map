@@ -34,13 +34,6 @@ python scripts/fetch_trea_fob.py
 python scripts/fetch_weather.py
 python scripts/fetch_weather_forecast.py
 
-# Telegram alert bot — subscribe intake + level-change notify (cron every 15min)
-# Requires GitHub Actions secret TELEGRAM_BOT_TOKEN (create the bot via
-# @BotFather, then also set TELEGRAM_BOT_USERNAME in farmer.html so the
-# subscribe button goes live). No-ops silently if the secret is unset.
-python scripts/telegram_notify.py
-python scripts/test_telegram_notify.py   # offline self-check, no token needed
-
 # Real fertilizer prices — weekly refresh (Mon 18:00 BKK) → data/fertilizer-prices.json
 # Scrapes maintained co-op/retailer price lists via Firecrawl (their prices are
 # buried in page-builder markup, so raw urllib can't read them). Requires GitHub
@@ -127,7 +120,7 @@ Auto-updated by GitHub Actions crons (23 files total). Key ones:
 
 ### GitHub Actions
 
-18 workflows in `.github/workflows/`. All commit directly to `main` through the shared
+17 workflows in `.github/workflows/`. All commit directly to `main` through the shared
 `./.github/actions/commit-data` composite action, which stages the listed paths, skips the
 commit when nothing changed, and retries `git pull --rebase` + push up to 3× so concurrent
 cron runs do not collide. Add new data workflows by calling that action rather than
