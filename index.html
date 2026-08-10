@@ -4711,7 +4711,7 @@
           S.year >= "2568";
         refs.latestBadge.textContent =
           S.layer === "mills"
-            ? `🏭 ${t("โรงสีข้าว DIT", "Rice Mills DIT")} ${RICE_MILLS_DATA?._meta?.updated || "2026-04-23"}`
+            ? `🏭 ${t("โรงสีข้าว DIT", "Rice Mills DIT")} ${fmtDateISO(RICE_MILLS_DATA?._meta?.updated)}`
             : S.layer === "profit"
               ? `💰 ${t("กำไร/ขาดทุนประมาณการ", "Est. Profit/Loss")} · ${t("ราคา × ผลผลิต − ต้นทุน OAE", "Price × Yield − OAE Cost")}`
               : S.layer === "price"
@@ -4723,7 +4723,7 @@
                       : S.layer === "rainfall"
                         ? `🌧 ${t("ปริมาณฝน นาปี", "Season Rainfall")} ${WEATHER_DATA?._meta?.year ? toBE(WEATHER_DATA._meta.year) : "2568"}`
                         : S.layer === "drought"
-                          ? `🌡 ${t("ฝนเบี่ยงเบนจากปกติ", "Rainfall Anomaly")} ${WEATHER_DATA?._meta?.year ? toBE(WEATHER_DATA._meta.year) : "2568"} vs ${WEATHER_FORECAST?._meta?.base_years || "2020–2024"}`
+                          ? `🌡 ${t("ฝนเบี่ยงเบนจากปกติ", "Rainfall Anomaly")} ${WEATHER_DATA?._meta?.year ? toBE(WEATHER_DATA._meta.year) : "2568"} vs ${WEATHER_FORECAST?._meta?.base_years || "—"}`
                           : S.layer === "ndvi"
                             ? `🌿 NDVI ${window.NDVI_DATA?.month || ""} · NASA MODIS`
                             : S.layer === "riceEvi"
@@ -4933,7 +4933,7 @@
         if (S.layer === "rainfall" || S.layer === "drought") {
           const meta = WEATHER_DATA?._meta;
           const season = meta?.season_label?.split("·")[0]?.trim() || "นาปี 2568 (มิ.ย.–พ.ย.)";
-          const baseYrs = WEATHER_FORECAST?._meta?.base_years || "2020–2024";
+          const baseYrs = WEATHER_FORECAST?._meta?.base_years || "—";
           const note =
             S.layer === "drought"
               ? t(
@@ -5148,8 +5148,8 @@
                 )
               : S.layer === "drought"
                 ? t(
-                    `% เบี่ยงเบนของฝนนาปีเทียบกับค่าเฉลี่ย 5 ปี (${WEATHER_FORECAST?._meta?.base_years || "2020–2024"}) รายจังหวัด · สีแดง = แห้งกว่าปกติ · สีน้ำเงิน = ชุ่มชื้นกว่าปกติ`,
-                    `Season rainfall % deviation from ${WEATHER_FORECAST?._meta?.base_years || "2020–2024"} average by province · Red = below normal · Blue = above normal`,
+                    `% เบี่ยงเบนของฝนนาปีเทียบกับค่าเฉลี่ย 5 ปี (${WEATHER_FORECAST?._meta?.base_years || "—"}) รายจังหวัด · สีแดง = แห้งกว่าปกติ · สีน้ำเงิน = ชุ่มชื้นกว่าปกติ`,
+                    `Season rainfall % deviation from ${WEATHER_FORECAST?._meta?.base_years || "—"} average by province · Red = below normal · Blue = above normal`,
                   )
                 : S.layer === "mills"
                   ? t(
@@ -5571,7 +5571,7 @@
           const wp = WEATHER_DATA.provinces[en];
           const seasonLabel = WEATHER_DATA._meta?.season_label?.split("·")[0]?.trim() || "นาปี 2568";
           const avgRain = WEATHER_FORECAST?.provinces?.[en]?.forecast_rainfall_mm;
-          const baseYrs = WEATHER_FORECAST?._meta?.base_years || "2020–2024";
+          const baseYrs = WEATHER_FORECAST?._meta?.base_years || "—";
           const anomaly = weatherValueOf(en, "drought"); // reuse existing calculation
           const anomColor =
             anomaly == null
@@ -7218,7 +7218,7 @@ ${warningsHtml}
           return;
         }
         if (S.layer === "mills") {
-          const updated = RICE_MILLS_DATA?._meta?.updated || "2026-04-23";
+          const updated = fmtDateISO(RICE_MILLS_DATA?._meta?.updated);
           refs.yearButtons.innerHTML = `<button class="pill on" data-year="mills">🏭 DIT ${t("อัปเดต", "Updated")} ${updated}</button>`;
           return;
         }
