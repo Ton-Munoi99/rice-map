@@ -246,11 +246,22 @@
         return card(`<h2>📍 จุดขายใกล้ตัว</h2>${rows}<div class="src">DIT (โรงสี) · พพ. (ทะเบียนโรงไฟฟ้าชีวมวล ธ.ค. 2568)</div>`);
       }
 
+      // ลิงก์ออกไปที่ LDD — ไม่ดึงข้อมูลเข้ามา เพราะชุดนั้นเป็น CC BY-NC-ND
+      function renderLand() {
+        return card(
+          `<h2>🗺️ ที่ดินเหมาะปลูกข้าวไหม</h2>` +
+            `<a class="aid-link" href="https://agri-map-online.moac.go.th/" target="_blank" rel="noopener">🗺️ ดูที่ดินของฉัน — Agri-Map<span>↗</span></a>` +
+            `<div class="src">กรมพัฒนาที่ดินจัดชั้นความเหมาะสมถึงระดับตำบล (S1 เหมาะสมสูง → N ไม่เหมาะสม) · ` +
+            `Agri-Map ต้องสมัครสมาชิกฟรีก่อน · ดูข้อมูลทางการได้ที่ ` +
+            `<a href="https://lddcatalog.ldd.go.th/dataset/ldd_21_02" target="_blank" rel="noopener">LDD</a></div>`,
+        );
+      }
+
       function render(en) {
         const p = PROV.find((x) => x.en === en);
         if (!p) { $("cards").innerHTML = `<div class="loading">ไม่พบจังหวัด</div>`; return; }
         $("cards").innerHTML =
-          renderAdvice(en) + renderWeather(en) + renderAid() + renderNearby(en, p.th);
+          renderAdvice(en) + renderWeather(en) + renderAid() + renderNearby(en, p.th) + renderLand();
         localStorage.setItem("farmer_prov", en);
         const u = new URL(location.href); u.searchParams.set("prov", en);
         history.replaceState(null, "", u);

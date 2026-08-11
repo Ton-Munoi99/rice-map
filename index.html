@@ -6406,7 +6406,32 @@
         }
         // ─────────────────────────────────────────────────────────────────────
 
-        const econContent = profitHtml + strawHtml + strawMarketHtml + biomassHtml + fertRatioHtml + millsHtml + fertHtml;
+        // ลิงก์ออกไปดูชั้นความเหมาะสมของที่ดิน (LDD) — ลิงก์อย่างเดียว ไม่ดึงข้อมูลเข้ามา
+        // เพราะชุดนั้นเป็น CC BY-NC-ND (ห้ามพาณิชย์ + ห้ามดัดแปลง) ดู DATA_SOURCES.md
+        const landSuitHtml = `
+            <div class="rice-card" style="grid-column:1/-1;background:rgba(120,170,90,.07);border:1px solid rgba(120,170,90,.25)">
+              <div class="t">🗺️ ${t("ที่ดินเหมาะปลูกข้าวแค่ไหน", "Is the land suited to rice?")}</div>
+              <div style="font-size:10px;color:var(--text-soft);line-height:1.5;margin-bottom:6px">
+                ${t(
+                  "กรมพัฒนาที่ดินจัดชั้นความเหมาะสมของที่ดินสำหรับปลูกข้าวไว้ถึงระดับตำบล (S1 เหมาะสมสูง → N ไม่เหมาะสม)",
+                  "The Land Development Dept. classifies land suitability for rice down to sub-district level (S1 highly suitable → N unsuitable).",
+                )}
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:6px">
+                <a href="https://agri-map-online.moac.go.th/" target="_blank" rel="noopener"
+                   style="font-size:10px;padding:5px 9px;border-radius:8px;background:rgba(120,170,90,.16);border:1px solid rgba(120,170,90,.35);color:#cfe8b8;text-decoration:none">
+                  ${t("เปิด Agri-Map (ต้องสมัครฟรี)", "Open Agri-Map (free sign-up)")} ↗</a>
+                <a href="https://lddcatalog.ldd.go.th/dataset/ldd_21_02" target="_blank" rel="noopener"
+                   style="font-size:10px;padding:5px 9px;border-radius:8px;background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--text-soft);text-decoration:none">
+                  ${t("ข้อมูลทางการ LDD", "Official LDD dataset")} ↗</a>
+              </div>
+              <div style="font-size:9px;color:var(--muted);margin-top:6px">${t(
+                "ลิงก์ไปต้นทาง — เว็บนี้ไม่ได้เก็บสำเนาข้อมูลชุดนี้ไว้",
+                "Links out — this site does not hold a copy of that dataset",
+              )}</div>
+            </div>`;
+
+        const econContent = profitHtml + strawHtml + strawMarketHtml + biomassHtml + fertRatioHtml + millsHtml + landSuitHtml + fertHtml;
         const peopleContent = householdsHtml;
         const riceContent = cardHtml + naprangHtml;
         const simContent = buildSimPane(en);
