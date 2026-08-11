@@ -44,4 +44,12 @@ https://ton-munoi99.github.io/rice-map/
 
 ## 📄 License
 
-MIT License — ข้อมูลจาก OAE และกรมการข้าว กระทรวงเกษตรและสหกรณ์
+**โค้ด** (`index.html`, `farmer.html`, `scripts/`, `.github/`) — [MIT](LICENSE)
+
+**ข้อมูล** (`data/`, `rice-data.*`, `thailand-data.js`, `naprang-data.js`) — **ไม่ใช่ MIT**
+แต่ละชุดเป็นของหน่วยงานต้นทางและมีสัญญาอนุญาตของตัวเอง ดูรายแหล่งได้ที่
+**[DATA_SOURCES.md](DATA_SOURCES.md#สัญญาอนุญาตรายแหล่ง)**
+
+> ⚠️ **ก่อนใช้เชิงพาณิชย์** — ข้อมูลพยากรณ์อากาศมาจาก Open-Meteo Free API ซึ่ง
+> **อนุญาตเฉพาะการใช้ที่ไม่แสวงหากำไร** (CC BY 4.0 + non-commercial) ถ้าจะใช้
+> เชิงพาณิชย์ต้องสมัครแพ็กเกจกับ Open-Meteo เอง และตรวจสัญญาอนุญาตของแหล่งอื่นด้วย
