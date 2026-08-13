@@ -4617,9 +4617,26 @@
         });
       }
 
+      // 628 สถานี (รวมสถานีริมแม่น้ำโขง) ต้นทางไม่ส่งระดับสถานการณ์/%ของตลิ่ง ส่งมาแต่ระดับ
+      // น้ำทะเลปานกลาง เทียบกับค่าก่อนหน้าได้ว่ากำลังขึ้นหรือลง — เป็นสัญญาณเดียวที่ใช้ได้
+      // สำหรับน้ำโขงหนุน ซึ่งมาจากการไหลของต้นน้ำ ไม่ใช่ฝนในพื้นที่
+      function wlTrend(st) {
+        if (st.msl == null || st.msl_prev == null) return "";
+        const d = st.msl - st.msl_prev;
+        if (Math.abs(d) < 0.005) return ` · ${t("ทรงตัว", "steady")} ${st.msl.toFixed(2)} ${t("ม.รทก.", "m MSL")}`;
+        const up = d > 0;
+        return ` · <span style="color:${up ? "#ef9a9a" : "#9ccc65"}">${up ? "↑" : "↓"} ${d > 0 ? "+" : ""}${d.toFixed(2)} ${t("ม.", "m")}</span> ${t("ระดับ", "at")} ${st.msl.toFixed(2)} ${t("ม.รทก.", "m MSL")}`;
+      }
+
       function showStationTooltip(event, st) {
         const lvl = st.level || 0;
-        const lbl = WL_LABELS[lvl] ? t(WL_LABELS[lvl].th, WL_LABELS[lvl].en) : t("ไม่มีข้อมูล", "No data");
+        // มีค่าระดับน้ำแต่ต้นทางไม่ได้ให้เกณฑ์ตลิ่ง — คนละเรื่องกับ "ไม่มีข้อมูล"
+        const hasTrend = st.msl != null && st.msl_prev != null;
+        const lbl = WL_LABELS[lvl]
+          ? t(WL_LABELS[lvl].th, WL_LABELS[lvl].en)
+          : hasTrend
+            ? t("ไม่มีเกณฑ์ตลิ่ง", "no bank threshold")
+            : t("ไม่มีข้อมูล", "No data");
         const col = WL_COLORS[lvl] || "var(--muted)";
         const prov = t(st.province_th || "", st.province_en || "");
         const amphoe = t(st.amphoe_th || "", st.amphoe_en || "");
@@ -4629,7 +4646,7 @@
         ${where ? `<div class="en">${where}</div>` : ""}
         ${st.river ? `<div class="type">🌊 ${st.river}</div>` : ""}
         <div class="value" style="color:${col}">${st.pct != null ? st.pct.toFixed(0) + "%" : "—"} <small style="font-size:9px;opacity:.7">${t("ของตลิ่ง", "of bank")}</small></div>
-        <div style="font-size:10px;margin-top:2px">${lbl}${st.diff_text ? " · " + st.diff_text : ""}</div>
+        <div style="font-size:10px;margin-top:2px">${lbl}${st.diff_text ? " · " + st.diff_text : ""}${wlTrend(st)}</div>
         <div class="rank" style="font-size:9px;margin-top:3px;opacity:.7">${st.agency || "ThaiWater"} · ${st.dt || ""}</div>
       `;
         refs.tooltip.classList.add("show");

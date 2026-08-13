@@ -60,6 +60,16 @@ def main():
             continue   # ข้ามสถานีที่ไม่มีพิกัด
         name = st.get("tele_station_name") or {}
         geo  = r.get("geocode") or {}
+        level = r.get("situation_level")
+
+        # สถานีที่ต้นทางไม่ส่ง situation_level (628/1422) จะส่ง diff_wl_bank เป็นค่าระดับ
+        # น้ำทะเลปานกลางแทนส่วนต่างจากตลิ่ง แล้วติดป้าย "ล้นตลิ่ง (ม.)" มาด้วย — เช่นสถานี
+        # ริมโขงที่รายงาน "ล้นตลิ่ง 215 เมตร" ค่าพวกนี้เชื่อไม่ได้ ตัดทิ้งไปเลยดีกว่าปล่อยให้
+        # หน้าเว็บขึ้นว่า "ไม่มีข้อมูล · ล้นตลิ่ง" พร้อมกัน
+        trusted_bank = level is not None
+        msl = _num(r.get("waterlevel_msl"))
+        msl_prev = _num(r.get("waterlevel_msl_previous"))
+
         stations.append({
             "id":          r.get("id"),
             "name_th":     name.get("th") or "",
@@ -67,10 +77,14 @@ def main():
             "lat":         lat,
             "lon":         lon,
             "river":       r.get("river_name") or "",
-            "level":       r.get("situation_level"),
+            "level":       level,
             "pct":         _num(r.get("storage_percent")),
-            "diff":        _num(r.get("diff_wl_bank")),
-            "diff_text":   r.get("diff_wl_bank_text") or "",
+            # ระดับน้ำทะเลปานกลาง + ค่าก่อนหน้า — ใช้ดู "กำลังขึ้น/ลง" ได้แม้ไม่มี level
+            # (สถานีแม่น้ำโขงมีแค่ค่านี้ ซึ่งเป็นตัวเดียวที่บอกแนวโน้มน้ำโขงหนุนได้)
+            "msl":         msl,
+            "msl_prev":    msl_prev,
+            "diff":        _num(r.get("diff_wl_bank")) if trusted_bank else None,
+            "diff_text":   (r.get("diff_wl_bank_text") or "") if trusted_bank else "",
             "dt":          r.get("waterlevel_datetime") or "",
             "agency":      _loc((r.get("agency") or {}).get("agency_shortname"), "th"),
             "province_th": _loc(geo.get("province_name"), "th"),
