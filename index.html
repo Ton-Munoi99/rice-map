@@ -3890,8 +3890,37 @@
       function forecastValueOf(en) {
         return window.FORECAST_DATA?.provinces?.[en]?.rain_7d ?? null;
       }
+      // ในฤดูฝนมีจังหวัดติดเตือนพร้อมกัน 60-80% ของประเทศ การบอกว่า "🔴 26 จังหวัด"
+      // จึงไม่ช่วยให้ตัดสินใจอะไรได้ — บอกว่าจังหวัดไหนหนักสุดใช้งานได้จริงกว่า
+      function topAlertProvinces(n = 3) {
+        const P = window.ALERTS_DATA?.provinces || {};
+        return Object.keys(P)
+          .filter((en) => (P[en]?.level_num ?? 0) >= 1)
+          .map((en) => ({
+            en,
+            s: alertSeverityOf(en) ?? 0,
+            mm: Math.max(
+              window.FORECAST_DATA?.provinces?.[en]?.rain_7d ?? 0,
+              window.GSMAP_DATA?.provinces?.[en]?.rain_7d ?? 0,
+            ),
+          }))
+          .sort((a, b) => b.s - a.s)
+          .slice(0, n);
+      }
+
       function alertsValueOf(en) {
         return window.ALERTS_DATA?.provinces?.[en]?.level_num ?? null;
+      }
+      // level_num มีแค่ 0/0.5/1/2/3 — ในฤดูฝนมีจังหวัดระดับ 3 พร้อมกันเป็นสิบ
+      // เรียงลำดับด้วยค่านี้อย่างเดียวจึงได้ลำดับมั่วๆ ใช้ปริมาณฝนจริงมาไล่ลำดับในระดับเดียวกัน
+      function alertSeverityOf(en) {
+        const w = window.ALERTS_DATA?.provinces?.[en];
+        if (!w) return null;
+        const mm = Math.max(
+          window.FORECAST_DATA?.provinces?.[en]?.rain_7d ?? 0,
+          window.GSMAP_DATA?.provinces?.[en]?.rain_7d ?? 0,
+        );
+        return (w.level_num ?? 0) * 1000 + mm; // ระดับมาก่อน แล้วค่อยไล่ด้วยมิลลิเมตร
       }
       function soilMoistureValueOf(en) {
         return window.SOIL_DATA?.provinces?.[en]?.smp ?? null;
@@ -4882,8 +4911,8 @@
           const meta = window.ALERTS_DATA?._meta;
           const sum = window.ALERTS_DATA?.summary;
           refs.dataSourceNote.textContent = t(
-            `🚨 สร้างอัตโนมัติจากข้อมูล: ${(meta?.sources || []).join(" · ")} · อัปเดตทุกวัน · ครอบคลุม ${covered} จังหวัด · สูง:${sum?.high || 0} ปานกลาง:${sum?.medium || 0} ต่ำ:${sum?.low || 0} แล้ง:${sum?.drought || 0}`,
-            `🚨 Auto-generated from: ${(meta?.sources || []).join(" · ")} · Daily update · ${covered} provinces · High:${sum?.high || 0} Med:${sum?.medium || 0} Low:${sum?.low || 0} Drought:${sum?.drought || 0}`,
+            `🚨 สร้างอัตโนมัติจากข้อมูล: ${(meta?.sources || []).join(" · ")} · อัปเดตทุกวัน · เรียงจากหนักไปเบา · ช่วงฤดูฝนมีจังหวัดเข้าเกณฑ์พร้อมกันมาก (วันนี้ ${(sum?.high || 0) + (sum?.medium || 0) + (sum?.low || 0)}/${covered} จังหวัด) — ให้ดูลำดับความรุนแรง ไม่ใช่จำนวนจังหวัด`,
+            `🚨 Auto-generated from: ${(meta?.sources || []).join(" · ")} · Daily update · ranked worst-first · in the wet season most provinces clear the thresholds at once (${(sum?.high || 0) + (sum?.medium || 0) + (sum?.low || 0)} of ${covered} today) — read the ordering, not the count`,
           );
           return;
         }
@@ -5307,8 +5336,8 @@
         const isSoilMoisture = S.layer === "soilMoisture";
         const allSorted = visible
           .filter((en) => hasLayerValue(en))
-          .map((en) => ({ en, v: valueOf(en) }))
-          .sort((a, b) => b.v - a.v);
+          .map((en) => ({ en, v: valueOf(en), s: isAlerts ? alertSeverityOf(en) : null }))
+          .sort((a, b) => (isAlerts ? b.s - a.s : b.v - a.v));
         const items =
           isNdvi || isRiceEvi || isRain || isGsmap || isForecast || isAlerts || isSoilMoisture
             ? allSorted
@@ -7300,8 +7329,10 @@ ${warningsHtml}
           return;
         }
         if (S.layer === "alerts") {
-          const sum = window.ALERTS_DATA?.summary;
-          refs.yearButtons.innerHTML = `<button class="pill on" data-year="alerts">🚨 ${t("พื้นที่เสี่ยงน้ำท่วม", "Flood Risk Areas")} · ${window.ALERTS_DATA?._meta?.updated || t("ล่าสุด", "Latest")} · 🔴${sum?.high || 0} 🟠${sum?.medium || 0} 🟡${sum?.low || 0}</button>`;
+          const names = topAlertProvinces(3)
+            .map((x) => `${t(NM[x.en] || x.en, x.en)} ${x.mm.toFixed(0)}`)
+            .join(" · ");
+          refs.yearButtons.innerHTML = `<button class="pill on" data-year="alerts">🚨 ${t("เสี่ยงสูงสุดวันนี้", "Highest risk today")}: ${names || t("ไม่มี", "none")} <small style="opacity:.7">${t("มม./7วัน", "mm/7d")}</small></button>`;
           return;
         }
         if (S.layer === "soilMoisture") {
