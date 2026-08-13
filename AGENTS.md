@@ -133,3 +133,11 @@ re-inlining the git block.
 - **Year keys are Thai Buddhist Era strings** — `"2567"` not `2567` (number)
 - **Province keys are English names** — matching `NM` lookup map and `thailand-data.js`
 - **Do not push to git without owner review** — confirm before any `git push`
+- **Record every change in `CHANGELOG.md`** — owner's standing instruction. Any change that
+  alters behaviour, data, or documentation goes in the current month's section under
+  เพิ่ม / เปลี่ยนแปลง / แก้ไข / ลบออก, in Thai, before handing the work back. Skip only the
+  automated `auto:` data commits, which the file already excludes by design.
+  Write what changed *and why it mattered* — a bug entry should say what a reader would
+  have seen wrong, not just which function moved. Something diagnosed but deliberately
+  left alone belongs under **ทราบปัญหา / รอดำเนินการ** with the reason, so the next person
+  does not rediscover it or "fix" it without the context.
