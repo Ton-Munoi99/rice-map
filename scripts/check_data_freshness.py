@@ -27,6 +27,7 @@ MAX_AGE_DAYS = {
     "trea-fob.json":         7,   # จ-ศ ×3 (เผื่อวันหยุดยาว)
     "soil-moisture.json":    10,  # รายสัปดาห์ (จันทร์)
     "fertilizer-prices.json": 10,  # รายสัปดาห์ (จันทร์) — ต้องมี FIRECRAWL_API_KEY
+    "mekong-level.json":      3,   # รายวัน (MRC telemetry)
     "alert-scoreboard.json":  3,   # ต่อท้าย update-rain รายวัน
     "ndvi.json":             45,  # รายเดือน (วันที่ 8)
     "ndvi-district.json":    45,

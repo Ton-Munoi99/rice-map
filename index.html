@@ -6452,6 +6452,49 @@
         }
         // ─────────────────────────────────────────────────────────────────────
 
+        // ระดับน้ำโขง (MRC) — โขงขึ้นจากการไหลของต้นน้ำ ไม่ใช่ฝนในพื้นที่
+        // layer เตือนน้ำท่วมที่อิงฝนจึงมองไม่เห็น ต้องแสดงแยกให้จังหวัดริมโขง
+        let mekongHtml = "";
+        {
+          const st = (window.MEKONG_DATA?.stations || []).filter((x) => x.province_en === en);
+          if (st.length) {
+            const COL = { flood: "#ef5350", alarm: "#ffa726", normal: "#66bb6a" };
+            const LBL = {
+              flood: t("เกินระดับวิกฤต", "above flood stage"),
+              alarm: t("ถึงระดับเตือน", "at alarm stage"),
+              normal: t("ปกติ", "normal"),
+              nothreshold: t("ไม่มีเกณฑ์", "no threshold"),
+              nodata: t("ไม่มีข้อมูล", "no data"),
+            };
+            const rows = st
+              .map((x) => {
+                const c = COL[x.status] || "var(--muted)";
+                const gap =
+                  x.to_flood_m == null
+                    ? ""
+                    : x.to_flood_m >= 0
+                      ? `<div class="m-label" style="margin-top:2px">${t("เหลืออีก", "still")} ${x.to_flood_m.toFixed(2)} ${t("ม. ถึงระดับวิกฤต", "m below flood stage")}</div>`
+                      : `<div class="m-label" style="margin-top:2px;color:${COL.flood}">${t("เกินระดับวิกฤตแล้ว", "over flood stage by")} ${Math.abs(x.to_flood_m).toFixed(2)} ${t("ม.", "m")}</div>`;
+                return `<div class="metric">
+                  <div class="m-label">${x.name} · ${LBL[x.status] || x.status}</div>
+                  <div class="m-value" style="color:${c}">${x.level_m ?? "—"} <small>${t("ม.", "m")}</small></div>
+                  ${gap}
+                  <div class="m-label" style="margin-top:2px">${t("เตือน", "alarm")} ${x.alarm_m ?? "—"} · ${t("วิกฤต", "flood")} ${x.flood_m ?? "—"} ${t("ม.", "m")}</div>
+                </div>`;
+              })
+              .join("");
+            mekongHtml = `
+            <div class="rice-card" style="grid-column:1/-1;background:rgba(66,165,245,.07);border:1px solid rgba(66,165,245,.28)">
+              <div class="t">🌊 ${t("ระดับน้ำโขง", "Mekong Water Level")} · MRC</div>
+              ${rows}
+              <div style="font-size:9px;color:var(--muted);margin-top:6px">${t(
+                `Mekong River Commission · วัดเมื่อ ${window.MEKONG_DATA?._meta?.updated || "—"} · โขงขึ้นจากน้ำต้นทาง ไม่ใช่ฝนในพื้นที่ — คนละกลไกกับ layer เตือนน้ำท่วม`,
+                `Mekong River Commission · measured ${window.MEKONG_DATA?._meta?.updated || "—"} · the Mekong rises from upstream flow, not local rain — a different mechanism from the flood-risk layer`,
+              )}</div>
+            </div>`;
+          }
+        }
+
         // ลิงก์ออกไปดูชั้นความเหมาะสมของที่ดิน (LDD) — ลิงก์อย่างเดียว ไม่ดึงข้อมูลเข้ามา
         // เพราะชุดนั้นเป็น CC BY-NC-ND (ห้ามพาณิชย์ + ห้ามดัดแปลง) ดู DATA_SOURCES.md
         const landSuitHtml = `
@@ -6477,7 +6520,7 @@
               )}</div>
             </div>`;
 
-        const econContent = profitHtml + strawHtml + strawMarketHtml + biomassHtml + fertRatioHtml + millsHtml + landSuitHtml + fertHtml;
+        const econContent = mekongHtml + profitHtml + strawHtml + strawMarketHtml + biomassHtml + fertRatioHtml + millsHtml + landSuitHtml + fertHtml;
         const peopleContent = householdsHtml;
         const riceContent = cardHtml + naprangHtml;
         const simContent = buildSimPane(en);
@@ -8025,6 +8068,9 @@ ${warningsHtml}
         });
         fetchLayerData("rain-stations.json", "RAINSTATION_DATA", "rainstation", () => {
           if (isPointLayer()) rerender();
+        });
+        fetchLayerData("mekong-level.json", "MEKONG_DATA", null, () => {
+          if (S.sel) selectProvince(S.sel);
         });
         fetchLayerData("biomass-plants.json", "BIOMASS_DATA", "biomass");
         fetchLayerData("disease-risk.json", "DISEASE_DATA", null, () => {

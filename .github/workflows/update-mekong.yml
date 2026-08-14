@@ -1,0 +1,32 @@
+name: Update Mekong Water Levels (MRC)
+
+on:
+  schedule:
+    # ทุกวัน 08:00 UTC (15:00 BKK) — MRC ส่งข้อมูลทุก 15 นาที รายวันพอสำหรับหน้าเว็บ
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+
+jobs:
+  update-mekong:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Fetch Mekong levels from MRC telemetry API
+        run: python scripts/fetch_mekong_level.py
+
+      - name: Commit and push
+        uses: ./.github/actions/commit-data
+        with:
+          paths: data/mekong-level.json
+          message: "auto: update Mekong water levels (MRC)"
