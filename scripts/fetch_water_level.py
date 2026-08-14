@@ -10,7 +10,7 @@ situation_level: 5=ล้นตลิ่ง 4=มาก 3=ปกติ 2=น้�
 
 Output: data/water-level.json
 """
-import json, sys, requests
+import csv, json, math, os, sys, requests
 from datetime import datetime, timezone
 from collections import Counter
 
@@ -18,6 +18,15 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 API_URL = "https://api-v3.thaiwater.net/api/v1/thaiwater30/public/waterlevel_load"
 OUTPUT  = "data/water-level.json"
+
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+GEO_PATH = os.path.join(_ROOT, "data", "districts-geo.json")
+CSV_PATH = os.path.join(_ROOT, "rice-data.csv")
+
+# ต้นทางติดชื่อจังหวัดผิดกับบางสถานี — เจอที่ห่างจากจังหวัดที่อ้างถึง 385 กม.
+# ("บ้านมีชัย" ระบุหนองคาย แต่พิกัดอยู่กลางประเทศ) ถ้าปล่อยไว้ หมุดจะไปโผล่ผิดจังหวัด
+# และการนับ "สถานีเฝ้าระวังในจังหวัดนี้" จะผิดตาม · 50 กม. เผื่อสถานีที่อยู่ชายขอบจริงๆ
+MAX_KM_OUTSIDE = 50
 
 
 def _num(v):
@@ -31,6 +40,27 @@ def _num(v):
 def _loc(d, lang):
     """ดึงค่าภาษาจาก localized dict {th,en} — คืน '' ถ้าไม่มี"""
     return (d or {}).get(lang, "") if isinstance(d, dict) else ""
+
+
+def load_province_bbox():
+    """{province_en: [minLon, minLat, maxLon, maxLat]} + แผนที่ชื่อไทย→อังกฤษ"""
+    try:
+        geo = json.load(open(GEO_PATH, encoding="utf-8"))["provinces"]
+        with open(CSV_PATH, encoding="utf-8-sig") as f:
+            th2en = {r["province_th"]: r["province_en"]
+                     for r in csv.DictReader(f) if r.get("province_th")}
+    except (OSError, ValueError, KeyError) as e:
+        print(f"[WARN] ตรวจพิกัดไม่ได้ ({e}) — ข้ามการตรวจ", file=sys.stderr)
+        return {}, {}
+    return {p: v["bbox"] for p, v in geo.items() if v.get("bbox")}, th2en
+
+
+def km_outside(lat, lon, bbox):
+    """ระยะจากจุดถึงกรอบจังหวัด (กม.) — 0 ถ้าอยู่ในกรอบ"""
+    x0, y0, x1, y1 = bbox
+    dx = max(x0 - lon, 0, lon - x1)
+    dy = max(y0 - lat, 0, lat - y1)
+    return math.hypot(dx * 111 * math.cos(math.radians(lat)), dy * 111)
 
 
 def fetch_rows():
@@ -51,7 +81,8 @@ def main():
     rows = fetch_rows()
     print(f"  total rows: {len(rows)}")
 
-    stations = []
+    bbox_by_prov, th2en = load_province_bbox()
+    stations, dropped = [], []
     for r in rows:
         st = r.get("station") or {}
         lat = _num(st.get("tele_station_lat"))
@@ -60,6 +91,17 @@ def main():
             continue   # ข้ามสถานีที่ไม่มีพิกัด
         name = st.get("tele_station_name") or {}
         geo  = r.get("geocode") or {}
+
+        # พิกัดต้องอยู่ในจังหวัดที่ต้นทางระบุจริง ไม่งั้นหมุดไปโผล่ผิดที่
+        prov_th = _loc(geo.get("province_name"), "th")
+        prov_en = _loc(geo.get("province_name"), "en") or th2en.get(prov_th, "")
+        bbox = bbox_by_prov.get(prov_en)
+        if bbox:
+            off = km_outside(lat, lon, bbox)
+            if off > MAX_KM_OUTSIDE:
+                dropped.append((name.get("th") or "?", prov_th, round(off)))
+                continue
+
         level = r.get("situation_level")
 
         # สถานีที่ต้นทางไม่ส่ง situation_level (628/1422) จะส่ง diff_wl_bank เป็นค่าระดับ
@@ -87,7 +129,7 @@ def main():
             "diff_text":   (r.get("diff_wl_bank_text") or "") if trusted_bank else "",
             "dt":          r.get("waterlevel_datetime") or "",
             "agency":      _loc((r.get("agency") or {}).get("agency_shortname"), "th"),
-            "province_th": _loc(geo.get("province_name"), "th"),
+            "province_th": prov_th,
             "province_en": _loc(geo.get("province_name"), "en"),
             "amphoe_th":   _loc(geo.get("amphoe_name"), "th"),
             "amphoe_en":   _loc(geo.get("amphoe_name"), "en"),
@@ -113,6 +155,10 @@ def main():
     with open(OUTPUT, "w", encoding="utf-8") as f:
         json.dump(output, f, ensure_ascii=False, indent=2)
 
+    if dropped:
+        print(f"  ⚠️ ตัดออก {len(dropped)} สถานี — พิกัดห่างจังหวัดที่ระบุเกิน {MAX_KM_OUTSIDE} กม.")
+        for nm, pv, km in sorted(dropped, key=lambda x: -x[2])[:5]:
+            print(f"      {nm[:24]} (ระบุ {pv}) ห่าง {km} กม.")
     print(f"  by situation_level: {counts_by_level}")
     print(f"  alert (level 4-5): {n_alert}")
     print(f"\nSaved {len(stations)} stations → {OUTPUT}")
