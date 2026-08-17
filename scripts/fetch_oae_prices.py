@@ -2,137 +2,144 @@
 """
 fetch_oae_prices.py
 --------------------
-ดึงราคาข้าวเปลือกระดับประเทศจาก OAE CKAN API
-แล้วเขียนลง data/prices-live.json เพื่อให้ index.html โหลดได้ตอนเปิดเว็บ
+ราคาข้าวเปลือกที่เกษตรกรขายได้ ระดับประเทศ (รายสัปดาห์) → data/prices-live.json
 
-API Source: https://catalog.oae.go.th
-Resource IDs:
-  - ข้าวเปลือกเจ้า : c72f9a58-6969-48d6-9203-7859362adaf7
-  - ข้าวเปลือกหอมมะลิ : (ต้องหา resource_id เพิ่ม)
+ทำไมเปลี่ยนแหล่ง: เดิมยิง CKAN datastore ของ catalog.oae.go.th ตรงๆ ด้วย
+resource_id ซึ่งตั้งแต่ 20 พ.ค. 2569 ตอบ 403 "ไม่ได้รับอนุญาตให้อ่านทรัพยากร"
+สคริปต์เดิมกลืน error แล้วเขียน oae_national เป็น {} ทับของเดิม แต่ยัง exit 0
+workflow จึงขึ้นเขียวทุกวันโดยที่ข้อมูลหายไป 3 เดือนไม่มีใครรู้
+
+แหล่งใหม่คือ API ที่ตัว catalog ชี้ไปเอง (ดู resource url ในชุดข้อมูล
+"ราคาที่เกษตรกรขายได้รายสัปดาห์ สินค้าข้าวเปลือก") — เปิดสาธารณะ ไม่ต้องมี key
+ให้รายสัปดาห์ (เดิมรายเดือน) ย้อนถึง 2554 และมีหอมมะลิด้วย (เดิมมีแต่ข้าวเจ้า)
+
+Run: python scripts/fetch_oae_prices.py
 """
-
-import requests
 import json
 import os
-from datetime import datetime, timezone
+import sys
 
-# ───────────────────────────────────────────
-# Config
-# ───────────────────────────────────────────
-CKAN_BASE = "https://catalog.oae.go.th/api/3/action/datastore_search"
+import requests
 
-RESOURCES = {
-    "white_rice": {
-        "resource_id": "c72f9a58-6969-48d6-9203-7859362adaf7",
+API = "https://agriapi.nabc.go.th/api/weekly-prices/product"
+CATALOG_URL = "https://catalog.oae.go.th/dataset/weekly-prices-paddy"
+TIMEOUT = 30
+PAGE = 100
+
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+OUTPUT_FILE = os.path.join(_ROOT, "data", "prices-live.json")
+
+# คีย์ต้องเป็น white / jasmine เพราะ index.html อ่าน oae_national.white.latest
+# (สคริปต์เดิมเขียน "white_rice" ตามชื่อ dict ทำให้เว็บอ่านไม่เจอแม้ตอนดึงสำเร็จ)
+PRODUCTS = {
+    "white": {
+        "product_name": "ข้าวเปลือกเจ้า ความชื้น 15",
         "label_th": "ข้าวเปลือกเจ้า (ความชื้น 15%)",
-        "label_en": "White Rice Paddy (15% moisture)",
-        "key": "white"
-    }
-    # เพิ่ม jasmine ถ้าพบ resource_id
+        "label_en": "White paddy (15% moisture)",
+    },
+    "jasmine": {
+        "product_name": "ข้าวเปลือกเจ้าหอมมะลิ ความชื้น 15",
+        "label_th": "ข้าวเปลือกหอมมะลิ (ความชื้น 15%)",
+        "label_en": "Jasmine paddy (15% moisture)",
+    },
 }
 
-OUTPUT_FILE = "data/prices-live.json"
 
-
-def fetch_all_records(resource_id: str) -> list:
-    """ดึงข้อมูลทั้งหมดจาก CKAN API (pagination)"""
-    records = []
-    offset = 0
-    limit = 100
-
+def fetch_all(product_name):
+    """ดึงทุกหน้า — API ตอบ total มาให้ ใช้ offset เลื่อน"""
+    rows, offset = [], 0
     while True:
-        url = (
-            f"{CKAN_BASE}"
-            f"?resource_id={resource_id}"
-            f"&limit={limit}&offset={offset}"
+        r = requests.get(
+            API,
+            params={"product_name": product_name, "limit": PAGE, "offset": offset},
+            timeout=TIMEOUT,
         )
-        try:
-            r = requests.get(url, timeout=15)
-            r.raise_for_status()
-            data = r.json()
-            batch = data["result"]["records"]
-            records.extend(batch)
-            if len(batch) < limit:
-                break
-            offset += limit
-        except Exception as e:
-            print(f"  ⚠️  Error fetching offset={offset}: {e}")
-            break
-
-    return records
+        r.raise_for_status()
+        body = r.json()
+        if not body.get("success"):
+            raise RuntimeError(f"API ตอบ success=false: {str(body)[:200]}")
+        batch = body.get("data") or []
+        rows.extend(batch)
+        total = (body.get("pagination") or {}).get("total", len(rows))
+        if not batch or len(rows) >= total:
+            return rows
+        offset += PAGE
 
 
-def latest_records(records: list) -> dict:
-    """
-    คืนค่าข้อมูลล่าสุด:
-    - latest_month: ราคาเดือนล่าสุดที่มีข้อมูล
-    - last_12_months: ย้อนหลัง 12 เดือน สำหรับ mini chart
-    """
-    sorted_r = sorted(records, key=lambda x: (x["year"], x["month"]))
-    latest = sorted_r[-1] if sorted_r else {}
-    last_12 = sorted_r[-12:] if len(sorted_r) >= 12 else sorted_r
+def latest_of(rows):
+    """แถวล่าสุดตาม ปี→เดือน→สัปดาห์ (API ไม่รับประกันลำดับ จึงเรียงเอง)"""
+    national = [r for r in rows if r.get("province_code") == "TH00"]
+    if not national:
+        return None
+    newest = max(national, key=lambda r: (r["year_th"], int(r["month"]), r["week"]))
+    try:
+        value = round(float(newest["value"]))
+    except (TypeError, ValueError):
+        return None
     return {
-        "latest": {
-            "year": latest.get("year"),
-            "month": latest.get("month"),
-            "value_thb_per_ton": latest.get("Value"),     # บาท/ตัน — ราคาที่ไร่นา
-        },
-        "trend_12m": [
-            {
-                "year": r["year"],
-                "month": r["month"],
-                "value": r["Value"]
-            }
-            for r in last_12
-        ]
+        # เดือนเป็น int เพราะ index.html ใช้ทำ index ใน monthNames[]
+        "year": newest["year_th"],
+        "month": int(newest["month"]),
+        "week": newest["week"],
+        "value_thb_per_ton": value,
     }
 
 
 def main():
-    os.makedirs("data", exist_ok=True)
-
-    # โหลดไฟล์เดิมถ้ามี (เพื่อ merge ไม่ flush ทิ้ง)
     existing = {}
     if os.path.exists(OUTPUT_FILE):
+        with open(OUTPUT_FILE, encoding="utf-8") as f:
+            existing = json.load(f)
+
+    # เริ่มจากของเดิมเสมอ — ดึงไม่สำเร็จต้องไม่ลบข้อมูลที่ยังใช้ได้อยู่ทิ้ง
+    oae = dict(existing.get("oae_national") or {})
+    failed = []
+
+    for key, cfg in PRODUCTS.items():
         try:
-            with open(OUTPUT_FILE, "r", encoding="utf-8") as f:
-                existing = json.load(f)
-        except Exception:
-            pass
+            rows = fetch_all(cfg["product_name"])
+            latest = latest_of(rows)
+            if not latest:
+                raise RuntimeError("ไม่พบแถวระดับประเทศ (TH00) ที่อ่านค่าได้")
+            oae[key] = {
+                "label_th": cfg["label_th"],
+                "label_en": cfg["label_en"],
+                "latest": latest,
+            }
+            print(f"  {key:8} {len(rows):>4} แถว · ล่าสุด {latest['year']}-"
+                  f"{latest['month']:02d} สัปดาห์ {latest['week']} = "
+                  f"{latest['value_thb_per_ton']:,} บาท/ตัน")
+        except Exception as e:
+            failed.append(f"{key}: {type(e).__name__}: {e}")
+            print(f"  [ERROR] {key}: {e}", file=sys.stderr)
 
     result = {
         **existing,
-        "oae_national": {},
+        "oae_national": oae,
         "_meta": {
-            "source": "OAE CKAN API — catalog.oae.go.th",
-            "source_en": "Office of Agricultural Economics (OAE)",
-            "updated_at": datetime.now(timezone.utc).isoformat(),
-            "note_th": "ราคาเฉลี่ยรายเดือน ณ ราคาที่เกษตรกรขายได้ที่ไร่นา (ระดับประเทศ)",
-            "note_en": "Monthly average farm-gate price at national level"
-        }
+            **(existing.get("_meta") or {}),
+            "source": "OAE / NABC weekly farm-gate prices",
+            "source_url": CATALOG_URL,
+            "api": API,
+            "note_th": "ราคาที่เกษตรกรขายได้ รายสัปดาห์ ระดับประเทศ (สศก.) · "
+                       "ราคารายจังหวัดในไฟล์เดียวกันมาจากสมาคมโรงสี ดู provincial_prices",
+            "note_en": "Weekly national farm-gate paddy prices (OAE). Provincial prices in "
+                       "this file come from the Millers Association — see provincial_prices.",
+        },
     }
-
-    for key, cfg in RESOURCES.items():
-        print(f"🔄  Fetching {cfg['label_en']} ...")
-        records = fetch_all_records(cfg["resource_id"])
-        print(f"    ✅  {len(records)} records retrieved")
-
-        if records:
-            summary = latest_records(records)
-            result["oae_national"][key] = {
-                "label_th": cfg["label_th"],
-                "label_en": cfg["label_en"],
-                **summary
-            }
+    # อัปเดตเวลาเฉพาะตอนดึงได้จริง ไม่งั้น freshness monitor จะเห็นว่าไฟล์สดทั้งที่ข้อมูลค้าง
+    if not failed:
+        from datetime import datetime, timezone
+        result["_meta"]["updated_at"] = datetime.now(timezone.utc).isoformat()
 
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=2)
+    print(f"Wrote {OUTPUT_FILE}")
 
-    print(f"\n✅  Saved → {OUTPUT_FILE}")
-    latest = result["oae_national"].get("white", {}).get("latest", {})
-    if latest:
-        print(f"    ล่าสุด: ปี {latest['year']} เดือน {latest['month']} "
-              f"= {latest['value_thb_per_ton']:,} บาท/ตัน")
+    if failed:
+        # ออกด้วย error ให้ workflow แดง — ความเงียบคือสาเหตุที่ของเดิมพังอยู่ 3 เดือน
+        print(f"[FAIL] ดึงไม่สำเร็จ {len(failed)}/{len(PRODUCTS)} รายการ: {failed}", file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

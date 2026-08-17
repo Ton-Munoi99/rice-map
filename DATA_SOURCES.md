@@ -46,7 +46,9 @@
   - เว็บสมาคม: <http://www.thairicemillers.org/>
   - โฟลเดอร์ PDF ราคา (รูปแบบ `PricericeDDMMYYYY.pdf`): <http://www.thairicemillers.org/images/introc_1429264173/>
   - ตัวอย่างไฟล์: <http://www.thairicemillers.org/images/introc_1429264173/Pricerice17042569.pdf>
-- **ราคา OAE (สำรอง/ระดับชาติ):** CKAN API <https://catalog.oae.go.th/api/3/action/datastore_search> (resource `c72f9a58-6969-48d6-9203-7859362adaf7`)
+- **ราคา OAE (ระดับชาติ, รายสัปดาห์):** <https://agriapi.nabc.go.th/api/weekly-prices/product> — ราคาที่เกษตรกรขายได้ ข้าวเปลือกเจ้า/หอมมะลิ ความชื้น 15% ย้อนถึง พ.ศ. 2554 · เปิดสาธารณะ ไม่ต้องมี key
+  - หน้า dataset ต้นทาง: <https://catalog.oae.go.th/dataset/weekly-prices-paddy>
+  - *เดิมใช้ CKAN `datastore_search` resource `c72f9a58-…` ซึ่งตอบ 403 ตั้งแต่ 20 พ.ค. 2569 — ตัว catalog ชี้มาที่ API ใหม่นี้แทน*
 - **สคริปต์:** `scripts/fetch_miller_prices.py`, `scripts/fetch_oae_prices.py`
 
 ### ราคาส่งออก FOB

@@ -1,12 +1,35 @@
 {
   "_meta": {
-    "source": "OAE CKAN API — catalog.oae.go.th",
+    "source": "OAE / NABC weekly farm-gate prices",
     "source_en": "Office of Agricultural Economics (OAE)",
-    "updated_at": "2026-08-17T00:25:50.026692+00:00",
-    "note_th": "ราคาเฉลี่ยรายเดือน ณ ราคาที่เกษตรกรขายได้ที่ไร่นา (ระดับประเทศ)",
-    "note_en": "Monthly average farm-gate price at national level"
+    "updated_at": "2026-08-17T10:05:06.586827+00:00",
+    "note_th": "ราคาที่เกษตรกรขายได้ รายสัปดาห์ ระดับประเทศ (สศก.) · ราคารายจังหวัดในไฟล์เดียวกันมาจากสมาคมโรงสี ดู provincial_prices",
+    "note_en": "Weekly national farm-gate paddy prices (OAE). Provincial prices in this file come from the Millers Association — see provincial_prices.",
+    "source_url": "https://catalog.oae.go.th/dataset/weekly-prices-paddy",
+    "api": "https://agriapi.nabc.go.th/api/weekly-prices/DOES-NOT-EXIST"
   },
-  "oae_national": {},
+  "oae_national": {
+    "white": {
+      "label_th": "ข้าวเปลือกเจ้า (ความชื้น 15%)",
+      "label_en": "White paddy (15% moisture)",
+      "latest": {
+        "year": 2569,
+        "month": 7,
+        "week": 4,
+        "value_thb_per_ton": 8377
+      }
+    },
+    "jasmine": {
+      "label_th": "ข้าวเปลือกหอมมะลิ (ความชื้น 15%)",
+      "label_en": "Jasmine paddy (15% moisture)",
+      "latest": {
+        "year": 2569,
+        "month": 7,
+        "week": 4,
+        "value_thb_per_ton": 16449
+      }
+    }
+  },
   "provincial_prices": {
     "source_th": "สมาคมโรงสีข้าวไทย",
     "source_en": "Thai Rice Millers Association",
