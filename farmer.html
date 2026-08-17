@@ -68,9 +68,6 @@
       .advice li { display: flex; gap: 10px; padding: 9px 0; font-size: 15px; border-top: 1px dashed var(--line); }
       .advice li:first-child { border-top: none; }
       .advice li .dot { color: var(--gold); font-weight: 700; }
-      .verdict { font-size: 15px; font-weight: 600; padding: 10px 12px; border-radius: 10px; margin-top: 10px; }
-      .verdict.good { background: rgba(70, 192, 122, 0.14); color: #b8f0cf; }
-      .verdict.bad { background: rgba(239, 111, 111, 0.14); color: #ffc9c9; }
       .muted { color: var(--muted); font-size: 12px; }
       .aid-link {
         display: flex; align-items: center; justify-content: space-between; gap: 10px;
@@ -133,7 +130,7 @@
           normal: ["🌱 ระยะปลูก: ดินชื้นกำลังดี เหมาะกับการปักดำ/หว่าน"],
         },
         growing: {
-          wet: ["🌾 ข้าวกำลังโต: ทนน้ำขังได้ระยะหนึ่ง แต่อย่าให้ท่วมมิดยอดเกิน 3–5 วัน", "งดใส่ปุ๋ยจนน้ำลด — ใส่ตอนนี้ไหลทิ้งหมด"],
+          wet: ["🌾 ข้าวกำลังโต: น้ำขังพอทนได้ แต่ถ้าท่วมมิดยอดหลายวันติดต้องรีบระบาย", "งดใส่ปุ๋ยจนน้ำลด — ใส่ตอนนี้ไหลทิ้งหมด"],
           dry: ["🌾 ข้าวกำลังโต: ระยะตั้งท้องขาดน้ำกระทบผลผลิตมากที่สุด — ถ้าน้ำจำกัด ให้ระยะนี้ก่อน"],
           normal: ["🌾 ข้าวกำลังโต: ช่วงใส่ปุ๋ยแต่งหน้า ดูสีใบประกอบก่อนตัดสินใจ"],
         },
@@ -153,9 +150,6 @@
           normal: ["🚜 ช่วงเตรียมดิน: เหมาะกับไถกลบตอซังและปรับพื้นที่"],
         },
       };
-
-      // ต้นทุนผลิตอ้างอิง สศก. (บาท/ไร่) — ใช้คำนวณจุดคุ้มทุน ตรงกับที่แผนที่ใช้
-      const COST_RAI = { white: 6100, jasmine: 5150 };
 
       const $ = (id) => document.getElementById(id);
       const fmt = (n) => (n == null || isNaN(n) ? "—" : Math.round(n).toLocaleString("th-TH"));
@@ -195,8 +189,7 @@
       function buildProvinces(csv) {
         const head = csv[0].map((h) => h.replace(/^﻿/, "").trim());
         const ix = (n) => head.indexOf(n);
-        const [iTh, iEn, iReg, iType, iYear, iYield] =
-          ["province_th", "province_en", "region", "rice_type", "year", "yield"].map(ix);
+        const [iTh, iEn, iReg] = ["province_th", "province_en", "region"].map(ix);
         const by = new Map();
         for (let r = 1; r < csv.length; r++) {
           const row = csv[r];
@@ -204,15 +197,7 @@
           const en = (row[iEn] || "").trim();
           const th = (row[iTh] || "").trim();
           if (!en || !th) continue;
-          if (!by.has(en)) by.set(en, { th, en, region: (row[iReg] || "").trim(), yields: {} });
-          // เก็บผลผลิต/ไร่ ของปีล่าสุดต่อชนิดข้าว ไว้คำนวณจุดคุ้มทุน
-          const p = by.get(en);
-          const type = (row[iType] || "").trim();
-          const year = (row[iYear] || "").trim();
-          const y = parseFloat(row[iYield]);
-          if (type && year && y > 0 && (!p.yields[type] || year > p.yields[type].year)) {
-            p.yields[type] = { year, y };
-          }
+          if (!by.has(en)) by.set(en, { th, en, region: (row[iReg] || "").trim() });
         }
         PROV = [...by.values()].sort((a, b) => a.th.localeCompare(b.th, "th"));
       }
@@ -280,14 +265,17 @@
       function renderAid() {
         const items = (D.news?.items || []).filter((it) => AID_KW.some((k) => it.title.includes(k))).slice(0, 4);
         const link = `<a class="aid-link" href="https://www.baac.or.th" target="_blank" rel="noopener">🏦 ตรวจสอบสิทธิ์/เงินโอน — ธ.ก.ส.<span>↗</span></a>`;
+        // พาดหัวข่าวช่วงนี้เต็มไปด้วยการคาดการณ์ ("ลุ้นได้ไร่ละ 2,000") ซึ่งอ่านผ่านๆ
+        // แล้วนึกว่าเงินออกแล้ว — ติดป้ายให้ชัดตรงหัวรายการ ไม่ใช่ไปหมายเหตุตัวเล็กข้างล่าง
         const news = items.length
-          ? `<ul class="news">${items
+          ? `<div class="muted" style="margin:14px 0 4px">📰 ข่าวที่กำลังพูดถึง — <b>ยังไม่ใช่ประกาศทางการ</b> เงินจะออกจริงหรือไม่ ให้ยึดตาม ธ.ก.ส.</div>` +
+            `<ul class="news">${items
               .map((it) => `<li><a href="${it.url}" target="_blank" rel="noopener"><span class="t">${it.title}</span><span class="meta">${it.source} · ${it.date}</span></a></li>`)
               .join("")}</ul>`
           : `<div class="muted">ยังไม่มีข่าวสิทธิ์/เงินช่วยเหลือล่าสุด</div>`;
         return card(
           `<h2>📋 สิทธิ์ &amp; เงินช่วยเหลือ</h2>${link}${news}` +
-            `<div class="src">ลิงก์ทางการ ธ.ก.ส. · ข่าวจาก Google News (หัวข้อ + ลิงก์ต้นฉบับ) · ตรวจสอบเงื่อนไขกับ ธ.ก.ส./เกษตรอำเภอก่อนเสมอ</div>`,
+            `<div class="src">ลิงก์ทางการ ธ.ก.ส. · ข่าวจาก Google News (หัวข้อ + ลิงก์ต้นฉบับ)</div>`,
         );
       }
 
@@ -311,43 +299,16 @@
         }
 
         let rows = "";
-        // ส่วนต่างความชื้น = เงินที่ได้เพิ่มถ้าตากข้าวก่อนขาย
         if (q.white != null) {
           rows += priceRow(`${RICE_TH.white} · ความชื้น 15%`, q.white);
-          if (q.white_25 != null) {
-            const gap = q.white - q.white_25;
-            rows += priceRow(
-              `${RICE_TH.white} · ความชื้น 25%`,
-              q.white_25,
-              gap > 0 ? `<span class="note" style="color:var(--gold)">ตากให้ถึง 15% ได้เพิ่ม ${fmt(gap)} บาท/ตัน</span>` : "",
-            );
-          }
+          if (q.white_25 != null) rows += priceRow(`${RICE_TH.white} · ความชื้น 25%`, q.white_25);
         }
         if (q.jasmine != null) rows += priceRow(`${RICE_TH.jasmine}`, q.jasmine);
 
-        // จุดคุ้มทุน: ต้นทุน/ไร่ ÷ ผลผลิต/ไร่ → ราคาต่อตันที่ต้องขายให้ได้
-        let verdict = "";
-        const type = q.white != null ? "white" : "jasmine";
-        const yieldInfo = p.yields[type];
-        const gotPrice = q[type];
-        if (yieldInfo && gotPrice) {
-          const breakeven = (COST_RAI[type] / yieldInfo.y) * 1000;
-          const profit = (gotPrice * yieldInfo.y) / 1000 - COST_RAI[type];
-          verdict =
-            `<div class="verdict ${profit >= 0 ? "good" : "bad"}">` +
-            (profit >= 0
-              ? `✅ ราคานี้คุ้มทุน — เหลือราว ${fmt(profit)} บาท/ไร่`
-              : `⚠️ ราคานี้ยังไม่คุ้มทุน — ขาดราว ${fmt(-profit)} บาท/ไร่`) +
-            ` (ต้องขายได้ ≥ ${fmt(breakeven)} บาท/ตัน จึงเท่าทุน)</div>` +
-            `<div class="muted" style="margin-top:6px">ประมาณการหยาบ: ผลผลิตเฉลี่ยทั้งจังหวัด ${fmt(yieldInfo.y)} กก./ไร่ (ปี ${yieldInfo.year}) ` +
-            `กับต้นทุน <b>ค่าเฉลี่ยทั้งประเทศ</b> ${fmt(COST_RAI[type])} บาท/ไร่ (สศก.) ซึ่งไม่ใช่ต้นทุนของจังหวัดนี้ ` +
-            `— ถ้าแปลงคุณได้ผลผลิตสูงกว่าหรือต้นทุนต่ำกว่าค่าเฉลี่ย ผลจริงจะดีกว่าที่แสดง</div>`;
-        }
-
         return card(
-          `<h2>💰 ราคา &amp; จุดคุ้มทุน</h2>${rows}${verdict}` +
+          `<h2>💰 ราคาข้าวเปลือกในจังหวัด</h2>${rows}` +
             `<div class="src">${src.source_th} · ${(src.updated_at || "").slice(0, 10)} · ` +
-            `ส่วนต่างความชื้นเป็นเกณฑ์หักมาตรฐานของสมาคม (เท่ากันทุกจังหวัด) ไม่ใช่ราคาต่อรองจริงหน้าโรงสี</div>`,
+            `เป็นราคาอ้างอิงที่สมาคมประกาศ ราคาจริงหน้าโรงสีต่อรองกันได้</div>`,
         );
       }
 
