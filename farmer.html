@@ -55,13 +55,12 @@
       .row:first-of-type { border-top: none; }
       .row .k { font-size: 14px; color: var(--muted); }
       .row .v { font-size: 16px; font-weight: 600; text-align: right; }
-      .row .v .note { display: block; font-size: 12.5px; font-weight: 600; margin-top: 3px; }
       .status { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; margin-bottom: 12px; font-weight: 600; }
       .status .ic { font-size: 26px; line-height: 1; }
       .status.high { background: rgba(239, 111, 111, 0.14); border: 1px solid rgba(239, 111, 111, 0.35); }
       .status.medium { background: rgba(240, 162, 75, 0.14); border: 1px solid rgba(240, 162, 75, 0.35); }
       .status.low { background: rgba(245, 192, 101, 0.12); border: 1px solid rgba(245, 192, 101, 0.3); }
-      .status.drought, .status.dam_low { background: rgba(87, 182, 224, 0.12); border: 1px solid rgba(87, 182, 224, 0.3); }
+      .status.drought { background: rgba(87, 182, 224, 0.12); border: 1px solid rgba(87, 182, 224, 0.3); }
       .status.normal { background: rgba(70, 192, 122, 0.12); border: 1px solid rgba(70, 192, 122, 0.3); }
       .status .msg { font-size: 14px; font-weight: 500; }
       .advice { list-style: none; }
@@ -103,7 +102,7 @@
       <div id="cards"><div class="loading">กำลังโหลดข้อมูล…</div></div>
 
       <footer>
-        ข้อมูลราชการ (OAE · Open-Meteo · JAXA GSMaP · RID · สมาคมโรงสีข้าวไทย · พพ.)<br />
+        ข้อมูลราชการ (OAE · Open-Meteo · JAXA GSMaP · สมาคมโรงสีข้าวไทย · DIT · พพ.)<br />
         สรุปเพื่อการตัดสินใจเบื้องต้น — โปรดตรวจสอบกับเจ้าหน้าที่เกษตรในพื้นที่ประกอบ
       </footer>
     </div>
@@ -116,7 +115,6 @@
         flood_medium: ["เฝ้าระวังระดับน้ำ เตรียมทางระบายให้พร้อม", "เลื่อนการใส่ปุ๋ยถ้าฝนยังตกหนัก รอฝนซาก่อน"],
         flood_low: ["ฝนพอเหมาะ เดินหน้าตามแผนได้", "หลังฝนหยุด ดินชื้นกำลังดี — เหมาะกับใส่ปุ๋ย ปุ๋ยละลายดี"],
         drought: ["งดหว่านแห้งถ้าไม่มีแหล่งน้ำสำรอง", "เลือกพันธุ์อายุสั้น/ทนแล้ง เก็บกักน้ำไว้ใช้"],
-        dam_low: ["น้ำต้นทุนในเขื่อนน้อย — ใช้น้ำอย่างประหยัด", "วางแผนรอบปลูกให้พอดีกับน้ำที่มี เลี่ยงปลูกเกินตัว"],
         normal: ["สภาพอากาศเหมาะสม เดินหน้าตามแผนได้", "ช่วงดินชื้นเหมาะกับการเตรียมแปลงและใส่ปุ๋ย"],
       };
 
@@ -204,47 +202,28 @@
 
       function card(html) { return `<div class="card">${html}</div>`; }
 
-      // แปลปริมาณฝนสะสม 7 วัน (มม.) เป็นคำอธิบาย — เกณฑ์เดียวกับ agri-warnings (30/60/120, แล้ง<5)
-      function rainLabel(mm) {
-        if (mm == null) return null;
-        if (mm >= 120) return { t: "🔴 ฝนหนักมาก เสี่ยงน้ำท่วม", c: "var(--red)" };
-        if (mm >= 60) return { t: "🟠 ฝนมาก เฝ้าระวังน้ำหลาก", c: "var(--orange)" };
-        if (mm >= 30) return { t: "🟡 ฝนปานกลาง พอเหมาะกับนา", c: "var(--gold)" };
-        if (mm >= 5) return { t: "ฝนน้อย ดินอาจไม่ชุ่มพอ", c: "var(--blue)" };
-        return { t: "🏜️ แทบไม่มีฝน เสี่ยงแล้ง", c: "var(--red)" };
-      }
-      // แปลระดับน้ำในเขื่อน (%) — เกณฑ์ dam_low 30 / drought_dam 40
-      function damLabel(pct) {
-        if (pct == null) return null;
-        if (pct < 30) return { t: "🔴 น้ำน้อยวิกฤต — ประหยัดน้ำ", c: "var(--red)" };
-        if (pct < 50) return { t: "🟠 น้ำค่อนข้างน้อย — วางแผนใช้น้ำ", c: "var(--orange)" };
-        if (pct < 80) return { t: "🟢 ระดับปกติ", c: "var(--green)" };
-        return { t: "🔵 น้ำมาก — เฝ้าระวังการระบาย", c: "var(--blue)" };
-      }
-      function valWithNote(value, unit, label) {
-        const note = label ? `<span class="note" style="color:${label.c}">${label.t}</span>` : "";
-        return `<span class="v">${value} <span class="unit">${unit}</span>${note}</span>`;
-      }
-
+      // แสดงตัวเลขกับแหล่งที่มาเท่านั้น — การตัดสินว่าเสี่ยงแค่ไหนอยู่ที่การ์ด "ควรทำอะไรตอนนี้"
+      // ป้ายตีความเดิม ("ฝนปานกลาง พอเหมาะกับนา") ใช้เกณฑ์ของค่าที่หัก bias แล้ว
+      // แต่เอามาแปะบนพยากรณ์ดิบ จึงขัดกับระดับเตือนของระบบเอง
       function renderWeather(en) {
         const fc = D.forecast?.provinces?.[en]?.rain_7d;
         const past = D.rain?.provinces?.[en]?.rain_7d;
-        const dam = D.dam?.provinces?.[en]?.dam_level_pct;
-        let rows = "";
-        rows += `<div class="row"><span class="k">🌦️ ฝนคาด 7 วันข้างหน้า</span>${valWithNote(fmt(fc), "มม.", rainLabel(fc))}</div>`;
-        if (past != null) rows += `<div class="row"><span class="k">🌧️ ฝนสะสม 7 วันที่ผ่านมา</span>${valWithNote(fmt(past), "มม.", rainLabel(past))}</div>`;
-        if (dam != null) rows += `<div class="row"><span class="k">💧 น้ำในเขื่อน (จังหวัด)</span>${valWithNote(dam.toFixed(0), "%", damLabel(dam))}</div>`;
-        return card(`<h2>⛈️ อากาศ &amp; น้ำ</h2>${rows}<div class="src">Open-Meteo · JAXA GSMaP · RID · อัปเดต ${D.forecast?._meta?.updated || "—"}</div>`);
+        let rows = `<div class="row"><span class="k">🌦️ ฝนคาด 7 วันข้างหน้า</span><span class="v">${fmt(fc)} <span class="unit">มม.</span></span></div>`;
+        if (past != null)
+          rows += `<div class="row"><span class="k">🌧️ ฝนสะสม 7 วันที่ผ่านมา</span><span class="v">${fmt(past)} <span class="unit">มม.</span></span></div>`;
+        return card(`<h2>⛈️ ฝน</h2>${rows}<div class="src">พยากรณ์: Open-Meteo · ฝนที่ตกแล้ว: ดาวเทียม JAXA GSMaP · อัปเดต ${D.forecast?._meta?.updated || "—"}</div>`);
       }
 
       // ระดับเตือน → กลุ่มสภาพน้ำที่คำแนะนำตามระยะข้าวใช้ตัดสิน
-      const WATER_BUCKET = { flood_high: "wet", flood_medium: "wet", drought: "dry", dam_low: "dry" };
+      const WATER_BUCKET = { flood_high: "wet", flood_medium: "wet", drought: "dry" };
 
       function renderAdvice(p) {
         const w = D.warn?.provinces?.[p.en];
-        const top = w?.warnings?.[0] || { type: "normal", level: "normal", icon: "✅", message_th: "ไม่มีข้อมูลเตือนภัย" };
-        // warning type/level → advice+style key. flood level = high/medium/low; type "dam" → dam_low
-        const key = top.type === "flood" ? "flood_" + top.level : top.type === "dam" ? "dam_low" : top.type;
+        // ข้ามคำเตือนระดับน้ำในเขื่อน — ข้าวนาปีเป็นนาน้ำฝนทั้งหมด ชาวนาส่วนใหญ่
+        // ไม่ได้ใช้น้ำจากเขื่อนนั้น เห็นแถบแดงแล้วตกใจโดยไม่เกี่ยวกับแปลงตัวเอง
+        const top = (w?.warnings || []).find((x) => x.type !== "dam") ||
+          { type: "normal", level: "normal", icon: "✅", message_th: "ตอนนี้ไม่มีเตือนภัยฝน/น้ำท่วมในพื้นที่" };
+        const key = top.type === "flood" ? "flood_" + top.level : top.type;
         const cls = key.startsWith("flood_") ? top.level : key;
 
         const season = RiceSeason.of(p.region);
@@ -279,8 +258,9 @@
         );
       }
 
-      // ── ราคา · ความชื้น · จุดคุ้มทุน ────────────────────────────────────────
-      // ตอบคำถามที่ชาวนาตัดสินใจจริง: ตากข้าวก่อนขายคุ้มไหม และขายราคานี้แล้วกำไรไหม
+      // ── ราคาข้าวเปลือกรายจังหวัด ────────────────────────────────────────────
+      // แสดงราคาที่ประกาศเท่านั้น ไม่คำนวณกำไร/จุดคุ้มทุนต่อ — ตัวเลขพวกนั้นต้องใช้
+      // ต้นทุนค่าเฉลี่ยประเทศคู่กับผลผลิตเฉลี่ยจังหวัด ซึ่งไม่ใช่ของแปลงใครเลย
       const RICE_TH = { white: "ข้าวเปลือกเจ้า", jasmine: "ข้าวหอมมะลิ" };
 
       function priceRow(label, baht, extra) {
@@ -292,7 +272,7 @@
         const q = src?.data?.[p.th];
         if (!q || (q.white == null && q.jasmine == null)) {
           return card(
-            `<h2>💰 ราคา &amp; จุดคุ้มทุน</h2>` +
+            `<h2>💰 ราคาข้าวเปลือกในจังหวัด</h2>` +
               `<div class="muted">ยังไม่มีราคารายจังหวัดของ${p.th} — สมาคมโรงสีประกาศเพียงบางจังหวัด</div>` +
               `<div class="src">ไม่นำค่าเฉลี่ยประเทศมาแสดงแทน เพราะราคารับซื้อต่างกันมากรายพื้นที่</div>`,
           );
@@ -349,19 +329,18 @@
       }
 
       (async function () {
-        const [csv, warn, forecast, rain, dam, mills, biomass, news, price] = await Promise.all([
+        const [csv, warn, forecast, rain, mills, biomass, news, price] = await Promise.all([
           loadCSV("./rice-data.csv"),
           loadJSON("./data/agri-warnings.json"),
           loadJSON("./data/rain-forecast.json"),
           loadJSON("./data/rain-daily.json"),
-          loadJSON("./data/dam-water.json"),
           loadJSON("./data/rice-mills.json"),
           loadJSON("./data/biomass-plants.json"),
           loadJSON("./data/rice-news-archive.json"),
           loadJSON("./data/prices-live.json"),
         ]);
         if (!csv) { $("cards").innerHTML = `<div class="loading">โหลดข้อมูลไม่สำเร็จ ลองรีเฟรชอีกครั้ง</div>`; return; }
-        Object.assign(D, { warn, forecast, rain, dam, mills, biomass, news, price });
+        Object.assign(D, { warn, forecast, rain, mills, biomass, news, price });
         buildProvinces(csv);
         const url = new URLSearchParams(location.search).get("prov");
         const saved = localStorage.getItem("farmer_prov");
