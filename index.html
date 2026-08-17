@@ -4804,8 +4804,12 @@
           const rice = t(riceMeta[S.rice].th, riceMeta[S.rice].en);
           const cost = fmtNumber(COST_BASE[S.rice]?.oaeRaiCost);
           refs.dataSourceNote.textContent = t(
-            `ประมาณการกำไร/ขาดทุนต่อไร่ = (ราคาโรงสี × ผลผลิต/ตัน) − ต้นทุน OAE ${cost} ฿/ไร่ (${rice}) · ครอบคลุม ${covered} จังหวัดที่มีข้อมูลราคา`,
-            `Est. profit/loss per rai = (mill price × yield/ton) − OAE cost ${cost} ฿/rai (${rice}) · ${covered} provinces with price data`,
+            `ประมาณการกำไร/ขาดทุนต่อไร่ = (ราคาโรงสี × ผลผลิตเฉลี่ยของจังหวัด) − ต้นทุน สศก. ${cost} ฿/ไร่ (${rice}) ` +
+              `· ต้นทุนนี้เป็น "ค่าเฉลี่ยทั้งประเทศ" ไม่ใช่ต้นทุนรายจังหวัด จึงใช้เทียบจังหวัดต่อจังหวัดได้ ` +
+              `แต่ไม่ใช่กำไรจริงของแปลงใด · ครอบคลุม ${covered} จังหวัดที่มีข้อมูลราคา`,
+            `Est. profit/loss per rai = (mill price × province-average yield) − OAE cost ${cost} ฿/rai (${rice}) ` +
+              `· that cost is a NATIONAL average, not per-province, so this compares provinces but is not any farm's actual margin ` +
+              `· ${covered} provinces with price data`,
           );
           return;
         }
@@ -5949,7 +5953,7 @@
                 <div class="m-label">${t("ต้นทุนอ้างอิง OAE", "OAE Cost Benchmark")}</div>
                 <div class="m-value" style="font-size:12px">${fmtNumber(cost)} <small>฿/ไร่</small></div>
               </div>
-              <div style="font-size:9px;color:var(--muted);margin-top:6px">${t("⚠️ ประมาณการ ใช้ต้นทุนอ้างอิงระดับประเทศ (OAE 2566/67) ไม่รวมค่าเช่านา", "⚠️ Estimate using national OAE cost benchmark (2566/67), excludes land rent for landowners")}</div>
+              <div style="font-size:9px;color:var(--muted);margin-top:6px">${t("⚠️ ประมาณการ · ต้นทุนเป็นค่าเฉลี่ยทั้งประเทศ (สศก. 2566/67) ไม่ใช่ของจังหวัดนี้ และรวมค่าเช่านา 1,000 ฿/ไร่ ไว้แล้ว — เจ้าของที่ดินเองต้นทุนจะต่ำกว่านี้", "⚠️ Estimate · cost is a NATIONAL average (OAE 2566/67), not this province, and already includes 1,000 ฿/rai land rent — owner-operators pay less")}</div>
             </div>`;
           }
         }
@@ -6896,8 +6900,10 @@
     <div class="value" style="color:${col}">${pval >= 0 ? "+" : ""}${fmtNumber(pval)} <small style="font-size:12px;color:var(--muted)">฿/ไร่</small></div>
     <div class="rank">${rank ? `${t("อันดับ", "Rank")} #${rank} / ${total}` : t("ไม่มีข้อมูล", "No data")}</div>
     <div style="font-size:9px;color:var(--muted);margin-top:4px">
-      ${t("รายได้", "Revenue")}: ${fmtNumber(price)} × ${fmtNumber(yld)} ÷ 1000 = <strong>${fmtNumber(revenue)} ฿/ไร่</strong><br>
-      ${t("ต้นทุน OAE", "OAE Cost")}: <strong>${fmtNumber(cost)} ฿/ไร่</strong>
+      ${t("รายได้", "Revenue")}: ${fmtNumber(price)} × ${fmtNumber(yld)} ÷ 1000 = <strong>${fmtNumber(revenue)} ฿/ไร่</strong>
+      <span style="opacity:.75">(${t("ผลผลิตเฉลี่ยทั้งจังหวัด", "province-average yield")})</span><br>
+      ${t("ต้นทุน สศก.", "OAE cost")}: <strong>${fmtNumber(cost)} ฿/ไร่</strong>
+      <span style="opacity:.75">(${t("ค่าเฉลี่ยทั้งประเทศ ไม่ใช่ของจังหวัดนี้", "national average, not this province")})</span>
     </div>
   `;
         }
