@@ -5808,7 +5808,7 @@
             <div style="background:${bgCol};border:1px solid ${borderCol};border-radius:7px;padding:6px 8px;margin-top:6px;font-size:9px;line-height:1.6">
               <span style="font-weight:700;color:${accentCol}">📅 ${t("ปฏิทินฤดูกาล", "Season Calendar")}</span>
               <span style="float:right;font-weight:600;color:#ffd54f">${t(ctx.cropType.th, ctx.cropType.en)}</span><br>
-              <div style="margin:3px 0;color:#fff;font-weight:600">${stg.icon} ${t(stg.th, stg.en)} → <span style="color:${accentCol}">${t(ctx.situation.th, ctx.situation.en)}</span></div>
+              <div style="margin:3px 0;color:#fff;font-weight:600">${stg.icon} ${t(`ดาวเทียม ${eviMonth}`, `Satellite ${eviMonth}`)}: ${t(stg.th, stg.en)}<br>📅 ${t("ตามปฏิทิน ตอนนี้", "Calendar, now")}: <span style="color:${accentCol}">${t(ctx.situation.th, ctx.situation.en)}</span></div>
               <div style="opacity:.8">${t(ctx.calendar.th, ctx.calendar.en)}</div>
             </div>`;
             })()}
@@ -7137,7 +7137,7 @@ ${warningsHtml}
     <div class="rank">${rank ? `${t("อันดับ", "Rank")} #${rank} / ${total}` : t("ไม่มีข้อมูล", "No data")}</div>
     ${confPct != null ? `<div style="font-size:10px;margin-top:3px"><span style="color:${confColor}">📊 ${t("ครอบคลุมนา", "Coverage")} ${confPct}%</span> · ${fmtNumber(rp.rice_rai || 0)} ${t("ไร่", "rai")}</div>` : ""}
     <div style="font-size:9px;color:var(--muted);margin-top:5px;line-height:1.5;border-top:1px solid rgba(255,255,255,.1);padding-top:4px">
-      <div style="margin-bottom:2px"><strong style="color:#ffd54f">${t(ctx.situation.th, ctx.situation.en)}</strong> · ${t(ctx.cropType.th, ctx.cropType.en)}</div>
+      <div style="margin-bottom:2px">📅 ${t("ตามปฏิทิน ตอนนี้", "Calendar, now")}: <strong style="color:#ffd54f">${t(ctx.situation.th, ctx.situation.en)}</strong> · ${t(ctx.cropType.th, ctx.cropType.en)}</div>
       <div>${t(ctx.calendar.th, ctx.calendar.en)}</div>
     </div>
   `;
