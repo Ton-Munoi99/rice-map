@@ -2526,58 +2526,14 @@
       };
 
       // ── EVI trend badge (ทิศทางความเขียว เทียบเดือนก่อน) ─────────────────────
-      // ── กันระยะปลายฤดูที่เป็นไปไม่ได้ตามปฏิทิน ───────────────────────────────
-      // classify_evi() ฝั่ง pipeline ตัดสินจากค่า EVI + ทิศทางเท่านั้น ไม่รู้ว่าเดือนอะไร
-      // "EVI ลดลง = สุกแก่" จริงเฉพาะช่วงหลังยอด — ช่วงก่อนยอด EVI ลดเพราะไถขังน้ำ
-      // เตรียมปักดำ ซึ่งแปลว่าตรงข้ามกันคือเพิ่งเริ่มปลูก
-      // ผลจริง มิ.ย. 2569: เชียงใหม่/เชียงราย/อุตรดิตถ์/ขอนแก่น/สมุทรปราการ ขึ้นว่า
-      // "ใกล้เก็บเกี่ยว" ทั้งที่นาปีเพิ่งปลูก (เกณฑ์คมมาก เชียงใหม่ห่างเส้นแบ่ง 0.002)
-      // กันไว้ที่นี่จนกว่าจะแก้ต้นทางใน scripts/fetch_rice_evi*.py
-      const EVI_LATE_STAGES = new Set(["ripening", "harvest"]);
-
-      function eviDataMonth() {
-        return parseInt((window.RICE_EVI_DATA?.month || "").split("-")[1], 10) || null;
-      }
-
-      // เชื่อระยะปลายฤดูเฉพาะเมื่อ "เดือนของภาพดาวเทียม" อยู่ในหน้าต่างเก็บเกี่ยวของภาคนั้น
-      function eviStageTrusted(en, stage) {
-        if (!EVI_LATE_STAGES.has(stage)) return true;
-        const mon = eviDataMonth();
-        if (!mon) return true; // ไม่รู้เดือน อย่าเดา
-        const s = RiceSeason.of(regionOf(en), mon).stage;
-        return s === "harvest" || s === "offseason";
-      }
-
-      // คืนรูปแบบเดียวกับ STAGE_MAP เสมอ เพื่อให้จุดที่เรียกใช้เดิมไม่ต้องแก้
-      function eviStageOf(en, rp) {
-        const stage = rp?.stage;
-        if (eviStageTrusted(en, stage)) return STAGE_MAP[stage] || STAGE_MAP.growing;
-        return {
-          th: "ความเขียวลดลง (ยังไม่ถึงฤดูเก็บเกี่ยวของภาคนี้)",
-          en: "Greenness falling (outside this region's harvest window)",
-          icon: "▼",
-          color: "var(--muted)",
-        };
-      }
-
       // ใช้แยก ออกรวง (ขาขึ้น) จาก สร้างเมล็ด/สุกแก่ (ขาลง) ที่ค่า EVI เดียวกัน
-      function eviTrend(rp, en) {
+      function eviTrend(rp) {
         const tr = rp?.trend;
         if (tr == null) return null; // JSON เก่ายังไม่มี trend
         if (tr >= 0.02)
           return { icon: "▲", th: "ความเขียวเพิ่มขึ้น → เข้าสู่ออกรวง", en: "Greening up → toward heading", color: "#66bb6a", delta: tr };
-        if (tr <= -0.02) {
-          // อ้าง "ใกล้เก็บเกี่ยว" ได้เฉพาะเมื่อปฏิทินรองรับ ไม่งั้นบอกแค่สิ่งที่วัดได้
-          if (en != null && !eviStageTrusted(en, "ripening"))
-            return {
-              icon: "▼",
-              th: "ความเขียวลดลง — ช่วงนี้ตามปฏิทินมักเป็นการไถขังน้ำเตรียมปักดำ",
-              en: "Greenness falling — at this point in the season this is usually flooding/land prep",
-              color: "var(--muted)",
-              delta: tr,
-            };
+        if (tr <= -0.02)
           return { icon: "▼", th: "ความเขียวลดลง → สร้างเมล็ด/สุกแก่ ใกล้เก็บเกี่ยว", en: "Greenness falling → grain-fill/ripening, near harvest", color: "#c9a227", delta: tr };
-        }
         return { icon: "▬", th: "ความเขียวทรงตัว", en: "Greenness steady", color: "var(--muted)", delta: tr };
       }
 
@@ -5770,7 +5726,7 @@
           const riceRai = riceEviProv.rice_rai || 0;
           const confidence = riceEviProv.confidence ?? null;
           const phenoWindow = window.RICE_EVI_DATA?._meta?.phenology_window || "";
-          const stg = eviStageOf(en, riceEviProv);
+          const stg = STAGE_MAP[stage] || STAGE_MAP.growing;
           // ── confidence color: เขียว ≥90%, เหลือง 70-90%, แดง <70%
           const confColor =
             confidence == null
@@ -5795,7 +5751,7 @@
               <div class="m-value" style="color:${stg.color}">${eviVal.toFixed(3)} ${stg.icon} <small style="color:${stg.color}">${t(stg.th, stg.en)}</small></div>
             </div>
             ${(() => {
-              const tv = eviTrend(riceEviProv, en);
+              const tv = eviTrend(riceEviProv);
               return tv
                 ? `<div class="metric">
               <div class="m-label">${t("ทิศทางความเขียว (เทียบเดือนก่อน)", "Greenness trend (vs last month)")}</div>
@@ -7163,7 +7119,7 @@ ${warningsHtml}
             return `<div class="th">${t(NM[en] || en, en)}</div><div class="en">${en}</div>
               <div style="color:#bcaaa4;font-size:11px;font-weight:700;margin-top:6px">⚠️ ${t("ไม่ใช่พื้นที่นาข้าวสำคัญ", "Not a significant rice area")}</div>
               <div style="color:var(--muted);font-size:9px;margin-top:3px;line-height:1.5">${t(`ข้าวจริง (OAE) เพียง ${fmtNumber(oaeMaxRiceRai(en))} ไร่ · EVI น่าจะเป็นพืชอื่น`, `Only ${fmtNumber(oaeMaxRiceRai(en))} rai of rice (OAE) · EVI likely non-rice`)}</div>`;
-          const stg = eviStageOf(en, rp);
+          const stg = STAGE_MAP[rp.stage] || STAGE_MAP.growing;
           const ctx = riceSeasonContext(en);
           const confPct = rp.confidence != null ? Math.round(rp.confidence * 100) : null;
           const confColor =
@@ -7175,7 +7131,7 @@ ${warningsHtml}
     <div class="value" style="color:${stg.color}">${rp.evi.toFixed(3)} EVI ${stg.icon}</div>
     <div style="font-size:11px;font-weight:700;color:${stg.color};margin:2px 0">${t(stg.th, stg.en)}</div>
     ${(() => {
-      const tv = eviTrend(rp, en);
+      const tv = eviTrend(rp);
       return tv ? `<div style="font-size:9px;color:${tv.color};margin:1px 0">${tv.icon} ${t(tv.th, tv.en)}</div>` : "";
     })()}
     <div class="rank">${rank ? `${t("อันดับ", "Rank")} #${rank} / ${total}` : t("ไม่มีข้อมูล", "No data")}</div>
@@ -7867,7 +7823,7 @@ ${warningsHtml}
             .filter(([, v]) => v?.evi != null)
             .sort((a, b) => (b[1].evi || 0) - (a[1].evi || 0))
             .map(([name, v]) => {
-              const stg = eviStageOf(en, v);
+              const stg = STAGE_MAP[v.stage] || STAGE_MAP.growing;
               return {
                 name,
                 val: v.evi,

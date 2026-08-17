@@ -27,6 +27,7 @@ import json
 import os
 from datetime import date, timedelta
 from riceutils import init_gee, GAUL_NAME_MAP as PROV_MAP
+from rice_stage import TREND_EPS, classify_evi
 
 
 PHENOLOGY_MONTHS = 12
@@ -39,7 +40,6 @@ MIN_EVI_MAX   = 0.20   # ต้องเคยโล่ง/น้ำขัง (m
 GLAD_MIN_PIXELS  = 8    # GLAD-preferred: GLAD ต่ำกว่านี้ = คง union (GLAD ขาด)
 GLAD_BONUS_RATIO = 3.0  # bonus เกินสัดส่วนนี้ของ GLAD = น่าสงสัยพืชอื่น → เชื่อ GLAD
 RUBBER_ASSET     = ""   # asset ยาง (ปล่อยว่าง = ข้าม) — mirror province script
-TREND_EPS     = 0.02   # |Δ EVI| ต่ำกว่านี้ = ทรงตัว (กัน noise รายเดือน)
 
 
 def get_last_month_dates():
@@ -152,18 +152,7 @@ def build_rice_phenology_mask(current_start, n_months=12):
     return rice_confirm, window_str
 
 
-def classify_evi(evi_val, evi_prev=None):
-    """ระยะข้าวจาก EVI + ทิศทาง (mirror scripts/fetch_rice_evi.py)
-    ค่าสูง = ออกรวง (ยอด canopy) ไม่ใช่สุกแก่ — สุกแก่ EVI ลดลง"""
-    if evi_val is None:  return None
-    if evi_val < 0.15:   return "fallow"
-    rising = True if evi_prev is None else (evi_val - evi_prev) >= -TREND_EPS
-    if evi_val < 0.25:   return "seedling" if rising else "harvest"
-    if evi_val < 0.40:   return "tillering" if rising else "ripening"
-    if evi_val < 0.55:   return "heading" if rising else "ripening"
-    return "heading"
-
-
+# classify_evi ย้ายไป rice_stage.py (ใช้ร่วมกับสคริปต์ระดับจังหวัด)
 def main():
     init_gee()
 

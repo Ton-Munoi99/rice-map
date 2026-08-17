@@ -25,6 +25,7 @@ import json
 import os
 from datetime import date, timedelta
 from riceutils import init_gee, GAUL_NAME_MAP as NAME_MAP
+from rice_stage import TREND_EPS, classify_evi
 
 
 # ── Phenology window ────────────────────────────────────────────────────────
@@ -62,7 +63,6 @@ RUBBER_ASSET = ""       # เช่น "projects/xxx/assets/thailand_rubber_2023
 # EVI ขึ้นสูงสุดที่ "ออกรวง" แล้วลดลงตอนสร้างเมล็ด–สุกแก่ (senescence) จนเหลือ ~0.4
 # ตอนเก็บเกี่ยว (Xiao et al.; Sentinel-2 rice phenology). ค่าเดือนเดียวจึงกำกวม —
 # ต้องดู "ทิศทาง" เทียบเดือนก่อนหน้า: ขาขึ้น = กำลังเข้าออกรวง, ขาลง = สร้างเมล็ด/สุกแก่
-TREND_EPS = 0.02       # |Δ EVI| ต่ำกว่านี้ถือว่าทรงตัว (กัน noise MODIS รายเดือน)
 
 
 # ── Helpers ─────────────────────────────────────────────────────────────────
@@ -280,33 +280,7 @@ def build_rice_phenology_mask(current_start_iso, n_months=12):
 
 # ── EVI stage classification (trend-aware) ────────────────────────────────────
 
-def classify_evi(evi_val, evi_prev=None):
-    """
-    จำแนกระยะข้าวจาก EVI + ทิศทาง (เทียบเดือนก่อนหน้า)
-
-    หลักการ: ความเขียว (EVI) ขึ้นสูงสุดที่ "ออกรวง/ออกดอก" แล้วลดลงตอนสร้างเมล็ด–สุกแก่
-    ดังนั้นค่าสูงคือ canopy เขียวสุด (heading) ไม่ใช่ "ใกล้เก็บเกี่ยว" — นาใกล้เก็บเกี่ยว
-    EVI จะ "ลดลง" ต่างหาก. เมื่อรู้ทิศทางจึงแยก heading (ขาขึ้น) กับ ripening (ขาลง) ได้
-
-    evi_prev = None → ไม่รู้ทิศทาง → เดาเป็นขาขึ้น (label ตามระดับความเขียว)
-    """
-    if evi_val is None:
-        return None
-    if evi_val < 0.15:
-        return "fallow"        # นาว่าง / เตรียมดิน / น้ำขัง
-    rising = True if evi_prev is None else (evi_val - evi_prev) >= -TREND_EPS
-    if evi_val < 0.25:
-        return "seedling" if rising else "harvest"    # ต้นกล้า(ขึ้น) / เก็บเกี่ยว-ตอซัง(ลง)
-    if evi_val < 0.40:
-        return "tillering" if rising else "ripening"  # แตกกอ(ขึ้น) / สุกแก่(ลง)
-    # EVI ≥ 0.40 = canopy หนาแน่น
-    if evi_val < 0.55:
-        return "heading" if rising else "ripening"    # ออกรวง(ขึ้น) / สร้างเมล็ด-สุกแก่(ลง)
-    return "heading"           # ≥0.55 = ยอด canopy เขียวสุด = ออกรวง/ออกดอก (ไม่ใช่สุกแก่)
-
-
-# ── Main ─────────────────────────────────────────────────────────────────────
-
+# classify_evi ย้ายไป rice_stage.py แล้ว (ใช้ร่วมกับสคริปต์ระดับอำเภอ + ตัวคำนวณซ้ำ)
 def main():
     init_gee()
 
