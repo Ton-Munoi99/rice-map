@@ -111,16 +111,51 @@
       </footer>
     </div>
 
+    <script src="./rice-season.js"></script>
     <script>
       // ── คำแนะนำการเพาะปลูกตามระดับเตือน (ต่อยอดจาก agri-warnings) ──────────
       const ADVICE = {
-        flood_high: ["เร่งระบายน้ำออกจากแปลงนา ยกคันนากันน้ำหลาก", "งดใส่ปุ๋ย/ฉีดยาช่วงนี้ — ถูกน้ำชะล้าง เสียเปล่า", "ถ้าข้าวใกล้เก็บเกี่ยว เตรียมเก็บก่อนน้ำท่วมขัง"],
+        flood_high: ["เร่งระบายน้ำออกจากแปลงนา ยกคันนากันน้ำหลาก", "งดใส่ปุ๋ย/ฉีดยาช่วงนี้ — ถูกน้ำชะล้าง เสียเปล่า"],
         flood_medium: ["เฝ้าระวังระดับน้ำ เตรียมทางระบายให้พร้อม", "เลื่อนการใส่ปุ๋ยถ้าฝนยังตกหนัก รอฝนซาก่อน"],
         flood_low: ["ฝนพอเหมาะ เดินหน้าตามแผนได้", "หลังฝนหยุด ดินชื้นกำลังดี — เหมาะกับใส่ปุ๋ย ปุ๋ยละลายดี"],
-        drought: ["ชะลอการหว่าน/ปักดำ จนกว่าจะมีน้ำแน่นอน", "งดหว่านแห้งถ้าไม่มีแหล่งน้ำสำรอง", "เลือกพันธุ์อายุสั้น/ทนแล้ง เก็บกักน้ำไว้ใช้"],
+        drought: ["งดหว่านแห้งถ้าไม่มีแหล่งน้ำสำรอง", "เลือกพันธุ์อายุสั้น/ทนแล้ง เก็บกักน้ำไว้ใช้"],
         dam_low: ["น้ำต้นทุนในเขื่อนน้อย — ใช้น้ำอย่างประหยัด", "วางแผนรอบปลูกให้พอดีกับน้ำที่มี เลี่ยงปลูกเกินตัว"],
         normal: ["สภาพอากาศเหมาะสม เดินหน้าตามแผนได้", "ช่วงดินชื้นเหมาะกับการเตรียมแปลงและใส่ปุ๋ย"],
       };
+
+      // ── คำแนะนำเฉพาะระยะข้าว (rice-season.js) × สภาพน้ำ ────────────────────
+      // คำแนะนำเดิมดูแค่ระดับเตือน จึงพูดเหมือนกันหมดไม่ว่าข้าวจะเพิ่งหว่านหรือใกล้เกี่ยว
+      // ซึ่งเป็นคนละเรื่องกันโดยสิ้นเชิง — กล้าเล็กจมน้ำตาย แต่ข้าวใกล้แก่ต้องรีบเกี่ยว
+      const STAGE_ADVICE = {
+        planting: {
+          wet: ["🌱 ระยะปลูก: ชะลอหว่าน/ปักดำจนน้ำลด — กล้าเล็กจมน้ำตายง่ายที่สุด", "ถ้าหว่านไปแล้ว เตรียมกล้าสำรองไว้ซ่อมแปลง"],
+          dry: ["🌱 ระยะปลูก: อย่าเพิ่งหว่านจนกว่าจะมีน้ำแน่นอน — หว่านแล้วแล้งคือเสียเมล็ดพันธุ์เปล่า"],
+          normal: ["🌱 ระยะปลูก: ดินชื้นกำลังดี เหมาะกับการปักดำ/หว่าน"],
+        },
+        growing: {
+          wet: ["🌾 ข้าวกำลังโต: ทนน้ำขังได้ระยะหนึ่ง แต่อย่าให้ท่วมมิดยอดเกิน 3–5 วัน", "งดใส่ปุ๋ยจนน้ำลด — ใส่ตอนนี้ไหลทิ้งหมด"],
+          dry: ["🌾 ข้าวกำลังโต: ระยะตั้งท้องขาดน้ำกระทบผลผลิตมากที่สุด — ถ้าน้ำจำกัด ให้ระยะนี้ก่อน"],
+          normal: ["🌾 ข้าวกำลังโต: ช่วงใส่ปุ๋ยแต่งหน้า ดูสีใบประกอบก่อนตัดสินใจ"],
+        },
+        harvest: {
+          wet: ["🚜 ระยะเก็บเกี่ยว: ถ้าข้าวแก่พอแล้วให้เร่งเกี่ยว — ข้าวล้มแช่น้ำคุณภาพตกทันที", "เกี่ยวแล้วอย่ากองไว้กลางแจ้ง ความชื้นขึ้นเร็วมาก"],
+          dry: ["🚜 ระยะเก็บเกี่ยว: อากาศแห้งช่วยตากข้าวได้เร็ว ลดความชื้นก่อนขายได้ราคาดีกว่า"],
+          normal: ["🚜 ระยะเก็บเกี่ยว: อย่าปล่อยแก่เกินไปข้าวจะร่วง เกี่ยวที่ความชื้นเหมาะสม"],
+        },
+        offseason: {
+          wet: ["💧 นาปรัง: ระวังน้ำหลากเข้าแปลง นาปรังมักอยู่ในที่ลุ่มชลประทาน"],
+          dry: ["💧 นาปรัง: พึ่งน้ำชลประทานล้วน — ถ้าเขื่อนน้ำน้อย อย่าขยายพื้นที่ปลูก"],
+          normal: ["💧 นาปรัง: วางแผนรอบน้ำให้จบก่อนสิ้นฤดูชลประทาน"],
+        },
+        prep: {
+          wet: ["🚜 ช่วงเตรียมดิน: ดินแฉะเกินไถลำบาก รอหน้าดินสะเด็ดน้ำก่อน"],
+          dry: ["🚜 ช่วงเตรียมดิน: ไถกลบตอซังตอนนี้ได้ ช่วยเพิ่มอินทรียวัตถุก่อนฤดูปลูก"],
+          normal: ["🚜 ช่วงเตรียมดิน: เหมาะกับไถกลบตอซังและปรับพื้นที่"],
+        },
+      };
+
+      // ต้นทุนผลิตอ้างอิง สศก. (บาท/ไร่) — ใช้คำนวณจุดคุ้มทุน ตรงกับที่แผนที่ใช้
+      const COST_RAI = { white: 6100, jasmine: 5150 };
 
       const $ = (id) => document.getElementById(id);
       const fmt = (n) => (n == null || isNaN(n) ? "—" : Math.round(n).toLocaleString("th-TH"));
@@ -160,17 +195,26 @@
       function buildProvinces(csv) {
         const head = csv[0].map((h) => h.replace(/^﻿/, "").trim());
         const ix = (n) => head.indexOf(n);
-        const [iTh, iEn, iReg] = ["province_th", "province_en", "region"].map(ix);
-        const seen = new Set();
+        const [iTh, iEn, iReg, iType, iYear, iYield] =
+          ["province_th", "province_en", "region", "rice_type", "year", "yield"].map(ix);
+        const by = new Map();
         for (let r = 1; r < csv.length; r++) {
           const row = csv[r];
           if (!row || row.length < 5) continue;
           const en = (row[iEn] || "").trim();
           const th = (row[iTh] || "").trim();
           if (!en || !th) continue;
-          if (!seen.has(en)) { seen.add(en); PROV.push({ th, en, region: (row[iReg] || "").trim() }); }
+          if (!by.has(en)) by.set(en, { th, en, region: (row[iReg] || "").trim(), yields: {} });
+          // เก็บผลผลิต/ไร่ ของปีล่าสุดต่อชนิดข้าว ไว้คำนวณจุดคุ้มทุน
+          const p = by.get(en);
+          const type = (row[iType] || "").trim();
+          const year = (row[iYear] || "").trim();
+          const y = parseFloat(row[iYield]);
+          if (type && year && y > 0 && (!p.yields[type] || year > p.yields[type].year)) {
+            p.yields[type] = { year, y };
+          }
         }
-        PROV.sort((a, b) => a.th.localeCompare(b.th, "th"));
+        PROV = [...by.values()].sort((a, b) => a.th.localeCompare(b.th, "th"));
       }
 
       function card(html) { return `<div class="card">${html}</div>`; }
@@ -208,16 +252,26 @@
         return card(`<h2>⛈️ อากาศ &amp; น้ำ</h2>${rows}<div class="src">Open-Meteo · JAXA GSMaP · RID · อัปเดต ${D.forecast?._meta?.updated || "—"}</div>`);
       }
 
-      function renderAdvice(en) {
-        const w = D.warn?.provinces?.[en];
+      // ระดับเตือน → กลุ่มสภาพน้ำที่คำแนะนำตามระยะข้าวใช้ตัดสิน
+      const WATER_BUCKET = { flood_high: "wet", flood_medium: "wet", drought: "dry", dam_low: "dry" };
+
+      function renderAdvice(p) {
+        const w = D.warn?.provinces?.[p.en];
         const top = w?.warnings?.[0] || { type: "normal", level: "normal", icon: "✅", message_th: "ไม่มีข้อมูลเตือนภัย" };
         // warning type/level → advice+style key. flood level = high/medium/low; type "dam" → dam_low
         const key = top.type === "flood" ? "flood_" + top.level : top.type === "dam" ? "dam_low" : top.type;
-        const tips = ADVICE[key] || ADVICE.normal;
         const cls = key.startsWith("flood_") ? top.level : key;
+
+        const season = RiceSeason.of(p.region);
+        const stageTips = STAGE_ADVICE[season.stage]?.[WATER_BUCKET[key] || "normal"] || [];
+        const tips = [...stageTips, ...(ADVICE[key] || ADVICE.normal)];
+
         const status = `<div class="status ${cls}"><span class="ic">${top.icon}</span><span class="msg">${top.message_th}</span></div>`;
         const list = `<ul class="advice">${tips.map((t) => `<li><span class="dot">➜</span><span>${t}</span></li>`).join("")}</ul>`;
-        return card(`<h2>✅ ควรทำอะไรตอนนี้</h2>${status}${list}`);
+        return card(
+          `<h2>✅ ควรทำอะไรตอนนี้</h2>${status}${list}` +
+            `<div class="src">ตอนนี้: ${season.situation.th} · ${season.calendar.th}</div>`,
+        );
       }
 
       // ข่าวหมวดสิทธิ์/เงินช่วยเหลือ — กรองเฉพาะโครงการช่วยเหลือจริง (ไม่เอาข่าวทุจริต/ทั่วไป)
@@ -234,6 +288,66 @@
         return card(
           `<h2>📋 สิทธิ์ &amp; เงินช่วยเหลือ</h2>${link}${news}` +
             `<div class="src">ลิงก์ทางการ ธ.ก.ส. · ข่าวจาก Google News (หัวข้อ + ลิงก์ต้นฉบับ) · ตรวจสอบเงื่อนไขกับ ธ.ก.ส./เกษตรอำเภอก่อนเสมอ</div>`,
+        );
+      }
+
+      // ── ราคา · ความชื้น · จุดคุ้มทุน ────────────────────────────────────────
+      // ตอบคำถามที่ชาวนาตัดสินใจจริง: ตากข้าวก่อนขายคุ้มไหม และขายราคานี้แล้วกำไรไหม
+      const RICE_TH = { white: "ข้าวเปลือกเจ้า", jasmine: "ข้าวหอมมะลิ" };
+
+      function priceRow(label, baht, extra) {
+        return `<div class="row"><span class="k">${label}</span><span class="v">${fmt(baht)} <span class="unit">บาท/ตัน</span>${extra || ""}</span></div>`;
+      }
+
+      function renderPrice(p) {
+        const src = D.price?.provincial_prices;
+        const q = src?.data?.[p.th];
+        if (!q || (q.white == null && q.jasmine == null)) {
+          return card(
+            `<h2>💰 ราคา &amp; จุดคุ้มทุน</h2>` +
+              `<div class="muted">ยังไม่มีราคารายจังหวัดของ${p.th} — สมาคมโรงสีประกาศเพียงบางจังหวัด</div>` +
+              `<div class="src">ไม่นำค่าเฉลี่ยประเทศมาแสดงแทน เพราะราคารับซื้อต่างกันมากรายพื้นที่</div>`,
+          );
+        }
+
+        let rows = "";
+        // ส่วนต่างความชื้น = เงินที่ได้เพิ่มถ้าตากข้าวก่อนขาย
+        if (q.white != null) {
+          rows += priceRow(`${RICE_TH.white} · ความชื้น 15%`, q.white);
+          if (q.white_25 != null) {
+            const gap = q.white - q.white_25;
+            rows += priceRow(
+              `${RICE_TH.white} · ความชื้น 25%`,
+              q.white_25,
+              gap > 0 ? `<span class="note" style="color:var(--gold)">ตากให้ถึง 15% ได้เพิ่ม ${fmt(gap)} บาท/ตัน</span>` : "",
+            );
+          }
+        }
+        if (q.jasmine != null) rows += priceRow(`${RICE_TH.jasmine}`, q.jasmine);
+
+        // จุดคุ้มทุน: ต้นทุน/ไร่ ÷ ผลผลิต/ไร่ → ราคาต่อตันที่ต้องขายให้ได้
+        let verdict = "";
+        const type = q.white != null ? "white" : "jasmine";
+        const yieldInfo = p.yields[type];
+        const gotPrice = q[type];
+        if (yieldInfo && gotPrice) {
+          const breakeven = (COST_RAI[type] / yieldInfo.y) * 1000;
+          const profit = (gotPrice * yieldInfo.y) / 1000 - COST_RAI[type];
+          verdict =
+            `<div class="verdict ${profit >= 0 ? "good" : "bad"}">` +
+            (profit >= 0
+              ? `✅ ราคานี้คุ้มทุน — เหลือราว ${fmt(profit)} บาท/ไร่`
+              : `⚠️ ราคานี้ยังไม่คุ้มทุน — ขาดราว ${fmt(-profit)} บาท/ไร่`) +
+            ` (ต้องขายได้ ≥ ${fmt(breakeven)} บาท/ตัน จึงเท่าทุน)</div>` +
+            `<div class="muted" style="margin-top:6px">ประมาณการหยาบ: ผลผลิตเฉลี่ยทั้งจังหวัด ${fmt(yieldInfo.y)} กก./ไร่ (ปี ${yieldInfo.year}) ` +
+            `กับต้นทุน <b>ค่าเฉลี่ยทั้งประเทศ</b> ${fmt(COST_RAI[type])} บาท/ไร่ (สศก.) ซึ่งไม่ใช่ต้นทุนของจังหวัดนี้ ` +
+            `— ถ้าแปลงคุณได้ผลผลิตสูงกว่าหรือต้นทุนต่ำกว่าค่าเฉลี่ย ผลจริงจะดีกว่าที่แสดง</div>`;
+        }
+
+        return card(
+          `<h2>💰 ราคา &amp; จุดคุ้มทุน</h2>${rows}${verdict}` +
+            `<div class="src">${src.source_th} · ${(src.updated_at || "").slice(0, 10)} · ` +
+            `ส่วนต่างความชื้นเป็นเกณฑ์หักมาตรฐานของสมาคม (เท่ากันทุกจังหวัด) ไม่ใช่ราคาต่อรองจริงหน้าโรงสี</div>`,
         );
       }
 
@@ -261,7 +375,7 @@
         const p = PROV.find((x) => x.en === en);
         if (!p) { $("cards").innerHTML = `<div class="loading">ไม่พบจังหวัด</div>`; return; }
         $("cards").innerHTML =
-          renderAdvice(en) + renderWeather(en) + renderAid() + renderNearby(en, p.th) + renderLand();
+          renderAdvice(p) + renderWeather(en) + renderPrice(p) + renderAid() + renderNearby(en, p.th) + renderLand();
         localStorage.setItem("farmer_prov", en);
         const u = new URL(location.href); u.searchParams.set("prov", en);
         history.replaceState(null, "", u);
@@ -274,7 +388,7 @@
       }
 
       (async function () {
-        const [csv, warn, forecast, rain, dam, mills, biomass, news] = await Promise.all([
+        const [csv, warn, forecast, rain, dam, mills, biomass, news, price] = await Promise.all([
           loadCSV("./rice-data.csv"),
           loadJSON("./data/agri-warnings.json"),
           loadJSON("./data/rain-forecast.json"),
@@ -283,9 +397,10 @@
           loadJSON("./data/rice-mills.json"),
           loadJSON("./data/biomass-plants.json"),
           loadJSON("./data/rice-news-archive.json"),
+          loadJSON("./data/prices-live.json"),
         ]);
         if (!csv) { $("cards").innerHTML = `<div class="loading">โหลดข้อมูลไม่สำเร็จ ลองรีเฟรชอีกครั้ง</div>`; return; }
-        Object.assign(D, { warn, forecast, rain, dam, mills, biomass, news });
+        Object.assign(D, { warn, forecast, rain, dam, mills, biomass, news, price });
         buildProvinces(csv);
         const url = new URLSearchParams(location.search).get("prov");
         const saved = localStorage.getItem("farmer_prov");

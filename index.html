@@ -2255,6 +2255,7 @@
     <div class="tooltip" id="tooltip"></div>
     <div class="toast" id="toast"></div>
 
+    <script src="./rice-season.js"></script>
     <script src="./thailand-data.js"></script>
     <script src="./rice-data.js"></script>
     <script src="./naprang-data.js"></script>
@@ -2540,63 +2541,10 @@
       // ใช้ประกอบ tooltip + detail card: อธิบายว่า EVI ระยะนี้ = กำลังทำอะไร
       // แต่ละภาคมีปฏิทินต่างกัน + แยกนาปี (main) / นาปรัง (off-season)
       function riceSeasonContext(en) {
-        const isSouth = SOUTH_PROVINCES.has(en);
-        const reg = regionOf(en);
-        // currentMonth from RICE_EVI_DATA (e.g. "2026-04") → extract month number
-        const monthStr = window.RICE_EVI_DATA?.month || "";
-        const mon = monthStr ? parseInt(monthStr.split("-")[1], 10) : new Date().getMonth() + 1;
-
-        if (isSouth) {
-          // ภาคใต้: นาปี ปลูก ก.ย.–พ.ย. เก็บ มี.ค.–พ.ค. | นาปรังน้อย
-          const calendar = {
-            th: "🌧️ ภาคใต้ · นาปี: ปลูก ก.ย.–พ.ย. → เก็บ มี.ค.–พ.ค. (มรสุม ต.อ.น.)",
-            en: "🌧️ South · Main: plant Sep–Nov → harvest Mar–May (NE monsoon)",
-          };
-          let situation;
-          if (mon >= 3 && mon <= 5) {
-            situation = { th: "ช่วงเก็บเกี่ยวนาปี", en: "Main crop harvest season" };
-          } else if (mon >= 9 && mon <= 11) {
-            situation = { th: "ช่วงปลูกนาปี", en: "Main crop planting season" };
-          } else if (mon >= 6 && mon <= 8) {
-            situation = { th: "เตรียมดิน / รอฝนมรสุม", en: "Land prep / awaiting monsoon" };
-          } else {
-            situation = { th: "ข้าวกำลังเจริญเติบโต (นาปี)", en: "Rice growing (main crop)" };
-          }
-          return { calendar, situation, cropType: { th: "นาปี (rain-fed)", en: "Main season (rain-fed)" } };
-        }
-
-        // ภาคเหนือ / อีสาน / กลาง / ตะวันออก / ตะวันตก
-        // นาปี: ปลูก พ.ค.–ส.ค. เก็บ พ.ย.–ม.ค.
-        // นาปรัง: ปลูก ธ.ค.–ก.พ. เก็บ มี.ค.–พ.ค. (เฉพาะพื้นที่มีชลประทาน)
-        const regNameTh =
-          reg === "north"
-            ? "เหนือ"
-            : reg === "northeast"
-              ? "อีสาน"
-              : reg === "central"
-                ? "กลาง"
-                : reg === "east"
-                  ? "ตะวันออก"
-                  : "ตะวันตก";
-        const calendar = {
-          th: `🗓️ ภาค${regNameTh} · นาปี: ปลูก พ.ค.–ส.ค. → เก็บ พ.ย.–ม.ค. · นาปรัง: ปลูก ธ.ค.–ก.พ. → เก็บ มี.ค.–พ.ค.`,
-          en: `🗓️ ${reg.charAt(0).toUpperCase() + reg.slice(1)} · Main: plant May–Aug → harvest Nov–Jan · Off-season: plant Dec–Feb → harvest Mar–May`,
-        };
-        let situation, cropType;
-        if (mon >= 5 && mon <= 8) {
-          situation = { th: "ช่วงปลูกนาปี (rain-fed)", en: "Main crop planting season" };
-          cropType = { th: "นาปี (rain-fed)", en: "Main season (rain-fed)" };
-        } else if (mon >= 11 || mon <= 1) {
-          situation = { th: "เก็บเกี่ยวนาปี / เริ่มนาปรัง", en: "Main harvest / off-season start" };
-          cropType = { th: "นาปี→นาปรัง", en: "Main→Off-season" };
-        } else if (mon >= 2 && mon <= 4) {
-          situation = { th: "นาปรังกำลังโต / เก็บเกี่ยว", en: "Off-season growing / harvest" };
-          cropType = { th: "นาปรัง (irrigated)", en: "Off-season (irrigated)" };
-        } else {
-          situation = { th: "ข้าวนาปีกำลังเจริญเติบโต", en: "Main crop growing" };
-          cropType = { th: "นาปี (rain-fed)", en: "Main season (rain-fed)" };
-        }
-        return { calendar, situation, cropType };
+        // ปฏิทินอยู่ใน rice-season.js — หน้าชาวนาใช้ตัวเดียวกัน แก้ที่เดียวตรงกันทั้งสองหน้า
+        // ใช้เดือนจริง ไม่ใช่เดือนของภาพดาวเทียม (RICE_EVI_DATA.month ช้าราว 2 เดือน
+        // เคยทำให้ พ.ย. ขึ้นว่า "กำลังโต" ทั้งที่ถึงรอบเก็บเกี่ยวแล้ว)
+        return RiceSeason.of(regionOf(en));
       }
 
       // ── Rice EVI tier thresholds (mirrors STAGE_MAP above) ───────────────────
