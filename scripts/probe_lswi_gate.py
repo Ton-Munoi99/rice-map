@@ -56,13 +56,13 @@ def gate(flood_evi_max, peak_min, amp_min, min_evi_max, need_flood=True):
     return conds.rename("g")
 
 VARIANTS = [
-    ("ปัจจุบัน",                    dict(flood_evi_max=.30, peak_min=.40, amp_min=.25, min_evi_max=.20)),
-    ("ผ่อน: น้ำขังตอน EVI<0.45",    dict(flood_evi_max=.45, peak_min=.40, amp_min=.25, min_evi_max=.20)),
-    ("ผ่อน: ไม่บังคับเจอน้ำขัง",     dict(flood_evi_max=.30, peak_min=.40, amp_min=.25, min_evi_max=.20, need_flood=False)),
-    ("ผ่อน: แกว่ง≥0.15",            dict(flood_evi_max=.30, peak_min=.40, amp_min=.15, min_evi_max=.20)),
-    ("ผ่อน: เคยโล่ง EVI≤0.30",      dict(flood_evi_max=.30, peak_min=.40, amp_min=.25, min_evi_max=.30)),
-    ("ผ่อน: ยอดเขียว≥0.30",         dict(flood_evi_max=.30, peak_min=.30, amp_min=.25, min_evi_max=.20)),
-    ("ผ่อนรวม (0.45/0.30/0.15/0.30)", dict(flood_evi_max=.45, peak_min=.30, amp_min=.15, min_evi_max=.30)),
+    ("ปัจจุบัน (เคยโล่ง≤0.20)",  dict(flood_evi_max=.30, peak_min=.40, amp_min=.25, min_evi_max=.20)),
+    ("เคยโล่ง≤0.22",            dict(flood_evi_max=.30, peak_min=.40, amp_min=.25, min_evi_max=.22)),
+    ("เคยโล่ง≤0.24",            dict(flood_evi_max=.30, peak_min=.40, amp_min=.25, min_evi_max=.24)),
+    ("เคยโล่ง≤0.26",            dict(flood_evi_max=.30, peak_min=.40, amp_min=.25, min_evi_max=.26)),
+    ("เคยโล่ง≤0.28",            dict(flood_evi_max=.30, peak_min=.40, amp_min=.25, min_evi_max=.28)),
+    ("เคยโล่ง≤0.30",            dict(flood_evi_max=.30, peak_min=.40, amp_min=.25, min_evi_max=.30)),
+    ("เคยโล่ง≤0.26 + แกว่ง≥0.30", dict(flood_evi_max=.30, peak_min=.40, amp_min=.30, min_evi_max=.26)),
 ]
 
 union, glad, _ = F.load_rice_mask()
