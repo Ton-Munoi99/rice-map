@@ -36,7 +36,6 @@ FIRECRAWL_KEY = os.environ.get("FIRECRAWL_API_KEY", "")
 MAX_LAG_MONTHS = 3
 CATALOG_URL = "https://catalog.oae.go.th/dataset/weekly-prices-paddy"
 TIMEOUT = 30
-PAGE = 100
 
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUTPUT_FILE = os.path.join(_ROOT, "data", "prices-live.json")
@@ -159,7 +158,6 @@ def main():
     }
     # อัปเดตเวลาเฉพาะตอนดึงได้จริง ไม่งั้น freshness monitor จะเห็นว่าไฟล์สดทั้งที่ข้อมูลค้าง
     if not failed:
-        from datetime import datetime, timezone
         result["_meta"]["updated_at"] = datetime.now(timezone.utc).isoformat()
 
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
