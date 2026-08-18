@@ -83,12 +83,14 @@ for f in res["features"]:
     p = f["properties"]
     data[NM.get(p["ADM1_NAME"], p["ADM1_NAME"])] = p
 
-print(f"จังหวัดข้าวใหญ่ {len(RICE)} จว. · กลุ่มควบคุม (นา<20,000 ไร่) {len(CTRL)} จว.\n")
-print(f"{'สูตร':32}{'ข้าวใหญ่ ÷ OAE':>16}{'กลุ่มควบคุม (ไร่)':>20}{'รวมประเทศ (ไร่)':>18}")
-for i, (name, _kw) in enumerate(VARIANTS):
-    k = f"v{i}"
+# เว็บซ่อนจังหวัดที่ OAE < 15,000 ไร่อยู่แล้ว (RICE_EVI_MIN_OAE_RAI)
+SHOWN = [p for p, a in oae.items() if a >= 15000]
+print(f"จังหวัดที่เว็บแสดง {len(SHOWN)} จาก {len(oae)}
+")
+print(f"{'สูตร':30}{'ข้าวใหญ่÷OAE':>14}{'รวมประเทศ÷OAE':>16}{'ส่วนเกินในจว.ที่แสดง':>24}")
+for i2, (name, _kw) in enumerate(VARIANTS):
+    k = f"v{i2}"
     ratios = [(data[p].get(k, 0) or 0) * RAI / oae[p] for p in RICE if p in data]
-    ctrl = sum((data[p].get(k, 0) or 0) * RAI for p in CTRL if p in data)
     tot = sum((v.get(k, 0) or 0) * RAI for v in data.values())
-    print(f"  {name:30}{st.median(ratios):>14.2f}x{ctrl:>18,.0f}{tot:>18,.0f}")
-print(f"\n  {'OAE จริง (ข้าวใหญ่ 20 จว.)':30}{'1.00x':>15}{sum(oae[p] for p in CTRL):>18,.0f}{sum(oae.values()):>18,.0f}")
+    excess = sum(max(0.0, (data[p].get(k, 0) or 0) * RAI - oae[p]) for p in SHOWN if p in data)
+    print(f"  {name:28}{st.median(ratios):>12.2f}x{tot/sum(oae.values()):>15.2f}x{excess:>21,.0f} ไร่")
