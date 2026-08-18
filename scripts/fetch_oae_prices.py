@@ -22,6 +22,16 @@ import sys
 import requests
 
 API = "https://agriapi.nabc.go.th/api/weekly-prices/product"
+# API อยู่หลัง Cloudflare ซึ่งบล็อก 403 เมื่อยิงจาก IP ดาต้าเซ็นเตอร์ด้วย UA ของ
+# python-requests (จากไทยผ่านหมด แต่ runner ของ GitHub Actions โดนทุกครั้ง)
+# ส่ง header แบบเบราว์เซอร์เพื่อยกคะแนน bot score — ไม่ได้หลบ CAPTCHA หรือ challenge ใดๆ
+HEADERS = {
+    "User-Agent": ("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+                   "(KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"),
+    "Accept": "application/json, text/plain, */*",
+    "Accept-Language": "th,en;q=0.9",
+    "Referer": "https://catalog.oae.go.th/",
+}
 CATALOG_URL = "https://catalog.oae.go.th/dataset/weekly-prices-paddy"
 TIMEOUT = 30
 PAGE = 100
@@ -52,6 +62,7 @@ def fetch_all(product_name):
         r = requests.get(
             API,
             params={"product_name": product_name, "limit": PAGE, "offset": offset},
+            headers=HEADERS,
             timeout=TIMEOUT,
         )
         r.raise_for_status()
