@@ -541,7 +541,7 @@
       }
 
       .inset-province.faded {
-        opacity: 0.22;
+        opacity: 0.35;
       }
 
       .sea-label {
@@ -1435,8 +1435,11 @@
         filter: url(#selectGlowJasmine);
       }
 
+      /* จังหวัดที่ไม่มีข้อมูลใน layer นั้น — 0.15 จางจนดูเหมือนแผนที่หายไป
+         โดยเฉพาะ layer เขื่อนที่มีข้อมูลแค่ 26/77 จังหวัด อีก 51 จังหวัดหายหมด
+         0.35 ยังแยกออกว่าไม่มีข้อมูล แต่ยังเห็นรูปประเทศครบ */
       .province.faded {
-        opacity: 0.15;
+        opacity: 0.35;
       }
 
       .province-label text {
