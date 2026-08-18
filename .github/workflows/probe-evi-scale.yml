@@ -1,0 +1,13 @@
+name: (ชั่วคราว) วัดภาระ GEE ที่ 250 ม.
+on: { workflow_dispatch: {} }
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - run: pip install earthengine-api
+      - env:
+          GEE_SERVICE_ACCOUNT_KEY: ${{ secrets.GEE_SERVICE_ACCOUNT_KEY }}
+        run: python scripts/probe_evi_scale.py
