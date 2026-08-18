@@ -84,13 +84,13 @@ for f in res["features"]:
     data[NM.get(p["ADM1_NAME"], p["ADM1_NAME"])] = p
 
 # เว็บซ่อนจังหวัดที่ OAE < 15,000 ไร่อยู่แล้ว (RICE_EVI_MIN_OAE_RAI)
-SHOWN = [p for p, a in oae.items() if a >= 15000]
-print(f"จังหวัดที่เว็บแสดง {len(SHOWN)} จาก {len(oae)}
-")
-print(f"{'สูตร':30}{'ข้าวใหญ่÷OAE':>14}{'รวมประเทศ÷OAE':>16}{'ส่วนเกินในจว.ที่แสดง':>24}")
+SHOWN = [q for q, a in oae.items() if a >= 15000]
+print("จังหวัดที่เว็บแสดงจริง %d จาก %d" % (len(SHOWN), len(oae)))
+print("")
+print("%-30s%14s%16s%22s" % ("สูตร", "ข้าวใหญ่/OAE", "รวมประเทศ/OAE", "ส่วนเกินในจว.ที่แสดง"))
 for i2, (name, _kw) in enumerate(VARIANTS):
-    k = f"v{i2}"
-    ratios = [(data[p].get(k, 0) or 0) * RAI / oae[p] for p in RICE if p in data]
+    k = "v%d" % i2
+    ratios = [(data[q].get(k, 0) or 0) * RAI / oae[q] for q in RICE if q in data]
     tot = sum((v.get(k, 0) or 0) * RAI for v in data.values())
-    excess = sum(max(0.0, (data[p].get(k, 0) or 0) * RAI - oae[p]) for p in SHOWN if p in data)
-    print(f"  {name:28}{st.median(ratios):>12.2f}x{tot/sum(oae.values()):>15.2f}x{excess:>21,.0f} ไร่")
+    excess = sum(max(0.0, (data[q].get(k, 0) or 0) * RAI - oae[q]) for q in SHOWN if q in data)
+    print("  %-28s%12.2fx%15.2fx%19s ไร่" % (name, st.median(ratios), tot / sum(oae.values()), format(excess, ",.0f")))
