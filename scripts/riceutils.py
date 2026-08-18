@@ -285,12 +285,15 @@ def latest_q1_periods(n=2, today=None):
 
 
 def q1_evi_image(start_iso, end_iso):
-    """ภาพ EVI (scaled) ของ composite ช่วงนั้น — กรองพิกเซลที่เมฆบังออกก่อน
+    """ภาพ EVI (scaled) ของช่วงนั้น — กรองพิกเซลที่เมฆบังออกก่อน แล้วเฉลี่ยทุกภาพ
 
     ต้องกรอง QA เพราะ composite ราย 16 วันมีภาพให้เลือกน้อยกว่ารายเดือน
     หน้าฝนไทยจึงเหลือพิกเซลที่เมฆบังเยอะ ทำให้ EVI ต่ำผิดจริง
     (ทดลองไม่กรอง: ค่าเฉลี่ยประเทศร่วงจาก 0.43 เหลือ 0.33 และ 40 จังหวัด
      ถูกจัดเป็น "ทรงพุ่มโรย" กลางเดือน ส.ค. ซึ่งเป็นไปไม่ได้ตอนข้าวกำลังโต)
+
+    แต่กรองอย่างเดียวทำให้ครอบคลุมเหลือ 51/77 จังหวัด จึงรับช่วงกว้างกว่า
+    1 composite ได้ แล้ว mean() ข้ามภาพเพื่ออุดรูที่เมฆบัง
 
     SummaryQA: 0 = ดี, 1 = พอใช้, 2 = หิมะ/น้ำแข็ง, 3 = เมฆ → เก็บ 0-1
     """
@@ -300,13 +303,12 @@ def q1_evi_image(start_iso, end_iso):
     hi = (_date.fromisoformat(end_iso) + _td(days=1)).isoformat()
 
     def _clean(img):
-        good = img.select("SummaryQA").lte(1)
-        return img.select("EVI").updateMask(good)
+        return img.select("EVI").updateMask(img.select("SummaryQA").lte(1))
 
     return (
         ee.ImageCollection(MOD13Q1)
         .filterDate(start_iso, hi)
         .map(_clean)
-        .mosaic()
+        .mean()
         .multiply(0.0001)
     )

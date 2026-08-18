@@ -149,18 +149,19 @@ def main():
     init_gee()
 
     # ── MOD13Q1 composite ราย 16 วัน ล่าสุด — ตรงกับสคริปต์ระดับจังหวัด ──────
-    periods = latest_q1_periods(n=2)
+    periods = latest_q1_periods(n=4)
     if not periods:
         raise RuntimeError("ไม่พบ composite MOD13Q1 ในช่วง 80 วันล่าสุด")
-    start, end = periods[0]
+    # รวม 2 composite (~32 วัน) เพื่ออุดรูที่เมฆบัง — ครอบคลุมกลับมาใกล้รายเดือน
+    start, end = periods[1][0], periods[0][1]
     month_label = start[:7]
     print(f"Fetching District Rice EVI (MOD13Q1 16-day): {start} → {end}")
     evi_img = q1_evi_image(start, end)
 
     # ── EVI ของ composite ก่อนหน้า (trend ขึ้น/ลง) ───────────────────────────
-    if len(periods) > 1:
-        prev_evi_img = q1_evi_image(*periods[1])
-        print(f"  Previous composite for trend: {periods[1][0]}")
+    if len(periods) > 3:
+        prev_evi_img = q1_evi_image(periods[3][0], periods[2][1])
+        print(f"  Previous window for trend: {periods[3][0]} → {periods[2][1]}")
     else:
         prev_evi_img = evi_img.updateMask(ee.Image(0))
         print("  ไม่มี composite ก่อนหน้า → trend = None")
