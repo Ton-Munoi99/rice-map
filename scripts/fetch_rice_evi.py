@@ -46,14 +46,14 @@ MIN_EVI_MAX   = 0.22   # ต้องเคย "โล่ง/น้ำขัง"
                        # และดีขึ้น 47/61 จังหวัด (ผ่อนกว่านี้ค่าเฉลี่ยเริ่มแย่ลงเพราะปนพืชอื่น)
                        # ที่ตรงจุดสุด: พืชยืนต้นเขียวตลอดปี ไม่เคยมีเดือนที่ EVI ต่ำขนาดนี้
 
-# ── GLAD-preferred (ลด overcount จาก cropland union) ─────────────────────────
-# GLAD∩phenology ใกล้ OAE กว่า union มาก (นครศรีฯ ~2× แทน ~13×) แต่ GLAD
-# under-represent จังหวัดเล็กภาคกลาง (อ่างทอง/สิงห์บุรี/ปทุมธานี) จึงเลือกแบบมีเงื่อนไข:
-#   - ถ้า GLAD มีข้อมูลพอ (≥GLAD_MIN_PIXELS) แต่ cropland-bonus เพิ่ม >GLAD_BONUS_RATIO×
-#     ของ GLAD → bonus ส่วนใหญ่น่าจะเป็นพืชอื่น (ยาง/ปาล์ม) → เชื่อเฉพาะแกน GLAD
-#   - ถ้า GLAD น้อย/ศูนย์ (จังหวัดเล็ก GLAD ขาด) → คง union ไว้ (bonus คือสัญญาณเดียว)
-GLAD_MIN_PIXELS  = 8    # GLAD ต่ำกว่านี้ = ถือว่า GLAD under-represent → คง union
-GLAD_BONUS_RATIO = 3.0  # bonus เกินสัดส่วนนี้ของ GLAD = น่าสงสัยว่าเป็นพืชอื่น
+# ── ทำไมไม่ใช้ GLAD อย่างเดียว ────────────────────────────────────────────
+# GLAD (30 ม.) แม่นเรื่องขอบแปลง แต่ under-represent นาข้าวหลายจังหวัดอย่างหนัก
+# วัดจริง ส.ค. 2569: อยุธยา GLAD ให้ 6,875 ไร่ ทั้งที่ OAE มี 811,742 ไร่
+# นครสวรรค์ 365,000 vs 2,465,017 · ร้อยเอ็ด 166,250 vs 2,388,264
+# เคยมีกฎเลือก GLAD เมื่อ cropland-bonus สูงผิดปกติ (กันยาง/ปาล์ม) แต่วัดแล้ว
+# กฎทำงานเฉพาะ 10 จังหวัดข้าวใหญ่ที่ไม่มียาง/ปาล์ม และตัดนาจริงทิ้ง 9.2 ล้านไร่
+# ส่วนจังหวัดยาง/ปาล์มที่ตั้งใจกัน ไม่เคยเข้าเงื่อนไขเลย — ถอดกฎออกแล้ว
+# หน้าที่กันพืชยืนต้นตกเป็นของ phenology gate + exclusion mask ด้านล่าง
 
 # ── Perennial-crop exclusion (defense-in-depth เสริม phenology) ───────────────
 # ลบปาล์ม/ยางออกจาก scan area ตรงๆ เผื่อปาล์ม/ยางอ่อน (replanting ที่ยังโล่ง) หลุด gate
@@ -430,11 +430,14 @@ def main():
             stage         = classify_evi(evi_rounded, evi_prev_r)
             # bonus = pixels found by MCD12Q1 that GLAD missed
             bonus_count   = max(0, confirmed_count - glad_count)
-            # ── GLAD-preferred rice count (ลด overcount จากยาง/ปาล์มใน cropland) ──
-            if glad_count >= GLAD_MIN_PIXELS and bonus_count > GLAD_BONUS_RATIO * glad_count:
-                rice_count, rice_basis = glad_count, "glad"    # bonus มากผิดปกติ → เชื่อ GLAD
-            else:
-                rice_count, rice_basis = confirmed_count, "union"  # GLAD ขาด/bonus พอเชื่อ
+            # เดิมมีกฎ "GLAD-preferred": ถ้า cropland-bonus เกิน 3 เท่าของ GLAD ให้เชื่อ
+            # GLAD อย่างเดียว ตั้งใจกันยาง/ปาล์มที่หลุดมาใน cropland — แต่วัดจริงแล้ว
+            # กฎนี้ทำงานเฉพาะ 10 จังหวัดข้าวใหญ่ (นครสวรรค์ อยุธยา ร้อยเอ็ด พิจิตร สุรินทร์…)
+            # ซึ่งไม่มียาง/ปาล์ม และตัดพื้นที่นาจริงทิ้งรวม 9.2 ล้านไร่
+            # อยุธยาเหลือ 6,875 ไร่ ทั้งที่ OAE มี 811,742 ไร่ — GLAD จับนาไม่ครบเอง
+            # ส่วนจังหวัดยาง/ปาล์มที่กฎตั้งใจกัน ไม่เคยเข้าเงื่อนไขเลยสักจังหวัด
+            # ถอดกฎแล้ว: ดีขึ้น 10 จังหวัด แย่ลง 0 · คลาดกลาง 53%→43% เฉลี่ย 60%→51%
+            rice_count, rice_basis = confirmed_count, "union"
             rice_area_rai = int(rice_count    * 625)   # ไร่ นาข้าว (GLAD-preferred)
             scan_rai      = int(scan_count    * 625)
             glad_rai      = int(glad_count    * 625)

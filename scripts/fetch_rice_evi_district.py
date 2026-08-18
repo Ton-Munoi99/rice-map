@@ -38,8 +38,6 @@ PEAK_MIN      = 0.40   # ต้องมีเดือน canopy เขีย�
 AMP_MIN       = 0.25   # EVI แกว่งตามฤดูสูง (ตัดยาง/ปาล์ม/ป่า เขียวคงที่ทั้งปี)
 MIN_EVI_MAX   = 0.22   # ต้องเคยโล่ง/น้ำขัง (min EVI ต่ำ) → ตัดพืชยืนต้นเขียวตลอดปี
                        # ต้องตรงกับ fetch_rice_evi.py — ดูเหตุผลการเลือก 0.22 ที่นั่น
-GLAD_MIN_PIXELS  = 8    # GLAD-preferred: GLAD ต่ำกว่านี้ = คง union (GLAD ขาด)
-GLAD_BONUS_RATIO = 3.0  # bonus เกินสัดส่วนนี้ของ GLAD = น่าสงสัยพืชอื่น → เชื่อ GLAD
 RUBBER_ASSET     = ""   # asset ยาง (ปล่อยว่าง = ข้าม) — mirror province script
 
 
@@ -238,12 +236,8 @@ def main():
             evi_prev_r = round(float(evi_prev_v), 4) if evi_prev_v is not None else None
             trend      = round(evi_r - evi_prev_r, 4) if evi_prev_r is not None else None
             confidence = round(min(conf_count / scan_count, 1.0), 3)
-            # GLAD-preferred (mirror province script): ตัด cropland-bonus ที่มากผิดปกติ
-            bonus_count = max(0, conf_count - glad_count)
-            if glad_count >= GLAD_MIN_PIXELS and bonus_count > GLAD_BONUS_RATIO * glad_count:
-                rice_count, rice_basis = glad_count, "glad"
-            else:
-                rice_count, rice_basis = conf_count, "union"
+            # ถอดกฎ GLAD-preferred ตามสคริปต์ระดับจังหวัด (ดูเหตุผลที่นั่น)
+            rice_count, rice_basis = conf_count, "union"
             provinces_data[prov_mapped][dist_name] = {
                 "evi":        evi_r,
                 "evi_prev":   evi_prev_r,
