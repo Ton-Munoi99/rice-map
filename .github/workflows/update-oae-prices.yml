@@ -27,6 +27,10 @@ jobs:
         run: pip install requests
 
       - name: 🔄 Fetch OAE prices
+        # Cloudflare หน้า API ตอบ 403 ให้ IP ของ runner — สคริปต์จะสลับไปใช้
+        # Firecrawl (เบราว์เซอร์จริง) เองเมื่อเจอ 403
+        env:
+          FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
         run: python scripts/fetch_oae_prices.py
 
       - name: Commit and push

@@ -17,21 +17,23 @@ Run: python scripts/fetch_oae_prices.py
 """
 import json
 import os
+import re
 import sys
+import urllib.parse
+import urllib.request
+from datetime import datetime, timedelta, timezone
 
 import requests
 
 API = "https://agriapi.nabc.go.th/api/weekly-prices/product"
-# API อยู่หลัง Cloudflare ซึ่งบล็อก 403 เมื่อยิงจาก IP ดาต้าเซ็นเตอร์ด้วย UA ของ
-# python-requests (จากไทยผ่านหมด แต่ runner ของ GitHub Actions โดนทุกครั้ง)
-# ส่ง header แบบเบราว์เซอร์เพื่อยกคะแนน bot score — ไม่ได้หลบ CAPTCHA หรือ challenge ใดๆ
-HEADERS = {
-    "User-Agent": ("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-                   "(KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"),
-    "Accept": "application/json, text/plain, */*",
-    "Accept-Language": "th,en;q=0.9",
-    "Referer": "https://catalog.oae.go.th/",
-}
+# API อยู่หลัง Cloudflare ซึ่งตอบ 403 ให้ IP ดาต้าเซ็นเตอร์ — ยิงจากไทยผ่านทุก UA
+# แต่ runner ของ GitHub Actions โดนทุกครั้ง (ลองส่ง header แบบเบราว์เซอร์แล้วไม่ช่วย
+# เพราะบล็อกที่ชื่อเสียง IP ไม่ใช่ UA) จึงมีทางสำรองผ่าน Firecrawl ซึ่งใช้เบราว์เซอร์จริง
+# และรีโปนี้ตั้ง FIRECRAWL_API_KEY ไว้อยู่แล้วสำหรับราคาปุ๋ย
+HEADERS = {"User-Agent": "RiceMap/1.0 (+https://github.com/Ton-Munoi99/rice-map)"}
+FIRECRAWL_KEY = os.environ.get("FIRECRAWL_API_KEY", "")
+# ยอมให้ข้อมูลล่าช้าได้เท่านี้ — เกินนี้ถือว่าต้นทางหยุดอัปเดต ให้ workflow แดง
+MAX_LAG_MONTHS = 3
 CATALOG_URL = "https://catalog.oae.go.th/dataset/weekly-prices-paddy"
 TIMEOUT = 30
 PAGE = 100
@@ -55,45 +57,66 @@ PRODUCTS = {
 }
 
 
-def fetch_all(product_name):
-    """ดึงทุกหน้า — API ตอบ total มาให้ ใช้ offset เลื่อน"""
-    rows, offset = [], 0
-    while True:
-        r = requests.get(
-            API,
-            params={"product_name": product_name, "limit": PAGE, "offset": offset},
-            headers=HEADERS,
-            timeout=TIMEOUT,
-        )
+def _url(product_name):
+    q = urllib.parse.urlencode({"product_name": product_name, "limit": 1, "offset": 0})
+    return f"{API}?{q}"
+
+
+def _via_firecrawl(url):
+    """ทางสำรองเมื่อ Cloudflare บล็อก — Firecrawl ใช้เบราว์เซอร์จริงจึงผ่าน
+    ตอบกลับเป็น markdown ที่ห่อ JSON ไว้ในโค้ดบล็อก จึงต้องแกะออกมาก่อน"""
+    if not FIRECRAWL_KEY:
+        raise RuntimeError("โดนบล็อก และไม่มี FIRECRAWL_API_KEY ให้ใช้ทางสำรอง")
+    body = json.dumps({"url": url, "formats": ["markdown"], "onlyMainContent": False}).encode()
+    req = urllib.request.Request(
+        "https://api.firecrawl.dev/v1/scrape", data=body,
+        headers={"Authorization": f"Bearer {FIRECRAWL_KEY}", "Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+        data = json.load(r)
+    if not data.get("success"):
+        raise RuntimeError(f"firecrawl ไม่สำเร็จ: {str(data)[:200]}")
+    md = data["data"]["markdown"]
+    m = re.search(r"\{.*\}", md, re.S)
+    if not m:
+        raise RuntimeError(f"firecrawl ไม่ได้ JSON กลับมา: {md[:200]}")
+    return json.loads(m.group(0))
+
+
+def fetch_latest(product_name):
+    """แถวล่าสุดของสินค้านั้น — API เรียงใหม่ไปเก่า จึงขอแค่แถวเดียว"""
+    url = _url(product_name)
+    try:
+        r = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
         r.raise_for_status()
         body = r.json()
-        if not body.get("success"):
-            raise RuntimeError(f"API ตอบ success=false: {str(body)[:200]}")
-        batch = body.get("data") or []
-        rows.extend(batch)
-        total = (body.get("pagination") or {}).get("total", len(rows))
-        if not batch or len(rows) >= total:
-            return rows
-        offset += PAGE
+        via = "direct"
+    except requests.HTTPError as e:
+        if e.response is None or e.response.status_code != 403:
+            raise
+        body = _via_firecrawl(url)
+        via = "firecrawl"
 
+    if not body.get("success"):
+        raise RuntimeError(f"API ตอบ success=false: {str(body)[:200]}")
+    rows = [x for x in (body.get("data") or []) if x.get("province_code") == "TH00"]
+    if not rows:
+        raise RuntimeError("ไม่พบแถวระดับประเทศ (TH00)")
+    newest = max(rows, key=lambda x: (x["year_th"], int(x["month"]), x["week"]))
 
-def latest_of(rows):
-    """แถวล่าสุดตาม ปี→เดือน→สัปดาห์ (API ไม่รับประกันลำดับ จึงเรียงเอง)"""
-    national = [r for r in rows if r.get("province_code") == "TH00"]
-    if not national:
-        return None
-    newest = max(national, key=lambda r: (r["year_th"], int(r["month"]), r["week"]))
-    try:
-        value = round(float(newest["value"]))
-    except (TypeError, ValueError):
-        return None
+    # กันกรณีต้นทางหยุดอัปเดตแล้วเรายังดึง "สำเร็จ" อยู่ทุกวัน
+    bkk = datetime.now(timezone.utc) + timedelta(hours=7)
+    lag = (bkk.year + 543 - newest["year_th"]) * 12 + (bkk.month - int(newest["month"]))
+    if lag > MAX_LAG_MONTHS:
+        raise RuntimeError(f"ข้อมูลล่าสุด {newest['year_th']}-{newest['month']} เก่ากว่า {MAX_LAG_MONTHS} เดือน")
+
     return {
         # เดือนเป็น int เพราะ index.html ใช้ทำ index ใน monthNames[]
         "year": newest["year_th"],
         "month": int(newest["month"]),
         "week": newest["week"],
-        "value_thb_per_ton": value,
-    }
+        "value_thb_per_ton": round(float(newest["value"])),
+    }, via
 
 
 def main():
@@ -108,18 +131,14 @@ def main():
 
     for key, cfg in PRODUCTS.items():
         try:
-            rows = fetch_all(cfg["product_name"])
-            latest = latest_of(rows)
-            if not latest:
-                raise RuntimeError("ไม่พบแถวระดับประเทศ (TH00) ที่อ่านค่าได้")
+            latest, via = fetch_latest(cfg["product_name"])
             oae[key] = {
                 "label_th": cfg["label_th"],
                 "label_en": cfg["label_en"],
                 "latest": latest,
             }
-            print(f"  {key:8} {len(rows):>4} แถว · ล่าสุด {latest['year']}-"
-                  f"{latest['month']:02d} สัปดาห์ {latest['week']} = "
-                  f"{latest['value_thb_per_ton']:,} บาท/ตัน")
+            print(f"  {key:8} [{via}] ล่าสุด {latest['year']}-{latest['month']:02d} "
+                  f"สัปดาห์ {latest['week']} = {latest['value_thb_per_ton']:,} บาท/ตัน")
         except Exception as e:
             failed.append(f"{key}: {type(e).__name__}: {e}")
             print(f"  [ERROR] {key}: {e}", file=sys.stderr)
