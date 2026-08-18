@@ -2513,20 +2513,21 @@
       // ค่าสูงจึง = ออกรวง (ยอด canopy) ไม่ใช่ "สุกแก่/ใกล้เก็บเกี่ยว" (นั้น EVI ลดลง)
       // stage ที่ pipeline ส่งมาแยกด้วยทิศทาง EVI แล้ว (heading ขาขึ้น / ripening ขาลง)
       const STAGE_MAP = {
-        fallow: { th: "นาว่าง / เตรียมดิน", en: "Fallow / Land Prep", icon: "🟫", color: "#8d6e63" },
-        seedling: { th: "ต้นกล้า / ปักดำ", en: "Seedling / Transplanted", icon: "🌱", color: "#ff9800" },
-        tillering: { th: "แตกกอ / เจริญเติบโต", en: "Tillering / Growing", icon: "🌿", color: "#8bc34a" },
-        heading: { th: "ออกรวง / ออกดอก (ยอดเขียว)", en: "Heading / Flowering (peak canopy)", icon: "🌾", color: "#2e7d32" },
-        ripening: { th: "สร้างเมล็ด / สุกแก่ · ใกล้เก็บเกี่ยว", en: "Grain fill / Ripening · near harvest", icon: "🌾", color: "#c9a227" },
-        harvest: { th: "เก็บเกี่ยว / ตอซัง", en: "Harvest / Stubble", icon: "🌾", color: "#bfa76f" },
+        fallow: { th: "แทบไม่มีพืชปกคลุม", en: "Little/no canopy", icon: "🟫", color: "#8d6e63" },
+        seedling: { th: "เริ่มเขียว · ทรงพุ่มบาง", en: "Greening up · sparse canopy", icon: "🌱", color: "#ff9800" },
+        tillering: { th: "ทรงพุ่มกำลังขยาย", en: "Canopy expanding", icon: "🌿", color: "#8bc34a" },
+        heading: { th: "ทรงพุ่มเขียวเต็มที่", en: "Canopy at peak green", icon: "🌾", color: "#2e7d32" },
+        ripening: { th: "ทรงพุ่มเริ่มโรย", en: "Canopy declining", icon: "🌾", color: "#c9a227" },
+        harvest: { th: "ทรงพุ่มโล่งลง", en: "Canopy cleared", icon: "🌾", color: "#bfa76f" },
         // ── aliases สำหรับ JSON เก่า (ก่อนเปลี่ยน classify) — label แก้ให้ถูกแล้ว ──
-        early: { th: "ต้นกล้า / ปักดำ", en: "Seedling / Transplanted", icon: "🌱", color: "#ff9800" },
-        growing: { th: "แตกกอ / เจริญเติบโต", en: "Tillering / Growing", icon: "🌿", color: "#8bc34a" },
-        peak: { th: "ออกรวง / ออกดอก (ยอดเขียว)", en: "Heading / Flowering (peak canopy)", icon: "🌾", color: "#2e7d32" },
+        early: { th: "เริ่มเขียว · ทรงพุ่มบาง", en: "Greening up · sparse canopy", icon: "🌱", color: "#ff9800" },
+        growing: { th: "ทรงพุ่มกำลังขยาย", en: "Canopy expanding", icon: "🌿", color: "#8bc34a" },
+        peak: { th: "ทรงพุ่มเขียวเต็มที่", en: "Canopy at peak green", icon: "🌾", color: "#2e7d32" },
       };
 
       // ── EVI trend badge (ทิศทางความเขียว เทียบเดือนก่อน) ─────────────────────
-      // ใช้แยก ออกรวง (ขาขึ้น) จาก สร้างเมล็ด/สุกแก่ (ขาลง) ที่ค่า EVI เดียวกัน
+      // บอกทิศทางของทรงพุ่มอย่างเดียว ไม่แปลเป็นระยะข้าว — ค่า EVI เท่ากันแต่ขาขึ้น/ขาลง
+      // คนละความหมาย ส่วนจะเป็นระยะไหนขึ้นกับพันธุ์ซึ่งภาพดาวเทียมบอกไม่ได้
       function eviTrend(rp) {
         const tr = rp?.trend;
         if (tr == null) return null; // JSON เก่ายังไม่มี trend
@@ -2536,7 +2537,7 @@
           // จึงยังห่างจากออกรวงอีก 4 เดือน
           return { icon: "▲", th: "ความเขียวเพิ่มขึ้น", en: "Greening up", color: "#66bb6a", delta: tr };
         if (tr <= -0.02)
-          return { icon: "▼", th: "ความเขียวลดลง → สร้างเมล็ด/สุกแก่ ใกล้เก็บเกี่ยว", en: "Greenness falling → grain-fill/ripening, near harvest", color: "#c9a227", delta: tr };
+          return { icon: "▼", th: "ความเขียวลดลง", en: "Greenness falling", color: "#c9a227", delta: tr };
         return { icon: "▬", th: "ความเขียวทรงตัว", en: "Greenness steady", color: "var(--muted)", delta: tr };
       }
 
@@ -2553,48 +2554,48 @@
       // ── Rice EVI tier thresholds (mirrors STAGE_MAP above) ───────────────────
       // labelTh/labelEn are static strings; call t(tier.labelTh, tier.labelEn) at render time
       // tier = ระดับ "ความเขียว" (EVI magnitude) ซึ่งเป็นสิ่งที่สีบนแผนที่แทน
-      // ความเขียวสูงสุดคือ "ออกรวง" ไม่ใช่สุกแก่ — ระยะจริง (heading vs ripening)
-      // ต้องดูทิศทาง EVI ประกอบ (อยู่ใน stage/trend ที่ pipeline ส่งมา)
+      // ป้ายบอก "ความหนาแน่นของทรงพุ่ม" ไม่ใช่ระยะข้าว — ข้าวไวแสง (หอมมะลิ/เหนียว
+      // ซึ่งครองพื้นที่อีสาน) ทรงพุ่มปิดตั้งแต่ ก.ค. แต่ออกรวงราว 20 ต.ค. ตามช่วงแสง
       const RICE_EVI_TIERS = [
         {
-          labelTh: "🌾 เขียวจัด · ออกรวง/ออกดอก (≥0.55)",
-          labelEn: "🌾 Very green · Heading/Flowering (≥0.55)",
+          labelTh: "🌾 เขียวจัดมาก (≥0.55)",
+          labelEn: "🌾 Very dense canopy (≥0.55)",
           min: 0.55,
           color: "#2e7d32",
-          descTh: "ยอด canopy เขียวสุด = ออกรวง/ออกดอก (ไม่ใช่สุกแก่ — สุกแก่ EVI จะลดลง)",
-          descEn: "Peak canopy greenness = heading/flowering (not maturity — that comes as EVI falls)",
+          descTh: "ทรงพุ่มเขียวสูงสุด · ระยะข้าวจริงขึ้นกับพันธุ์ — ข้าวไวแสง (หอมมะลิ/เหนียว) ทรงพุ่มปิดตั้งแต่ ก.ค. แต่ออกรวง ต.ค.",
+          descEn: "Peak canopy greenness · actual crop stage depends on variety — photoperiod-sensitive rice closes canopy months before heading",
         },
         {
-          labelTh: "🌾 เขียวหนา · ออกรวง หรือ สร้างเมล็ด (0.40–0.55)",
-          labelEn: "🌾 Dense green · Heading or grain-fill (0.40–0.55)",
+          labelTh: "🌾 เขียวหนา (0.40–0.55)",
+          labelEn: "🌾 Dense canopy (0.40–0.55)",
           min: 0.4,
           color: "#4caf50",
-          descTh: "canopy หนาแน่น — ขาขึ้น = กำลังออกรวง / ขาลง = สร้างเมล็ด สุกแก่",
-          descEn: "Dense canopy — rising = heading / falling = grain-fill, ripening",
+          descTh: "ทรงพุ่มหนาแน่น — ขาขึ้น = ยังขยายตัว / ขาลง = เริ่มโรย",
+          descEn: "Dense canopy — rising = still expanding / falling = declining",
         },
         {
-          labelTh: "🌿 เขียวปานกลาง · แตกกอ หรือ สุกแก่ (0.25–0.40)",
-          labelEn: "🌿 Moderate · Tillering or ripening (0.25–0.40)",
+          labelTh: "🌿 เขียวปานกลาง (0.25–0.40)",
+          labelEn: "🌿 Moderate canopy (0.25–0.40)",
           min: 0.25,
           color: "#8bc34a",
-          descTh: "ขาขึ้น = แตกกอ เจริญเติบโต / ขาลง = สุกแก่ ใกล้เก็บเกี่ยว",
-          descEn: "Rising = tillering / falling = ripening, near harvest",
+          descTh: "ขาขึ้น = ทรงพุ่มกำลังขยาย / ขาลง = ทรงพุ่มเริ่มโรย",
+          descEn: "Rising = canopy expanding / falling = canopy declining",
         },
         {
-          labelTh: "🌱 เขียวน้อย · ต้นกล้า หรือ เก็บเกี่ยว (0.15–0.25)",
-          labelEn: "🌱 Low · Seedling or harvest (0.15–0.25)",
+          labelTh: "🌱 เขียวน้อย (0.15–0.25)",
+          labelEn: "🌱 Sparse canopy (0.15–0.25)",
           min: 0.15,
           color: "#ff9800",
-          descTh: "ขาขึ้น = เพิ่งปักดำ ต้นกล้า / ขาลง = เก็บเกี่ยว ตอซัง",
-          descEn: "Rising = just transplanted / falling = harvested, stubble",
+          descTh: "ขาขึ้น = เริ่มมีพืชปกคลุม / ขาลง = ทรงพุ่มโล่งลง (เก็บเกี่ยวแล้วหรือยังไม่ปลูก)",
+          descEn: "Rising = cover appearing / falling = cover cleared",
         },
         {
-          labelTh: "🟫 นาว่าง (<0.15)",
-          labelEn: "🟫 Fallow (<0.15)",
+          labelTh: "🟫 แทบไม่มีพืชปกคลุม (<0.15)",
+          labelEn: "🟫 Little/no canopy (<0.15)",
           min: 0.0,
           color: "#8d6e63",
-          descTh: "นาว่าง เตรียมดิน หรือน้ำท่วมขัง",
-          descEn: "Fallow, land prep, or flooded",
+          descTh: "ดินเปล่า เตรียมแปลง หรือมีน้ำขัง",
+          descEn: "Bare soil, land prep, or standing water",
         },
       ];
 
