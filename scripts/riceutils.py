@@ -245,3 +245,55 @@ def load_sample_points(js_path=None, max_pts=6):
                 uniq.append({"lat": key[1], "lon": key[0]})
         out[name] = uniq
     return out
+
+
+# ── MOD13Q1: ภาพ EVI ล่าสุดแบบราย 16 วัน ────────────────────────────────────
+# ทำไมไม่ใช้ MOD13A3 (รายเดือน) กับค่าปัจจุบัน: composite รายเดือนออกช้า —
+# 8 ส.ค. 2569 ยังไม่มีของเดือน ก.ค. ทำให้เว็บแสดงข้อมูลเก่า 2 เดือน
+# MOD13Q1 เป็น composite ราย 16 วัน ออกเร็วกว่ามาก (ตรวจกับ NASA CMR: ช่วง
+# 28 ก.ค.–12 ส.ค. มีให้ใช้แล้วตั้งแต่ 18 ส.ค.) และละเอียด 250 ม.
+#
+# ใช้เฉพาะ "ค่า EVI ปัจจุบัน + ก่อนหน้า" เท่านั้น ส่วน mask/phenology ยังใช้
+# MOD13A3 รายเดือนย้อน 12 เดือนเหมือนเดิม เพราะเป็นค่าสะสมทั้งปี ความสดไม่สำคัญ
+MOD13Q1 = "MODIS/061/MOD13Q1"
+_Q1_LOOKBACK_DAYS = 80  # ครอบ composite ราย 16 วัน ได้อย่างน้อย 4 ช่วง
+
+
+def latest_q1_periods(n=2, today=None):
+    """คืน [(start_iso, end_iso), ...] ของ composite MOD13Q1 ล่าสุด n ช่วง (ใหม่→เก่า)
+
+    อ่านวันที่จริงจาก system:time_start ไม่คำนวณ DOY เอง เพราะรอบ composite
+    ของ MODIS ไม่ตรงกับปฏิทินและอาจข้ามช่วงถ้าภาพเสีย
+    """
+    import ee
+    from datetime import date as _date, timedelta as _td
+
+    end = today or _date.today()
+    start = end - _td(days=_Q1_LOOKBACK_DAYS)
+    col = (
+        ee.ImageCollection(MOD13Q1)
+        .filterDate(start.isoformat(), (end + _td(days=1)).isoformat())
+        .select("EVI")
+        .sort("system:time_start", False)
+    )
+    millis = col.aggregate_array("system:time_start").getInfo() or []
+    out = []
+    for ms in millis[:n]:
+        s = _date.fromtimestamp(ms / 1000)
+        out.append((s.isoformat(), (s + _td(days=15)).isoformat()))
+    return out
+
+
+def q1_evi_image(start_iso, end_iso):
+    """ภาพ EVI (scaled) ของ composite ช่วงนั้น — mosaic เผื่อมีหลาย tile"""
+    import ee
+    from datetime import date as _date, timedelta as _td
+
+    hi = (_date.fromisoformat(end_iso) + _td(days=1)).isoformat()
+    return (
+        ee.ImageCollection(MOD13Q1)
+        .filterDate(start_iso, hi)
+        .select("EVI")
+        .mosaic()
+        .multiply(0.0001)
+    )

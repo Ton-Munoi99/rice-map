@@ -2512,6 +2512,24 @@
       // ความเขียว (EVI) ขึ้นสูงสุดที่ "ออกรวง" แล้วลดลงตอนสร้างเมล็ด–สุกแก่
       // ค่าสูงจึง = ออกรวง (ยอด canopy) ไม่ใช่ "สุกแก่/ใกล้เก็บเกี่ยว" (นั้น EVI ลดลง)
       // stage ที่ pipeline ส่งมาแยกด้วยทิศทาง EVI แล้ว (heading ขาขึ้น / ripening ขาลง)
+      // MOD13Q1 เป็น composite ราย 16 วัน จึงคร่อมเดือน — แสดงช่วงจริงแทนเลขเดือน
+      // ข้อมูลเก่า (MOD13A3 รายเดือน) ไม่มี period_start จึงถอยไปใช้ month เหมือนเดิม
+      function eviPeriodLabel() {
+        const m = window.RICE_EVI_DATA?._meta || {};
+        const a = m.period_start, b = m.period_end;
+        if (!a || !b) return eviPeriodLabel();
+        const fmt = (iso, withYear) => {
+          const d = new Date(iso);
+          if (isNaN(d)) return iso;
+          return new Intl.DateTimeFormat(t("th-TH", "en-GB"), {
+            day: "numeric",
+            month: "short",
+            ...(withYear ? { year: "numeric" } : {}),
+          }).format(d);
+        };
+        return `${fmt(a, false)} – ${fmt(b, true)}`;
+      }
+
       const STAGE_MAP = {
         fallow: { th: "แทบไม่มีพืชปกคลุม", en: "Little/no canopy", icon: "🟫", color: "#8d6e63" },
         seedling: { th: "เริ่มเขียว · ทรงพุ่มบาง", en: "Greening up · sparse canopy", icon: "🌱", color: "#ff9800" },
@@ -4725,7 +4743,7 @@
                           : S.layer === "ndvi"
                             ? `🌿 NDVI ${window.NDVI_DATA?.month || ""} · NASA MODIS`
                             : S.layer === "riceEvi"
-                              ? `🌾 ${t("สภาพนาข้าว", "Rice Paddy Status")} ${window.RICE_EVI_DATA?.month || ""}`
+                              ? `🌾 ${t("สภาพนาข้าว", "Rice Paddy Status")} ${eviPeriodLabel()}`
                               : S.layer === "rain"
                                 ? `🌧 ${t("ฝนสะสม 7 วันล่าสุด", "7-Day Rainfall")} · Open-Meteo ${window.RAIN_DATA?._meta?.updated || ""}`
                                 : S.layer === "gsmap"
@@ -5170,8 +5188,8 @@
                         )
                       : S.layer === "riceEvi"
                         ? t(
-                            `ดัชนีความเขียวชอุ่มของนาข้าว เดือน ${window.RICE_EVI_DATA?.month || "—"} · ส้ม = นาว่าง · เขียวเข้ม = ข้าวสมบูรณ์ · หมายเหตุ: ภาคใต้ปลูก ก.ย.–พ.ย. เก็บ มี.ค.–พ.ค. (นาปี) ต่างจากภาคอื่น`,
-                            `Rice paddy greenness index (EVI) for ${window.RICE_EVI_DATA?.month || "—"} · Orange = fallow · Dark green = healthy rice · Note: South harvests Mar–May (main season, different calendar)`,
+                            `ดัชนีความเขียวชอุ่มของนาข้าว เดือน ${eviPeriodLabel()} · ส้ม = นาว่าง · เขียวเข้ม = ข้าวสมบูรณ์ · หมายเหตุ: ภาคใต้ปลูก ก.ย.–พ.ย. เก็บ มี.ค.–พ.ค. (นาปี) ต่างจากภาคอื่น`,
+                            `Rice paddy greenness index (EVI) for ${eviPeriodLabel()} · Orange = fallow · Dark green = healthy rice · Note: South harvests Mar–May (main season, different calendar)`,
                           )
                         : S.layer === "rain"
                           ? t(
@@ -5281,7 +5299,7 @@
                       : S.layer === "soilMoisture"
                         ? `${metaLabel}<br>${t(`NASA SMAP 10km · อัปเดต ${fmtDateISO(window.SOIL_DATA?._meta?.updated)}`, `NASA SMAP 10km · Updated ${fmtDateISO(window.SOIL_DATA?._meta?.updated)}`)}`
                         : S.layer === "riceEvi"
-                          ? `${metaLabel}<br>${t(`ดัชนีความเขียวชอุ่ม EVI · ${window.RICE_EVI_DATA?.month || "—"}`, `Rice Paddy EVI · ${window.RICE_EVI_DATA?.month || "—"}`)}`
+                          ? `${metaLabel}<br>${t(`ดัชนีความเขียวชอุ่ม EVI · ${eviPeriodLabel()}`, `Rice Paddy EVI · ${eviPeriodLabel()}`)}`
                           : `${riceLabel} &nbsp;·&nbsp; ${metaLabel}<br>${yearLabel}`;
         const isNdvi = S.layer === "ndvi";
         const isRiceEvi = S.layer === "riceEvi";
@@ -5417,7 +5435,7 @@
             `⚠️ กรองจังหวัดที่พื้นที่ปลูกข้าวจริง (OAE) < ${fmtNumber(RICE_EVI_MIN_OAE_RAI)} ไร่ ออก (เช่น ภูเก็ต ระนอง จันทบุรี) เพราะ EVI มักจับพืชยืนต้น/ป่า/พื้นที่น้ำขัง ไม่ใช่ข้าว`,
             `⚠️ Provinces with < ${fmtNumber(RICE_EVI_MIN_OAE_RAI)} rai of actual OAE rice (e.g. Phuket, Ranong, Chanthaburi) are filtered out — their EVI usually reflects perennial crops/forest/water, not rice`,
           )}</div>
-          <div style="margin-top:4px;opacity:.7">${t(`ข้อมูลเดือน ${window.RICE_EVI_DATA?.month || "—"} · อัปเดตทุกเดือน`, `Data: ${window.RICE_EVI_DATA?.month || "—"} · monthly update`)}</div>
+          <div style="margin-top:4px;opacity:.7">${t(`ข้อมูลเดือน ${eviPeriodLabel()} · อัปเดตทุกเดือน`, `Data: ${eviPeriodLabel()} · monthly update`)}</div>
         </div>`;
           let riceEviList = riceEviLegend;
           let riceEviIdx = 0;
@@ -5711,7 +5729,7 @@
           // จังหวัดที่แทบไม่มีนาข้าวจริง — EVI น่าจะเป็นพืชยืนต้น/พื้นที่น้ำขัง ไม่ใช่ข้าว
           riceEviHtml = `
           <div class="rice-card" style="grid-column:1/-1;background:rgba(141,110,99,.10);border:1px solid rgba(141,110,99,.30)">
-            <div class="t">🌾 ${t(`สภาพนาข้าว · ${window.RICE_EVI_DATA?.month || "—"}`, `Rice Paddy Status · ${window.RICE_EVI_DATA?.month || "—"}`)}</div>
+            <div class="t">🌾 ${t(`สภาพนาข้าว · ${eviPeriodLabel()}`, `Rice Paddy Status · ${eviPeriodLabel()}`)}</div>
             <div style="font-size:10px;line-height:1.6;color:#d7ccc8">
               <div style="font-weight:700;color:#bcaaa4;margin-bottom:3px">⚠️ ${t("ไม่ใช่พื้นที่นาข้าวสำคัญ", "Not a significant rice-growing area")}</div>
               ${t(
@@ -5725,7 +5743,7 @@
           </div>`;
         } else if (riceEviProv && riceEviProv.evi != null) {
           const eviVal = riceEviProv.evi;
-          const eviMonth = window.RICE_EVI_DATA?.month || "—";
+          const eviMonth = eviPeriodLabel();
           const stage = riceEviProv.stage;
           const riceRai = riceEviProv.rice_rai || 0;
           const confidence = riceEviProv.confidence ?? null;
@@ -6727,8 +6745,8 @@
                 )
               : S.layer === "riceEvi"
                 ? t(
-                    `สภาพนาข้าว ${window.RICE_EVI_DATA?.month || ""} — ดัชนีความเขียวชอุ่ม EVI`,
-                    `Rice paddy greenness (EVI) ${window.RICE_EVI_DATA?.month || ""}`,
+                    `สภาพนาข้าว ${eviPeriodLabel()} — ดัชนีความเขียวชอุ่ม EVI`,
+                    `Rice paddy greenness (EVI) ${eviPeriodLabel()}`,
                   )
                 : S.layer === "rain"
                   ? t(
@@ -7131,7 +7149,7 @@ ${warningsHtml}
           return `
     <div class="th">${t(NM[en] || en, en)}</div>
     <div class="en">${en}</div>
-    <div class="type">${t("สภาพนาข้าว", "Rice Paddy Status")} · ${window.RICE_EVI_DATA?.month || "—"}</div>
+    <div class="type">${t("สภาพนาข้าว", "Rice Paddy Status")} · ${eviPeriodLabel()}</div>
     <div class="value" style="color:${stg.color}">${rp.evi.toFixed(3)} EVI ${stg.icon}</div>
     <div style="font-size:11px;font-weight:700;color:${stg.color};margin:2px 0">${t(stg.th, stg.en)}</div>
     ${(() => {
@@ -7299,7 +7317,7 @@ ${warningsHtml}
           return;
         }
         if (S.layer === "riceEvi") {
-          refs.yearButtons.innerHTML = `<button class="pill on" data-year="riceEvi">🌾 ${window.RICE_EVI_DATA?.month || t("ล่าสุด", "Latest")} · ${t("ดัชนีความเขียวชอุ่ม EVI", "Rice Paddy EVI")}</button>`;
+          refs.yearButtons.innerHTML = `<button class="pill on" data-year="riceEvi">🌾 ${eviPeriodLabel()} · ${t("ดัชนีความเขียวชอุ่ม EVI", "Rice Paddy EVI")}</button>`;
           return;
         }
         if (S.layer === "rain") {

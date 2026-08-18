@@ -24,7 +24,7 @@ import ee
 import json
 import os
 from datetime import date, timedelta
-from riceutils import init_gee, GAUL_NAME_MAP as NAME_MAP
+from riceutils import init_gee, GAUL_NAME_MAP as NAME_MAP, latest_q1_periods, q1_evi_image
 from rice_stage import TREND_EPS, classify_evi
 
 
@@ -66,15 +66,6 @@ RUBBER_ASSET = ""       # เช่น "projects/xxx/assets/thailand_rubber_2023
 
 
 # ── Helpers ─────────────────────────────────────────────────────────────────
-
-def get_last_month_dates():
-    """คืน (start, end) ของเดือนที่แล้ว"""
-    today = date.today()
-    first_this = today.replace(day=1)
-    last_prev  = first_this - timedelta(days=1)
-    first_prev = last_prev.replace(day=1)
-    return first_prev.isoformat(), last_prev.isoformat()
-
 
 def get_history_months(current_start_iso, n=12):
     """
@@ -284,32 +275,15 @@ def build_rice_phenology_mask(current_start_iso, n_months=12):
 def main():
     init_gee()
 
-    start, end = get_last_month_dates()
+    # ── MOD13Q1 composite ราย 16 วัน ล่าสุด (ค่าที่แสดงบนแผนที่) ───────────
+    # เดิมใช้ MOD13A3 รายเดือนซึ่งออกช้าจนเว็บแสดงข้อมูลเก่า 2 เดือน
+    periods = latest_q1_periods(n=2)
+    if not periods:
+        raise RuntimeError("ไม่พบ composite MOD13Q1 ในช่วง 80 วันล่าสุด")
+    start, end = periods[0]
     month_label = start[:7]
-    print(f"Fetching Rice EVI: {start} → {end}")
-
-    # ── MODIS MOD13A3 Monthly EVI (เดือนเป้าหมาย) ──────────────────────────
-    collection = (
-        ee.ImageCollection("MODIS/061/MOD13A3")
-        .filterDate(start, end)
-        .select("EVI")
-    )
-    count = collection.size().getInfo()
-    if count == 0:
-        prev_start = (
-            date.fromisoformat(start).replace(day=1) - timedelta(days=1)
-        ).replace(day=1).isoformat()
-        prev_end = (date.fromisoformat(start) - timedelta(days=1)).isoformat()
-        print(f"  No data for {start}–{end}, fallback to {prev_start}–{prev_end}")
-        collection = (
-            ee.ImageCollection("MODIS/061/MOD13A3")
-            .filterDate(prev_start, prev_end)
-            .select("EVI")
-        )
-        month_label = prev_start[:7]
-        start, end  = prev_start, prev_end
-
-    evi_img = collection.first().multiply(0.0001)
+    print(f"Fetching Rice EVI (MOD13Q1 16-day): {start} → {end}")
+    evi_img = q1_evi_image(start, end)
 
     # ── Hybrid Union Mask (GLAD ∪ MCD12Q1 Cropland) ─────────────────────────
     union_mask, glad_mask, mask_source = load_rice_mask()
@@ -323,17 +297,16 @@ def main():
     else:
         print("  → No perennial-crop exclusion layer (relying on phenology gate)")
 
-    # ── Previous-month EVI (สำหรับดูทิศทาง ขึ้น/ลง → แยก heading vs ripening) ──
-    prev_end_d   = date.fromisoformat(start) - timedelta(days=1)
-    prev_start_d = prev_end_d.replace(day=1)
-    prev_evi_img = (
-        ee.ImageCollection("MODIS/061/MOD13A3")
-        .filterDate(prev_start_d.isoformat(), prev_end_d.isoformat())
-        .select("EVI")
-        .mosaic()               # all-masked ถ้าไม่มีข้อมูล → EVIprev_mean = null → trend None
-        .multiply(0.0001)
-    )
-    print(f"  Previous month for trend: {prev_start_d.isoformat()[:7]}")
+    # ── EVI ของ composite ก่อนหน้า (ดูทิศทางขึ้น/ลงของทรงพุ่ม) ─────────────
+    # ทิศทางวัดข้าม 16 วันแทน 1 เดือน จึงแกว่งน้อยกว่าเดิมโดยธรรมชาติ
+    # TREND_EPS เท่าเดิม = การตัดสิน "ขาลง" เข้มขึ้นเล็กน้อย ซึ่งเป็นทางที่ปลอดภัยกว่า
+    if len(periods) > 1:
+        prev_start_iso, prev_end_iso = periods[1]
+        prev_evi_img = q1_evi_image(prev_start_iso, prev_end_iso)
+    else:
+        prev_start_iso = prev_end_iso = None
+        prev_evi_img = evi_img.updateMask(ee.Image(0))  # all-masked → trend = None
+    print(f"  Previous composite for trend: {prev_start_iso or '—'}")
 
     # ── Phenology rice-confirmation mask (flood + peak + amplitude) ─────────
     print(f"Building rice phenology mask (flood+peak+amplitude, {PHENOLOGY_MONTHS} months)...")
@@ -546,9 +519,12 @@ def main():
     # ── Write output ─────────────────────────────────────────────────────────
     output = {
         "_meta": {
-            "source":     "NASA MODIS MOD13A3 (EVI + LSWI) via Google Earth Engine",
-            "source_url": "https://developers.google.com/earth-engine/datasets/catalog/MODIS_061_MOD13A3",
-            "dataset":    "MODIS/061/MOD13A3 (EVI + LSWI: b02 NIR, b07 SWIR2)",
+            "source":     "NASA MODIS MOD13Q1 16-day EVI (250m) + MOD13A3 LSWI mask via Google Earth Engine",
+            "source_url": "https://developers.google.com/earth-engine/datasets/catalog/MODIS_061_MOD13Q1",
+            "dataset":    "MODIS/061/MOD13Q1 (EVI, 16-day 250m) · mask/phenology: MODIS/061/MOD13A3 monthly 1km",
+            "period_start": start,
+            "period_end":   end,
+            "composite_days": 16,
             "rice_mask":  mask_source,
             "method":     (
                 "Hybrid Union Mask (GLAD rice ∪ MCD12Q1 cropland) + "

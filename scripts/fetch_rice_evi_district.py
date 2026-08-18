@@ -4,7 +4,7 @@
 scripts/fetch_rice_evi_district.py
 ดึงข้อมูล Rice EVI รายอำเภอ ประเทศไทย จาก MODIS + Hybrid Mask + Phenology
 
-Source:  MODIS/061/MOD13A3 — Monthly EVI + LSWI Composite (1km)
+Source:  MODIS/061/MOD13Q1 — 16-day EVI (250m) · mask/phenology: MOD13A3 monthly (1km)
 Mask:    GLAD LCLUC 2020 Rice ∪ MCD12Q1 Cropland (Phenology-gated)
 Regions: FAO GAUL 2015 level2 (813 อำเภอ)
 Output:  data/rice-evi-district.json
@@ -26,7 +26,7 @@ import ee
 import json
 import os
 from datetime import date, timedelta
-from riceutils import init_gee, GAUL_NAME_MAP as PROV_MAP
+from riceutils import init_gee, GAUL_NAME_MAP as PROV_MAP, latest_q1_periods, q1_evi_image
 from rice_stage import TREND_EPS, classify_evi
 
 
@@ -40,14 +40,6 @@ MIN_EVI_MAX   = 0.20   # ต้องเคยโล่ง/น้ำขัง (m
 GLAD_MIN_PIXELS  = 8    # GLAD-preferred: GLAD ต่ำกว่านี้ = คง union (GLAD ขาด)
 GLAD_BONUS_RATIO = 3.0  # bonus เกินสัดส่วนนี้ของ GLAD = น่าสงสัยพืชอื่น → เชื่อ GLAD
 RUBBER_ASSET     = ""   # asset ยาง (ปล่อยว่าง = ข้าม) — mirror province script
-
-
-def get_last_month_dates():
-    today = date.today()
-    first_this = today.replace(day=1)
-    last_prev  = first_this - timedelta(days=1)
-    first_prev = last_prev.replace(day=1)
-    return first_prev.isoformat(), last_prev.isoformat()
 
 
 def get_history_months(current_start_iso, n=12):
@@ -156,36 +148,22 @@ def build_rice_phenology_mask(current_start, n_months=12):
 def main():
     init_gee()
 
-    start, end = get_last_month_dates()
+    # ── MOD13Q1 composite ราย 16 วัน ล่าสุด — ตรงกับสคริปต์ระดับจังหวัด ──────
+    periods = latest_q1_periods(n=2)
+    if not periods:
+        raise RuntimeError("ไม่พบ composite MOD13Q1 ในช่วง 80 วันล่าสุด")
+    start, end = periods[0]
     month_label = start[:7]
-    print(f"Fetching District Rice EVI: {start} → {end}")
+    print(f"Fetching District Rice EVI (MOD13Q1 16-day): {start} → {end}")
+    evi_img = q1_evi_image(start, end)
 
-    # ── MODIS EVI ────────────────────────────────────────────────────────────
-    collection = (
-        ee.ImageCollection("MODIS/061/MOD13A3")
-        .filterDate(start, end)
-        .select("EVI")
-    )
-    if collection.size().getInfo() == 0:
-        prev_start = (date.fromisoformat(start).replace(day=1) - timedelta(days=1)).replace(day=1).isoformat()
-        prev_end   = (date.fromisoformat(start) - timedelta(days=1)).isoformat()
-        print(f"  No data for {start}–{end}, fallback to {prev_start}–{prev_end}")
-        collection = (
-            ee.ImageCollection("MODIS/061/MOD13A3")
-            .filterDate(prev_start, prev_end)
-            .select("EVI")
-        )
-        month_label = prev_start[:7]
-        start, end  = prev_start, prev_end
-
-    evi_img = collection.first().multiply(0.0001)
-
-    # ── Previous-month EVI (สำหรับ trend ขึ้น/ลง) ──────────────────────────────
-    prev_end_d   = date.fromisoformat(start) - timedelta(days=1)
-    prev_start_d = prev_end_d.replace(day=1)
-    prev_evi_img = (ee.ImageCollection("MODIS/061/MOD13A3")
-                    .filterDate(prev_start_d.isoformat(), prev_end_d.isoformat())
-                    .select("EVI").mosaic().multiply(0.0001))
+    # ── EVI ของ composite ก่อนหน้า (trend ขึ้น/ลง) ───────────────────────────
+    if len(periods) > 1:
+        prev_evi_img = q1_evi_image(*periods[1])
+        print(f"  Previous composite for trend: {periods[1][0]}")
+    else:
+        prev_evi_img = evi_img.updateMask(ee.Image(0))
+        print("  ไม่มี composite ก่อนหน้า → trend = None")
 
     # ── Hybrid Mask + Phenology ───────────────────────────────────────────────
     union_mask, glad_mask, mask_source = load_rice_mask()
