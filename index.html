@@ -5782,13 +5782,27 @@
                 : "";
             })()}
             ${(() => {
-              // พื้นที่ (ไร่): ยึด OAE เป็นตัวเลขจริง — EVI ดาวเทียม 1km มักเกินจริง
-              // (พิกเซล 625 ไร่ + อาจปนยาง/ปาล์ม) จึงแสดงเป็น diagnostic เทียบ OAE
+              // พื้นที่ (ไร่): ยึด OAE เป็นตัวเลขจริง ดาวเทียมเป็น diagnostic เท่านั้น
+              // วัดจริง 76 จังหวัด (ส.ค. 2569): รวมทั้งประเทศดาวเทียมเห็น 13.7 ล้านไร่
+              // เทียบ OAE 43.9 ล้านไร่ = 0.31 เท่า · ค่ากลางรายจังหวัด 0.23 เท่า
+              // แต่คลาดเคลื่อนเฉลี่ย 120% แปลว่าแกว่งทั้งสองทาง บางจังหวัดเกิน (เชียงราย 2.7×)
+              // เดิมป้ายเขียนว่า "มักเกินจริง" ซึ่งกลับทางกับภาพรวมที่ต่ำกว่า 3 เท่า
               const oaeRai = oaeMaxRiceRai(en);
               const gladRai = riceEviProv.glad_rai || 0;
               const overstate = oaeRai > 0 && riceRai > 0 ? riceRai / oaeRai : null;
+              // ต้องดูทั้งสองทาง — ของเดิมเช็คแค่ค่าเกิน จังหวัดที่ต่ำกว่าจริง 5 เท่า
+              // (เช่น 0.2×) จึงขึ้นเขียวว่า "ใกล้เคียง" ทั้งที่ห่างพอกับ 5×
+              const ovOff = overstate == null ? null : Math.max(overstate, 1 / overstate);
               const ovColor =
-                overstate == null ? "var(--muted)" : overstate <= 2 ? "#66bb6a" : overstate <= 5 ? "#ffa726" : "#ef5350";
+                ovOff == null ? "var(--muted)" : ovOff <= 2 ? "#66bb6a" : ovOff <= 5 ? "#ffa726" : "#ef5350";
+              const ovNote =
+                ovOff == null
+                  ? ""
+                  : ovOff <= 2
+                    ? t("(ใกล้เคียง)", "(close)")
+                    : overstate > 1
+                      ? t("(สูงกว่า OAE — อาจปนยาง/ปาล์ม)", "(above OAE — may include rubber/palm)")
+                      : t("(ต่ำกว่า OAE — ประตูคัดกรองตัดทิ้งมาก)", "(below OAE — screening gate drops a lot)");
               const oaeMetric =
                 oaeRai > 0
                   ? `<div class="metric">
@@ -5804,10 +5818,10 @@
               <div style="display:flex;justify-content:space-between"><span>${t("เฉพาะ GLAD (แม่นกว่า)", "GLAD-only (tighter)")}</span><span style="color:#cdd6df">${fmtNumber(gladRai)} ${t("ไร่", "rai")}</span></div>
               ${
                 overstate != null
-                  ? `<div style="display:flex;justify-content:space-between;margin-top:2px"><span>${t("เทียบ OAE", "vs OAE")}</span><span style="color:${ovColor};font-weight:700">${overstate >= 10 ? overstate.toFixed(0) : overstate.toFixed(1)}× ${overstate > 5 ? t("(สูงมาก — อาจปนยาง/ปาล์ม)", "(very high — may include rubber/palm)") : overstate > 2 ? t("(ปนพืชอื่นบ้าง)", "(some non-rice)") : t("(ใกล้เคียง)", "(close)")}</span></div>`
+                  ? `<div style="display:flex;justify-content:space-between;margin-top:2px"><span>${t("เทียบ OAE", "vs OAE")}</span><span style="color:${ovColor};font-weight:700">${overstate >= 10 ? overstate.toFixed(0) : overstate.toFixed(2)}× ${ovNote}</span></div>`
                   : ""
               }
-              <div style="opacity:.65;margin-top:3px">${t("MODIS 1km (625 ไร่/พิกเซล) มักเกินจริง — ให้ยึดพื้นที่ OAE เป็นหลัก", "MODIS 1km (625 rai/pixel) overcounts — use OAE area as the reference")}</div>
+              <div style="opacity:.65;margin-top:3px">${t("ประมาณการหยาบจาก MODIS 1 กม. (พิกเซลละ 625 ไร่) · ทั้งประเทศเห็นราว 1 ใน 3 ของ OAE แต่รายจังหวัดคลาดได้ทั้งสองทาง — ให้ยึดพื้นที่ OAE เป็นหลัก", "Rough estimate from MODIS 1km (625 rai/pixel) · nationally it sees about a third of OAE, but per province it errs both ways — use OAE area as the reference")}</div>
             </div>`
                   : "";
               return oaeMetric + diag;
