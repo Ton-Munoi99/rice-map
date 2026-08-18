@@ -2531,7 +2531,10 @@
         const tr = rp?.trend;
         if (tr == null) return null; // JSON เก่ายังไม่มี trend
         if (tr >= 0.02)
-          return { icon: "▲", th: "ความเขียวเพิ่มขึ้น → เข้าสู่ออกรวง", en: "Greening up → toward heading", color: "#66bb6a", delta: tr };
+          // ไม่ต่อท้ายว่า "เข้าสู่ออกรวง" — อีสานปลูกข้าวไวแสงเกือบทั้งภาค (ร้อยเอ็ดหอมมะลิ 99%)
+          // ซึ่งออกดอกตามช่วงแสงราว 20 ต.ค. ไม่ว่าหว่านเดือนไหน ความเขียวที่เพิ่มขึ้นเดือน มิ.ย.
+          // จึงยังห่างจากออกรวงอีก 4 เดือน
+          return { icon: "▲", th: "ความเขียวเพิ่มขึ้น", en: "Greening up", color: "#66bb6a", delta: tr };
         if (tr <= -0.02)
           return { icon: "▼", th: "ความเขียวลดลง → สร้างเมล็ด/สุกแก่ ใกล้เก็บเกี่ยว", en: "Greenness falling → grain-fill/ripening, near harvest", color: "#c9a227", delta: tr };
         return { icon: "▬", th: "ความเขียวทรงตัว", en: "Greenness steady", color: "var(--muted)", delta: tr };
