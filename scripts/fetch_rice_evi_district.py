@@ -36,7 +36,8 @@ PHENOLOGY_MONTHS = 12
 FLOOD_EVI_MAX = 0.30   # น้ำท่วมขังต้องเกิดตอน canopy ยังโปร่ง (ตัดป่าเขียวทึบ)
 PEAK_MIN      = 0.40   # ต้องมีเดือน canopy เขียวจริง (ตัดน้ำเปิด/บ่อกุ้ง/นาเกลือ)
 AMP_MIN       = 0.25   # EVI แกว่งตามฤดูสูง (ตัดยาง/ปาล์ม/ป่า เขียวคงที่ทั้งปี)
-MIN_EVI_MAX   = 0.20   # ต้องเคยโล่ง/น้ำขัง (min EVI ต่ำ) → ตัดพืชยืนต้นเขียวตลอดปี
+MIN_EVI_MAX   = 0.22   # ต้องเคยโล่ง/น้ำขัง (min EVI ต่ำ) → ตัดพืชยืนต้นเขียวตลอดปี
+                       # ต้องตรงกับ fetch_rice_evi.py — ดูเหตุผลการเลือก 0.22 ที่นั่น
 GLAD_MIN_PIXELS  = 8    # GLAD-preferred: GLAD ต่ำกว่านี้ = คง union (GLAD ขาด)
 GLAD_BONUS_RATIO = 3.0  # bonus เกินสัดส่วนนี้ของ GLAD = น่าสงสัยพืชอื่น → เชื่อ GLAD
 RUBBER_ASSET     = ""   # asset ยาง (ปล่อยว่าง = ข้าม) — mirror province script
