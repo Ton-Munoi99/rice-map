@@ -2517,7 +2517,9 @@
       function eviPeriodLabel() {
         const m = window.RICE_EVI_DATA?._meta || {};
         const a = m.period_start, b = m.period_end;
-        if (!a || !b) return eviPeriodLabel();
+        // ห้ามเรียก eviPeriodLabel() ตรงนี้ — เคยพลาดมาแล้วจนเรียกตัวเองไม่รู้จบ
+        // stack ล้ม แผนที่ไม่ถูกวาดทั้งหน้า
+        if (!a || !b) return window.RICE_EVI_DATA?.month || "—";
         const fmt = (iso, withYear) => {
           const d = new Date(iso);
           if (isNaN(d)) return iso;
