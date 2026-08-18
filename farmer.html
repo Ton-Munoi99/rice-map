@@ -175,12 +175,12 @@
       let PROV = []; // [{th, en, region}]
 
       async function loadJSON(path) {
-        try { const r = await fetch(path, { cache: "no-store" }); return r.ok ? await r.json() : null; }
+        try { const r = await fetch(path, { cache: "no-cache" }); return r.ok ? await r.json() : null; }
         catch { return null; }
       }
 
       async function loadCSV(path) {
-        try { const r = await fetch(path, { cache: "no-store" }); return r.ok ? parseCSV(await r.text()) : null; }
+        try { const r = await fetch(path, { cache: "no-cache" }); return r.ok ? parseCSV(await r.text()) : null; }
         catch { return null; }
       }
 
