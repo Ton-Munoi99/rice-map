@@ -2626,20 +2626,6 @@
         },
       ];
 
-      // ── Layers that have no year-based time series (no spark chart, no est-year badge) ──
-      const LAYER_NO_TIMESERIES = new Set([
-        "dam",
-        "mills",
-        "profit",
-        "riceEvi",
-        "gsmap",
-        "forecast",
-        "alerts",
-        "soilMoisture",
-        "waterlevel",
-        "rainstation",
-        "biomass",
-      ]);
 
       const layerMeta = {
         production: {
@@ -2693,6 +2679,7 @@
           summaryMode: "sum",
         },
         dam: {
+          noTimeseries: true,   // ไม่มีอนุกรมเวลารายปี — ไม่ต้องมีกราฟ spark / ป้ายปีประมาณการ
           th: "ระดับน้ำในเขื่อน",
           en: "Dam Water Level",
           unit: "% ความจุ (RID)",
@@ -2703,6 +2690,7 @@
           summaryMode: "avg_nonzero",
         },
         mills: {
+          noTimeseries: true,   // ไม่มีอนุกรมเวลารายปี — ไม่ต้องมีกราฟ spark / ป้ายปีประมาณการ
           th: "โรงสีข้าว",
           en: "Rice Mills",
           unit: "แห่ง/จังหวัด",
@@ -2713,6 +2701,7 @@
           summaryMode: "sum",
         },
         profit: {
+          noTimeseries: true,   // ไม่มีอนุกรมเวลารายปี — ไม่ต้องมีกราฟ spark / ป้ายปีประมาณการ
           th: "กำไร/ขาดทุนต่อไร่",
           en: "Est. Profit/Loss per Rai",
           unit: "บาท/ไร่ (ประมาณการ)",
@@ -2723,6 +2712,7 @@
           summaryMode: "avg_signed",
         },
         riceEvi: {
+          noTimeseries: true,   // ไม่มีอนุกรมเวลารายปี — ไม่ต้องมีกราฟ spark / ป้ายปีประมาณการ
           th: "สภาพนาข้าว",
           en: "Rice Paddy Status",
           unit: "EVI เฉพาะนาข้าว (0–1)",
@@ -2733,6 +2723,7 @@
           summaryMode: "avg",
         },
         gsmap: {
+          noTimeseries: true,   // ไม่มีอนุกรมเวลารายปี — ไม่ต้องมีกราฟ spark / ป้ายปีประมาณการ
           th: "ปริมาณฝนรวม 7 วัน (ดาวเทียม)",
           en: "7-Day Total Rainfall (Satellite)",
           unit: "มม. (รวม 7 วัน)",
@@ -2743,6 +2734,7 @@
           summaryMode: "avg",
         },
         forecast: {
+          noTimeseries: true,   // ไม่มีอนุกรมเวลารายปี — ไม่ต้องมีกราฟ spark / ป้ายปีประมาณการ
           th: "พยากรณ์ฝน 7 วัน",
           en: "7-Day Rain Forecast",
           unit: "มม. (พยากรณ์ 7 วัน)",
@@ -2753,6 +2745,7 @@
           summaryMode: "avg",
         },
         alerts: {
+          noTimeseries: true,   // ไม่มีอนุกรมเวลารายปี — ไม่ต้องมีกราฟ spark / ป้ายปีประมาณการ
           th: "พื้นที่เสี่ยงน้ำท่วม",
           en: "Flood Risk Areas",
           unit: "ระดับการเตือน",
@@ -2763,6 +2756,7 @@
           summaryMode: "avg",
         },
         soilMoisture: {
+          noTimeseries: true,   // ไม่มีอนุกรมเวลารายปี — ไม่ต้องมีกราฟ spark / ป้ายปีประมาณการ
           th: "ความชื้นในดิน (SMAP)",
           en: "Soil Moisture (SMAP)",
           unit: "% ความชื้น",
@@ -2773,6 +2767,7 @@
           summaryMode: "avg",
         },
         waterlevel: {
+          noTimeseries: true,   // ไม่มีอนุกรมเวลารายปี — ไม่ต้องมีกราฟ spark / ป้ายปีประมาณการ
           th: "ระดับน้ำในแม่น้ำ/คลอง (สถานีจริง)",
           en: "River/Canal Water Level (stations)",
           unit: "ThaiWater · realtime",
@@ -2782,6 +2777,7 @@
           pointOverlay: true,
         },
         rainstation: {
+          noTimeseries: true,   // ไม่มีอนุกรมเวลารายปี — ไม่ต้องมีกราฟ spark / ป้ายปีประมาณการ
           th: "สถานีฝน Realtime",
           en: "Rain Stations Realtime",
           unit: "ThaiWater · realtime",
@@ -2822,6 +2818,7 @@
           summaryMode: "sum",
         },
         biomass: {
+          noTimeseries: true,   // ไม่มีอนุกรมเวลารายปี — ไม่ต้องมีกราฟ spark / ป้ายปีประมาณการ
           th: "โรงไฟฟ้าชีวมวล",
           en: "Biomass Power Plants",
           unit: "แห่ง",
@@ -4655,7 +4652,7 @@
         refs.legendUnit.textContent = uLabel();
         refs.latestBadge.classList.add("show");
         const isEstYear =
-          !LAYER_NO_TIMESERIES.has(S.layer) &&
+          !layerMeta[S.layer]?.noTimeseries &&
           S.layer !== "price" &&
           S.layer !== "households" &&
           S.year >= "2568";
@@ -4913,7 +4910,7 @@
           );
           return;
         }
-        const isEstYearNote = !LAYER_NO_TIMESERIES.has(S.layer) && S.layer !== "price" && S.year >= "2568";
+        const isEstYearNote = !layerMeta[S.layer]?.noTimeseries && S.layer !== "price" && S.year >= "2568";
         if (isEstYearNote) {
           refs.dataSourceNote.innerHTML = `<strong style="color:#f5c065">📊 ข้อมูลปี ${S.year} เป็นการประมาณการ / Estimated Data</strong><br>คำนวณจากค่าเฉลี่ย YoY Growth Rate ปี 2565–2567 รายจังหวัด (capped ±30%/ปี)<br>${S.year === "2568" ? "เนื้อที่เพาะปลูกปรับด้วย scale factor จากข้อมูลกรมการข้าว ณ 2 มี.ค. 2569 (58.5 ล้านไร่ทั้งประเทศ)" : "ประมาณการต่อเนื่องจากปี 2568"}<br><span style="color:var(--muted)">Trend estimation: avg 2-year YoY (2565→2566→2567) applied to ${S.year}. ${S.year === "2568" ? "Area_planted calibrated using Department of Rice 2568 regional planted-area data (58.5M rai national)." : ""} Not official OAE data — replace via Import CSV when official data is released.</span>`;
           return;
@@ -6683,7 +6680,7 @@
       // ── End Simulator ─────────────────────────────────────────────────────
 
       function drawSpark(en) {
-        if (LAYER_NO_TIMESERIES.has(S.layer)) {
+        if (layerMeta[S.layer]?.noTimeseries) {
           refs.sparkSvg.innerHTML = "";
           refs.sparkTitle.textContent =
             S.layer === "ndvi"
@@ -7151,7 +7148,7 @@ ${warningsHtml}
           }
         }
         const entry = entryOf(en);
-        const est = S.layer !== "price" && !LAYER_NO_TIMESERIES.has(S.layer) && isEstimated(en);
+        const est = S.layer !== "price" && !layerMeta[S.layer]?.noTimeseries && isEstimated(en);
         const estBadge = est
           ? `<div class="est-badge">${t("📊 ประมาณการ · Estimated (Trend)", "📊 Estimated (Trend)")}</div>`
           : "";
