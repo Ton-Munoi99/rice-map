@@ -2035,6 +2035,10 @@
                 <span class="th-t">ราคาโรงสี (฿/ตัน)</span>
                 <span class="en-t">Mill Price (THB/ton)</span>
               </button>
+              <button class="pill" data-layer="profit" onclick="setLayer('profit')">
+                <span class="th-t">กำไร/ขาดทุนต่อไร่</span>
+                <span class="en-t">Est. Profit/Loss per Rai</span>
+              </button>
               <button class="pill" data-layer="mills" onclick="setLayer('mills')">
                 <span class="th-t">🏭 โรงสีข้าว</span>
                 <span class="en-t">🏭 Rice Mills</span>
@@ -2625,12 +2629,9 @@
       // ── Layers that have no year-based time series (no spark chart, no est-year badge) ──
       const LAYER_NO_TIMESERIES = new Set([
         "dam",
-        "rainfall",
-        "drought",
         "mills",
         "profit",
         "riceEvi",
-        "rain",
         "gsmap",
         "forecast",
         "alerts",
@@ -2701,26 +2702,6 @@
           summary: "ระดับน้ำเฉลี่ย",
           summaryMode: "avg_nonzero",
         },
-        rainfall: {
-          th: "ปริมาณฝน (นาปี)",
-          en: "Season Rainfall",
-          unit: "มม. (มิ.ย.–พ.ย.)",
-          unitEn: "mm (Jun–Nov)",
-          unitShort: "มม.",
-          unitShortEn: "mm",
-          summary: "ปริมาณฝนเฉลี่ย",
-          summaryMode: "avg_nonzero",
-        },
-        drought: {
-          th: "ฝนเบี่ยงเบนจากปกติ",
-          en: "Rainfall Anomaly",
-          unit: "% เทียบค่าปกติ 5 ปี",
-          unitEn: "% vs 5-yr avg",
-          unitShort: "%",
-          unitShortEn: "%",
-          summary: "% เบี่ยงเบนเฉลี่ย",
-          summaryMode: "avg_signed",
-        },
         mills: {
           th: "โรงสีข้าว",
           en: "Rice Mills",
@@ -2749,16 +2730,6 @@
           unitShort: "EVI",
           unitShortEn: "EVI",
           summary: "EVI เฉลี่ยนาข้าวทั้งประเทศ",
-          summaryMode: "avg",
-        },
-        rain: {
-          th: "ฝนสะสม 7 วัน",
-          en: "7-Day Rainfall",
-          unit: "มม. (7 วันล่าสุด)",
-          unitEn: "mm (last 7 days)",
-          unitShort: "มม.",
-          unitShortEn: "mm",
-          summary: "ฝนสะสมเฉลี่ยต่อจังหวัด",
           summaryMode: "avg",
         },
         gsmap: {
@@ -2901,18 +2872,6 @@
           sourceEn: "RID",
           palette: { lo: [192, 57, 43], mid: [241, 196, 15], hi: [41, 128, 185], accent: "#3498db" },
         },
-        rainfall: {
-          format: "mm",
-          sourceTh: "Open-Meteo",
-          sourceEn: "Open-Meteo",
-          palette: { lo: [180, 90, 30], mid: [235, 185, 55], hi: [30, 100, 195], accent: "#3b82f6" },
-        },
-        drought: {
-          format: "signedPct1",
-          sourceTh: "Open-Meteo",
-          sourceEn: "Open-Meteo",
-          palette: { lo: [192, 57, 43], mid: [241, 196, 15], hi: [41, 128, 185], accent: "#2ecc71" },
-        },
         mills: {
           format: "int",
           sourceTh: "กรมการค้าภายใน",
@@ -2931,13 +2890,6 @@
           sourceTh: "ดาวเทียม",
           sourceEn: "Satellite",
           palette: { lo: [255, 243, 224], mid: [255, 183, 77], hi: [46, 125, 50], accent: "#66bb6a" },
-        },
-        rain: {
-          format: "mm",
-          valueFn: rainValueOf,
-          sourceTh: "Open-Meteo",
-          sourceEn: "Open-Meteo",
-          palette: { lo: [224, 247, 250], mid: [0, 188, 212], hi: [0, 77, 103], accent: "#00bcd4" },
         },
         gsmap: {
           format: "mm",
@@ -3493,7 +3445,6 @@
         if (layer === "households") return ["2566"];
         if (layer === "mills") return ["mills"];
         if (layer === "riceEvi") return ["riceEvi"];
-        if (layer === "rain") return ["rain"];
         if (layer === "gsmap") return ["gsmap"];
         if (layer === "forecast") return ["forecast"];
         if (layer === "alerts") return ["alerts"];
