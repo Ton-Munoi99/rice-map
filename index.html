@@ -3438,7 +3438,6 @@
 
       function yearsForLayer(layer = S.layer) {
         if (layer === "dam") return ["dam"];
-        if (layer === "rainfall" || layer === "drought") return ["weather"];
         if (layer === "households") return ["2566"];
         if (layer === "mills") return ["mills"];
         if (layer === "riceEvi") return ["riceEvi"];
@@ -3869,7 +3868,6 @@
       function valueOf(en, rice = S.rice, year = S.year, layer = S.layer) {
         if (isPointLayer(layer)) return 0;
         if (layer === "households") return householdValueOf(en);
-        if (layer === "rainfall" || layer === "drought") return weatherValueOf(en, layer) ?? 0;
         if (layer === "mills") return millsValueOf(en);
         if (layer === "profit") return profitValueOf(en, rice, year) ?? 0;
         // ข้าวหอมมะลิเป็นข้าวไวแสง ปลูกเฉพาะนาปี → ไม่มีข้าวนาปรัง (ฤดูแล้ง)
@@ -3884,7 +3882,6 @@
 
       function hasLayerValue(en, rice = S.rice, year = S.year, layer = S.layer) {
         if (isPointLayer(layer)) return false;
-        if (layer === "rainfall" || layer === "drought") return weatherValueOf(en, layer) != null;
         if (layer === "mills") return millsValueOf(en) > 0;
         if (layer === "profit") return profitValueOf(en, rice, year) !== null;
         const m = layerMeta[layer];
@@ -3938,7 +3935,7 @@
       function scaleT(v, min, max) {
         if (max <= min) return 0.5;
         // drought: center palette at 0mm (balanced) — red=แล้ง yellow=สมดุล blue=ชุ่มชื้น
-        if (S.layer === "drought" || S.layer === "profit") {
+        if (S.layer === "profit") {
           const absMax = Math.max(Math.abs(min), Math.abs(max));
           return absMax > 0 ? Math.max(0, Math.min(1, 0.5 + 0.5 * (v / absMax))) : 0.5;
         }
@@ -5034,11 +5031,8 @@
         refs.scopeValue.textContent =
           S.layer === "price" ||
           S.layer === "dam" ||
-          S.layer === "rainfall" ||
-          S.layer === "drought" ||
           S.layer === "mills" ||
           S.layer === "profit" ||
-          S.layer === "rain" ||
           S.layer === "gsmap" ||
           S.layer === "forecast" ||
           S.layer === "alerts" ||
@@ -5270,7 +5264,7 @@
         const max = allSorted[0]?.v || 1;
         // drought/profit: ใช้ absolute value เพราะมีค่าติดลบ
         const maxAbs =
-          S.layer === "drought" || S.layer === "profit" ? Math.max(...items.map((i) => Math.abs(i.v)), 1) : max || 1;
+          S.layer === "profit" ? Math.max(...items.map((i) => Math.abs(i.v)), 1) : max || 1;
         const palette = getPalette();
 
         if (isNdvi) {
@@ -5403,7 +5397,7 @@
             .map((item, idx) => {
               const pct = Math.max(6, (Math.abs(item.v) / maxAbs) * 100);
               const t01 =
-                S.layer === "drought" || S.layer === "profit"
+                S.layer === "profit"
                   ? Math.max(0, Math.min(1, 0.5 + 0.5 * (item.v / maxAbs)))
                   : Math.max(0.16, item.v / (max || 1));
               const tone = lerp(palette.lo, palette.hi, t01);
@@ -6464,11 +6458,7 @@
           // default: env layers → env tab, อื่น → rice
           const defaultTab =
             S.layer === "dam" ||
-            S.layer === "rainfall" ||
-            S.layer === "drought" ||
-            S.layer === "ndvi" ||
             S.layer === "riceEvi" ||
-            S.layer === "rain" ||
             S.layer === "gsmap" ||
             S.layer === "forecast" ||
             S.layer === "alerts" ||
@@ -8357,7 +8347,6 @@ ${warningsHtml}
       function weatherValueOf(en, layer) {
         const p = WEATHER_DATA?.provinces?.[en];
         if (!p) return null;
-        if (layer === "rainfall") return p.season_rainfall_mm ?? null;
         if (layer === "drought") {
           // % เบี่ยงเบนจากค่าปกติ 5 ปี (2020–2024)
           const avg = WEATHER_FORECAST?.provinces?.[en]?.forecast_rainfall_mm;
