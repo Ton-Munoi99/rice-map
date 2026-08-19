@@ -28,6 +28,7 @@ import sys
 import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from riceutils import km_outside
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -64,14 +65,6 @@ def load_province_bbox():
         except ImportError:
             print("[WARN] ไม่มี bbox บึงกาฬ — สถานีบึงกาฬจะถูกแมปเป็นหนองคาย", file=sys.stderr)
     return bboxes, th_by_en
-
-
-def km_outside(lat, lon, bbox):
-    x0, y0, x1, y1 = bbox
-    dx = max(x0 - lon, 0, lon - x1)
-    dy = max(y0 - lat, 0, lat - y1)
-    return math.hypot(dx * 111 * math.cos(math.radians(lat)), dy * 111)
-
 
 def province_for(lat, lon, bboxes):
     """จังหวัดจากพิกัดจริง — ไม่เดาจากชื่อสถานี

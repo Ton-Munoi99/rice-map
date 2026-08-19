@@ -14,6 +14,9 @@ import csv, json, math, os, sys, requests
 from datetime import datetime, timezone
 from collections import Counter
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from riceutils import km_outside
+
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 API_URL = "https://api-v3.thaiwater.net/api/v1/thaiwater30/public/waterlevel_load"
@@ -53,15 +56,6 @@ def load_province_bbox():
         print(f"[WARN] ตรวจพิกัดไม่ได้ ({e}) — ข้ามการตรวจ", file=sys.stderr)
         return {}, {}
     return {p: v["bbox"] for p, v in geo.items() if v.get("bbox")}, th2en
-
-
-def km_outside(lat, lon, bbox):
-    """ระยะจากจุดถึงกรอบจังหวัด (กม.) — 0 ถ้าอยู่ในกรอบ"""
-    x0, y0, x1, y1 = bbox
-    dx = max(x0 - lon, 0, lon - x1)
-    dy = max(y0 - lat, 0, lat - y1)
-    return math.hypot(dx * 111 * math.cos(math.radians(lat)), dy * 111)
-
 
 def fetch_rows():
     """ดึงรายการสถานีจาก ThaiWater API (retry 3 ครั้ง)"""

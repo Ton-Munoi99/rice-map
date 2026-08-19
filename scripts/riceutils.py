@@ -526,3 +526,15 @@ def build_rice_phenology_mask(current_start_iso, n_months=12):
     )
     window_str = f"{history[0][0][:7]} to {history[-1][0][:7]}"
     return rice_confirm, window_str
+
+
+def km_outside(lat, lon, bbox):
+    """ระยะจากจุดถึงกรอบจังหวัด (กม.) — 0 = อยู่ในกรอบ
+
+    สถานีวัดน้ำมักตั้งริมน้ำซึ่งเป็นเส้นเขตแดน จึงหลุดกรอบเล็กน้อยได้เป็นปกติ
+    แต่ถ้าหลุดมากแปลว่าต้นทางติดชื่อจังหวัดไม่ตรงกับพิกัดจริง
+    """
+    x0, y0, x1, y1 = bbox
+    dx = max(x0 - lon, 0, lon - x1)
+    dy = max(y0 - lat, 0, lat - y1)
+    return math.hypot(dx * 111 * math.cos(math.radians(lat)), dy * 111)
