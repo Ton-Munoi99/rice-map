@@ -6423,12 +6423,7 @@
         if (layerMeta[S.layer]?.noTimeseries) {
           refs.sparkSvg.innerHTML = "";
           refs.sparkTitle.textContent =
-            S.layer === "ndvi"
-              ? t(
-                  `NDVI ${window.NDVI_DATA?.month || ""} — อัปเดตรายเดือน (NASA MODIS)`,
-                  `NDVI ${window.NDVI_DATA?.month || ""} — monthly update (NASA MODIS)`,
-                )
-              : S.layer === "riceEvi"
+            S.layer === "riceEvi"
                 ? t(
                     `สภาพนาข้าว ${eviPeriodLabel()} — ดัชนีความเขียวชอุ่ม EVI`,
                     `Rice paddy greenness (EVI) ${eviPeriodLabel()}`,
@@ -7398,9 +7393,7 @@ ${warningsHtml}
 
         // ดึงค่า NDVI/EVI ต่ออำเภอ
         const vals = {};
-        if (layer === "ndvi" && window.NDVI_DISTRICT?.provinces?.[en]) {
-          Object.assign(vals, window.NDVI_DISTRICT.provinces[en]);
-        } else if (layer === "riceEvi" && window.RICE_EVI_DISTRICT?.provinces?.[en]) {
+        if (layer === "riceEvi" && window.RICE_EVI_DISTRICT?.provinces?.[en]) {
           for (const [d, v] of Object.entries(window.RICE_EVI_DISTRICT.provinces[en])) {
             vals[d] = v?.evi ?? null;
           }
@@ -7440,12 +7433,7 @@ ${warningsHtml}
       function renderDistrictList(en, layer) {
         let entries = [];
 
-        if (layer === "ndvi" && window.NDVI_DISTRICT?.provinces?.[en]) {
-          entries = Object.entries(window.NDVI_DISTRICT.provinces[en])
-            .filter(([, v]) => v != null)
-            .sort((a, b) => b[1] - a[1])
-            .map(([name, val]) => ({ name, val, label: val.toFixed(3), sub: null }));
-        } else if (layer === "riceEvi" && window.RICE_EVI_DISTRICT?.provinces?.[en]) {
+        if (layer === "riceEvi" && window.RICE_EVI_DISTRICT?.provinces?.[en]) {
           entries = Object.entries(window.RICE_EVI_DISTRICT.provinces[en])
             .filter(([, v]) => v?.evi != null)
             .sort((a, b) => (b[1].evi || 0) - (a[1].evi || 0))
@@ -7510,17 +7498,13 @@ ${warningsHtml}
       function districtDrilldownHtml(en, layer) {
         if (layer !== "riceEvi") return "";
         let count = 0;
-        if (layer === "ndvi" && window.NDVI_DISTRICT?.provinces?.[en]) {
-          count = Object.values(window.NDVI_DISTRICT.provinces[en]).filter((v) => v != null).length;
-        } else if (layer === "riceEvi" && window.RICE_EVI_DISTRICT?.provinces?.[en]) {
+        if (layer === "riceEvi" && window.RICE_EVI_DISTRICT?.provinces?.[en]) {
           count = Object.values(window.RICE_EVI_DISTRICT.provinces[en]).filter((v) => v?.evi != null).length;
         }
         if (!count) return "";
         const id = `${en}-${layer}`;
         const label =
-          layer === "ndvi"
-            ? t(`🗺️ ดูรายอำเภอ NDVI (${count} อำเภอ)`, `🗺️ View by District NDVI (${count})`)
-            : t(`🗺️ ดูรายอำเภอ สภาพนาข้าว (${count} อำเภอ)`, `🗺️ View by District EVI (${count})`);
+            t(`🗺️ ดูรายอำเภอ สภาพนาข้าว (${count} อำเภอ)`, `🗺️ View by District EVI (${count})`);
         return `
       <button id="dtb-${id}" class="district-toggle-btn"
         onclick="toggleDistrictPanel('${en.replace(/'/g, "\\'")}','${layer}')"
