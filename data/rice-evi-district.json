@@ -1,14 +1,14 @@
 {
   "_meta": {
     "source": "NASA MODIS MOD13A3 via Google Earth Engine",
-    "mask": "GLAD ∪ MCD12Q1 − exclusion(oil palm (Descals))",
+    "mask": "GLAD LCLUC 2020 Rice ∪ MODIS MCD12Q1 Cropland (Phenology-gated) − exclusion(oil palm (Descals BIOPAMA v1))",
     "method": "Hybrid Union Mask + Rice phenology (12mo: flood<0.3 + peak≥0.4 + amp≥0.25 + minEVI≤0.22) · EVI เฉพาะนายืนยัน · stage แยกด้วยทิศทาง EVI",
     "regions": "FAO GAUL 2015 level2",
     "resolution": "1 km / monthly composite",
     "period": "2026-07-12 to 2026-08-12",
     "month": "2026-07",
     "phenology_window": "2025-07 to 2026-06",
-    "updated": "2026-08-18",
+    "updated": "2026-08-19",
     "provinces_covered": 76,
     "districts_covered": 813,
     "districts_with_data": 563,
