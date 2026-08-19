@@ -4763,24 +4763,6 @@
           );
           return;
         }
-        if (S.layer === "ndvi") {
-          const meta = window.NDVI_DATA?._meta;
-          refs.dataSourceNote.textContent = t(
-            `🛰️ NASA MODIS MOD13A3 · ความละเอียด 1km · ${meta?.month || window.NDVI_DATA?.month || "—"} · ครอบคลุม ${covered} จังหวัด · อัปเดตทุกเดือน`,
-            `🛰️ NASA MODIS MOD13A3 · 1km resolution · ${meta?.month || window.NDVI_DATA?.month || "—"} · ${covered} provinces · monthly update`,
-          );
-          return;
-        }
-        if (S.layer === "rain") {
-          const updated = window.RAIN_DATA?._meta?.updated || "—";
-          const dates = window.RAIN_DATA?._meta?.dates;
-          const period = dates?.length ? `${dates[0]} – ${dates[dates.length - 1]}` : "7 วัน";
-          refs.dataSourceNote.textContent = t(
-            `🌧 Open-Meteo Forecast API · ฟรี ไม่ต้อง API key · อัปเดตทุกวัน · ครอบคลุม ${covered} จังหวัด · centroid จังหวัด (ไม่ใช่ค่าเฉลี่ยทั้งจังหวัด) · ช่วง: ${period}`,
-            `🌧 Open-Meteo Forecast API · Free, no API key · Daily update · ${covered} provinces · Province centroid (not province-wide average) · Period: ${period}`,
-          );
-          return;
-        }
         if (S.layer === "gsmap") {
           const meta = window.GSMAP_DATA?._meta;
           const ps = meta?.period_start,
@@ -4876,20 +4858,6 @@
             `⚡ โรงไฟฟ้าชีวมวลที่ขายไฟเข้าระบบ ${meta?.total || 230} แห่ง (${(meta?.total_mw || 0).toLocaleString()} MW) · ทะเบียน กรมพัฒนาพลังงานทดแทนและอนุรักษ์พลังงาน (พพ./DEDE) ข้อมูล ณ ${meta?.as_of || "ธ.ค. 2568"} · ครอบคลุม ${covered} จังหวัด · ใช้เชื้อเพลิงจากข้าว ${meta?.rice_fuel_plants || 0} แห่ง (อีก ${meta?.unspecified_fuel || 0} แห่งต้นทางไม่ระบุเชื้อเพลิง)`,
             `⚡ ${meta?.total || 230} on-grid biomass power plants (${(meta?.total_mw || 0).toLocaleString()} MW) · DEDE registry as of ${meta?.as_of_en || "Dec 2025"} · ${covered} provinces · ${meta?.rice_fuel_plants || 0} use rice fuel (${meta?.unspecified_fuel || 0} have no fuel type stated at source)`,
           );
-          return;
-        }
-        if (S.layer === "rainfall" || S.layer === "drought") {
-          const meta = WEATHER_DATA?._meta;
-          const season = meta?.season_label?.split("·")[0]?.trim() || "นาปี 2568 (มิ.ย.–พ.ย.)";
-          const baseYrs = WEATHER_FORECAST?._meta?.base_years || "—";
-          const note =
-            S.layer === "drought"
-              ? t(
-                  `% เบี่ยงเบนจากค่าปกติ 5 ปี (${baseYrs}) · บวก = ฝนมากกว่าปกติ · ลบ = ฝนน้อยกว่าปกติ (เสี่ยงแล้ง)`,
-                  `% deviation from ${baseYrs} average · Positive = above normal · Negative = below normal (drought risk)`,
-                )
-              : t("ปริมาณฝนสะสมตลอดฤดูนาปี (มิ.ย.–พ.ย.)", "Total seasonal precipitation Jun–Nov");
-          refs.dataSourceNote.textContent = `${t(season, meta?.season_label?.split("·")[1]?.trim() || "Jun–Nov 2025")} · ${note} · Open-Meteo Archive API · ${covered} ${t("จว.", "prov.")}`;
           return;
         }
         if (S.layer === "naprang" || S.layer === "naprangArea") {
@@ -6876,43 +6844,6 @@
   `;
         }
         // ── Rain tooltip ──────────────────────────────────────────────────────
-        if (S.layer === "rain") {
-          const rp = window.RAIN_DATA?.provinces?.[en];
-          const rank = currentRank(en);
-          const total = getVisibleProvinces().filter((n) => hasLayerValue(n)).length;
-          if (!rp)
-            return `<div class="th">${t(NM[en] || en, en)}</div><div class="en">${en}</div><div style="color:var(--muted);font-size:11px;margin-top:6px">${t("กำลังโหลดข้อมูลฝน…", "Loading rain data…")}</div>`;
-          const rain = rp.rain_7d ?? 0;
-          const rainCol =
-            rain > 100
-              ? "#006064"
-              : rain > 50
-                ? "#0097a7"
-                : rain > 15
-                  ? "#00bcd4"
-                  : rain > 0
-                    ? "#80deea"
-                    : "var(--muted)";
-          const rainLabel =
-            rain > 100
-              ? t("ฝนหนักมาก 🌧", "Heavy Rain 🌧")
-              : rain > 50
-                ? t("ฝนปานกลาง-หนัก 🌧", "Moderate-Heavy 🌧")
-                : rain > 15
-                  ? t("ฝนปานกลาง 🌦", "Moderate 🌦")
-                  : rain > 0
-                    ? t("ฝนเล็กน้อย 🌤", "Light Rain 🌤")
-                    : t("แห้ง / ไม่มีฝน ☀️", "Dry / No Rain ☀️");
-          return `
-    <div class="th">${t(NM[en] || en, en)}</div>
-    <div class="en">${en}</div>
-    <div class="type">${t("ฝนสะสม 7 วันล่าสุด · Open-Meteo", "7-Day Rainfall · Open-Meteo")}</div>
-    <div class="metric-name">${t("ปริมาณฝนสะสม", "Cumulative Rainfall")}</div>
-    <div class="value" style="color:${rainCol}">${fmtNumber(Math.round(rain))} <small style="font-size:12px;color:var(--muted)">มม.</small></div>
-    <div style="font-size:11px;font-weight:700;color:${rainCol};margin:2px 0">${rainLabel}</div>
-    <div class="rank">${rank ? `${t("อันดับ", "Rank")} #${rank} / ${total}` : t("ไม่มีข้อมูล", "No data")}</div>
-  `;
-        }
         if (S.layer === "gsmap") {
           const rp = window.GSMAP_DATA?.provinces?.[en];
           const rank = currentRank(en);
@@ -7111,30 +7042,6 @@ ${warningsHtml}
   `;
         }
         // ── NDVI tooltip ──
-        if (S.layer === "ndvi") {
-          const np = window.NDVI_DATA?.provinces?.[en]; // number (0–1) or null
-          const rank = currentRank(en);
-          const total = getVisibleProvinces().filter((n) => hasLayerValue(n)).length;
-          if (np == null)
-            return `<div class="th">${t(NM[en] || en, en)}</div><div class="en">${en}</div><div style="color:var(--muted);font-size:11px;margin-top:6px">${t("ไม่มีข้อมูล NDVI", "No NDVI data")}</div>`;
-          const ndviColor = np >= 0.6 ? "#2e7d32" : np >= 0.4 ? "#558b2f" : np >= 0.2 ? "#f9a825" : "#bf360c";
-          const ndviLabel =
-            np >= 0.6
-              ? t("ป่าไม้ / ชุ่มชื้นมาก 🌳", "Forest / Very Lush 🌳")
-              : np >= 0.4
-                ? t("นาข้าว / เกษตร 🌾", "Cropland / Agriculture 🌾")
-                : np >= 0.2
-                  ? t("พืชเบาบาง / แล้ง 🌱", "Sparse Vegetation / Dry 🌱")
-                  : t("เมือง / ดินเปล่า 🏙️", "Urban / Bare Soil 🏙️");
-          return `
-    <div class="th">${t(NM[en] || en, en)}</div>
-    <div class="en">${en}</div>
-    <div class="type">NDVI · ${window.NDVI_DATA?.month || "—"}</div>
-    <div class="value" style="color:${ndviColor}">${np.toFixed(3)} NDVI</div>
-    <div style="font-size:11px;font-weight:700;color:${ndviColor};margin:2px 0">${ndviLabel}</div>
-    <div class="rank">${rank ? `${t("อันดับ", "Rank")} #${rank} / ${total}` : t("ไม่มีข้อมูล", "No data")}</div>
-  `;
-        }
         const value = valueOf(en);
         const rank = currentRank(en);
         const prevYear = previousYear(S.year);
@@ -7246,29 +7153,13 @@ ${warningsHtml}
           refs.yearButtons.innerHTML = `<button class="pill on" data-year="dam">💧 ${t("ล่าสุด", "Latest")} ${updated}</button>`;
           return;
         }
-        if (S.layer === "rainfall" || S.layer === "drought") {
-          const meta = WEATHER_DATA?._meta;
-          const seasonTh = meta ? `นาปี ${toBE(meta.year)}` : "นาปี 2568";
-          const seasonEn = meta ? `Main Season ${meta.year}` : "Main Season 2025";
-          refs.yearButtons.innerHTML = `<button class="pill on" data-year="weather">🌧 ${t(seasonTh, seasonEn)} (${t("มิ.ย.–พ.ย.", "Jun–Nov")})</button>`;
-          return;
-        }
         if (S.layer === "mills") {
           const updated = fmtDateISO(RICE_MILLS_DATA?._meta?.updated);
           refs.yearButtons.innerHTML = `<button class="pill on" data-year="mills">🏭 DIT ${t("อัปเดต", "Updated")} ${updated}</button>`;
           return;
         }
-        if (S.layer === "ndvi") {
-          refs.yearButtons.innerHTML = `<button class="pill on" data-year="ndvi">🌿 ${window.NDVI_DATA?.month || t("ล่าสุด", "Latest")} · NASA MODIS</button>`;
-          return;
-        }
         if (S.layer === "riceEvi") {
           refs.yearButtons.innerHTML = `<button class="pill on" data-year="riceEvi">🌾 ${eviPeriodLabel()} · ${t("ดัชนีความเขียวชอุ่ม EVI", "Rice Paddy EVI")}</button>`;
-          return;
-        }
-        if (S.layer === "rain") {
-          const updated = window.RAIN_DATA?._meta?.updated || t("ล่าสุด", "Latest");
-          refs.yearButtons.innerHTML = `<button class="pill on" data-year="rain">🌧 ${t("7 วันล่าสุด", "Last 7 days")} · Open-Meteo · ${updated}</button>`;
           return;
         }
         if (S.layer === "gsmap") {
