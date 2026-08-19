@@ -4969,7 +4969,6 @@
                       )
                     : t("ยังไม่มีฐานเทียบ", "No prior year");
         if (
-          S.layer !== "rain" &&
           S.layer !== "gsmap" &&
           S.layer !== "forecast" &&
           S.layer !== "alerts" &&
@@ -5151,9 +5150,7 @@
                         : S.layer === "riceEvi"
                           ? `${metaLabel}<br>${t(`ดัชนีความเขียวชอุ่ม EVI · ${eviPeriodLabel()}`, `Rice Paddy EVI · ${eviPeriodLabel()}`)}`
                           : `${riceLabel} &nbsp;·&nbsp; ${metaLabel}<br>${yearLabel}`;
-        const isNdvi = S.layer === "ndvi";
         const isRiceEvi = S.layer === "riceEvi";
-        const isRain = S.layer === "rain";
         const isGsmap = S.layer === "gsmap";
         const isForecast = S.layer === "forecast";
         const isAlerts = S.layer === "alerts";
@@ -5163,18 +5160,15 @@
           .map((en) => ({ en, v: valueOf(en), s: isAlerts ? alertSeverityOf(en) : null }))
           .sort((a, b) => (isAlerts ? b.s - a.s : b.v - a.v));
         const items =
-          isNdvi || isRiceEvi || isRain || isGsmap || isForecast || isAlerts || isSoilMoisture
+          isRiceEvi || isGsmap || isForecast || isAlerts || isSoilMoisture
             ? allSorted
             : allSorted.slice(0, 10);
 
         // Update rank title
         if (refs.rankTitle) {
-          refs.rankTitle.innerHTML = isNdvi
-            ? `<span class="th-t">ทุกจังหวัด เรียงตาม NDVI</span><span class="en-t">All Provinces by NDVI</span>`
-            : isRiceEvi
+          refs.rankTitle.innerHTML =
+            isRiceEvi
               ? `<span class="th-t">ทุกจังหวัด เรียงตามความเขียวชอุ่มของนา</span><span class="en-t">All Provinces by Rice Paddy EVI</span>`
-              : isRain
-                ? `<span class="th-t">ทุกจังหวัด เรียงตามฝน 7 วัน</span><span class="en-t">All Provinces by 7-Day Rain</span>`
                 : isGsmap
                   ? `<span class="th-t">ทุกจังหวัด เรียงตามปริมาณฝน</span><span class="en-t">All Provinces by Rainfall</span>`
                   : isForecast
@@ -5192,149 +5186,6 @@
           S.layer === "profit" ? Math.max(...items.map((i) => Math.abs(i.v)), 1) : max || 1;
         const palette = getPalette();
 
-        if (isNdvi) {
-          // ── NDVI: legend explainer + tier grouping ──────────────────────────
-          const NDVI_TIERS = [
-            {
-              label: () => t("🌳 ป่าไม้หนาแน่น (≥0.6)", "🌳 Dense Forest (≥0.6)"),
-              min: 0.6,
-              color: "#2e7d32",
-              desc: () => t("ป่าไม้ พืชคลุมดินหนา ความชุ่มชื้นสูง", "Forest, dense cover, high moisture"),
-            },
-            {
-              label: () => t("🌾 พืชเกษตร / ป่าบาง (0.4–0.6)", "🌾 Cropland / Light Forest (0.4–0.6)"),
-              min: 0.4,
-              color: "#558b2f",
-              desc: () => t("นาข้าว ไร่อ้อย พืชไร่ ป่าโปร่ง", "Rice paddy, sugarcane, field crops"),
-            },
-            {
-              label: () => t("🌱 พืชเบาบาง (0.2–0.4)", "🌱 Sparse Vegetation (0.2–0.4)"),
-              min: 0.2,
-              color: "#f9a825",
-              desc: () => t("พืชน้อย ดินโล่ง หน้าแล้ง", "Low vegetation, bare soil, dry season"),
-            },
-            {
-              label: () => t("🏙️ แห้ง / เมือง / น้ำ (<0.2)", "🏙️ Dry / Urban / Water (<0.2)"),
-              min: 0.0,
-              color: "#bf360c",
-              desc: () => t("พื้นที่เมือง ดินเปล่า แหล่งน้ำ", "Urban area, bare land, water body"),
-            },
-          ];
-          // legend explainer
-          let ndviLegendHtml = `<div style="background:rgba(255,255,255,.04);border-radius:10px;padding:8px 10px;margin-bottom:6px;font-size:9px;line-height:1.7;color:var(--muted)">
-          <div style="font-weight:700;color:#ccc;margin-bottom:4px">📊 ${t("ค่า NDVI คืออะไร?", "What is NDVI?")}</div>
-          <div>${t("ดัชนีพืชพรรณ (0–1) จากดาวเทียม NASA MODIS ยิ่งเขียวเข้ม = พืชพรรณหนาแน่นและสุขภาพดี", "Vegetation index (0–1) from NASA MODIS satellite. Darker green = denser, healthier vegetation.")}</div>
-          <div style="margin-top:5px;display:grid;grid-template-columns:1fr 1fr;gap:3px">
-            <div style="color:#2e7d32">● ≥0.6 ${t("ป่าไม้ / ชุ่มชื้นมาก", "Forest / Very wet")}</div>
-            <div style="color:#558b2f">● 0.4–0.6 ${t("นาข้าว / เกษตร", "Rice / Crops")}</div>
-            <div style="color:#f9a825">● 0.2–0.4 ${t("พืชเบาบาง / แล้ง", "Sparse / Dry")}</div>
-            <div style="color:#bf360c">● <0.2 ${t("เมือง / ดินเปล่า", "Urban / Bare")}</div>
-          </div>
-          <div style="margin-top:4px;opacity:.7">${t(`ข้อมูลเดือน ${window.NDVI_DATA?.month || "—"} · อัปเดตทุกวันที่ 8 ของเดือน`, `Data: ${window.NDVI_DATA?.month || "—"} · Updated 8th of each month`)}</div>
-        </div>`;
-          let html2 = ndviLegendHtml;
-          let globalIdx2 = 0;
-          const ndviTierGroups = NDVI_TIERS.map((tier, ti) => {
-            const nextMin = NDVI_TIERS[ti - 1]?.min ?? Infinity;
-            return { tier, group: items.filter((i) => i.v >= tier.min && i.v < nextMin) };
-          }).filter(({ group }) => group.length > 0);
-          ndviTierGroups.forEach(({ tier, group }, gi) => {
-            const isOpen = gi <= 1; // เปิด 2 tier แรก
-            const tid = `ndvi-tier-${gi}`;
-            html2 += `<div style="font-size:9px;font-weight:700;color:var(--muted);padding:6px 4px 2px;cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center"
-            onclick="(function(el){var b=document.getElementById('${tid}');var open=b.style.display!=='none';b.style.display=open?'none':'';el.querySelector('.tier-arrow').textContent=open?'▶':'▼';})(this)">
-            <span style="color:${tier.color}">${tier.label()} · ${group.length} ${t("จว.", "prov.")}</span>
-            <span class="tier-arrow" style="font-size:8px">${isOpen ? "▼" : "▶"}</span>
-          </div>
-          <div style="font-size:8.5px;color:var(--muted);opacity:.7;padding:0 4px 3px">${tier.desc()}</div>`;
-            html2 += `<div id="${tid}" style="display:${isOpen ? "" : "none"}">`;
-            group.forEach((item) => {
-              globalIdx2++;
-              const barPct = Math.max(4, (item.v / 0.85) * 100);
-              const tone = lerp(palette.lo, palette.hi, Math.max(0.1, item.v / 0.85));
-              html2 += `<div class="rank-row" onclick="selectProvince('${item.en.replace(/'/g, "\\'")}')">
-              <div class="rank-index">#${globalIdx2}</div>
-              <div class="rank-name">${t(NM[item.en] || item.en, item.en)}<br><small style="font-size:9px;opacity:.65">${item.en}</small></div>
-              <div class="rank-track"><div class="rank-fill" style="width:${barPct.toFixed(1)}%;background:${rgb(tone)}"></div></div>
-              <div class="rank-value">${item.v.toFixed(3)}</div>
-            </div>`;
-            });
-            html2 += `</div>`;
-          });
-          refs.topList.innerHTML = html2;
-        } else if (isRiceEvi) {
-          // ── Rice EVI: stage-based tier grouping (uses module-level RICE_EVI_TIERS) ──
-          let riceEviLegend = `<div style="background:rgba(255,255,255,.04);border-radius:10px;padding:8px 10px;margin-bottom:6px;font-size:9px;line-height:1.7;color:var(--muted)">
-          <div style="font-weight:700;color:#ccc;margin-bottom:4px">🌾 ${t("ดัชนีความเขียวชอุ่มของนาข้าว คืออะไร?", "What is Rice EVI?")}</div>
-          <div>${t("EVI = ดัชนีความเขียวชอุ่มของนาข้าว (0–1) · ความเขียวขึ้นสูงสุดตอน \"ออกรวง\" แล้วลดลงตอนสร้างเมล็ด–สุกแก่ · ค่าสูงจึง = ออกรวง ไม่ใช่ใกล้เก็บเกี่ยว", "EVI = rice paddy greenness (0–1) · peaks at heading, then falls through grain-fill to harvest · High = heading, NOT near-harvest")}</div>
-          <div style="margin-top:5px;display:grid;grid-template-columns:1fr 1fr;gap:3px">
-            <div style="color:#2e7d32">● ≥0.55 ${t("ออกรวง (ยอดเขียว)", "Heading (peak)")}</div>
-            <div style="color:#4caf50">● 0.40–0.55 ${t("ออกรวง/สร้างเมล็ด", "Heading/grain-fill")}</div>
-            <div style="color:#8bc34a">● 0.25–0.40 ${t("แตกกอ/สุกแก่", "Tillering/ripening")}</div>
-            <div style="color:#ff9800">● 0.15–0.25 ${t("ต้นกล้า/เก็บเกี่ยว", "Seedling/harvest")}</div>
-          </div>
-          <div style="margin-top:6px;padding-top:5px;border-top:1px solid rgba(255,255,255,.08)">
-            <div style="font-weight:700;color:#aaa;margin-bottom:3px">🗓️ ${t("ปฏิทินข้าวรายภาค", "Regional Rice Calendar")}</div>
-            <div style="display:grid;grid-template-columns:auto 1fr;gap:2px 6px;line-height:1.5">
-              <span style="color:#ffd54f">ใต้</span><span>${t("ปลูก ก.ย.–พ.ย. · เก็บ มี.ค.–พ.ค. (นาปี มรสุม NE)", "Plant Sep–Nov · Harvest Mar–May (main, NE monsoon)")}</span>
-              <span style="color:#81c784">เหนือ/อีสาน</span><span>${t("ปลูก พ.ค.–ก.ค. · เก็บ พ.ย.–ธ.ค. (นาปี มรสุม SW)", "Plant May–Jul · Harvest Nov–Dec (main, SW monsoon)")}</span>
-              <span style="color:#64b5f6">กลาง/ตาก-พิษ</span><span>${t("นาปรัง ปลูก ธ.ค.–ก.พ. · เก็บ พ.ค.–มิ.ย. (ชลประทาน)", "Dry season: Plant Dec–Feb · Harvest May–Jun (irrigated)")}</span>
-            </div>
-          </div>
-          <div style="margin-top:5px;padding-top:5px;border-top:1px solid rgba(255,255,255,.08);opacity:.85">${t(
-            `⚠️ กรองจังหวัดที่พื้นที่ปลูกข้าวจริง (OAE) < ${fmtNumber(RICE_EVI_MIN_OAE_RAI)} ไร่ ออก (เช่น ภูเก็ต ระนอง จันทบุรี) เพราะ EVI มักจับพืชยืนต้น/ป่า/พื้นที่น้ำขัง ไม่ใช่ข้าว`,
-            `⚠️ Provinces with < ${fmtNumber(RICE_EVI_MIN_OAE_RAI)} rai of actual OAE rice (e.g. Phuket, Ranong, Chanthaburi) are filtered out — their EVI usually reflects perennial crops/forest/water, not rice`,
-          )}</div>
-          <div style="margin-top:4px;opacity:.7">${t(`ข้อมูลเดือน ${eviPeriodLabel()} · อัปเดตทุกเดือน`, `Data: ${eviPeriodLabel()} · monthly update`)}</div>
-        </div>`;
-          let riceEviList = riceEviLegend;
-          let riceEviIdx = 0;
-          const riceEviTierGroups = RICE_EVI_TIERS.map((tier, ti) => {
-            const nextMin = RICE_EVI_TIERS[ti - 1]?.min ?? Infinity;
-            return { tier, group: items.filter((i) => i.v >= tier.min && i.v < nextMin) };
-          }).filter(({ group }) => group.length > 0);
-          riceEviTierGroups.forEach(({ tier, group }, gi) => {
-            const isOpen = gi <= 1;
-            const tid = `riceevi-tier-${gi}`;
-            riceEviList += `<div style="font-size:9px;font-weight:700;color:var(--muted);padding:6px 4px 2px;cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center"
-            onclick="(function(el){var b=document.getElementById('${tid}');var open=b.style.display!=='none';b.style.display=open?'none':'';el.querySelector('.tier-arrow').textContent=open?'▶':'▼';})(this)">
-            <span style="color:${tier.color}">${t(tier.labelTh, tier.labelEn)} · ${group.length} ${t("จว.", "prov.")}</span>
-            <span class="tier-arrow" style="font-size:8px">${isOpen ? "▼" : "▶"}</span>
-          </div>
-          <div style="font-size:8.5px;color:var(--muted);opacity:.7;padding:0 4px 3px">${t(tier.descTh, tier.descEn)}</div>`;
-            riceEviList += `<div id="${tid}" style="display:${isOpen ? "" : "none"}">`;
-            group.forEach((item) => {
-              riceEviIdx++;
-              const barPct = Math.max(4, (item.v / 0.6) * 100);
-              const tone = lerp(palette.lo, palette.hi, Math.max(0.1, item.v / 0.6));
-              riceEviList += `<div class="rank-row" onclick="selectProvince('${item.en.replace(/'/g, "\\'")}')">
-              <div class="rank-index">#${riceEviIdx}</div>
-              <div class="rank-name">${t(NM[item.en] || item.en, item.en)}<br><small style="font-size:9px;opacity:.65">${item.en}</small></div>
-              <div class="rank-track"><div class="rank-fill" style="width:${barPct.toFixed(1)}%;background:${rgb(tone)}"></div></div>
-              <div class="rank-value">${item.v.toFixed(3)}</div>
-            </div>`;
-            });
-            riceEviList += `</div>`;
-          });
-          refs.topList.innerHTML = riceEviList;
-        } else {
-          refs.topList.innerHTML = items
-            .map((item, idx) => {
-              const pct = Math.max(6, (Math.abs(item.v) / maxAbs) * 100);
-              const t01 =
-                S.layer === "profit"
-                  ? Math.max(0, Math.min(1, 0.5 + 0.5 * (item.v / maxAbs)))
-                  : Math.max(0.16, item.v / (max || 1));
-              const tone = lerp(palette.lo, palette.hi, t01);
-              return `<div class="rank-row" onclick="selectProvince('${item.en.replace(/'/g, "\\'")}')">
-        <div class="rank-index">#${idx + 1}</div>
-        <div class="rank-name">${t(NM[item.en] || item.en, item.en)}<br><small style="font-size:9px;opacity:.65">${item.en}</small></div>
-        <div class="rank-track"><div class="rank-fill" style="width:${pct.toFixed(1)}%;background:${rgb(tone)}"></div></div>
-        <div class="rank-value">${fmtCompact(item.v)}</div>
-      </div>`;
-            })
-            .join("");
-        }
       }
 
       function currentRank(en) {
@@ -5399,7 +5250,7 @@
         refs.detailCard.classList.add("show");
         refs.detailPlaceholder.style.display = "none";
         // lazy-load district data when NDVI or riceEvi layer is active
-        if (S.layer === "ndvi" || S.layer === "riceEvi") {
+        if (S.layer === "riceEvi") {
           if (!window.NDVI_DISTRICT) {
             loadDistrictData().then(() => {
               // re-render once data arrives (only if still same province selected)
@@ -5547,31 +5398,6 @@
         }
 
         // ── NDVI detail card ──────────────────────────────────────────────────
-        let ndviHtml = "";
-        const ndviVal = window.NDVI_DATA?.provinces?.[en];
-        if (ndviVal != null) {
-          const ndviMonth = window.NDVI_DATA?.month || "—";
-          const ndviColor =
-            ndviVal >= 0.6 ? "#2e7d32" : ndviVal >= 0.4 ? "#558b2f" : ndviVal >= 0.2 ? "#f9a825" : "#bf360c";
-          const ndviLabel =
-            ndviVal >= 0.6
-              ? t("พืชพรรณหนาแน่น 🌳", "Dense Vegetation 🌳")
-              : ndviVal >= 0.4
-                ? t("พืชเกษตร / ป่าบาง 🌾", "Cropland / Light Forest 🌾")
-                : ndviVal >= 0.2
-                  ? t("พืชเบาบาง 🌱", "Sparse Vegetation 🌱")
-                  : t("พื้นที่แห้ง / เมือง 🏙️", "Dry / Urban 🏙️");
-          ndviHtml = `
-          <div class="rice-card" style="grid-column:1/-1;background:rgba(76,175,80,.08);border:1px solid rgba(76,175,80,.25)">
-            <div class="t">🌿 ${t(`ดัชนีพืชพรรณ NDVI · ${ndviMonth}`, `Vegetation Index NDVI · ${ndviMonth}`)}</div>
-            <div class="metric">
-              <div class="m-label">${t("ค่า NDVI เฉลี่ย (0 = ไม่มีพืช, 1 = พืชหนาแน่น)", "Mean NDVI (0 = bare, 1 = dense vegetation)")}</div>
-              <div class="m-value" style="color:${ndviColor}">${ndviVal.toFixed(3)} <small style="color:${ndviColor}">${ndviLabel}</small></div>
-            </div>
-            <div style="font-size:9px;color:var(--muted);margin-top:4px">🛰️ ${t("ที่มา: NASA MODIS MOD13A3 (ดาวเทียม Terra) · ความละเอียด 1km · อัปเดตรายเดือน", "Source: NASA MODIS MOD13A3 (Terra satellite) · 1km resolution · monthly update")}</div>
-            ${districtDrilldownHtml(en, "ndvi")}
-          </div>`;
-        }
         // ── Rice EVI detail card ─────────────────────────────────────────────
         let riceEviHtml = "";
         const riceEviProv = window.RICE_EVI_DATA?.provinces?.[en];
@@ -6240,7 +6066,6 @@
         const envContent =
           weatherHtml +
           damHtml +
-          ndviHtml +
           riceEviHtml +
           rainHtml +
           gsmapHtml +
@@ -7683,7 +7508,7 @@ ${warningsHtml}
 
       // ── Build district toggle button HTML (ใช้ใน selectProvince) ─────────────
       function districtDrilldownHtml(en, layer) {
-        if (layer !== "ndvi" && layer !== "riceEvi") return "";
+        if (layer !== "riceEvi") return "";
         let count = 0;
         if (layer === "ndvi" && window.NDVI_DISTRICT?.provinces?.[en]) {
           count = Object.values(window.NDVI_DISTRICT.provinces[en]).filter((v) => v != null).length;
@@ -8180,7 +8005,6 @@ ${warningsHtml}
           console.info("weather JSON not available");
         }
         // rerender ถ้าผู้ใช้กด weather layer ก่อนที่ข้อมูลจะโหลดเสร็จ
-        if (S.layer === "rainfall" || S.layer === "drought") rerender();
       }
 
       function weatherValueOf(en, layer) {
