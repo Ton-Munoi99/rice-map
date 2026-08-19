@@ -312,3 +312,212 @@ def q1_evi_image(start_iso, end_iso):
         .mean()
         .multiply(0.0001)
     )
+
+
+# ── Rice mask + phenology (ใช้ร่วมทั้งระดับจังหวัดและอำเภอ) ─────────────
+# เดิมโค้ดชุดนี้ซ้ำอยู่ทั้ง fetch_rice_evi.py และ fetch_rice_evi_district.py
+# รวมถึงค่าคงที่จูนเกณฑ์ ซึ่งต้องแก้ให้ตรงกันทั้งสองไฟล์ทุกครั้ง —
+# 18 ส.ค. 2569 ต้องแก้ MIN_EVI_MAX สองที่พร้อมกัน ถ้าหลุดที่เดียวแผนที่จังหวัด
+# กับรายอำเภอจะใช้เกณฑ์คนละชุดโดยไม่มีใครรู้ จึงยกมารวมไว้ที่เดียว
+
+PHENOLOGY_MONTHS = 12   # จำนวนเดือนย้อนหลังที่ตรวจ flooding phase
+FLOOD_EVI_MAX = 0.30   # น้ำท่วมขังต้องเกิดตอน canopy ยังโปร่ง (เตรียมดิน/ปักดำ) ไม่ใช่ป่าเขียวทึบ
+PEAK_MIN      = 0.40   # ต้องมีเดือนที่ต้นข้าวขึ้น canopy เขียวจริง → ตัดน้ำเปิด/บ่อกุ้ง/นาเกลือ
+AMP_MIN       = 0.25   # EVI แกว่งตามฤดูสูง → ตัดพืชยืนต้นเขียวคงที่ทั้งปี (ยาง ปาล์ม ป่า)
+MIN_EVI_MAX   = 0.22   # ต้องเคย "โล่ง/น้ำขัง" อย่างน้อย 1 เดือน (min EVI ต่ำ) → ตัวตัดยาง/ปาล์ม/ป่า
+RUBBER_ASSET = ""       # เช่น "projects/xxx/assets/thailand_rubber_2023" (ปล่อยว่าง = ข้าม)
+
+
+def load_rice_mask():
+    """
+    โหลด rice scan mask แบบ Hybrid Union:
+    1. GLAD LCLUC 2020 Rice Paddy (Class 24) — rice-specific
+    2. MODIS MCD12Q1 Cropland (Class 12, 14) — ครอบคลุมกว้างกว่า
+    3. Union = GLAD ∪ MCD12Q1 — scan area กว้าง, Phenology กรอง rice-only
+
+    เหตุผลที่ใช้ union:
+    - GLAD underrepresent จังหวัดเล็กภาคกลาง (อ่างทอง 4px, สิงห์บุรี 6px, ปทุมธานี 2px)
+    - MCD12Q1 ครอบคลุมกว้างกว่า (1km native) แต่รวม cropland ทุกชนิด
+    - Phenology gate (LSWI > EVI) จะกรองเอาเฉพาะนาข้าวที่มี flooding signature
+    - อ้อย/มัน/ข้าวโพด ปลูกบนดินแห้ง → ไม่ผ่าน phenology → ถูกกรองออก
+
+    Returns:
+        union_mask  — ee.Image binary (1 = GLAD rice OR MCD12Q1 cropland)
+        glad_mask   — ee.Image binary (1 = GLAD rice only, สำหรับ per-province stats)
+        mask_source — str description
+    """
+    glad_mask = None
+    cropland_mask = None
+
+    # ── GLAD LCLUC 2020 Rice Paddy ──
+    try:
+        glad_mask = ee.Image("projects/glad/GLCLU2020/v2/LCLUC_2020").eq(24)
+        print("✓ Loaded GLAD LCLUC 2020 (rice paddy class 24)")
+    except Exception as e:
+        print(f"  ⚠️ GLAD not available: {e}")
+
+    # ── MODIS MCD12Q1 Cropland ──
+    try:
+        lc = ee.Image("MODIS/061/MCD12Q1/2022_01_01").select("LC_Type1")
+        cropland_mask = lc.eq(12).Or(lc.eq(14))
+        print("✓ Loaded MCD12Q1 Cropland (classes 12, 14)")
+    except Exception as e:
+        print(f"  ⚠️ MCD12Q1 not available: {e}")
+
+    # ── Build union ──
+    if glad_mask is not None and cropland_mask is not None:
+        union_mask = glad_mask.Or(cropland_mask)
+        mask_source = "GLAD LCLUC 2020 Rice ∪ MODIS MCD12Q1 Cropland (Phenology-gated)"
+        print("✓ Union mask: GLAD rice ∪ MCD12Q1 cropland")
+    elif glad_mask is not None:
+        union_mask = glad_mask
+        mask_source = "GLAD LCLUC 2020 — Rice Paddy (Class 24)"
+        print("  → Using GLAD only (MCD12Q1 unavailable)")
+    elif cropland_mask is not None:
+        union_mask = cropland_mask
+        glad_mask = None   # GLAD unavailable — bonus_pixels will be 0 (N/A)
+        mask_source = "MODIS MCD12Q1 Cropland (fallback, GLAD unavailable)"
+        print("  → Using MCD12Q1 only (GLAD unavailable)")
+    else:
+        raise RuntimeError("No rice/cropland mask available!")
+
+    return union_mask, glad_mask, mask_source
+
+def load_exclusion_mask():
+    """
+    โหลด mask พืชยืนต้นที่ไม่ใช่ข้าว (ปาล์ม/ยาง) สำหรับลบออกจาก scan area
+    เป็น defense-in-depth เสริม phenology gate
+
+    Returns:
+        excl_mask — ee.Image binary (1 = ปาล์ม/ยาง, 0 = อื่นๆ, unmasked ทั้งภาพ) | None
+        desc      — str อธิบายชั้นที่โหลดได้
+    """
+    parts, names = [], []
+
+    # ── Oil palm: Descals et al. (BIOPAMA/GlobalOilPalm/v1) ──
+    try:
+        palm = (
+            ee.ImageCollection("BIOPAMA/GlobalOilPalm/v1")
+            .select("classification")
+            .mosaic()
+            .lt(3)            # 1,2 = palm ; 3 = non-palm
+            .unmask(0)        # นอกพื้นที่ dataset → 0 (ไม่ลบพิกเซลนา)
+        )
+        parts.append(palm)
+        names.append("oil palm (Descals BIOPAMA v1)")
+        print("✓ Loaded oil-palm exclusion (BIOPAMA/GlobalOilPalm/v1)")
+    except Exception as e:
+        print(f"  ⚠️ oil-palm layer unavailable: {e}")
+
+    # ── Rubber (optional asset) ──
+    if RUBBER_ASSET:
+        try:
+            rubber = ee.Image(RUBBER_ASSET).gt(0).unmask(0)
+            parts.append(rubber)
+            names.append(f"rubber ({RUBBER_ASSET})")
+            print("✓ Loaded rubber exclusion")
+        except Exception as e:
+            print(f"  ⚠️ rubber layer unavailable: {e}")
+
+    if not parts:
+        return None, "none"
+
+    excl = parts[0]
+    for p in parts[1:]:
+        excl = excl.Or(p)
+    return excl.unmask(0), " ∪ ".join(names)
+
+def get_history_months(current_start_iso, n=12):
+    """
+    คืน list ของ (start_iso, end_iso) สำหรับ n เดือนก่อนหน้า current_start
+    เรียงจากเก่า → ใหม่  ไม่รวมเดือน current_start เอง
+    ตัวอย่าง: current='2026-05-01', n=3 → [(2026-02), (2026-03), (2026-04)]
+    """
+    d = date.fromisoformat(current_start_iso)
+    ranges = []
+    for i in range(n, 0, -1):
+        month = d.month - i
+        year  = d.year
+        while month <= 0:
+            month += 12
+            year  -= 1
+        last_day = calendar.monthrange(year, month)[1]
+        ranges.append((
+            date(year, month, 1).isoformat(),
+            date(year, month, last_day).isoformat(),
+        ))
+    return ranges
+
+def build_rice_phenology_mask(current_start_iso, n_months=12):
+    """
+    สร้าง rice-confirmation mask จาก phenology ของนาข้าวใน n เดือนย้อนหลัง
+
+    เดิมใช้แค่ "LSWI > EVI ≥1 เดือน" ซึ่งหลวมเกินไป — พืชยืนต้น (ยาง/ปาล์ม/ป่า)
+    และพื้นที่น้ำ (บ่อเลี้ยงสัตว์น้ำ/ป่าชายเลน/นาเกลือ) หลุดเข้ามาเป็น rice ได้
+    เพราะค่า LSWI สูงกว่า EVI ในบางเดือนโดยไม่ต้องเป็นนาข้าว
+
+    เงื่อนไขนาข้าวจริง (pixel ต้องผ่านทั้ง 3):
+      1. flood_any  — เคยมีเดือน "น้ำท่วมขังตอน canopy โปร่ง": LSWI > EVI และ EVI < FLOOD_EVI_MAX
+                       = ระยะเตรียมดิน/ปักดำจริง (ไม่ใช่ LSWI>EVI จากป่าที่ EVI แกว่ง)
+      2. evi_max ≥ PEAK_MIN     — มีเดือนที่ต้นข้าวขึ้น canopy เขียวจริง → ตัดน้ำเปิด/บ่อกุ้ง/นาเกลือ
+      3. amplitude ≥ AMP_MIN    — EVI แกว่งตามฤดูสูง (max−min) → ตัดพืชยืนต้นเขียวคงที่ทั้งปี
+      4. evi_min ≤ MIN_EVI_MAX  — ต้องเคยโล่ง/น้ำขัง (min EVI ต่ำ) → ตัดยาง/ปาล์ม/ป่าที่เขียวตลอดปี
+
+    แหล่งข้อมูล: MOD13A3 (EVI + LSWI จาก b02 NIR, b07 SWIR2), cloud-composited แล้ว
+    - LSWI = (NIR − SWIR2) / (NIR + SWIR2)
+    - window 12 เดือน ครอบคลุมนาปี (flooding Jun-Aug) + นาปรัง (Dec-Jan)
+
+    Return:
+        rice_confirm — ee.Image binary (1 = ผ่าน phenology ครบ 3 เงื่อนไข) band "flooded"
+        window_str   — "YYYY-MM to YYYY-MM"
+    """
+    history = get_history_months(current_start_iso, n_months)
+    print(f"  Phenology window: {history[0][0][:7]} → {history[-1][0][:7]} ({n_months} months)")
+
+    evi_imgs, flood_imgs = [], []
+    for m_start, m_end in history:
+        # ดึง EVI + NIR + SWIR2 จาก MOD13A3 ในคราวเดียว
+        mod13 = (
+            ee.ImageCollection("MODIS/061/MOD13A3")
+            .filterDate(m_start, m_end)
+            .select(["EVI", "sur_refl_b02", "sur_refl_b07"])
+            .mosaic()              # all-masked ถ้าไม่มีข้อมูล → safe (ถูกข้ามใน max/min/any)
+        )
+
+        evi  = mod13.select("EVI").multiply(0.0001)
+        nir  = mod13.select("sur_refl_b02").multiply(0.0001)
+        swir = mod13.select("sur_refl_b07").multiply(0.0001)
+
+        # LSWI = (NIR - SWIR2) / (NIR + SWIR2)
+        lswi = nir.subtract(swir).divide(nir.add(swir))
+
+        # Flooding: น้ำมากกว่าพืช (LSWI>EVI) และ canopy ยังโปร่ง (EVI ต่ำ)
+        flooded = lswi.gt(evi).And(evi.lt(FLOOD_EVI_MAX)).rename("flooded")
+        evi_imgs.append(evi.rename("EVI"))
+        flood_imgs.append(flooded)
+
+    if not flood_imgs:
+        print("  ⚠️ No phenology data — returning zero mask")
+        return ee.Image(0).rename("flooded"), "no data"
+
+    # เคย flood (แบบ canopy โปร่ง) ≥1 เดือน
+    flood_any = (
+        ee.ImageCollection(flood_imgs)
+        .reduce(ee.Reducer.anyNonZero())
+        .rename("flooded")
+    )
+    # สถิติฤดูกาลของ EVI ต่อ pixel
+    evi_col   = ee.ImageCollection(evi_imgs)
+    evi_max   = evi_col.max()
+    evi_min   = evi_col.min()
+    amplitude = evi_max.subtract(evi_min)
+
+    rice_confirm = (
+        flood_any
+        .And(evi_max.gte(PEAK_MIN))
+        .And(amplitude.gte(AMP_MIN))
+        .And(evi_min.lte(MIN_EVI_MAX))
+        .rename("flooded")
+    )
+    window_str = f"{history[0][0][:7]} to {history[-1][0][:7]}"
+    return rice_confirm, window_str
