@@ -28,7 +28,7 @@ import sys
 import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from riceutils import km_outside
+from riceutils import km_outside, load_province_bbox
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -43,28 +43,6 @@ CSV_PATH = os.path.join(_ROOT, "rice-data.csv")
 # ยอมให้สถานีอยู่นอกกรอบจังหวัดได้เท่านี้ — สถานีวัดโขงตั้งริมน้ำซึ่งเป็นเส้นเขตแดน
 # จึงมักหลุดกรอบไปเล็กน้อย แต่ถ้าหลุดมากแปลว่าแมปผิดจังหวัด
 MAX_KM_OUTSIDE = 30
-
-
-def load_province_bbox():
-    geo = json.load(open(GEO_PATH, encoding="utf-8"))["provinces"]
-    with open(CSV_PATH, encoding="utf-8-sig") as f:
-        th_by_en = {r["province_en"]: r["province_th"]
-                    for r in csv.DictReader(f) if r.get("province_en")}
-    bboxes = {p: v["bbox"] for p, v in geo.items() if v.get("bbox")}
-
-    # บึงกาฬแยกจากหนองคายปี 2554 ชุด GAUL ที่ districts-geo ใช้ยังไม่มี และ bbox
-    # หนองคายยังเป็นขอบเขตก่อนแยก จึงกินพื้นที่บึงกาฬทั้งจังหวัด — สถานีบึงกาฬ
-    # เลยถูกแมปเป็นหนองคาย · ใช้รูปหลายเหลี่ยมที่ riceutils เก็บไว้อยู่แล้ว
-    if "Bueng Kan" not in bboxes:
-        try:
-            from riceutils import _BUENG_KAN_POLY
-            pts = _BUENG_KAN_POLY[0]
-            lons = [x for x, _ in pts]
-            lats = [y for _, y in pts]
-            bboxes["Bueng Kan"] = [min(lons), min(lats), max(lons), max(lats)]
-        except ImportError:
-            print("[WARN] ไม่มี bbox บึงกาฬ — สถานีบึงกาฬจะถูกแมปเป็นหนองคาย", file=sys.stderr)
-    return bboxes, th_by_en
 
 def province_for(lat, lon, bboxes):
     """จังหวัดจากพิกัดจริง — ไม่เดาจากชื่อสถานี
@@ -111,7 +89,7 @@ def main():
         print(f"[ERROR] MRC API fetch failed: {e}", file=sys.stderr)
         sys.exit(1)
 
-    bboxes, th_by_en = load_province_bbox()
+    bboxes, _, th_by_en = load_province_bbox()
     mekong = [s for s in rows if (s.get("river") or "") == "Mekong"]
     print(f"MRC: {len(rows)} stations, {len(mekong)} on the Mekong mainstream")
 

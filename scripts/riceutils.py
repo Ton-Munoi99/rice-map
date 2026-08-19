@@ -538,3 +538,43 @@ def km_outside(lat, lon, bbox):
     dx = max(x0 - lon, 0, lon - x1)
     dy = max(y0 - lat, 0, lat - y1)
     return math.hypot(dx * 111 * math.cos(math.radians(lat)), dy * 111)
+
+
+def load_province_bbox():
+    """คืน (bboxes, th2en, en2th) — กรอบสี่เหลี่ยมของทุกจังหวัด + แผนที่ชื่อสองทาง
+
+    bboxes: {province_en: [minLon, minLat, maxLon, maxLat]}
+
+    ใช้ตรวจว่าพิกัดสถานีตรงกับจังหวัดที่ต้นทางระบุไหม — ThaiWater เคยติดชื่อ
+    จังหวัดผิดจนหมุดไปโผล่ห่าง 385 กม. (ดู CHANGELOG ส.ค. 2569)
+
+    บึงกาฬแยกจากหนองคายปี 2554 ซึ่งหลังชุด GAUL ที่ districts-geo ใช้ จึงไม่มี
+    กรอบของตัวเอง และกรอบหนองคายยังกินพื้นที่บึงกาฬอยู่ — เติมจากรูปหลายเหลี่ยม
+    ที่โมดูลนี้เก็บไว้ ไม่งั้นสถานีบึงกาฬจะถูกแมปเป็นหนองคาย
+
+    อ่านไฟล์ไม่ได้ → คืน ({}, {}, {}) ให้ผู้เรียกข้ามการตรวจไปแทนที่จะพัง
+    """
+    import csv as _csv
+
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    geo_path = os.path.join(root, "data", "districts-geo.json")
+    csv_path = os.path.join(root, "rice-data.csv")
+    try:
+        geo = json.load(open(geo_path, encoding="utf-8"))["provinces"]
+        with open(csv_path, encoding="utf-8-sig") as f:
+            rows = [r for r in _csv.DictReader(f) if r.get("province_th") and r.get("province_en")]
+    except (OSError, ValueError, KeyError) as e:
+        print(f"[WARN] อ่านขอบเขตจังหวัดไม่ได้ ({e}) — ข้ามการตรวจพิกัด")
+        return {}, {}, {}
+
+    th2en = {r["province_th"]: r["province_en"] for r in rows}
+    en2th = {r["province_en"]: r["province_th"] for r in rows}
+    bboxes = {p: v["bbox"] for p, v in geo.items() if v.get("bbox")}
+
+    if "Bueng Kan" not in bboxes and _BUENG_KAN_POLY:
+        pts = _BUENG_KAN_POLY[0]
+        lons = [x for x, _ in pts]
+        lats = [y for _, y in pts]
+        bboxes["Bueng Kan"] = [min(lons), min(lats), max(lons), max(lats)]
+
+    return bboxes, th2en, en2th

@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 from collections import Counter
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from riceutils import km_outside
+from riceutils import km_outside, load_province_bbox
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -44,19 +44,6 @@ def _loc(d, lang):
     """ดึงค่าภาษาจาก localized dict {th,en} — คืน '' ถ้าไม่มี"""
     return (d or {}).get(lang, "") if isinstance(d, dict) else ""
 
-
-def load_province_bbox():
-    """{province_en: [minLon, minLat, maxLon, maxLat]} + แผนที่ชื่อไทย→อังกฤษ"""
-    try:
-        geo = json.load(open(GEO_PATH, encoding="utf-8"))["provinces"]
-        with open(CSV_PATH, encoding="utf-8-sig") as f:
-            th2en = {r["province_th"]: r["province_en"]
-                     for r in csv.DictReader(f) if r.get("province_th")}
-    except (OSError, ValueError, KeyError) as e:
-        print(f"[WARN] ตรวจพิกัดไม่ได้ ({e}) — ข้ามการตรวจ", file=sys.stderr)
-        return {}, {}
-    return {p: v["bbox"] for p, v in geo.items() if v.get("bbox")}, th2en
-
 def fetch_rows():
     """ดึงรายการสถานีจาก ThaiWater API (retry 3 ครั้ง)"""
     for attempt in range(3):
@@ -75,7 +62,7 @@ def main():
     rows = fetch_rows()
     print(f"  total rows: {len(rows)}")
 
-    bbox_by_prov, th2en = load_province_bbox()
+    bbox_by_prov, th2en, _ = load_province_bbox()
     stations, dropped = [], []
     for r in rows:
         st = r.get("station") or {}
