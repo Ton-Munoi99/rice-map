@@ -346,6 +346,7 @@ def load_rice_mask():
         glad_mask   — ee.Image binary (1 = GLAD rice only, สำหรับ per-province stats)
         mask_source — str description
     """
+    import ee  # lazy — workflow ฝน/อากาศ ไม่ได้ติดตั้ง earthengine-api
     glad_mask = None
     cropland_mask = None
 
@@ -392,6 +393,7 @@ def load_exclusion_mask():
         excl_mask — ee.Image binary (1 = ปาล์ม/ยาง, 0 = อื่นๆ, unmasked ทั้งภาพ) | None
         desc      — str อธิบายชั้นที่โหลดได้
     """
+    import ee  # lazy — workflow ฝน/อากาศ ไม่ได้ติดตั้ง earthengine-api
     parts, names = [], []
 
     # ── Oil palm: Descals et al. (BIOPAMA/GlobalOilPalm/v1) ──
@@ -471,6 +473,7 @@ def build_rice_phenology_mask(current_start_iso, n_months=12):
         rice_confirm — ee.Image binary (1 = ผ่าน phenology ครบ 3 เงื่อนไข) band "flooded"
         window_str   — "YYYY-MM to YYYY-MM"
     """
+    import ee  # lazy — workflow ฝน/อากาศ ไม่ได้ติดตั้ง earthengine-api
     history = get_history_months(current_start_iso, n_months)
     print(f"  Phenology window: {history[0][0][:7]} → {history[-1][0][:7]} ({n_months} months)")
 
