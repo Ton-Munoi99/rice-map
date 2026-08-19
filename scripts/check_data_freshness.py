@@ -29,8 +29,6 @@ MAX_AGE_DAYS = {
     "fertilizer-prices.json": 10,  # รายสัปดาห์ (จันทร์) — ต้องมี FIRECRAWL_API_KEY
     "mekong-level.json":      3,   # รายวัน (MRC telemetry)
     "alert-scoreboard.json":  3,   # ต่อท้าย update-rain รายวัน
-    "ndvi.json":             45,  # รายเดือน (วันที่ 8)
-    "ndvi-district.json":    45,
     "rice-evi.json":         45,
     "rice-evi-district.json": 45,
     "weather-province.json": 45,  # รายเดือน (วันที่ 1)

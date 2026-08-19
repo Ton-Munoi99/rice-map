@@ -2629,7 +2629,6 @@
         "drought",
         "mills",
         "profit",
-        "ndvi",
         "riceEvi",
         "rain",
         "gsmap",
@@ -2741,16 +2740,6 @@
           unitShortEn: "฿/rai",
           summary: "กำไร/ขาดทุนเฉลี่ย",
           summaryMode: "avg_signed",
-        },
-        ndvi: {
-          th: "ดัชนีพืชพรรณ (NDVI)",
-          en: "Vegetation Index (NDVI)",
-          unit: "ค่า NDVI เฉลี่ยรายจังหวัด (0–1)",
-          unitEn: "Mean NDVI per province (0–1)",
-          unitShort: "NDVI",
-          unitShortEn: "NDVI",
-          summary: "NDVI เฉลี่ยทั้งประเทศ",
-          summaryMode: "avg",
         },
         riceEvi: {
           th: "สภาพนาข้าว",
@@ -2935,13 +2924,6 @@
           sourceTh: "OAE+สมาคมโรงสีฯ",
           sourceEn: "OAE+TRMAB",
           palette: { lo: [192, 57, 43], mid: [241, 196, 15], hi: [39, 174, 96], accent: "#27ae60" },
-        },
-        ndvi: {
-          format: "num3",
-          valueFn: ndviValueOf,
-          sourceTh: "NASA MODIS",
-          sourceEn: "NASA MODIS",
-          palette: { lo: [255, 251, 230], mid: [139, 195, 74], hi: [27, 94, 32], accent: "#4caf50" },
         },
         riceEvi: {
           format: "num3",
@@ -3510,7 +3492,6 @@
         if (layer === "rainfall" || layer === "drought") return ["weather"];
         if (layer === "households") return ["2566"];
         if (layer === "mills") return ["mills"];
-        if (layer === "ndvi") return ["ndvi"];
         if (layer === "riceEvi") return ["riceEvi"];
         if (layer === "rain") return ["rain"];
         if (layer === "gsmap") return ["gsmap"];
@@ -3809,9 +3790,6 @@
         el.classList.add("show");
       }
 
-      function ndviValueOf(en) {
-        return window.NDVI_DATA?.provinces?.[en] ?? null;
-      }
 
       // ── EVI rice-area sanity check ────────────────────────────────────────
       // ปัญหา: หน้ากากนา EVI (GLAD ∪ cropland + phenology flooding gate) กรอง
@@ -7767,14 +7745,9 @@ ${warningsHtml}
       async function loadDistrictData() {
         // โหลด 3 ไฟล์พร้อมกัน (ถ้ายังไม่ได้โหลด)
         const loads = [];
-        if (!window.NDVI_DISTRICT && !_districtGeoLoading) {
+        if (!window.RICE_EVI_DISTRICT && !_districtGeoLoading) {
           _districtGeoLoading = true;
           loads.push(
-            fetch("data/ndvi-district.json")
-              .then((r) => (r.ok ? r.json() : null))
-              .then((d) => {
-                window.NDVI_DISTRICT = d;
-              }),
             fetch("data/rice-evi-district.json")
               .then((r) => (r.ok ? r.json() : null))
               .then((d) => {
@@ -8049,7 +8022,6 @@ ${warningsHtml}
         fetchHouseholds();
         fetchStormAlerts();
         fetchRiceNews();
-        fetchLayerData("ndvi.json", "NDVI_DATA", "ndvi");
         fetchLayerData("rice-evi.json", "RICE_EVI_DATA", "riceEvi");
         fetchLayerData("rain-daily.json", "RAIN_DATA", "rain");
         fetchLayerData("rain-gsmap.json", "GSMAP_DATA", "gsmap");

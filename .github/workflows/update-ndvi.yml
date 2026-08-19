@@ -1,4 +1,4 @@
-name: Update NDVI Data (MODIS)
+name: Update Rice EVI (MODIS)
 
 on:
   schedule:
@@ -29,20 +29,10 @@ jobs:
       - name: Install dependencies
         run: pip install earthengine-api
 
-      - name: Fetch NDVI data from GEE
-        env:
-          GEE_SERVICE_ACCOUNT_KEY: ${{ secrets.GEE_SERVICE_ACCOUNT_KEY }}
-        run: python scripts/fetch_ndvi.py
-
       - name: Fetch Rice EVI data from GEE
         env:
           GEE_SERVICE_ACCOUNT_KEY: ${{ secrets.GEE_SERVICE_ACCOUNT_KEY }}
         run: python scripts/fetch_rice_evi.py
-
-      - name: Fetch NDVI district data from GEE
-        env:
-          GEE_SERVICE_ACCOUNT_KEY: ${{ secrets.GEE_SERVICE_ACCOUNT_KEY }}
-        run: python scripts/fetch_ndvi_district.py
 
       - name: Fetch Rice EVI district data from GEE
         env:
@@ -56,6 +46,6 @@ jobs:
       - name: Commit and push
         uses: ./.github/actions/commit-data
         with:
-          paths: data/ndvi.json data/rice-evi.json data/ndvi-district.json data/rice-evi-district.json data/rice-evi-validation.json
-          message: "auto: update NDVI + Rice EVI (province+district)"
+          paths: data/rice-evi.json data/rice-evi-district.json data/rice-evi-validation.json
+          message: "auto: update Rice EVI (province+district)"
           date-format: "%Y-%m"
