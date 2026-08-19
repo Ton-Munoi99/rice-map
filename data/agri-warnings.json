@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "updated": "2026-08-18",
+    "updated": "2026-08-19",
     "sources": [
       "Open-Meteo Forecast",
       "JAXA GSMaP",
@@ -14,12 +14,12 @@
       "drought_dam_pct": 40,
       "dam_low_pct": 30
     },
-    "forecast_bias_correction_mm": 54.4
+    "forecast_bias_correction_mm": 55.9
   },
   "summary": {
     "high": 19,
-    "medium": 15,
-    "low": 11,
+    "medium": 23,
+    "low": 7,
     "drought": 1,
     "dam_low": 3,
     "none": 0
@@ -33,10 +33,10 @@
           "icon": "🟠",
           "type": "flood",
           "level": "medium",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 122 มม. + (ดาวเทียม: 0 มม.) — เสี่ยงน้ำท่วมปานกลาง",
-          "message_en": "7-day forecast rainfall 122mm + (satellite: 0mm) — Moderate flood risk",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 139 มม. + (ดาวเทียม: 2 มม.) — เสี่ยงน้ำท่วมปานกลาง",
+          "message_en": "7-day forecast rainfall 139mm + (satellite: 2mm) — Moderate flood risk",
           "source": "พยากรณ์ Open-Meteo",
-          "value": 122.3,
+          "value": 139.2,
           "threshold": 60
         }
       ]
@@ -49,10 +49,10 @@
           "icon": "✅",
           "type": "normal",
           "level": "normal",
-          "message_th": "ฝนปกติ (31 มม./7 วัน) — ไม่มีความเสี่ยง",
-          "message_en": "Normal rainfall (31mm/7d) — no risk",
+          "message_th": "ฝนปกติ (42 มม./7 วัน) — ไม่มีความเสี่ยง",
+          "message_en": "Normal rainfall (42mm/7d) — no risk",
           "source": "Open-Meteo + JAXA GSMaP",
-          "value": 31.0,
+          "value": 42.1,
           "threshold": 30
         }
       ]
@@ -65,10 +65,10 @@
           "icon": "✅",
           "type": "normal",
           "level": "normal",
-          "message_th": "ฝนปกติ (37 มม./7 วัน) — ไม่มีความเสี่ยง",
-          "message_en": "Normal rainfall (37mm/7d) — no risk",
+          "message_th": "ฝนปกติ (46 มม./7 วัน) — ไม่มีความเสี่ยง",
+          "message_en": "Normal rainfall (46mm/7d) — no risk",
           "source": "Open-Meteo + JAXA GSMaP",
-          "value": 37.0,
+          "value": 46.5,
           "threshold": 30
         }
       ]
@@ -81,27 +81,37 @@
           "icon": "🔴",
           "type": "flood",
           "level": "high",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 379 มม. + ดาวเทียม GSMaP: 37 มม. — เสี่ยงน้ำท่วมรุนแรง",
-          "message_en": "7-day forecast rainfall 379mm + GSMaP satellite: 37mm — High flood risk",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 247 มม. + ดาวเทียม GSMaP: 36 มม. — เสี่ยงน้ำท่วมรุนแรง",
+          "message_en": "7-day forecast rainfall 247mm + GSMaP satellite: 36mm — High flood risk",
           "source": "พยากรณ์ Open-Meteo + JAXA GSMaP",
-          "value": 378.7,
+          "value": 246.8,
           "threshold": 120
         }
       ]
     },
     "Buri Ram": {
-      "level": "normal",
-      "level_num": 0,
+      "level": "low",
+      "level_num": 1,
       "warnings": [
         {
-          "icon": "✅",
-          "type": "normal",
-          "level": "normal",
-          "message_th": "ฝนปกติ (58 มม./7 วัน) — ไม่มีความเสี่ยง",
-          "message_en": "Normal rainfall (58mm/7d) — no risk",
-          "source": "Open-Meteo + JAXA GSMaP",
-          "value": 58.0,
+          "icon": "🟡",
+          "type": "flood",
+          "level": "low",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 88 มม. + (ดาวเทียม: 2 มม.) — เฝ้าระวังน้ำท่วม",
+          "message_en": "7-day forecast rainfall 88mm + (satellite: 2mm) — Flood watch",
+          "source": "พยากรณ์ Open-Meteo",
+          "value": 88.0,
           "threshold": 30
+        },
+        {
+          "icon": "🏜",
+          "type": "drought",
+          "level": "drought",
+          "message_th": "ฝนน้อยกว่า 5 มม./7 วัน (2.0 มม.) + เขื่อน 31% — เสี่ยงแล้ง",
+          "message_en": "Rain < 5mm/7d (2.0mm) + dam at 31% — drought risk",
+          "source": "JAXA GSMaP + กรมชลประทาน",
+          "value": 2.0,
+          "threshold": 5
         }
       ]
     },
@@ -113,10 +123,10 @@
           "icon": "💧",
           "type": "dam",
           "level": "dam_low",
-          "message_th": "เขื่อนระดับน้ำ 18.1% ของความจุ",
-          "message_en": "Dam at 18.1% of capacity",
+          "message_th": "เขื่อนระดับน้ำ 18.2% ของความจุ",
+          "message_en": "Dam at 18.2% of capacity",
           "source": "กรมชลประทาน (RID)",
-          "value": 18.09,
+          "value": 18.18,
           "threshold": 30
         }
       ]
@@ -129,10 +139,10 @@
           "icon": "✅",
           "type": "normal",
           "level": "normal",
-          "message_th": "ฝนปกติ (48 มม./7 วัน) — ไม่มีความเสี่ยง",
-          "message_en": "Normal rainfall (48mm/7d) — no risk",
+          "message_th": "ฝนปกติ (49 มม./7 วัน) — ไม่มีความเสี่ยง",
+          "message_en": "Normal rainfall (49mm/7d) — no risk",
           "source": "Open-Meteo + JAXA GSMaP",
-          "value": 48.4,
+          "value": 48.7,
           "threshold": 30
         }
       ]
@@ -145,20 +155,20 @@
           "icon": "🟠",
           "type": "flood",
           "level": "medium",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 126 มม. + (ดาวเทียม: 4 มม.) — เสี่ยงน้ำท่วมปานกลาง",
-          "message_en": "7-day forecast rainfall 126mm + (satellite: 4mm) — Moderate flood risk",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 153 มม. + (ดาวเทียม: 4 มม.) — เสี่ยงน้ำท่วมปานกลาง",
+          "message_en": "7-day forecast rainfall 153mm + (satellite: 4mm) — Moderate flood risk",
           "source": "พยากรณ์ Open-Meteo",
-          "value": 125.9,
+          "value": 152.9,
           "threshold": 60
         },
         {
           "icon": "🏜",
           "type": "drought",
           "level": "drought",
-          "message_th": "ฝนน้อยกว่า 5 มม./7 วัน (4.4 มม.) + เขื่อน 36% — เสี่ยงแล้ง",
-          "message_en": "Rain < 5mm/7d (4.4mm) + dam at 36% — drought risk",
+          "message_th": "ฝนน้อยกว่า 5 มม./7 วัน (3.7 มม.) + เขื่อน 36% — เสี่ยงแล้ง",
+          "message_en": "Rain < 5mm/7d (3.7mm) + dam at 36% — drought risk",
           "source": "JAXA GSMaP + กรมชลประทาน",
-          "value": 4.4,
+          "value": 3.7,
           "threshold": 5
         }
       ]
@@ -171,43 +181,43 @@
           "icon": "🔴",
           "type": "flood",
           "level": "high",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 194 มม. + (ดาวเทียม: 28 มม.) — เสี่ยงน้ำท่วมรุนแรง",
-          "message_en": "7-day forecast rainfall 194mm + (satellite: 28mm) — High flood risk",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 192 มม. + (ดาวเทียม: 29 มม.) — เสี่ยงน้ำท่วมรุนแรง",
+          "message_en": "7-day forecast rainfall 192mm + (satellite: 29mm) — High flood risk",
           "source": "พยากรณ์ Open-Meteo",
-          "value": 194.1,
+          "value": 191.9,
           "threshold": 120
         }
       ]
     },
     "Chiang Mai": {
-      "level": "high",
-      "level_num": 3,
+      "level": "medium",
+      "level_num": 2,
       "warnings": [
         {
-          "icon": "🔴",
+          "icon": "🟠",
           "type": "flood",
-          "level": "high",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 190 มม. + (ดาวเทียม: 8 มม.) — เสี่ยงน้ำท่วมรุนแรง",
-          "message_en": "7-day forecast rainfall 190mm + (satellite: 8mm) — High flood risk",
+          "level": "medium",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 157 มม. + (ดาวเทียม: 6 มม.) — เสี่ยงน้ำท่วมปานกลาง",
+          "message_en": "7-day forecast rainfall 157mm + (satellite: 6mm) — Moderate flood risk",
           "source": "พยากรณ์ Open-Meteo",
-          "value": 190.0,
-          "threshold": 120
+          "value": 156.9,
+          "threshold": 60
         }
       ]
     },
     "Chiang Rai": {
-      "level": "high",
-      "level_num": 3,
+      "level": "medium",
+      "level_num": 2,
       "warnings": [
         {
-          "icon": "🔴",
+          "icon": "🟠",
           "type": "flood",
-          "level": "high",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 195 มม. + ดาวเทียม GSMaP: 35 มม. — เสี่ยงน้ำท่วมรุนแรง",
-          "message_en": "7-day forecast rainfall 195mm + GSMaP satellite: 35mm — High flood risk",
+          "level": "medium",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 134 มม. + ดาวเทียม GSMaP: 34 มม. — เสี่ยงน้ำท่วมปานกลาง",
+          "message_en": "7-day forecast rainfall 134mm + GSMaP satellite: 34mm — Moderate flood risk",
           "source": "พยากรณ์ Open-Meteo + JAXA GSMaP",
-          "value": 195.2,
-          "threshold": 120
+          "value": 133.6,
+          "threshold": 60
         }
       ]
     },
@@ -219,10 +229,10 @@
           "icon": "✅",
           "type": "normal",
           "level": "normal",
-          "message_th": "ฝนปกติ (27 มม./7 วัน) — ไม่มีความเสี่ยง",
-          "message_en": "Normal rainfall (27mm/7d) — no risk",
+          "message_th": "ฝนปกติ (42 มม./7 วัน) — ไม่มีความเสี่ยง",
+          "message_en": "Normal rainfall (42mm/7d) — no risk",
           "source": "Open-Meteo + JAXA GSMaP",
-          "value": 27.2,
+          "value": 41.8,
           "threshold": 30
         }
       ]
@@ -235,10 +245,10 @@
           "icon": "🟡",
           "type": "flood",
           "level": "low",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 91 มม. + (ดาวเทียม: 11 มม.) — เฝ้าระวังน้ำท่วม",
-          "message_en": "7-day forecast rainfall 91mm + (satellite: 11mm) — Flood watch",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 100 มม. + (ดาวเทียม: 8 มม.) — เฝ้าระวังน้ำท่วม",
+          "message_en": "7-day forecast rainfall 100mm + (satellite: 8mm) — Flood watch",
           "source": "พยากรณ์ Open-Meteo",
-          "value": 91.0,
+          "value": 100.0,
           "threshold": 30
         }
       ]
@@ -251,10 +261,10 @@
           "icon": "🟠",
           "type": "flood",
           "level": "medium",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 164 มม. + (ดาวเทียม: 7 มม.) — เสี่ยงน้ำท่วมปานกลาง",
-          "message_en": "7-day forecast rainfall 164mm + (satellite: 7mm) — Moderate flood risk",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 140 มม. + (ดาวเทียม: 6 มม.) — เสี่ยงน้ำท่วมปานกลาง",
+          "message_en": "7-day forecast rainfall 140mm + (satellite: 6mm) — Moderate flood risk",
           "source": "พยากรณ์ Open-Meteo",
-          "value": 163.9,
+          "value": 140.4,
           "threshold": 60
         }
       ]
@@ -267,10 +277,10 @@
           "icon": "🟠",
           "type": "flood",
           "level": "medium",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 162 มม. + (ดาวเทียม: 16 มม.) — เสี่ยงน้ำท่วมปานกลาง",
-          "message_en": "7-day forecast rainfall 162mm + (satellite: 16mm) — Moderate flood risk",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 122 มม. + (ดาวเทียม: 16 มม.) — เสี่ยงน้ำท่วมปานกลาง",
+          "message_en": "7-day forecast rainfall 122mm + (satellite: 16mm) — Moderate flood risk",
           "source": "พยากรณ์ Open-Meteo",
-          "value": 161.6,
+          "value": 121.6,
           "threshold": 60
         }
       ]
@@ -283,36 +293,36 @@
           "icon": "🔴",
           "type": "flood",
           "level": "high",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 295 มม. + ดาวเทียม GSMaP: 46 มม. — เสี่ยงน้ำท่วมรุนแรง",
-          "message_en": "7-day forecast rainfall 295mm + GSMaP satellite: 46mm — High flood risk",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 302 มม. + ดาวเทียม GSMaP: 42 มม. — เสี่ยงน้ำท่วมรุนแรง",
+          "message_en": "7-day forecast rainfall 302mm + GSMaP satellite: 42mm — High flood risk",
           "source": "พยากรณ์ Open-Meteo + JAXA GSMaP",
-          "value": 295.2,
+          "value": 302.4,
           "threshold": 120
         }
       ]
     },
     "Khon Kaen": {
-      "level": "low",
-      "level_num": 1,
+      "level": "medium",
+      "level_num": 2,
       "warnings": [
         {
-          "icon": "🟡",
+          "icon": "🟠",
           "type": "flood",
-          "level": "low",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 107 มม. + (ดาวเทียม: 2 มม.) — เฝ้าระวังน้ำท่วม",
-          "message_en": "7-day forecast rainfall 107mm + (satellite: 2mm) — Flood watch",
+          "level": "medium",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 121 มม. + (ดาวเทียม: 1 มม.) — เสี่ยงน้ำท่วมปานกลาง",
+          "message_en": "7-day forecast rainfall 121mm + (satellite: 1mm) — Moderate flood risk",
           "source": "พยากรณ์ Open-Meteo",
-          "value": 107.0,
-          "threshold": 30
+          "value": 120.9,
+          "threshold": 60
         },
         {
           "icon": "🏜",
           "type": "drought",
           "level": "drought",
-          "message_th": "ฝนน้อยกว่า 5 มม./7 วัน (1.6 มม.) + เขื่อน 34% — เสี่ยงแล้ง",
-          "message_en": "Rain < 5mm/7d (1.6mm) + dam at 34% — drought risk",
+          "message_th": "ฝนน้อยกว่า 5 มม./7 วัน (0.6 มม.) + เขื่อน 34% — เสี่ยงแล้ง",
+          "message_en": "Rain < 5mm/7d (0.6mm) + dam at 34% — drought risk",
           "source": "JAXA GSMaP + กรมชลประทาน",
-          "value": 1.6,
+          "value": 0.6,
           "threshold": 5
         }
       ]
@@ -325,10 +335,10 @@
           "icon": "✅",
           "type": "normal",
           "level": "normal",
-          "message_th": "ฝนปกติ (45 มม./7 วัน) — ไม่มีความเสี่ยง",
-          "message_en": "Normal rainfall (45mm/7d) — no risk",
+          "message_th": "ฝนปกติ (68 มม./7 วัน) — ไม่มีความเสี่ยง",
+          "message_en": "Normal rainfall (68mm/7d) — no risk",
           "source": "Open-Meteo + JAXA GSMaP",
-          "value": 44.7,
+          "value": 68.1,
           "threshold": 30
         }
       ]
@@ -341,31 +351,15 @@
           "icon": "🟠",
           "type": "flood",
           "level": "medium",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 172 มม. + (ดาวเทียม: 10 มม.) — เสี่ยงน้ำท่วมปานกลาง",
-          "message_en": "7-day forecast rainfall 172mm + (satellite: 10mm) — Moderate flood risk",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 164 มม. + (ดาวเทียม: 9 มม.) — เสี่ยงน้ำท่วมปานกลาง",
+          "message_en": "7-day forecast rainfall 164mm + (satellite: 9mm) — Moderate flood risk",
           "source": "พยากรณ์ Open-Meteo",
-          "value": 171.8,
+          "value": 163.9,
           "threshold": 60
         }
       ]
     },
     "Lamphun": {
-      "level": "low",
-      "level_num": 1,
-      "warnings": [
-        {
-          "icon": "🟡",
-          "type": "flood",
-          "level": "low",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 103 มม. + (ดาวเทียม: 3 มม.) — เฝ้าระวังน้ำท่วม",
-          "message_en": "7-day forecast rainfall 103mm + (satellite: 3mm) — Flood watch",
-          "source": "พยากรณ์ Open-Meteo",
-          "value": 103.0,
-          "threshold": 30
-        }
-      ]
-    },
-    "Loei": {
       "level": "medium",
       "level_num": 2,
       "warnings": [
@@ -373,11 +367,27 @@
           "icon": "🟠",
           "type": "flood",
           "level": "medium",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 122 มม. + (ดาวเทียม: 5 มม.) — เสี่ยงน้ำท่วมปานกลาง",
-          "message_en": "7-day forecast rainfall 122mm + (satellite: 5mm) — Moderate flood risk",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 131 มม. + (ดาวเทียม: 3 มม.) — เสี่ยงน้ำท่วมปานกลาง",
+          "message_en": "7-day forecast rainfall 131mm + (satellite: 3mm) — Moderate flood risk",
           "source": "พยากรณ์ Open-Meteo",
-          "value": 122.5,
+          "value": 130.7,
           "threshold": 60
+        }
+      ]
+    },
+    "Loei": {
+      "level": "high",
+      "level_num": 3,
+      "warnings": [
+        {
+          "icon": "🔴",
+          "type": "flood",
+          "level": "high",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 292 มม. + (ดาวเทียม: 2 มม.) — เสี่ยงน้ำท่วมรุนแรง",
+          "message_en": "7-day forecast rainfall 292mm + (satellite: 2mm) — High flood risk",
+          "source": "พยากรณ์ Open-Meteo",
+          "value": 292.2,
+          "threshold": 120
         }
       ]
     },
@@ -389,10 +399,10 @@
           "icon": "✅",
           "type": "normal",
           "level": "normal",
-          "message_th": "ฝนปกติ (73 มม./7 วัน) — ไม่มีความเสี่ยง",
-          "message_en": "Normal rainfall (73mm/7d) — no risk",
+          "message_th": "ฝนปกติ (79 มม./7 วัน) — ไม่มีความเสี่ยง",
+          "message_en": "Normal rainfall (79mm/7d) — no risk",
           "source": "Open-Meteo + JAXA GSMaP",
-          "value": 72.6,
+          "value": 78.9,
           "threshold": 30
         }
       ]
@@ -405,27 +415,27 @@
           "icon": "🔴",
           "type": "flood",
           "level": "high",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 269 มม. + (ดาวเทียม: 7 มม.) — เสี่ยงน้ำท่วมรุนแรง",
-          "message_en": "7-day forecast rainfall 269mm + (satellite: 7mm) — High flood risk",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 270 มม. + (ดาวเทียม: 7 มม.) — เสี่ยงน้ำท่วมรุนแรง",
+          "message_en": "7-day forecast rainfall 270mm + (satellite: 7mm) — High flood risk",
           "source": "พยากรณ์ Open-Meteo",
-          "value": 269.4,
+          "value": 270.5,
           "threshold": 120
         }
       ]
     },
     "Maha Sarakham": {
-      "level": "normal",
-      "level_num": 0,
+      "level": "medium",
+      "level_num": 2,
       "warnings": [
         {
-          "icon": "✅",
-          "type": "normal",
-          "level": "normal",
-          "message_th": "ฝนปกติ (81 มม./7 วัน) — ไม่มีความเสี่ยง",
-          "message_en": "Normal rainfall (81mm/7d) — no risk",
-          "source": "Open-Meteo + JAXA GSMaP",
-          "value": 80.6,
-          "threshold": 30
+          "icon": "🟠",
+          "type": "flood",
+          "level": "medium",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 130 มม. + (ดาวเทียม: 0 มม.) — เสี่ยงน้ำท่วมปานกลาง",
+          "message_en": "7-day forecast rainfall 130mm + (satellite: 0mm) — Moderate flood risk",
+          "source": "พยากรณ์ Open-Meteo",
+          "value": 129.9,
+          "threshold": 60
         }
       ]
     },
@@ -437,10 +447,10 @@
           "icon": "🔴",
           "type": "flood",
           "level": "high",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 200 มม. + (ดาวเทียม: 13 มม.) — เสี่ยงน้ำท่วมรุนแรง",
-          "message_en": "7-day forecast rainfall 200mm + (satellite: 13mm) — High flood risk",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 221 มม. + (ดาวเทียม: 13 มม.) — เสี่ยงน้ำท่วมรุนแรง",
+          "message_en": "7-day forecast rainfall 221mm + (satellite: 13mm) — High flood risk",
           "source": "พยากรณ์ Open-Meteo",
-          "value": 199.7,
+          "value": 220.8,
           "threshold": 120
         }
       ]
@@ -453,10 +463,10 @@
           "icon": "🟠",
           "type": "flood",
           "level": "medium",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 115 มม. + (ดาวเทียม: 8 มม.) — เสี่ยงน้ำท่วมปานกลาง",
-          "message_en": "7-day forecast rainfall 115mm + (satellite: 8mm) — Moderate flood risk",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 151 มม. + (ดาวเทียม: 16 มม.) — เสี่ยงน้ำท่วมปานกลาง",
+          "message_en": "7-day forecast rainfall 151mm + (satellite: 16mm) — Moderate flood risk",
           "source": "พยากรณ์ Open-Meteo",
-          "value": 114.8,
+          "value": 150.6,
           "threshold": 60
         }
       ]
@@ -469,10 +479,10 @@
           "icon": "✅",
           "type": "normal",
           "level": "normal",
-          "message_th": "ฝนปกติ (44 มม./7 วัน) — ไม่มีความเสี่ยง",
-          "message_en": "Normal rainfall (44mm/7d) — no risk",
+          "message_th": "ฝนปกติ (46 มม./7 วัน) — ไม่มีความเสี่ยง",
+          "message_en": "Normal rainfall (46mm/7d) — no risk",
           "source": "Open-Meteo + JAXA GSMaP",
-          "value": 44.1,
+          "value": 45.9,
           "threshold": 30
         }
       ]
@@ -485,10 +495,10 @@
           "icon": "🔴",
           "type": "flood",
           "level": "high",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 396 มม. + ดาวเทียม GSMaP: 83 มม. — เสี่ยงน้ำท่วมรุนแรง",
-          "message_en": "7-day forecast rainfall 396mm + GSMaP satellite: 83mm — High flood risk",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 226 มม. + ดาวเทียม GSMaP: 83 มม. — เสี่ยงน้ำท่วมรุนแรง",
+          "message_en": "7-day forecast rainfall 226mm + GSMaP satellite: 83mm — High flood risk",
           "source": "พยากรณ์ Open-Meteo + JAXA GSMaP",
-          "value": 395.5,
+          "value": 226.4,
           "threshold": 120
         }
       ]
@@ -501,127 +511,31 @@
           "icon": "🏜",
           "type": "drought",
           "level": "drought",
-          "message_th": "ฝนน้อยกว่า 5 มม./7 วัน (4.0 มม.) + เขื่อน 33% — เสี่ยงแล้ง",
-          "message_en": "Rain < 5mm/7d (4.0mm) + dam at 33% — drought risk",
+          "message_th": "ฝนน้อยกว่า 5 มม./7 วัน (2.4 มม.) + เขื่อน 33% — เสี่ยงแล้ง",
+          "message_en": "Rain < 5mm/7d (2.4mm) + dam at 33% — drought risk",
           "source": "JAXA GSMaP + กรมชลประทาน",
-          "value": 4.0,
+          "value": 2.4,
           "threshold": 5
         }
       ]
     },
     "Nakhon Sawan": {
-      "level": "low",
-      "level_num": 1,
+      "level": "normal",
+      "level_num": 0,
       "warnings": [
         {
-          "icon": "🟡",
-          "type": "flood",
-          "level": "low",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 107 มม. + (ดาวเทียม: 13 มม.) — เฝ้าระวังน้ำท่วม",
-          "message_en": "7-day forecast rainfall 107mm + (satellite: 13mm) — Flood watch",
-          "source": "พยากรณ์ Open-Meteo",
-          "value": 107.0,
+          "icon": "✅",
+          "type": "normal",
+          "level": "normal",
+          "message_th": "ฝนปกติ (62 มม./7 วัน) — ไม่มีความเสี่ยง",
+          "message_en": "Normal rainfall (62mm/7d) — no risk",
+          "source": "Open-Meteo + JAXA GSMaP",
+          "value": 62.4,
           "threshold": 30
         }
       ]
     },
     "Nakhon Si Thammarat": {
-      "level": "normal",
-      "level_num": 0,
-      "warnings": [
-        {
-          "icon": "✅",
-          "type": "normal",
-          "level": "normal",
-          "message_th": "ฝนปกติ (24 มม./7 วัน) — ไม่มีความเสี่ยง",
-          "message_en": "Normal rainfall (24mm/7d) — no risk",
-          "source": "Open-Meteo + JAXA GSMaP",
-          "value": 23.7,
-          "threshold": 30
-        }
-      ]
-    },
-    "Nan": {
-      "level": "high",
-      "level_num": 3,
-      "warnings": [
-        {
-          "icon": "🔴",
-          "type": "flood",
-          "level": "high",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 205 มม. + ดาวเทียม GSMaP: 30 มม. — เสี่ยงน้ำท่วมรุนแรง",
-          "message_en": "7-day forecast rainfall 205mm + GSMaP satellite: 30mm — High flood risk",
-          "source": "พยากรณ์ Open-Meteo + JAXA GSMaP",
-          "value": 205.3,
-          "threshold": 120
-        }
-      ]
-    },
-    "Narathiwat": {
-      "level": "normal",
-      "level_num": 0,
-      "warnings": [
-        {
-          "icon": "✅",
-          "type": "normal",
-          "level": "normal",
-          "message_th": "ฝนปกติ (39 มม./7 วัน) — ไม่มีความเสี่ยง",
-          "message_en": "Normal rainfall (39mm/7d) — no risk",
-          "source": "Open-Meteo + JAXA GSMaP",
-          "value": 39.2,
-          "threshold": 30
-        }
-      ]
-    },
-    "Nong Bua Lam Phu": {
-      "level": "medium",
-      "level_num": 2,
-      "warnings": [
-        {
-          "icon": "🟠",
-          "type": "flood",
-          "level": "medium",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 123 มม. + (ดาวเทียม: 6 มม.) — เสี่ยงน้ำท่วมปานกลาง",
-          "message_en": "7-day forecast rainfall 123mm + (satellite: 6mm) — Moderate flood risk",
-          "source": "พยากรณ์ Open-Meteo",
-          "value": 123.2,
-          "threshold": 60
-        }
-      ]
-    },
-    "Nong Khai": {
-      "level": "high",
-      "level_num": 3,
-      "warnings": [
-        {
-          "icon": "🔴",
-          "type": "flood",
-          "level": "high",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 191 มม. + (ดาวเทียม: 24 มม.) — เสี่ยงน้ำท่วมรุนแรง",
-          "message_en": "7-day forecast rainfall 191mm + (satellite: 24mm) — High flood risk",
-          "source": "พยากรณ์ Open-Meteo",
-          "value": 191.4,
-          "threshold": 120
-        }
-      ]
-    },
-    "Nonthaburi": {
-      "level": "normal",
-      "level_num": 0,
-      "warnings": [
-        {
-          "icon": "✅",
-          "type": "normal",
-          "level": "normal",
-          "message_th": "ฝนปกติ (35 มม./7 วัน) — ไม่มีความเสี่ยง",
-          "message_en": "Normal rainfall (35mm/7d) — no risk",
-          "source": "Open-Meteo + JAXA GSMaP",
-          "value": 35.3,
-          "threshold": 30
-        }
-      ]
-    },
-    "Pathum Thani": {
       "level": "normal",
       "level_num": 0,
       "warnings": [
@@ -637,6 +551,102 @@
         }
       ]
     },
+    "Nan": {
+      "level": "medium",
+      "level_num": 2,
+      "warnings": [
+        {
+          "icon": "🟠",
+          "type": "flood",
+          "level": "medium",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 170 มม. + (ดาวเทียม: 26 มม.) — เสี่ยงน้ำท่วมปานกลาง",
+          "message_en": "7-day forecast rainfall 170mm + (satellite: 26mm) — Moderate flood risk",
+          "source": "พยากรณ์ Open-Meteo",
+          "value": 169.5,
+          "threshold": 60
+        }
+      ]
+    },
+    "Narathiwat": {
+      "level": "normal",
+      "level_num": 0,
+      "warnings": [
+        {
+          "icon": "✅",
+          "type": "normal",
+          "level": "normal",
+          "message_th": "ฝนปกติ (58 มม./7 วัน) — ไม่มีความเสี่ยง",
+          "message_en": "Normal rainfall (58mm/7d) — no risk",
+          "source": "Open-Meteo + JAXA GSMaP",
+          "value": 58.5,
+          "threshold": 30
+        }
+      ]
+    },
+    "Nong Bua Lam Phu": {
+      "level": "high",
+      "level_num": 3,
+      "warnings": [
+        {
+          "icon": "🔴",
+          "type": "flood",
+          "level": "high",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 272 มม. + (ดาวเทียม: 1 มม.) — เสี่ยงน้ำท่วมรุนแรง",
+          "message_en": "7-day forecast rainfall 272mm + (satellite: 1mm) — High flood risk",
+          "source": "พยากรณ์ Open-Meteo",
+          "value": 272.0,
+          "threshold": 120
+        }
+      ]
+    },
+    "Nong Khai": {
+      "level": "high",
+      "level_num": 3,
+      "warnings": [
+        {
+          "icon": "🔴",
+          "type": "flood",
+          "level": "high",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 302 มม. + (ดาวเทียม: 20 มม.) — เสี่ยงน้ำท่วมรุนแรง",
+          "message_en": "7-day forecast rainfall 302mm + (satellite: 20mm) — High flood risk",
+          "source": "พยากรณ์ Open-Meteo",
+          "value": 302.5,
+          "threshold": 120
+        }
+      ]
+    },
+    "Nonthaburi": {
+      "level": "low",
+      "level_num": 1,
+      "warnings": [
+        {
+          "icon": "🟡",
+          "type": "flood",
+          "level": "low",
+          "message_th": "ดาวเทียม GSMaP: 39 มม. + (พยากรณ์: 45 มม.) — เฝ้าระวังน้ำท่วม",
+          "message_en": "GSMaP satellite: 39mm + (forecast: 45mm) — Flood watch",
+          "source": "JAXA GSMaP",
+          "value": 38.7,
+          "threshold": 30
+        }
+      ]
+    },
+    "Pathum Thani": {
+      "level": "normal",
+      "level_num": 0,
+      "warnings": [
+        {
+          "icon": "✅",
+          "type": "normal",
+          "level": "normal",
+          "message_th": "ฝนปกติ (59 มม./7 วัน) — ไม่มีความเสี่ยง",
+          "message_en": "Normal rainfall (59mm/7d) — no risk",
+          "source": "Open-Meteo + JAXA GSMaP",
+          "value": 58.6,
+          "threshold": 30
+        }
+      ]
+    },
     "Pattani": {
       "level": "normal",
       "level_num": 0,
@@ -645,27 +655,27 @@
           "icon": "✅",
           "type": "normal",
           "level": "normal",
-          "message_th": "ฝนปกติ (23 มม./7 วัน) — ไม่มีความเสี่ยง",
-          "message_en": "Normal rainfall (23mm/7d) — no risk",
+          "message_th": "ฝนปกติ (26 มม./7 วัน) — ไม่มีความเสี่ยง",
+          "message_en": "Normal rainfall (26mm/7d) — no risk",
           "source": "Open-Meteo + JAXA GSMaP",
-          "value": 23.2,
+          "value": 25.9,
           "threshold": 30
         }
       ]
     },
     "Phangnga": {
-      "level": "low",
-      "level_num": 1,
+      "level": "medium",
+      "level_num": 2,
       "warnings": [
         {
-          "icon": "🟡",
+          "icon": "🟠",
           "type": "flood",
-          "level": "low",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 114 มม. + (ดาวเทียม: 8 มม.) — เฝ้าระวังน้ำท่วม",
-          "message_en": "7-day forecast rainfall 114mm + (satellite: 8mm) — Flood watch",
+          "level": "medium",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 140 มม. + (ดาวเทียม: 11 มม.) — เสี่ยงน้ำท่วมปานกลาง",
+          "message_en": "7-day forecast rainfall 140mm + (satellite: 11mm) — Moderate flood risk",
           "source": "พยากรณ์ Open-Meteo",
-          "value": 114.0,
-          "threshold": 30
+          "value": 140.1,
+          "threshold": 60
         }
       ]
     },
@@ -677,27 +687,27 @@
           "icon": "✅",
           "type": "normal",
           "level": "normal",
-          "message_th": "ฝนปกติ (13 มม./7 วัน) — ไม่มีความเสี่ยง",
-          "message_en": "Normal rainfall (13mm/7d) — no risk",
+          "message_th": "ฝนปกติ (16 มม./7 วัน) — ไม่มีความเสี่ยง",
+          "message_en": "Normal rainfall (16mm/7d) — no risk",
           "source": "Open-Meteo + JAXA GSMaP",
-          "value": 12.7,
+          "value": 16.0,
           "threshold": 30
         }
       ]
     },
     "Phayao": {
-      "level": "high",
-      "level_num": 3,
+      "level": "medium",
+      "level_num": 2,
       "warnings": [
         {
-          "icon": "🔴",
+          "icon": "🟠",
           "type": "flood",
-          "level": "high",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 183 มม. + ดาวเทียม GSMaP: 40 มม. — เสี่ยงน้ำท่วมรุนแรง",
-          "message_en": "7-day forecast rainfall 183mm + GSMaP satellite: 40mm — High flood risk",
+          "level": "medium",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 130 มม. + ดาวเทียม GSMaP: 39 มม. — เสี่ยงน้ำท่วมปานกลาง",
+          "message_en": "7-day forecast rainfall 130mm + GSMaP satellite: 39mm — Moderate flood risk",
           "source": "พยากรณ์ Open-Meteo + JAXA GSMaP",
-          "value": 182.6,
-          "threshold": 120
+          "value": 129.9,
+          "threshold": 60
         }
       ]
     },
@@ -709,27 +719,27 @@
           "icon": "🟠",
           "type": "flood",
           "level": "medium",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 125 มม. + (ดาวเทียม: 8 มม.) — เสี่ยงน้ำท่วมปานกลาง",
-          "message_en": "7-day forecast rainfall 125mm + (satellite: 8mm) — Moderate flood risk",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 146 มม. + (ดาวเทียม: 8 มม.) — เสี่ยงน้ำท่วมปานกลาง",
+          "message_en": "7-day forecast rainfall 146mm + (satellite: 8mm) — Moderate flood risk",
           "source": "พยากรณ์ Open-Meteo",
-          "value": 125.2,
+          "value": 145.9,
           "threshold": 60
         }
       ]
     },
     "Phetchaburi": {
-      "level": "high",
-      "level_num": 3,
+      "level": "medium",
+      "level_num": 2,
       "warnings": [
         {
-          "icon": "🔴",
+          "icon": "🟠",
           "type": "flood",
-          "level": "high",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 185 มม. + (ดาวเทียม: 19 มม.) — เสี่ยงน้ำท่วมรุนแรง",
-          "message_en": "7-day forecast rainfall 185mm + (satellite: 19mm) — High flood risk",
+          "level": "medium",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 176 มม. + (ดาวเทียม: 12 มม.) — เสี่ยงน้ำท่วมปานกลาง",
+          "message_en": "7-day forecast rainfall 176mm + (satellite: 12mm) — Moderate flood risk",
           "source": "พยากรณ์ Open-Meteo",
-          "value": 184.9,
-          "threshold": 120
+          "value": 175.8,
+          "threshold": 60
         }
       ]
     },
@@ -741,10 +751,10 @@
           "icon": "🟠",
           "type": "flood",
           "level": "medium",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 120 มม. + (ดาวเทียม: 9 มม.) — เสี่ยงน้ำท่วมปานกลาง",
-          "message_en": "7-day forecast rainfall 120mm + (satellite: 9mm) — Moderate flood risk",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 154 มม. + (ดาวเทียม: 8 มม.) — เสี่ยงน้ำท่วมปานกลาง",
+          "message_en": "7-day forecast rainfall 154mm + (satellite: 8mm) — Moderate flood risk",
           "source": "พยากรณ์ Open-Meteo",
-          "value": 120.5,
+          "value": 154.5,
           "threshold": 60
         }
       ]
@@ -757,10 +767,10 @@
           "icon": "🔴",
           "type": "flood",
           "level": "high",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 196 มม. + (ดาวเทียม: 12 มม.) — เสี่ยงน้ำท่วมรุนแรง",
-          "message_en": "7-day forecast rainfall 196mm + (satellite: 12mm) — High flood risk",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 286 มม. + (ดาวเทียม: 13 มม.) — เสี่ยงน้ำท่วมรุนแรง",
+          "message_en": "7-day forecast rainfall 286mm + (satellite: 13mm) — High flood risk",
           "source": "พยากรณ์ Open-Meteo",
-          "value": 195.8,
+          "value": 286.1,
           "threshold": 120
         }
       ]
@@ -773,10 +783,10 @@
           "icon": "✅",
           "type": "normal",
           "level": "normal",
-          "message_th": "ฝนปกติ (39 มม./7 วัน) — ไม่มีความเสี่ยง",
-          "message_en": "Normal rainfall (39mm/7d) — no risk",
+          "message_th": "ฝนปกติ (57 มม./7 วัน) — ไม่มีความเสี่ยง",
+          "message_en": "Normal rainfall (57mm/7d) — no risk",
           "source": "Open-Meteo + JAXA GSMaP",
-          "value": 38.9,
+          "value": 57.1,
           "threshold": 30
         }
       ]
@@ -789,10 +799,10 @@
           "icon": "🔴",
           "type": "flood",
           "level": "high",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 193 มม. + (ดาวเทียม: 17 มม.) — เสี่ยงน้ำท่วมรุนแรง",
-          "message_en": "7-day forecast rainfall 193mm + (satellite: 17mm) — High flood risk",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 201 มม. + (ดาวเทียม: 16 มม.) — เสี่ยงน้ำท่วมรุนแรง",
+          "message_en": "7-day forecast rainfall 201mm + (satellite: 16mm) — High flood risk",
           "source": "พยากรณ์ Open-Meteo",
-          "value": 192.8,
+          "value": 200.8,
           "threshold": 120
         }
       ]
@@ -805,52 +815,42 @@
           "icon": "✅",
           "type": "normal",
           "level": "normal",
-          "message_th": "ฝนปกติ (53 มม./7 วัน) — ไม่มีความเสี่ยง",
-          "message_en": "Normal rainfall (53mm/7d) — no risk",
+          "message_th": "ฝนปกติ (60 มม./7 วัน) — ไม่มีความเสี่ยง",
+          "message_en": "Normal rainfall (60mm/7d) — no risk",
           "source": "Open-Meteo + JAXA GSMaP",
-          "value": 53.3,
+          "value": 59.7,
           "threshold": 30
         }
       ]
     },
     "Prachin Buri": {
-      "level": "medium",
-      "level_num": 2,
+      "level": "high",
+      "level_num": 3,
       "warnings": [
         {
-          "icon": "🟠",
+          "icon": "🔴",
           "type": "flood",
-          "level": "medium",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 158 มม. + (ดาวเทียม: 14 มม.) — เสี่ยงน้ำท่วมปานกลาง",
-          "message_en": "7-day forecast rainfall 158mm + (satellite: 14mm) — Moderate flood risk",
+          "level": "high",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 184 มม. + (ดาวเทียม: 14 มม.) — เสี่ยงน้ำท่วมรุนแรง",
+          "message_en": "7-day forecast rainfall 184mm + (satellite: 14mm) — High flood risk",
           "source": "พยากรณ์ Open-Meteo",
-          "value": 158.1,
-          "threshold": 60
+          "value": 183.6,
+          "threshold": 120
         }
       ]
     },
     "Prachuap Khiri Khan": {
-      "level": "low",
-      "level_num": 1,
+      "level": "dam_low",
+      "level_num": 0.5,
       "warnings": [
-        {
-          "icon": "🟡",
-          "type": "flood",
-          "level": "low",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 93 มม. + (ดาวเทียม: 13 มม.) — เฝ้าระวังน้ำท่วม",
-          "message_en": "7-day forecast rainfall 93mm + (satellite: 13mm) — Flood watch",
-          "source": "พยากรณ์ Open-Meteo",
-          "value": 93.4,
-          "threshold": 30
-        },
         {
           "icon": "💧",
           "type": "dam",
           "level": "dam_low",
-          "message_th": "เขื่อนระดับน้ำ 29.2% ของความจุ",
-          "message_en": "Dam at 29.2% of capacity",
+          "message_th": "เขื่อนระดับน้ำ 29.7% ของความจุ",
+          "message_en": "Dam at 29.7% of capacity",
           "source": "กรมชลประทาน (RID)",
-          "value": 29.25,
+          "value": 29.66,
           "threshold": 30
         }
       ]
@@ -863,10 +863,10 @@
           "icon": "🟠",
           "type": "flood",
           "level": "medium",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 148 มม. + (ดาวเทียม: 12 มม.) — เสี่ยงน้ำท่วมปานกลาง",
-          "message_en": "7-day forecast rainfall 148mm + (satellite: 12mm) — Moderate flood risk",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 160 มม. + (ดาวเทียม: 11 มม.) — เสี่ยงน้ำท่วมปานกลาง",
+          "message_en": "7-day forecast rainfall 160mm + (satellite: 11mm) — Moderate flood risk",
           "source": "พยากรณ์ Open-Meteo",
-          "value": 147.9,
+          "value": 159.7,
           "threshold": 60
         }
       ]
@@ -879,10 +879,10 @@
           "icon": "🟡",
           "type": "flood",
           "level": "low",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 106 มม. + (ดาวเทียม: 16 มม.) — เฝ้าระวังน้ำท่วม",
-          "message_en": "7-day forecast rainfall 106mm + (satellite: 16mm) — Flood watch",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 112 มม. + (ดาวเทียม: 14 มม.) — เฝ้าระวังน้ำท่วม",
+          "message_en": "7-day forecast rainfall 112mm + (satellite: 14mm) — Flood watch",
           "source": "พยากรณ์ Open-Meteo",
-          "value": 106.0,
+          "value": 112.0,
           "threshold": 30
         }
       ]
@@ -895,43 +895,43 @@
           "icon": "🟡",
           "type": "flood",
           "level": "low",
-          "message_th": "ดาวเทียม GSMaP: 39 มม. + (พยากรณ์: 40 มม.) — เฝ้าระวังน้ำท่วม",
-          "message_en": "GSMaP satellite: 39mm + (forecast: 40mm) — Flood watch",
+          "message_th": "ดาวเทียม GSMaP: 38 มม. + (พยากรณ์: 43 มม.) — เฝ้าระวังน้ำท่วม",
+          "message_en": "GSMaP satellite: 38mm + (forecast: 43mm) — Flood watch",
           "source": "JAXA GSMaP",
-          "value": 39.1,
+          "value": 38.0,
           "threshold": 30
         }
       ]
     },
     "Roi Et": {
-      "level": "low",
-      "level_num": 1,
+      "level": "medium",
+      "level_num": 2,
       "warnings": [
         {
-          "icon": "🟡",
+          "icon": "🟠",
           "type": "flood",
-          "level": "low",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 110 มม. + (ดาวเทียม: 0 มม.) — เฝ้าระวังน้ำท่วม",
-          "message_en": "7-day forecast rainfall 110mm + (satellite: 0mm) — Flood watch",
+          "level": "medium",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 158 มม. + (ดาวเทียม: 0 มม.) — เสี่ยงน้ำท่วมปานกลาง",
+          "message_en": "7-day forecast rainfall 158mm + (satellite: 0mm) — Moderate flood risk",
           "source": "พยากรณ์ Open-Meteo",
-          "value": 109.5,
-          "threshold": 30
+          "value": 158.4,
+          "threshold": 60
         }
       ]
     },
     "Sa Kaeo": {
-      "level": "low",
-      "level_num": 1,
+      "level": "medium",
+      "level_num": 2,
       "warnings": [
         {
-          "icon": "🟡",
+          "icon": "🟠",
           "type": "flood",
-          "level": "low",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 107 มม. + (ดาวเทียม: 21 มม.) — เฝ้าระวังน้ำท่วม",
-          "message_en": "7-day forecast rainfall 107mm + (satellite: 21mm) — Flood watch",
+          "level": "medium",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 133 มม. + (ดาวเทียม: 18 มม.) — เสี่ยงน้ำท่วมปานกลาง",
+          "message_en": "7-day forecast rainfall 133mm + (satellite: 18mm) — Moderate flood risk",
           "source": "พยากรณ์ Open-Meteo",
-          "value": 107.4,
-          "threshold": 30
+          "value": 132.8,
+          "threshold": 60
         }
       ]
     },
@@ -943,10 +943,10 @@
           "icon": "🔴",
           "type": "flood",
           "level": "high",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 340 มม. + ดาวเทียม GSMaP: 31 มม. — เสี่ยงน้ำท่วมรุนแรง",
-          "message_en": "7-day forecast rainfall 340mm + GSMaP satellite: 31mm — High flood risk",
-          "source": "พยากรณ์ Open-Meteo + JAXA GSMaP",
-          "value": 340.0,
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 204 มม. + (ดาวเทียม: 28 มม.) — เสี่ยงน้ำท่วมรุนแรง",
+          "message_en": "7-day forecast rainfall 204mm + (satellite: 28mm) — High flood risk",
+          "source": "พยากรณ์ Open-Meteo",
+          "value": 203.8,
           "threshold": 120
         }
       ]
@@ -959,10 +959,10 @@
           "icon": "✅",
           "type": "normal",
           "level": "normal",
-          "message_th": "ฝนปกติ (35 มม./7 วัน) — ไม่มีความเสี่ยง",
-          "message_en": "Normal rainfall (35mm/7d) — no risk",
+          "message_th": "ฝนปกติ (43 มม./7 วัน) — ไม่มีความเสี่ยง",
+          "message_en": "Normal rainfall (43mm/7d) — no risk",
           "source": "Open-Meteo + JAXA GSMaP",
-          "value": 34.7,
+          "value": 43.1,
           "threshold": 30
         }
       ]
@@ -975,10 +975,10 @@
           "icon": "✅",
           "type": "normal",
           "level": "normal",
-          "message_th": "ฝนปกติ (40 มม./7 วัน) — ไม่มีความเสี่ยง",
-          "message_en": "Normal rainfall (40mm/7d) — no risk",
+          "message_th": "ฝนปกติ (39 มม./7 วัน) — ไม่มีความเสี่ยง",
+          "message_en": "Normal rainfall (39mm/7d) — no risk",
           "source": "Open-Meteo + JAXA GSMaP",
-          "value": 40.5,
+          "value": 39.2,
           "threshold": 30
         }
       ]
@@ -991,27 +991,37 @@
           "icon": "✅",
           "type": "normal",
           "level": "normal",
-          "message_th": "ฝนปกติ (60 มม./7 วัน) — ไม่มีความเสี่ยง",
-          "message_en": "Normal rainfall (60mm/7d) — no risk",
+          "message_th": "ฝนปกติ (59 มม./7 วัน) — ไม่มีความเสี่ยง",
+          "message_en": "Normal rainfall (59mm/7d) — no risk",
           "source": "Open-Meteo + JAXA GSMaP",
-          "value": 60.5,
+          "value": 59.4,
           "threshold": 30
         }
       ]
     },
     "Saraburi": {
-      "level": "dam_low",
-      "level_num": 0.5,
+      "level": "low",
+      "level_num": 1,
       "warnings": [
         {
-          "icon": "💧",
-          "type": "dam",
-          "level": "dam_low",
-          "message_th": "เขื่อนระดับน้ำ 29.6% ของความจุ",
-          "message_en": "Dam at 29.6% of capacity",
-          "source": "กรมชลประทาน (RID)",
-          "value": 29.61,
+          "icon": "🟡",
+          "type": "flood",
+          "level": "low",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 93 มม. + (ดาวเทียม: 4 มม.) — เฝ้าระวังน้ำท่วม",
+          "message_en": "7-day forecast rainfall 93mm + (satellite: 4mm) — Flood watch",
+          "source": "พยากรณ์ Open-Meteo",
+          "value": 92.6,
           "threshold": 30
+        },
+        {
+          "icon": "🏜",
+          "type": "drought",
+          "level": "drought",
+          "message_th": "ฝนน้อยกว่า 5 มม./7 วัน (4.5 มม.) + เขื่อน 30% — เสี่ยงแล้ง",
+          "message_en": "Rain < 5mm/7d (4.5mm) + dam at 30% — drought risk",
+          "source": "JAXA GSMaP + กรมชลประทาน",
+          "value": 4.5,
+          "threshold": 5
         }
       ]
     },
@@ -1023,27 +1033,27 @@
           "icon": "✅",
           "type": "normal",
           "level": "normal",
-          "message_th": "ฝนปกติ (35 มม./7 วัน) — ไม่มีความเสี่ยง",
-          "message_en": "Normal rainfall (35mm/7d) — no risk",
+          "message_th": "ฝนปกติ (24 มม./7 วัน) — ไม่มีความเสี่ยง",
+          "message_en": "Normal rainfall (24mm/7d) — no risk",
           "source": "Open-Meteo + JAXA GSMaP",
-          "value": 34.8,
+          "value": 24.3,
           "threshold": 30
         }
       ]
     },
     "Si Sa Ket": {
-      "level": "normal",
-      "level_num": 0,
+      "level": "medium",
+      "level_num": 2,
       "warnings": [
         {
-          "icon": "✅",
-          "type": "normal",
-          "level": "normal",
-          "message_th": "ฝนปกติ (71 มม./7 วัน) — ไม่มีความเสี่ยง",
-          "message_en": "Normal rainfall (71mm/7d) — no risk",
-          "source": "Open-Meteo + JAXA GSMaP",
-          "value": 71.1,
-          "threshold": 30
+          "icon": "🟠",
+          "type": "flood",
+          "level": "medium",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 122 มม. + (ดาวเทียม: 3 มม.) — เสี่ยงน้ำท่วมปานกลาง",
+          "message_en": "7-day forecast rainfall 122mm + (satellite: 3mm) — Moderate flood risk",
+          "source": "พยากรณ์ Open-Meteo",
+          "value": 122.5,
+          "threshold": 60
         }
       ]
     },
@@ -1055,10 +1065,10 @@
           "icon": "✅",
           "type": "normal",
           "level": "normal",
-          "message_th": "ฝนปกติ (29 มม./7 วัน) — ไม่มีความเสี่ยง",
-          "message_en": "Normal rainfall (29mm/7d) — no risk",
+          "message_th": "ฝนปกติ (49 มม./7 วัน) — ไม่มีความเสี่ยง",
+          "message_en": "Normal rainfall (49mm/7d) — no risk",
           "source": "Open-Meteo + JAXA GSMaP",
-          "value": 28.6,
+          "value": 48.7,
           "threshold": 30
         }
       ]
@@ -1071,27 +1081,27 @@
           "icon": "✅",
           "type": "normal",
           "level": "normal",
-          "message_th": "ฝนปกติ (18 มม./7 วัน) — ไม่มีความเสี่ยง",
-          "message_en": "Normal rainfall (18mm/7d) — no risk",
+          "message_th": "ฝนปกติ (23 มม./7 วัน) — ไม่มีความเสี่ยง",
+          "message_en": "Normal rainfall (23mm/7d) — no risk",
           "source": "Open-Meteo + JAXA GSMaP",
-          "value": 18.2,
+          "value": 23.0,
           "threshold": 30
         }
       ]
     },
     "Sukhothai": {
-      "level": "medium",
-      "level_num": 2,
+      "level": "high",
+      "level_num": 3,
       "warnings": [
         {
-          "icon": "🟠",
+          "icon": "🔴",
           "type": "flood",
-          "level": "medium",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 132 มม. + (ดาวเทียม: 6 มม.) — เสี่ยงน้ำท่วมปานกลาง",
-          "message_en": "7-day forecast rainfall 132mm + (satellite: 6mm) — Moderate flood risk",
+          "level": "high",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 185 มม. + (ดาวเทียม: 9 มม.) — เสี่ยงน้ำท่วมรุนแรง",
+          "message_en": "7-day forecast rainfall 185mm + (satellite: 9mm) — High flood risk",
           "source": "พยากรณ์ Open-Meteo",
-          "value": 131.8,
-          "threshold": 60
+          "value": 185.2,
+          "threshold": 120
         }
       ]
     },
@@ -1103,10 +1113,10 @@
           "icon": "💧",
           "type": "dam",
           "level": "dam_low",
-          "message_th": "เขื่อนระดับน้ำ 27.3% ของความจุ",
-          "message_en": "Dam at 27.3% of capacity",
+          "message_th": "เขื่อนระดับน้ำ 27.1% ของความจุ",
+          "message_en": "Dam at 27.1% of capacity",
           "source": "กรมชลประทาน (RID)",
-          "value": 27.26,
+          "value": 27.06,
           "threshold": 30
         }
       ]
@@ -1119,26 +1129,26 @@
           "icon": "✅",
           "type": "normal",
           "level": "normal",
-          "message_th": "ฝนปกติ (44 มม./7 วัน) — ไม่มีความเสี่ยง",
-          "message_en": "Normal rainfall (44mm/7d) — no risk",
+          "message_th": "ฝนปกติ (55 มม./7 วัน) — ไม่มีความเสี่ยง",
+          "message_en": "Normal rainfall (55mm/7d) — no risk",
           "source": "Open-Meteo + JAXA GSMaP",
-          "value": 44.2,
+          "value": 55.4,
           "threshold": 30
         }
       ]
     },
     "Surin": {
-      "level": "normal",
-      "level_num": 0,
+      "level": "low",
+      "level_num": 1,
       "warnings": [
         {
-          "icon": "✅",
-          "type": "normal",
-          "level": "normal",
-          "message_th": "ฝนปกติ (63 มม./7 วัน) — ไม่มีความเสี่ยง",
-          "message_en": "Normal rainfall (63mm/7d) — no risk",
-          "source": "Open-Meteo + JAXA GSMaP",
-          "value": 62.7,
+          "icon": "🟡",
+          "type": "flood",
+          "level": "low",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 105 มม. + (ดาวเทียม: 3 มม.) — เฝ้าระวังน้ำท่วม",
+          "message_en": "7-day forecast rainfall 105mm + (satellite: 3mm) — Flood watch",
+          "source": "พยากรณ์ Open-Meteo",
+          "value": 104.8,
           "threshold": 30
         }
       ]
@@ -1151,10 +1161,10 @@
           "icon": "🔴",
           "type": "flood",
           "level": "high",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 189 มม. + (ดาวเทียม: 26 มม.) — เสี่ยงน้ำท่วมรุนแรง",
-          "message_en": "7-day forecast rainfall 189mm + (satellite: 26mm) — High flood risk",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 221 มม. + (ดาวเทียม: 25 มม.) — เสี่ยงน้ำท่วมรุนแรง",
+          "message_en": "7-day forecast rainfall 221mm + (satellite: 25mm) — High flood risk",
           "source": "พยากรณ์ Open-Meteo",
-          "value": 188.6,
+          "value": 220.7,
           "threshold": 120
         }
       ]
@@ -1167,10 +1177,10 @@
           "icon": "✅",
           "type": "normal",
           "level": "normal",
-          "message_th": "ฝนปกติ (48 มม./7 วัน) — ไม่มีความเสี่ยง",
-          "message_en": "Normal rainfall (48mm/7d) — no risk",
+          "message_th": "ฝนปกติ (52 มม./7 วัน) — ไม่มีความเสี่ยง",
+          "message_en": "Normal rainfall (52mm/7d) — no risk",
           "source": "Open-Meteo + JAXA GSMaP",
-          "value": 48.3,
+          "value": 52.4,
           "threshold": 30
         }
       ]
@@ -1183,10 +1193,10 @@
           "icon": "🔴",
           "type": "flood",
           "level": "high",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 296 มม. + (ดาวเทียม: 17 มม.) — เสี่ยงน้ำท่วมรุนแรง",
-          "message_en": "7-day forecast rainfall 296mm + (satellite: 17mm) — High flood risk",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 290 มม. + (ดาวเทียม: 13 มม.) — เสี่ยงน้ำท่วมรุนแรง",
+          "message_en": "7-day forecast rainfall 290mm + (satellite: 13mm) — High flood risk",
           "source": "พยากรณ์ Open-Meteo",
-          "value": 296.1,
+          "value": 290.3,
           "threshold": 120
         }
       ]
@@ -1199,10 +1209,10 @@
           "icon": "🟠",
           "type": "flood",
           "level": "medium",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 119 มม. + (ดาวเทียม: 5 มม.) — เสี่ยงน้ำท่วมปานกลาง",
-          "message_en": "7-day forecast rainfall 119mm + (satellite: 5mm) — Moderate flood risk",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 147 มม. + (ดาวเทียม: 5 มม.) — เสี่ยงน้ำท่วมปานกลาง",
+          "message_en": "7-day forecast rainfall 147mm + (satellite: 5mm) — Moderate flood risk",
           "source": "พยากรณ์ Open-Meteo",
-          "value": 119.1,
+          "value": 147.0,
           "threshold": 60
         }
       ]
@@ -1215,10 +1225,10 @@
           "icon": "🔴",
           "type": "flood",
           "level": "high",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 208 มม. + (ดาวเทียม: 8 มม.) — เสี่ยงน้ำท่วมรุนแรง",
-          "message_en": "7-day forecast rainfall 208mm + (satellite: 8mm) — High flood risk",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 266 มม. + (ดาวเทียม: 5 มม.) — เสี่ยงน้ำท่วมรุนแรง",
+          "message_en": "7-day forecast rainfall 266mm + (satellite: 5mm) — High flood risk",
           "source": "พยากรณ์ Open-Meteo",
-          "value": 208.4,
+          "value": 266.4,
           "threshold": 120
         }
       ]
@@ -1231,10 +1241,10 @@
           "icon": "🟠",
           "type": "flood",
           "level": "medium",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 132 มม. + (ดาวเทียม: 12 มม.) — เสี่ยงน้ำท่วมปานกลาง",
-          "message_en": "7-day forecast rainfall 132mm + (satellite: 12mm) — Moderate flood risk",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 167 มม. + (ดาวเทียม: 11 มม.) — เสี่ยงน้ำท่วมปานกลาง",
+          "message_en": "7-day forecast rainfall 167mm + (satellite: 11mm) — Moderate flood risk",
           "source": "พยากรณ์ Open-Meteo",
-          "value": 131.9,
+          "value": 166.8,
           "threshold": 60
         }
       ]
@@ -1247,10 +1257,10 @@
           "icon": "🔴",
           "type": "flood",
           "level": "high",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 204 มม. + (ดาวเทียม: 6 มม.) — เสี่ยงน้ำท่วมรุนแรง",
-          "message_en": "7-day forecast rainfall 204mm + (satellite: 6mm) — High flood risk",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 220 มม. + (ดาวเทียม: 9 มม.) — เสี่ยงน้ำท่วมรุนแรง",
+          "message_en": "7-day forecast rainfall 220mm + (satellite: 9mm) — High flood risk",
           "source": "พยากรณ์ Open-Meteo",
-          "value": 204.3,
+          "value": 220.1,
           "threshold": 120
         }
       ]
@@ -1266,24 +1276,24 @@
           "message_th": "ฝนปกติ (20 มม./7 วัน) — ไม่มีความเสี่ยง",
           "message_en": "Normal rainfall (20mm/7d) — no risk",
           "source": "Open-Meteo + JAXA GSMaP",
-          "value": 19.7,
+          "value": 20.4,
           "threshold": 30
         }
       ]
     },
     "Yasothon": {
-      "level": "low",
-      "level_num": 1,
+      "level": "high",
+      "level_num": 3,
       "warnings": [
         {
-          "icon": "🟡",
+          "icon": "🔴",
           "type": "flood",
-          "level": "low",
-          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 113 มม. + (ดาวเทียม: 0 มม.) — เฝ้าระวังน้ำท่วม",
-          "message_en": "7-day forecast rainfall 113mm + (satellite: 0mm) — Flood watch",
+          "level": "high",
+          "message_th": "คาดว่าฝนสะสม 7 วันข้างหน้า 176 มม. + (ดาวเทียม: 0 มม.) — เสี่ยงน้ำท่วมรุนแรง",
+          "message_en": "7-day forecast rainfall 176mm + (satellite: 0mm) — High flood risk",
           "source": "พยากรณ์ Open-Meteo",
-          "value": 113.1,
-          "threshold": 30
+          "value": 176.1,
+          "threshold": 120
         }
       ]
     }
