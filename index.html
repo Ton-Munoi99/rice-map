@@ -6727,6 +6727,17 @@
         }
         const years = yearsForLayer();
         const values = years.map((year) => valueOf(en, S.rice, year, S.layer));
+        // ต้องมีอย่างน้อย 2 จุดถึงจะลากเส้นได้ — layer ครัวเรือนเกษตรกรมีปีเดียว
+        // ทำให้ idx/(length-1) = 0/0 = NaN แล้ว SVG โยน error ทุกครั้งที่เปิดจังหวัด
+        // (<path d="MNaN,29.00">) · ค่า null กลางชุดก็ทำให้ min/max เป็น NaN เช่นกัน
+        if (values.filter((v) => v != null && !isNaN(v)).length < 2) {
+          refs.sparkSvg.innerHTML = "";
+          refs.sparkTitle.textContent = t(
+            "ข้อมูลปีเดียว — ยังไม่มีแนวโน้มให้เทียบ",
+            "Single year of data — no trend to plot",
+          );
+          return;
+        }
         const w = 320,
           h = 58,
           pad = 9;
