@@ -4664,16 +4664,8 @@
                   ? `👨‍🌾 ${t("ครัวเรือนเกษตรกร", "Farm Households")} OAE 2566`
                     : S.layer === "dam"
                       ? `💧 ${t("ระดับน้ำในเขื่อน", "Dam Level")} RID ${window.DAM_DATA?._meta?.updated || ""}`
-                      : S.layer === "rainfall"
-                        ? `🌧 ${t("ปริมาณฝน นาปี", "Season Rainfall")} ${WEATHER_DATA?._meta?.year ? toBE(WEATHER_DATA._meta.year) : "2568"}`
-                        : S.layer === "drought"
-                          ? `🌡 ${t("ฝนเบี่ยงเบนจากปกติ", "Rainfall Anomaly")} ${WEATHER_DATA?._meta?.year ? toBE(WEATHER_DATA._meta.year) : "2568"} vs ${WEATHER_FORECAST?._meta?.base_years || "—"}`
-                          : S.layer === "ndvi"
-                            ? `🌿 NDVI ${window.NDVI_DATA?.month || ""} · NASA MODIS`
                             : S.layer === "riceEvi"
                               ? `🌾 ${t("สภาพนาข้าว", "Rice Paddy Status")} ${eviPeriodLabel()}`
-                              : S.layer === "rain"
-                                ? `🌧 ${t("ฝนสะสม 7 วันล่าสุด", "7-Day Rainfall")} · Open-Meteo ${window.RAIN_DATA?._meta?.updated || ""}`
                                 : S.layer === "gsmap"
                                   ? `🛰 ${t("ปริมาณฝนรวม 7 วัน (ดาวเทียม)", "7-Day Total Rainfall (Satellite)")} · ${window.GSMAP_DATA?._meta?.period_end || ""}`
                                   : S.layer === "forecast"
@@ -4960,11 +4952,6 @@
                 `อัปเดต ${window.GSMAP_DATA?._meta?.period_end || "—"}`,
                 `Updated ${window.GSMAP_DATA?._meta?.period_end || "—"}`,
               )
-            : S.layer === "rain"
-              ? t(
-                  `อัปเดต ${fmtDateISO(window.RAIN_DATA?._meta?.updated)}`,
-                  `Updated ${fmtDateISO(window.RAIN_DATA?._meta?.updated)}`,
-                )
               : S.layer === "forecast"
                 ? t(
                     `อัปเดต ${fmtDateISO(window.FORECAST_DATA?._meta?.updated)}`,
@@ -5019,20 +5006,12 @@
         refs.headlineTitle.textContent =
           S.layer === "dam"
             ? t("แผนที่ระดับน้ำในเขื่อนรายจังหวัด", "Dam Water Levels by Province")
-            : S.layer === "rainfall"
-              ? t("แผนที่ปริมาณฝนฤดูนาปีรายจังหวัด", "Season Rainfall Map by Province")
-              : S.layer === "drought"
-                ? t("แผนที่ฝนเบี่ยงเบนจากค่าปกติรายจังหวัด", "Rainfall Anomaly vs 5-Year Normal by Province")
                 : S.layer === "mills"
                   ? t("แผนที่โรงสีข้าวรายจังหวัด", "Rice Mills by Province")
                   : S.layer === "profit"
                     ? t("แผนที่กำไร/ขาดทุนประมาณการต่อไร่", "Estimated Profit/Loss per Rai by Province")
-                    : S.layer === "ndvi"
-                      ? t("แผนที่ดัชนีพืชพรรณ (NDVI) รายจังหวัด", "Vegetation Index (NDVI) by Province")
                       : S.layer === "riceEvi"
                         ? t("แผนที่สภาพนาข้าวรายจังหวัด", "Rice Paddy Status by Province")
-                        : S.layer === "rain"
-                          ? t("แผนที่ฝนสะสม 7 วันล่าสุดรายจังหวัด", "7-Day Cumulative Rainfall by Province")
                           : S.layer === "gsmap"
                             ? t(
                                 "แผนที่ปริมาณฝนรวม 7 วันล่าสุดรายจังหวัด (ดาวเทียม)",
@@ -5054,16 +5033,6 @@
                 "ระดับน้ำในเขื่อนขนาดใหญ่ 35 แห่ง จากกรมชลประทาน (RID) อัปเดตรายวัน",
                 "Large dam water levels from Royal Irrigation Dept. (RID). 35 dams, daily update.",
               )
-            : S.layer === "rainfall"
-              ? t(
-                  "ปริมาณฝนสะสมฤดูนาปี (มิ.ย.–พ.ย.) รายจังหวัด จาก Open-Meteo Archive API อัปเดตรายเดือน",
-                  "Seasonal cumulative rainfall (Jun–Nov) by province via Open-Meteo Archive API, updated monthly.",
-                )
-              : S.layer === "drought"
-                ? t(
-                    `% เบี่ยงเบนของฝนนาปีเทียบกับค่าเฉลี่ย 5 ปี (${WEATHER_FORECAST?._meta?.base_years || "—"}) รายจังหวัด · สีแดง = แห้งกว่าปกติ · สีน้ำเงิน = ชุ่มชื้นกว่าปกติ`,
-                    `Season rainfall % deviation from ${WEATHER_FORECAST?._meta?.base_years || "—"} average by province · Red = below normal · Blue = above normal`,
-                  )
                 : S.layer === "mills"
                   ? t(
                       `โรงสีข้าวจดทะเบียนกับกรมการค้าภายใน (DIT) จำนวน ${RICE_MILLS_DATA?._meta?.total_mills ?? "—"} แห่ง ใน ${RICE_MILLS_DATA?._meta?.provinces_covered ?? "—"} จังหวัด จำแนกตามขนาด (ใหญ่/กลาง/เล็ก) ข้อมูล ณ ${fmtDateISO(RICE_MILLS_DATA?._meta?.updated)}`,
@@ -5074,21 +5043,11 @@
                         `ประมาณการกำไร/ขาดทุนต่อไร่ = ราคาโรงสี × ผลผลิต − ต้นทุน OAE · สีเขียว = กำไร · สีแดง = ขาดทุน · ใช้ต้นทุนอ้างอิงระดับประเทศ (ข้าวขาว ${fmtNumber(COST_BASE.white.oaeRaiCost)} / หอมมะลิ ${fmtNumber(COST_BASE.jasmine.oaeRaiCost)} ฿/ไร่)`,
                         `Est. profit/loss per rai = mill price × yield − OAE cost benchmark · Green = profit · Red = loss · National cost reference (white ${fmtNumber(COST_BASE.white.oaeRaiCost)} / jasmine ${fmtNumber(COST_BASE.jasmine.oaeRaiCost)} ฿/rai)`,
                       )
-                    : S.layer === "ndvi"
-                      ? t(
-                          `ค่าเฉลี่ย NDVI รายจังหวัด เดือน ${window.NDVI_DATA?.month || "—"} · จากดาวเทียม NASA MODIS (1km) · สีเขียวเข้ม = พืชพรรณหนาแน่น · อัปเดตทุกเดือน`,
-                          `Mean NDVI by province for ${window.NDVI_DATA?.month || "—"} · NASA MODIS satellite 1km · Dark green = dense vegetation · Monthly update`,
-                        )
                       : S.layer === "riceEvi"
                         ? t(
                             `ดัชนีความเขียวชอุ่มของนาข้าว เดือน ${eviPeriodLabel()} · ส้ม = นาว่าง · เขียวเข้ม = ข้าวสมบูรณ์ · หมายเหตุ: ภาคใต้ปลูก ก.ย.–พ.ย. เก็บ มี.ค.–พ.ค. (นาปี) ต่างจากภาคอื่น`,
                             `Rice paddy greenness index (EVI) for ${eviPeriodLabel()} · Orange = fallow · Dark green = healthy rice · Note: South harvests Mar–May (main season, different calendar)`,
                           )
-                        : S.layer === "rain"
-                          ? t(
-                              `ปริมาณฝนสะสม 7 วันล่าสุดรายจังหวัด จาก Open-Meteo · อัปเดตทุกวัน · ใช้ centroid จังหวัด · สีเข้ม = ฝนมาก · ข้อมูลล่าสุด ${fmtDateISO(window.RAIN_DATA?._meta?.updated)}`,
-                              `7-day cumulative rainfall by province via Open-Meteo · Daily update · Province centroid · Dark = heavy rain · Latest: ${fmtDateISO(window.RAIN_DATA?._meta?.updated)}`,
-                            )
                           : S.layer === "gsmap"
                             ? t(
                                 `ปริมาณฝนรวม 7 วันล่าสุด จากดาวเทียมตรวจวัดฝน · คำนวณโดยเฉลี่ยทั้งพื้นที่จังหวัด (แม่นกว่าวัดจากจุดเดียว) · ข้อมูลล่าช้าแค่ ~4 ชม. · ข้อมูลถึง ${window.GSMAP_DATA?._meta?.period_end || "—"}`,
@@ -5181,8 +5140,6 @@
             ? `${metaLabel}<br>${t("DIT 2569", "DIT 2026")}`
             : S.layer === "profit"
               ? `${riceLabel} &nbsp;·&nbsp; ${metaLabel}<br>${yearLabel} · ${t("ประมาณการ", "Est.")}`
-              : S.layer === "rain"
-                ? `${metaLabel}<br>${t(`Open-Meteo · อัปเดต ${fmtDateISO(window.RAIN_DATA?._meta?.updated)}`, `Open-Meteo · Updated ${fmtDateISO(window.RAIN_DATA?._meta?.updated)}`)}`
                 : S.layer === "gsmap"
                   ? `${metaLabel}<br>${t(`ดาวเทียม · ข้อมูลถึง ${window.GSMAP_DATA?._meta?.period_end || "—"}`, `Satellite · Through ${window.GSMAP_DATA?._meta?.period_end || "—"}`)}`
                   : S.layer === "forecast"
@@ -6651,11 +6608,6 @@
                     `สภาพนาข้าว ${eviPeriodLabel()} — ดัชนีความเขียวชอุ่ม EVI`,
                     `Rice paddy greenness (EVI) ${eviPeriodLabel()}`,
                   )
-                : S.layer === "rain"
-                  ? t(
-                      `ฝนสะสม 7 วัน อัปเดต ${window.RAIN_DATA?._meta?.updated || ""} — Open-Meteo รายวัน`,
-                      `7-Day rainfall updated ${window.RAIN_DATA?._meta?.updated || ""} — Open-Meteo daily`,
-                    )
                   : S.layer === "gsmap"
                     ? t(
                         `ปริมาณฝนรวม 7 วัน ข้อมูลถึง ${window.GSMAP_DATA?._meta?.period_end || ""} — ดาวเทียม`,
@@ -7083,10 +7035,6 @@ ${warningsHtml}
     <div class="type">${
       S.layer === "households"
         ? t("ครัวเรือนเกษตรกร (OAE 2566)", "Farmer Households (OAE 2566)")
-        : S.layer === "rainfall"
-          ? t("ปริมาณฝนนาปี (มิ.ย.–พ.ย.)", "Season Rainfall (Jun–Nov)")
-          : S.layer === "drought"
-            ? t("ฝนเบี่ยงเบนจากค่าปกติ 5 ปี", "Rainfall Anomaly vs 5-yr Normal")
             : riceTypeDescription(S.rice, S.layer)
     }</div>
     <div class="metric-name">${t(layerMeta[S.layer].th, layerMeta[S.layer].en)}</div>
