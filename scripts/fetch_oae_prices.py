@@ -20,7 +20,6 @@ import os
 import re
 import sys
 import urllib.parse
-import urllib.request
 from datetime import datetime, timedelta, timezone
 
 import requests
@@ -66,13 +65,14 @@ def _via_firecrawl(url):
     ตอบกลับเป็น markdown ที่ห่อ JSON ไว้ในโค้ดบล็อก จึงต้องแกะออกมาก่อน"""
     if not FIRECRAWL_KEY:
         raise RuntimeError("โดนบล็อก และไม่มี FIRECRAWL_API_KEY ให้ใช้ทางสำรอง")
-    body = json.dumps({"url": url, "formats": ["markdown"], "onlyMainContent": False}).encode()
-    req = urllib.request.Request(
-        "https://api.firecrawl.dev/v1/scrape", data=body,
-        headers={"Authorization": f"Bearer {FIRECRAWL_KEY}", "Content-Type": "application/json"},
+    r = requests.post(
+        "https://api.firecrawl.dev/v1/scrape",
+        json={"url": url, "formats": ["markdown"], "onlyMainContent": False},
+        headers={"Authorization": f"Bearer {FIRECRAWL_KEY}"},
+        timeout=TIMEOUT,
     )
-    with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
-        data = json.load(r)
+    r.raise_for_status()
+    data = r.json()
     if not data.get("success"):
         raise RuntimeError(f"firecrawl ไม่สำเร็จ: {str(data)[:200]}")
     md = data["data"]["markdown"]

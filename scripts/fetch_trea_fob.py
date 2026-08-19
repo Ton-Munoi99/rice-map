@@ -16,11 +16,12 @@ White:   ใช้แถว "White Rice 5%"
 import json
 import os
 import re
-import ssl
 import sys
-import urllib.request
 
 import requests
+import urllib3
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 from bs4 import BeautifulSoup
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -43,13 +44,10 @@ def _crop_year(row_text: str) -> int:
 
 
 def fetch_trea_fob():
-    ctx = ssl.create_default_context()
-    ctx.check_hostname = False
-    ctx.verify_mode = ssl.CERT_NONE
-
     url = 'https://www.thairiceexporters.or.th/price.htm'
-    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-    html = urllib.request.urlopen(req, context=ctx, timeout=20).read()
+    # verify=False เพราะใบรับรองของเว็บ TREA ใช้ไม่ได้ — เดิมทำแบบเดียวกันผ่าน ssl context
+    html = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'},
+                        timeout=20, verify=False).content
 
     try:
         html_str = html.decode('cp874', errors='ignore')
