@@ -82,7 +82,9 @@ Mutate `S` then call `rerender()`. Never read DOM state — always read from `S`
 | `FERT_DOA_RATES` | กรมการข้าว recommended rates (kg/rai) — 46-0-0: **10**, 16-20-0: **25**, 15-15-15: **25** |
 
 **Adding a new layer:**
-1. Add entry to `layerMeta` (th, en, unit, unitShort, summary, summaryMode)
+1. Add entry to `layerMeta` (th, en, unit, unitShort, summary, summaryMode) —
+   set `noTimeseries: true` there if the layer has no yearly series (was a separate
+   `LAYER_NO_TIMESERIES` list until 19 Aug 2569; folded into `layerMeta` so one edit covers it)
 2. Add dispatch in `valueOf()` and `hasLayerValue()`
 3. Add color palette case in `getPalette()`
 4. Add format case in `fmtCompact()` if needed
@@ -113,7 +115,7 @@ Auto-updated by GitHub Actions crons (23 files total). Key ones:
 - `dam-water.json` — RID dam levels · `water-level.json` + `rain-stations.json` — ThaiWater station snapshots
 - `rain-daily.json` (Open-Meteo 7-day past) · `rain-forecast.json` (Open-Meteo 7-day forecast, multi-point p90) · `rain-gsmap.json` (JAXA GSMaP satellite)
 - `agri-warnings.json` — synthesized flood/drought risk · `storm-alerts.json` — GDACS storms · `disease-risk.json`
-- `soil-moisture.json` (NASA SMAP) · `ndvi.json` + `rice-evi.json` (+ `-district`/`-validation`) — MODIS/GLAD satellite
+- `soil-moisture.json` (NASA SMAP) · `rice-evi.json` (+ `-district`/`-validation`) — MODIS/GLAD satellite
 - `rice-news.json` — Google News RSS (Thai rice news, 3×/day)
 - `biomass-plants.json` — DEDE plant registry via GeoServer WFS (`fetch_biomass_plants.py`, yearly)
 - Not auto-updated: `rice-mills.json` (built from DIT Excel), `districts-geo.json`, `oae_extracted.json`

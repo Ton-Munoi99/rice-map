@@ -194,13 +194,6 @@
 
 ## 3. ดาวเทียม & ดัชนีพืช
 
-### 🌿 ดัชนีพืชพรรณ NDVI
-- **คืออะไร:** ความเขียวของพืชพรรณทั้งจังหวัด (ยิ่งเขียว = ค่าสูง)
-- **NDVI คืออะไร:** ดัชนีคำนวณจากแสงอินฟราเรดใกล้ (NIR) กับแสงแดงที่พืชสะท้อน — พืชสุขภาพดีสะท้อน NIR สูง
-- **ข้อมูล:** NASA **MODIS MOD13A3** (NDVI รายเดือน 1 กม.) via GEE
-- **ลิงก์ตรง (GEE dataset):** <https://developers.google.com/earth-engine/datasets/catalog/MODIS_061_MOD13A3>
-- **สคริปต์:** `scripts/fetch_ndvi.py`
-
 ### 🌾 สภาพนาข้าว (Rice EVI) — ซับซ้อนที่สุด
 - **คืออะไร:** ความเขียว/สมบูรณ์ของ**ต้นข้าว เฉพาะพื้นที่นาข้าวจริง** (ไม่รวมพืชอื่น)
 - **EVI คืออะไร:** *Enhanced Vegetation Index* — ดัชนีความเขียวจากแสงที่ใบสะท้อน (NIR/แดง/น้ำเงิน) คล้าย NDVI แต่แม่นกว่าในพื้นที่เขียวทึบ
@@ -272,7 +265,6 @@
 | พื้นที่เสี่ยงน้ำท่วม | สังเคราะห์ (3 แหล่ง) | สังเคราะห์ | (รวม Open-Meteo+GSMaP+RID) | fetch_agri_warnings.py |
 | สภาพอากาศสำคัญ | GDACS | ต่างประเทศ (RSS) | [gdacs.org/xml/rss.xml](https://www.gdacs.org/xml/rss.xml) | fetch_storm_alerts.py |
 | ความชื้นในดิน | NASA SMAP L4 | 🛰️ ดาวเทียม (GEE) | [GEE: SMAP L4](https://developers.google.com/earth-engine/datasets/catalog/NASA_SMAP_SPL4SMGP_008) | fetch_soil_moisture.py |
-| ดัชนีพืชพรรณ NDVI | NASA MODIS MOD13A3 | 🛰️ ดาวเทียม (GEE) | [GEE: MOD13A3](https://developers.google.com/earth-engine/datasets/catalog/MODIS_061_MOD13A3) | fetch_ndvi.py |
 | สภาพนาข้าว (Rice EVI) | MODIS+GLAD+phenology | 🛰️ ดาวเทียม+คำนวณ | [GEE: MOD13A3](https://developers.google.com/earth-engine/datasets/catalog/MODIS_061_MOD13A3) · [Xiao 2005](https://doi.org/10.1016/j.rse.2004.12.009) | fetch_rice_evi.py |
 | ความเสี่ยงโรค/แมลง | Open-Meteo + เกณฑ์วิจัย | คำนวณ (API) | [api.open-meteo…forecast](https://api.open-meteo.com/v1/forecast) | fetch_disease_risk.py |
 | ข่าวข้าว | Google News RSS | รวมข่าว (RSS) | [news.google.com/rss/search](https://news.google.com/rss/search?q=ราคาข้าว&hl=th&gl=TH&ceid=TH:th) | fetch_rice_news.py |
