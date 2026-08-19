@@ -13,6 +13,8 @@ import os
 import re
 import json
 import math
+import calendar
+from datetime import date, timedelta
 
 # โปรเจกต์ Google Earth Engine
 GEE_PROJECT = "agriculture-monitoring-497007"
