@@ -21,11 +21,7 @@ DATA_DIR = os.path.join(ROOT_DIR, "data")
 FORECAST_PATH   = os.path.join(DATA_DIR, "rain-forecast.json")
 GSMAP_PATH      = os.path.join(DATA_DIR, "rain-gsmap.json")
 DAM_PATH        = os.path.join(DATA_DIR, "dam-water.json")
-SCOREBOARD_PATH = os.path.join(DATA_DIR, "alert-scoreboard.json")
 OUTPUT_PATH     = os.path.join(DATA_DIR, "agri-warnings.json")
-
-# ต้องมีอย่างน้อยเท่านี้ window ก่อนเชื่อ bias (กัน overcorrect จากข้อมูลน้อย/สุ่ม)
-MIN_WINDOWS_FOR_CALIBRATION = 5
 
 # ---------------------------------------------------------------------------
 # Thresholds
@@ -82,14 +78,10 @@ def round2(v):
 
 
 def load_forecast_bias():
-    """ดึง bias สะสมของพยากรณ์ (พยากรณ์ - ฝนจริง GSMaP) จาก alert-scoreboard.json
-    ถ้าพยากรณ์ over-predict เป็นระบบ (bias > 0) ค่านี้จะถูกหักออกก่อนตัดสินระดับเตือน
-    เพื่อลด false positive โดยไม่ต้องแก้สูตรพยากรณ์เอง"""
-    d = load_json(SCOREBOARD_PATH)
-    rolling = (d or {}).get("rolling")
-    if not rolling or rolling.get("windows_scored", 0) < MIN_WINDOWS_FOR_CALIBRATION:
-        return 0.0
-    return rolling.get("bias_mm") or 0.0
+    """ปิด calibration ไว้ก่อน — วัดผลจริงแล้ว (20 ส.ค. 2569, 5 windows) precision แย่ลง
+    25.4%→12.7% และ recall แย่ลง 87.3%→77.8% พร้อมกันทั้งคู่ ไม่ใช่ trade-off ปกติ
+    score_alerts.py ยังคำนวณ bias_mm ต่อเนื่องเผื่อกลับมาเปิดพร้อมข้อมูลมากขึ้น"""
+    return 0.0
 
 
 # ---------------------------------------------------------------------------
