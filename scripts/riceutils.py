@@ -53,6 +53,55 @@ GAUL_NAME_MAP = {
     "Changwat Bueng Kan":       "Bueng Kan",
 }
 
+# ── Province name mapping: ภาษาไทย → rice-map (77 จังหวัด) ───────────────────
+# ย้ายมาจาก fetch_miller_prices.py (เดิมนิยามซ้ำที่เดียว) — TMD API และแหล่งอื่น
+# ที่คืนชื่อจังหวัดภาษาไทยก็ใช้ตัวเดียวกันนี้
+PROVINCE_TH_EN = {
+    "กรุงเทพมหานคร": "Bangkok Metropolis",
+    "กระบี่": "Krabi", "กาญจนบุรี": "Kanchanaburi",
+    "กาฬสินธุ์": "Kalasin", "กำแพงเพชร": "Kamphaeng Phet",
+    "ขอนแก่น": "Khon Kaen", "จันทบุรี": "Chanthaburi",
+    "ฉะเชิงเทรา": "Chachoengsao", "ชลบุรี": "Chon Buri",
+    "ชัยนาท": "Chai Nat", "ชัยภูมิ": "Chaiyaphum",
+    "ชุมพร": "Chumphon", "เชียงราย": "Chiang Rai",
+    "เชียงใหม่": "Chiang Mai", "ตรัง": "Trang",
+    "ตราด": "Trat", "ตาก": "Tak",
+    "นครนายก": "Nakhon Nayok", "นครปฐม": "Nakhon Pathom",
+    "นครพนม": "Nakhon Phanom", "นครราชสีมา": "Nakhon Ratchasima",
+    "นครศรีธรรมราช": "Nakhon Si Thammarat",
+    "นครสวรรค์": "Nakhon Sawan", "นนทบุรี": "Nonthaburi",
+    "นราธิวาส": "Narathiwat", "น่าน": "Nan",
+    "บึงกาฬ": "Bueng Kan", "บุรีรัมย์": "Buri Ram",
+    "ปทุมธานี": "Pathum Thani",
+    "ประจวบคีรีขันธ์": "Prachuap Khiri Khan",
+    "ปราจีนบุรี": "Prachin Buri", "ปัตตานี": "Pattani",
+    "พระนครศรีอยุธยา": "Phra Nakhon Si Ayutthaya",
+    "พะเยา": "Phayao", "พังงา": "Phangnga",
+    "พัทลุง": "Phatthalung", "พิจิตร": "Phichit",
+    "พิษณุโลก": "Phitsanulok", "เพชรบุรี": "Phetchaburi",
+    "เพชรบูรณ์": "Phetchabun", "แพร่": "Phrae",
+    "ภูเก็ต": "Phuket", "มหาสารคาม": "Maha Sarakham",
+    "มุกดาหาร": "Mukdahan", "แม่ฮ่องสอน": "Mae Hong Son",
+    "ยโสธร": "Yasothon", "ยะลา": "Yala",
+    "ร้อยเอ็ด": "Roi Et", "ระนอง": "Ranong",
+    "ระยอง": "Rayong", "ราชบุรี": "Ratchaburi",
+    "ลพบุรี": "Lop Buri", "ลำปาง": "Lampang",
+    "ลำพูน": "Lamphun", "เลย": "Loei",
+    "ศรีสะเกษ": "Si Sa Ket", "สกลนคร": "Sakon Nakhon",
+    "สงขลา": "Songkhla", "สตูล": "Satun",
+    "สมุทรปราการ": "Samut Prakan",
+    "สมุทรสงคราม": "Samut Songkhram",
+    "สมุทรสาคร": "Samut Sakhon",
+    "สระแก้ว": "Sa Kaeo", "สระบุรี": "Saraburi",
+    "สิงห์บุรี": "Sing Buri", "สุโขทัย": "Sukhothai",
+    "สุพรรณบุรี": "Suphan Buri", "สุราษฎร์ธานี": "Surat Thani",
+    "สุรินทร์": "Surin", "หนองคาย": "Nong Khai",
+    "หนองบัวลำภู": "Nong Bua Lam Phu",
+    "อ่างทอง": "Ang Thong", "อำนาจเจริญ": "Amnat Charoen",
+    "อุดรธานี": "Udon Thani", "อุตรดิตถ์": "Uttaradit",
+    "อุทัยธานี": "Uthai Thani", "อุบลราชธานี": "Ubon Ratchathani",
+}
+
 # Bueng Kan polygon — FAO GAUL 2015 ไม่มีบึงกาฬ (แยกจากหนองคายปี 2011)
 _BUENG_KAN_POLY = [[
     [103.378, 17.979], [103.380, 18.121], [103.416, 18.215],

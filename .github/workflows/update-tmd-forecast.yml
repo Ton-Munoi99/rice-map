@@ -1,0 +1,36 @@
+name: Update TMD Hourly Rain Forecast (48h)
+
+on:
+  workflow_dispatch:  # รันด้วยมือก่อน — ยังไม่ตั้ง cron จนกว่าจะยืนยันว่า TMD_API_TOKEN
+                       # ใช้งานได้จริงบน runner (ยังไม่เคยทดสอบ token บน GitHub Actions)
+
+permissions:
+  contents: write
+
+jobs:
+  update-tmd-forecast:
+    runs-on: ubuntu-latest
+    name: Fetch TMD hourly rain forecast (2km, 48h) & update tmd-forecast.json
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 📦 Install dependencies
+        run: pip install requests
+
+      - name: 🌧️ Fetch TMD forecast
+        env:
+          TMD_API_TOKEN: ${{ secrets.TMD_API_TOKEN }}
+        run: python scripts/fetch_tmd_forecast.py
+
+      - name: Commit and push
+        uses: ./.github/actions/commit-data
+        with:
+          paths: data/tmd-forecast.json
+          message: "auto: update TMD hourly rain forecast (48h)"

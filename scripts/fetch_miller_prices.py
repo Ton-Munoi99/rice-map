@@ -25,6 +25,8 @@ from datetime import datetime, timedelta, timezone
 
 import requests
 
+from riceutils import PROVINCE_TH_EN
+
 try:
     import pdfplumber
 except ImportError:
@@ -47,52 +49,8 @@ HEADERS = {
     "Referer": "http://www.thairicemillers.org/",
 }
 
-# Map ชื่อจังหวัดภาษาไทย → ชื่อภาษาอังกฤษที่ใช้ใน rice-data.js
-PROVINCE_MAP = {
-    "กรุงเทพมหานคร": "Bangkok Metropolis",
-    "กระบี่": "Krabi", "กาญจนบุรี": "Kanchanaburi",
-    "กาฬสินธุ์": "Kalasin", "กำแพงเพชร": "Kamphaeng Phet",
-    "ขอนแก่น": "Khon Kaen", "จันทบุรี": "Chanthaburi",
-    "ฉะเชิงเทรา": "Chachoengsao", "ชลบุรี": "Chon Buri",
-    "ชัยนาท": "Chai Nat", "ชัยภูมิ": "Chaiyaphum",
-    "ชุมพร": "Chumphon", "เชียงราย": "Chiang Rai",
-    "เชียงใหม่": "Chiang Mai", "ตรัง": "Trang",
-    "ตราด": "Trat", "ตาก": "Tak",
-    "นครนายก": "Nakhon Nayok", "นครปฐม": "Nakhon Pathom",
-    "นครพนม": "Nakhon Phanom", "นครราชสีมา": "Nakhon Ratchasima",
-    "นครศรีธรรมราช": "Nakhon Si Thammarat",
-    "นครสวรรค์": "Nakhon Sawan", "นนทบุรี": "Nonthaburi",
-    "นราธิวาส": "Narathiwat", "น่าน": "Nan",
-    "บึงกาฬ": "Bueng Kan", "บุรีรัมย์": "Buri Ram",
-    "ปทุมธานี": "Pathum Thani",
-    "ประจวบคีรีขันธ์": "Prachuap Khiri Khan",
-    "ปราจีนบุรี": "Prachin Buri", "ปัตตานี": "Pattani",
-    "พระนครศรีอยุธยา": "Phra Nakhon Si Ayutthaya",
-    "พะเยา": "Phayao", "พังงา": "Phangnga",
-    "พัทลุง": "Phatthalung", "พิจิตร": "Phichit",
-    "พิษณุโลก": "Phitsanulok", "เพชรบุรี": "Phetchaburi",
-    "เพชรบูรณ์": "Phetchabun", "แพร่": "Phrae",
-    "ภูเก็ต": "Phuket", "มหาสารคาม": "Maha Sarakham",
-    "มุกดาหาร": "Mukdahan", "แม่ฮ่องสอน": "Mae Hong Son",
-    "ยโสธร": "Yasothon", "ยะลา": "Yala",
-    "ร้อยเอ็ด": "Roi Et", "ระนอง": "Ranong",
-    "ระยอง": "Rayong", "ราชบุรี": "Ratchaburi",
-    "ลพบุรี": "Lop Buri", "ลำปาง": "Lampang",
-    "ลำพูน": "Lamphun", "เลย": "Loei",
-    "ศรีสะเกษ": "Si Sa Ket", "สกลนคร": "Sakon Nakhon",
-    "สงขลา": "Songkhla", "สตูล": "Satun",
-    "สมุทรปราการ": "Samut Prakan",
-    "สมุทรสงคราม": "Samut Songkhram",
-    "สมุทรสาคร": "Samut Sakhon",
-    "สระแก้ว": "Sa Kaeo", "สระบุรี": "Saraburi",
-    "สิงห์บุรี": "Sing Buri", "สุโขทัย": "Sukhothai",
-    "สุพรรณบุรี": "Suphan Buri", "สุราษฎร์ธานี": "Surat Thani",
-    "สุรินทร์": "Surin", "หนองคาย": "Nong Khai",
-    "หนองบัวลำภู": "Nong Bua Lam Phu",
-    "อ่างทอง": "Ang Thong", "อำนาจเจริญ": "Amnat Charoen",
-    "อุดรธานี": "Udon Thani", "อุตรดิตถ์": "Uttaradit",
-    "อุทัยธานี": "Uthai Thani", "อุบลราชธานี": "Ubon Ratchathani",
-}
+# Map ชื่อจังหวัดภาษาไทย → ชื่อภาษาอังกฤษที่ใช้ใน rice-data.js — ย้ายไป riceutils.py แล้ว
+PROVINCE_MAP = PROVINCE_TH_EN
 
 # ชื่อย่อที่ PDF ใช้ → ชื่อเต็ม
 ABBREV_MAP = {
