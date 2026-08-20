@@ -21,17 +21,30 @@ DATA_DIR = os.path.join(ROOT_DIR, "data")
 FORECAST_PATH   = os.path.join(DATA_DIR, "rain-forecast.json")
 GSMAP_PATH      = os.path.join(DATA_DIR, "rain-gsmap.json")
 DAM_PATH        = os.path.join(DATA_DIR, "dam-water.json")
+WEATHER_FC_PATH = os.path.join(DATA_DIR, "weather-forecast.json")
 OUTPUT_PATH     = os.path.join(DATA_DIR, "agri-warnings.json")
 
 # ---------------------------------------------------------------------------
 # Thresholds
 # ---------------------------------------------------------------------------
+# ค่าเดิม — ใช้เป็น fallback เมื่อจังหวัดไม่มีข้อมูลค่าปกติ
 FLOOD_HIGH_MM  = 120
 FLOOD_MED_MM   = 60
 FLOOD_LOW_MM   = 30
 DROUGHT_RAIN   = 5
 DROUGHT_DAM    = 40
 DAM_LOW_PCT    = 30
+
+# แผน A (20 ส.ค. 2569): เกณฑ์คงที่ 30/60/120 มม. ไม่เป็นธรรมข้ามจังหวัด —
+# ฝน 120 มม. คือ 1.2x ของสัปดาห์ปกติที่ตราด แต่ 2.8x ที่นครราชสีมา ทำให้
+# 67-84% ของประเทศติดเตือนพร้อมกันหน้าฝน ผู้ใช้เลือก 2.0x (จำลองแล้วเหลือ
+# 🔴 ~7 จังหวัดจากตัวอย่าง 13 ส.ค. เทียบกับคงที่ 120มม.=11) — สัดส่วน 4:2:1
+# เดิม (120:60:30) คงไว้เหมือนกันทุกระดับ
+SEASON_WEEKS         = 26  # weather-forecast.json คือค่าเฉลี่ยหน้านาปี มิ.ย.-พ.ย. (~26 สัปดาห์)
+NORMAL_MULT_HIGH     = 2.0
+NORMAL_MULT_MED      = 1.0
+NORMAL_MULT_LOW      = 0.5
+MIN_NORMAL_WEEKLY_MM = 5  # ต่ำกว่านี้ถือว่าข้อมูลค่าปกติไม่น่าเชื่อถือ ใช้ fallback แทน
 
 # ---------------------------------------------------------------------------
 # Warning type definitions
@@ -77,6 +90,22 @@ def round2(v):
     return round(float(v), 2) if v is not None else None
 
 
+def province_flood_thresholds(prov_name, wf_provs):
+    """เกณฑ์เตือนน้ำท่วม (high, med, low, normal_weekly_mm) เฉพาะจังหวัดนั้น
+    คำนวณจากค่าปกติฝนหน้านาปี ÷ 26 สัปดาห์ — ไม่มีข้อมูลหรือค่าต่ำผิดปกติ
+    ใช้เกณฑ์คงที่ 120/60/30 มม. แทน (normal_weekly_mm = None บอกว่าใช้ fallback)"""
+    normal_season = (wf_provs.get(prov_name) or {}).get("forecast_rainfall_mm")
+    normal_weekly = normal_season / SEASON_WEEKS if normal_season else 0
+    if normal_weekly < MIN_NORMAL_WEEKLY_MM:
+        return FLOOD_HIGH_MM, FLOOD_MED_MM, FLOOD_LOW_MM, None
+    return (
+        normal_weekly * NORMAL_MULT_HIGH,
+        normal_weekly * NORMAL_MULT_MED,
+        normal_weekly * NORMAL_MULT_LOW,
+        round2(normal_weekly),
+    )
+
+
 def load_forecast_bias():
     """ปิด calibration ไว้ก่อน — วัดผลจริงแล้ว (20 ส.ค. 2569, 5 windows) precision แย่ลง
     25.4%→12.7% และ recall แย่ลง 87.3%→77.8% พร้อมกันทั้งคู่ ไม่ใช่ trade-off ปกติ
@@ -88,16 +117,19 @@ def load_forecast_bias():
 # Warning generation per province
 # ---------------------------------------------------------------------------
 
-def build_warnings(prov_name, fc_7d, gs_7d, dam_pct, fc_bias=0.0):
+def build_warnings(prov_name, fc_7d, gs_7d, dam_pct, fc_bias=0.0,
+                    flood_thresholds=(FLOOD_HIGH_MM, FLOOD_MED_MM, FLOOD_LOW_MM)):
     """
     Return list of warning dicts for a province.
     fc_7d  : 7-day forecast rain (mm) or None
     gs_7d  : 7-day GSMaP satellite rain (mm) or None
     dam_pct: dam level (% capacity) or None
     fc_bias: ค่าเฉลี่ย (พยากรณ์ - จริง) สะสม — หักออกจาก fc_7d ก่อนตัดสินระดับ (ไม่กระทบข้อความที่แสดง)
+    flood_thresholds: (high, med, low) มม./7วัน เฉพาะจังหวัด (แผน A) ค่าเริ่มต้นคือเกณฑ์คงที่เดิม
     """
     warnings = []
     fc_7d_adj = max(0.0, fc_7d - fc_bias) if fc_7d is not None else None
+    flood_high_mm, flood_med_mm, flood_low_mm = flood_thresholds
 
     # -----------------------------------------------------------------------
     # Flood warnings (check both forecast and gsmap, use highest trigger)
@@ -106,11 +138,11 @@ def build_warnings(prov_name, fc_7d, gs_7d, dam_pct, fc_bias=0.0):
     def flood_level(mm):
         if mm is None:
             return None
-        if mm >= FLOOD_HIGH_MM:
+        if mm >= flood_high_mm:
             return "flood_high"
-        if mm >= FLOOD_MED_MM:
+        if mm >= flood_med_mm:
             return "flood_med"
-        if mm >= FLOOD_LOW_MM:
+        if mm >= flood_low_mm:
             return "flood_low"
         return None
 
@@ -157,7 +189,7 @@ def build_warnings(prov_name, fc_7d, gs_7d, dam_pct, fc_bias=0.0):
             primary_val = fc_7d
         else:
             primary_val = fc_7d if fc_7d is not None else gs_7d
-        threshold_map = {"flood_high": FLOOD_HIGH_MM, "flood_med": FLOOD_MED_MM, "flood_low": FLOOD_LOW_MM}
+        threshold_map = {"flood_high": flood_high_mm, "flood_med": flood_med_mm, "flood_low": flood_low_mm}
 
         warnings.append({
             "icon":       wt["icon"],
@@ -168,7 +200,7 @@ def build_warnings(prov_name, fc_7d, gs_7d, dam_pct, fc_bias=0.0):
             "source":     "พยากรณ์ Open-Meteo" + (" + JAXA GSMaP" if gs_level else "")
                           if fc_level else "JAXA GSMaP",
             "value":      round2(primary_val),
-            "threshold":  threshold_map[best],
+            "threshold":  round2(threshold_map[best]),
         })
 
     # -----------------------------------------------------------------------
@@ -250,6 +282,7 @@ def main():
     forecast_data = load_json(FORECAST_PATH)
     gsmap_data    = load_json(GSMAP_PATH)
     dam_data      = load_json(DAM_PATH)
+    weather_fc    = load_json(WEATHER_FC_PATH)
 
     if forecast_data is None:
         print("[ERROR] rain-forecast.json is required but missing.", file=sys.stderr)
@@ -258,6 +291,9 @@ def main():
     fc_provs  = get_provinces(forecast_data)
     gs_provs  = get_provinces(gsmap_data)
     dam_provs = get_provinces(dam_data)
+    wf_provs  = get_provinces(weather_fc)
+    if not wf_provs:
+        print("[WARN] weather-forecast.json missing/empty — ใช้เกณฑ์คงที่ 120/60/30มม. ทุกจังหวัด", file=sys.stderr)
 
     # Province list comes from forecast (77 provinces)
     all_provinces = sorted(fc_provs.keys())
@@ -279,13 +315,15 @@ def main():
         gs_7d  = gs_entry.get("rain_7d")
         dam_pct = dam_entry.get("dam_level_pct")
 
-        warnings = build_warnings(prov, fc_7d, gs_7d, dam_pct, fc_bias)
+        high, med, low, normal_weekly = province_flood_thresholds(prov, wf_provs)
+        warnings = build_warnings(prov, fc_7d, gs_7d, dam_pct, fc_bias, (high, med, low))
         level_str, level_num = top_level(warnings)
 
         result_provinces[prov] = {
-            "level":     level_str,
-            "level_num": level_num,
-            "warnings":  warnings,
+            "level":            level_str,
+            "level_num":        level_num,
+            "warnings":         warnings,
+            "rain_normal_weekly_mm": normal_weekly,  # None = ใช้เกณฑ์คงที่ fallback
         }
 
         # Tally summary (each province counted once, by its highest level)
@@ -300,9 +338,16 @@ def main():
             "updated": date.today().isoformat(),
             "sources": ["Open-Meteo Forecast", "JAXA GSMaP", "RID Dam"],
             "thresholds": {
-                "flood_high_mm":  FLOOD_HIGH_MM,
-                "flood_med_mm":   FLOOD_MED_MM,
-                "flood_low_mm":   FLOOD_LOW_MM,
+                "flood_basis":    "เกณฑ์เตือนน้ำท่วมเป็นทวีคูณของฝนปกติรายจังหวัด "
+                                   f"({NORMAL_MULT_LOW}x/{NORMAL_MULT_MED}x/{NORMAL_MULT_HIGH}x ค่าปกติรายสัปดาห์ หน้านาปี) "
+                                   f"— จังหวัดไม่มีข้อมูลค่าปกติใช้เกณฑ์คงที่ {FLOOD_LOW_MM}/{FLOOD_MED_MM}/{FLOOD_HIGH_MM}มม. แทน "
+                                   "(ดู rain_normal_weekly_mm รายจังหวัด)",
+                "normal_mult_high": NORMAL_MULT_HIGH,
+                "normal_mult_med":  NORMAL_MULT_MED,
+                "normal_mult_low":  NORMAL_MULT_LOW,
+                "fallback_flood_high_mm": FLOOD_HIGH_MM,
+                "fallback_flood_med_mm":  FLOOD_MED_MM,
+                "fallback_flood_low_mm":  FLOOD_LOW_MM,
                 "drought_rain_mm": DROUGHT_RAIN,
                 "drought_dam_pct": DROUGHT_DAM,
                 "dam_low_pct":    DAM_LOW_PCT,
