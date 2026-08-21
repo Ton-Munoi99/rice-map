@@ -79,6 +79,10 @@ def main():
         # ชื่อคีย์ไม่ตรงกันระหว่าง endpoint ของ TMD เอง (region: "WeatherForecast",
         # place/at: "WeatherForcasts" สะกดผิด) — รับทั้งสองแบบกันเหนียว
         items = data.get("WeatherForecast") or data.get("WeatherForcasts") or []
+        if not items:
+            # ยังไม่เคยเห็น response จริง — log โครงสร้างไว้เพื่อ debug รอบแรก
+            print(f"  ! response keys: {list(data.keys())} | preview: {json.dumps(data, ensure_ascii=False)[:500]}",
+                  file=sys.stderr)
         n_ok = 0
         for item in items:
             th_name = (item.get("location") or {}).get("province")
