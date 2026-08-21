@@ -1,8 +1,11 @@
 name: Update TMD Hourly Rain Forecast (48h)
 
 on:
-  workflow_dispatch:  # รันด้วยมือก่อน — ยังไม่ตั้ง cron จนกว่าจะยืนยันว่า TMD_API_TOKEN
-                       # ใช้งานได้จริงบน runner (ยังไม่เคยทดสอบ token บน GitHub Actions)
+  schedule:
+    # ทุก 6 ชั่วโมง — ตาม cycle ทั่วไปของโมเดล NWP (4 รอบ/วัน) ไม่มีประโยชน์รันถี่กว่านี้
+    # เพราะ TMD ไม่ได้อัปเดตโมเดลทุกชั่วโมง มีแค่ resolution การพยากรณ์เป็นรายชั่วโมง
+    - cron: '15 */6 * * *'  # นาที 15 กันชนคิวช่วง :00 ที่ workflow อื่นชุมนุมกันเยอะ
+  workflow_dispatch:  # ทดสอบ token บน runner จริงแล้ว (77/77 จังหวัด) เปิด cron ได้
 
 permissions:
   contents: write
