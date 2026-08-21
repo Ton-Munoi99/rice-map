@@ -76,11 +76,12 @@ def main():
             failed_regions.append(region)
             continue
 
-        # ชื่อคีย์ไม่ตรงกันระหว่าง endpoint ของ TMD เอง (region: "WeatherForecast",
-        # place/at: "WeatherForcasts" สะกดผิด) — รับทั้งสองแบบกันเหนียว
-        items = data.get("WeatherForecast") or data.get("WeatherForcasts") or []
+        # เอกสาร TMD เขียนคีย์ไม่ตรงกันเอง 2 แบบ (region: "WeatherForecast", place/at:
+        # "WeatherForcasts" สะกดผิด) แต่ของจริงที่ได้กลับมาคือ "WeatherForecasts"
+        # (มี s ท้าย สะกดถูก) — คนละคำกับทั้งสองแบบในเอกสาร รับทุกแบบกันเหนียว
+        items = (data.get("WeatherForecasts") or data.get("WeatherForecast")
+                  or data.get("WeatherForcasts") or [])
         if not items:
-            # ยังไม่เคยเห็น response จริง — log โครงสร้างไว้เพื่อ debug รอบแรก
             print(f"  ! response keys: {list(data.keys())} | preview: {json.dumps(data, ensure_ascii=False)[:500]}",
                   file=sys.stderr)
         n_ok = 0
@@ -102,7 +103,7 @@ def main():
                 "hourly": hourly,
             }
             n_ok += 1
-        print(f"  ok {n_ok} จังหวัด")
+        print(f"  ok {n_ok}/{len(items)} จังหวัด (API คืนมา {len(items)} รายการ)")
 
         if i < len(REGIONS) - 1:
             time.sleep(1)
