@@ -94,7 +94,7 @@ Mutate `S` then call `rerender()`. Never read DOM state — always read from `S`
 
 **Data flow:** `valueOf(en, rice, year, layer)` → dispatches to per-layer value functions → `rerender()` → SVG fill colors via `getPalette()` + `lerp()`.
 
-**Current layers (18):** `production`, `yield`, `area`, `naprang`, `naprangArea`, `households`, `price`, `mills`, `straw`, `biomass`, `dam`, `gsmap`, `forecast`, `waterlevel`, `rainstation`, `alerts` (flood risk), `soilMoisture`, `riceEvi`. The `profit` layer's code exists but its button is hidden. Sidebar also has non-layer cards: Weather Watch (`storm-alerts.json`) and Rice News (`rice-news.json`).
+**Current layers (20):** `production`, `yield`, `area`, `naprang`, `naprangArea`, `households`, `price`, `mills`, `profit`, `straw`, `biomass`, `dam`, `gsmap`, `forecast`, `tmdRain` (48h detailed forecast, TMD), `waterlevel`, `rainstation`, `alerts` (flood risk), `soilMoisture`, `riceEvi` — all 20 have a button; none are hidden. Sidebar also has non-layer cards: Weather Watch (`storm-alerts.json`) and Rice News (`rice-news.json`).
 
 **Profit formula:** `(price ฿/ton × yield kg/rai / 1000) − COST_BASE[rice].oaeRaiCost`
 
@@ -113,7 +113,7 @@ Mutate `S` then call `rerender()`. Never read DOM state — always read from `S`
 Auto-updated by GitHub Actions crons (23 files total). Key ones:
 - `prices-live.json` — Thai Rice Millers Association prices · `trea-fob.json` — TREA FOB export prices
 - `dam-water.json` — RID dam levels · `water-level.json` + `rain-stations.json` — ThaiWater station snapshots
-- `rain-daily.json` (Open-Meteo 7-day past) · `rain-forecast.json` (Open-Meteo 7-day forecast, multi-point p90) · `rain-gsmap.json` (JAXA GSMaP satellite)
+- `rain-daily.json` (Open-Meteo 7-day past) · `rain-forecast.json` (Open-Meteo 7-day forecast, multi-point p90) · `rain-gsmap.json` (JAXA GSMaP satellite) · `tmd-forecast.json` (TMD 48h hourly, 2km, every 6h)
 - `agri-warnings.json` — synthesized flood/drought risk · `storm-alerts.json` — GDACS storms · `disease-risk.json`
 - `soil-moisture.json` (NASA SMAP) · `rice-evi.json` (+ `-district`/`-validation`) — MODIS/GLAD satellite
 - `rice-news.json` — Google News RSS (Thai rice news, 3×/day)
@@ -122,7 +122,7 @@ Auto-updated by GitHub Actions crons (23 files total). Key ones:
 
 ### GitHub Actions
 
-17 workflows in `.github/workflows/`. All commit directly to `main` through the shared
+19 workflows in `.github/workflows/` (18 write data + `check-data-freshness.yml`, which only reads). The 18 data workflows commit directly to `main` through the shared
 `./.github/actions/commit-data` composite action, which stages the listed paths, skips the
 commit when nothing changed, and retries `git pull --rebase` + push up to 3× so concurrent
 cron runs do not collide. Add new data workflows by calling that action rather than

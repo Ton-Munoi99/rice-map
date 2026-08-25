@@ -144,6 +144,15 @@
   - โครงการ GSMaP (JAXA): <https://sharaku.eorc.jaxa.jp/GSMaP/> · GPM (NASA): <https://gpm.nasa.gov/>
 - **สคริปต์:** `scripts/fetch_rain_gsmap.py`
 
+### 🌧️ ฝนล่วงหน้า 48 ชม. (ละเอียด, TMD)
+- **คืออะไร:** พยากรณ์ฝนรายชั่วโมง ล่วงหน้าสูงสุด 48 ชม. (2 วัน) ความละเอียดพื้นที่ 2 กม. — **เสริม**เตือนภัยน้ำท่วม 7 วัน ไม่ได้แทน (TMD hourly พยากรณ์ได้แค่ 48 ชม.)
+- **ข้อมูล:** **กรมอุตุนิยมวิทยา (TMD)** — TMD Weather Forecast API (NWP, โดเมนความละเอียด 2 กม.) ต้องมี OAuth access token (สมัครที่เว็บ TMD)
+- **คำนวณ:** ดึงทีละภาค (6 ครั้ง) จาก endpoint `/hourly/region` แทนยิงทีละจังหวัด แล้วรวมฝนรายชั่วโมงเป็นยอดสะสม 48 ชม./24 ชม. ต่อจังหวัด
+- **ลิงก์ตรง:**
+  - เอกสาร API: <https://data.tmd.go.th/nwpapi/doc/apidoc/location/forecast_hourly.html>
+  - สมัคร token: <https://data.tmd.go.th/nwpapi/register>
+- **สคริปต์:** `scripts/fetch_tmd_forecast.py`
+
 ### 🌧️ สถานีฝน Realtime & 💧 ระดับน้ำในแม่น้ำ/คลอง
 - **คืออะไร:** ฝน 24 ชม. และระดับน้ำเทียบตลิ่ง จากสถานีวัดจริง (จุดต่อจุด)
 - **ข้อมูล:** **ThaiWater** — สถาบันสารสนเทศทรัพยากรน้ำ (สสน./HII)
@@ -259,6 +268,7 @@
 | ครัวเรือนเกษตรกร | OAE 2566 | ราชการ | [catalog.oae.go.th](https://catalog.oae.go.th/) | data/farmer_households.csv |
 | พยากรณ์ฝน 7 วัน | Open-Meteo (p90) | โมเดล (API) | [api.open-meteo…forecast](https://api.open-meteo.com/v1/forecast) | fetch_rain_forecast.py |
 | ฝนรวม 7 วัน (ดาวเทียม) | JAXA GSMaP v8 | 🛰️ ดาวเทียม (GEE) | [GEE: GSMaP v8](https://developers.google.com/earth-engine/datasets/catalog/JAXA_GPM_L3_GSMaP_v8_operational) | fetch_rain_gsmap.py |
+| ฝนล่วงหน้า 48 ชม. (ละเอียด) | กรมอุตุนิยมวิทยา (TMD) | ราชการ (API) | [data.tmd…forecast_hourly](https://data.tmd.go.th/nwpapi/doc/apidoc/location/forecast_hourly.html) | fetch_tmd_forecast.py |
 | สถานีฝน 24h | ThaiWater | ราชการ (API) | [api-v3.thaiwater…rain_24h](https://api-v3.thaiwater.net/api/v1/thaiwater30/public/rain_24h) | fetch_rain_stations.py |
 | ระดับน้ำแม่น้ำ | ThaiWater | ราชการ (API) | [api-v3.thaiwater…waterlevel](https://api-v3.thaiwater.net/api/v1/thaiwater30/public/waterlevel_load) | fetch_water_level.py |
 | ระดับน้ำเขื่อน | กรมชลประทาน (RID) | ราชการ (API) | [app.rid.go.th…dam/public](https://app.rid.go.th/reservoir/api/dam/public) | fetch_dam_water.py |
@@ -293,6 +303,7 @@
 | พพ. (DEDE) | โรงไฟฟ้าชีวมวล | Open Data Common | ✅ |
 | NASA (SMAP, MODIS) | ความชื้นดิน, NDVI | Full & open data policy | ✅ |
 | JAXA GSMaP (ผ่าน GEE) | ฝนดาวเทียม | Terms of use — ต้องอ้างอิงแหล่ง | ⚠️ ตรวจก่อน |
+| กรมอุตุนิยมวิทยา (TMD) | ฝนล่วงหน้า 48 ชม. | ไม่ได้ระบุ | ⚠️ ตรวจก่อน |
 | ThaiWater (สสน./HII) | ระดับน้ำ, สถานีฝน | ไม่ได้ระบุ | ⚠️ ตรวจก่อน |
 | MRC (Mekong River Commission) | ระดับน้ำโขง | ไม่ได้ระบุสำหรับ API นี้ | ⚠️ ตรวจก่อน |
 | กรมชลประทาน (RID) | ระดับน้ำเขื่อน | ไม่ได้ระบุ | ⚠️ ตรวจก่อน |

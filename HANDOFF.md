@@ -1,8 +1,68 @@
 # Rice Map Handoff
 
-Last updated: 2026-07-15 by Claude Code
+Last updated: 2026-08-25 by Claude Code
 
 ## Log
+
+- 2026-08-25 (Claude): Stale-check sweep. Fixed one real monitor gap —
+  `tmd-forecast.json` (new file below) was never added to
+  `scripts/check_data_freshness.py`'s `MAX_AGE_DAYS`, so a silently-broken TMD
+  pipeline would never have gone red; added it (limit 1 day, matches its 6h
+  cron). Also fixed three stale docs: `AGENTS.md`'s "Current layers (18)" list
+  (missing `profit` and `tmdRain`, real count is 20; the "profit button is
+  hidden" note was also wrong — it has had a button since the ponytail-audit
+  below), `AGENTS.md`'s "17 workflows" (real: 19, 18 of which write data),
+  `README.md`'s "~16 workflow" (→ 19), and `CHANGELOG.md`'s "Known issues"
+  entry on absolute alert thresholds (said "intentionally not fixed" — it was
+  fixed 20 Aug, see below). Everything else checked clean: no missing secrets,
+  0/42 fallback literals contradict their data file, all 20 layer captions
+  reset correctly when switching (`dataSourceNote` probed through the real
+  `setLayer` path), no orphaned `layerMeta` entries.
+- 2026-08-20/21 (Claude): Added the 20th layer, `tmdRain` — "48h detailed rain
+  forecast" from the Thai Meteorological Department (TMD NWP API), 2km
+  resolution, updated every 6h. Backend: `scripts/fetch_tmd_forecast.py`
+  fetches per-region (6 calls, not per-province) since the docs disagreed with
+  the actual response key twice during testing (real key is `WeatherForecasts`,
+  matching neither of the two spellings TMD's own docs use — code now accepts
+  all three). Frontend wired through the existing config-driven `valueFn`/
+  `palette` merge block plus the ~17 spots that still need a per-layer case
+  (dataSourceNote, tooltip, rankTitle, yearButtons override, etc. — same
+  pattern as `gsmap`/`forecast`). Verified live in-browser: 77/77 provinces
+  color, deep-link `#layer=tmdRain` loads cold, console clean, 19-layer
+  baseline unaffected. Requires GitHub secret `TMD_API_TOKEN` (set by the repo
+  owner, not by an agent). Explored district-level (649-843 amphoe) rain
+  granularity as a follow-up per user request — built and tested
+  `fetch_rain_forecast.py`/`fetch_rain_gsmap.py` district variants, but the
+  user reverted it after comparing against a real flood event (Nan, 19 Aug):
+  GSMaP satellite rain at district resolution still badly underestimated the
+  reported peak (measured ~35-65mm/day vs ~200mm+ reported on the ground) —
+  a satellite-resolution ceiling that administrative-boundary granularity
+  doesn't fix. Nothing from that exploration is in the codebase.
+- 2026-08-20 (Claude): Flood-alert threshold changed from a fixed 30/60/120mm
+  national threshold to 0.5x/1.0x/2.0x of each province's own seasonal-normal
+  weekly rainfall (`weather-forecast.json` ÷ 26 weeks), because the fixed
+  threshold was flagging 67-84% of provinces simultaneously in wet season and
+  was unfair across provinces (120mm = 1.2x Trat's normal week but 2.8x Nakhon
+  Ratchasima's). See `province_flood_thresholds()` in
+  `fetch_agri_warnings.py`. Same day: reverted the forecast-bias auto-
+  calibration added 4 Aug — once enough score windows accumulated to measure
+  it, it made both precision (25.4%→12.7%) and recall (87.3%→77.8%) worse
+  simultaneously, not a normal trade-off. `load_forecast_bias()` now always
+  returns 0.0; the scoring machinery (`score_alerts.py`) still runs in case
+  there's ever enough data to reconsider.
+- 2026-08-19/20 (Claude): Ponytail-audit cleanup across the repo (~-1,660
+  lines net, several commits). Removed 4 orphaned layers with no button
+  (`ndvi`/`rain`/`rainfall`/`drought` — the NDVI data pipeline was deleted
+  entirely, ~288 lines) and all their dead render branches in `index.html`
+  (36 leftover `if (layer === "ndvi") …` sites found across the detail card,
+  rank title, source note, and district drill-down). Gave `profit` a button
+  instead of deleting it (no equivalent layer replaces it). Consolidated
+  duplicated mask/phenology code and tuning constants into `riceutils.py`
+  (previously required editing two files in sync — a threshold change once
+  slipped and only one file got it). Fixed a real bug found along the way:
+  `eviPeriodLabel()` had a self-referential fallback line that caused
+  infinite recursion whenever `rice-evi.json` hadn't finished loading yet —
+  intermittently blanked the entire map (`RangeError: Maximum call stack`).
 
 - 2026-07-15 (Claude): Restored scripted regeneration of the official 2568 rice data,
   closing the reproducibility gap found during the pipeline trace below. Recovered
