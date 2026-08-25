@@ -2067,6 +2067,10 @@
                 <span class="th-t">🌧️ ฝนล่วงหน้า 48 ชม. (ละเอียด)</span>
                 <span class="en-t">🌧️ 48h Rain Forecast (Detailed)</span>
               </button>
+              <button class="pill" data-layer="floodExtent" onclick="setLayer('floodExtent')">
+                <span class="th-t">🌊 น้ำท่วมจริง (ดาวเทียม)</span>
+                <span class="en-t">🌊 Observed Flood (Satellite)</span>
+              </button>
               <button class="pill" data-layer="waterlevel" onclick="setLayer('waterlevel')">
                 <span class="th-t">💧 ระดับน้ำในแม่น้ำ/คลอง</span>
                 <span class="en-t">💧 River Water Level</span>
@@ -2759,6 +2763,17 @@
           summary: "พยากรณ์ฝน 48 ชม. เฉลี่ยต่อจังหวัด",
           summaryMode: "avg",
         },
+        floodExtent: {
+          noTimeseries: true,   // ไม่มีอนุกรมเวลารายปี — ไม่ต้องมีกราฟ spark / ป้ายปีประมาณการ
+          th: "น้ำท่วมจริง (ดาวเทียม)",
+          en: "Observed Flood (Satellite)",
+          unit: "ไร่ (ภาพดาวเทียม GISTDA)",
+          unitEn: "rai (GISTDA satellite)",
+          unitShort: "ไร่",
+          unitShortEn: "rai",
+          summary: "พื้นที่น้ำท่วมรวม",
+          summaryMode: "sum",
+        },
         alerts: {
           noTimeseries: true,   // ไม่มีอนุกรมเวลารายปี — ไม่ต้องมีกราฟ spark / ป้ายปีประมาณการ
           th: "พื้นที่เสี่ยงน้ำท่วม",
@@ -2923,6 +2938,13 @@
           sourceTh: "กรมอุตุนิยมวิทยา",
           sourceEn: "TMD",
           palette: { lo: [255, 243, 224], mid: [255, 152, 0], hi: [191, 54, 12], accent: "#e65100" },
+        },
+        floodExtent: {
+          format: "bignum",
+          valueFn: floodExtentValueOf,
+          sourceTh: "GISTDA (ดาวเทียม)",
+          sourceEn: "GISTDA (satellite)",
+          palette: { lo: [225, 245, 254], mid: [3, 155, 229], hi: [1, 42, 74], accent: "#039be5" },
         },
         alerts: {
           format: "alertLevel",
@@ -3466,6 +3488,7 @@
         if (layer === "gsmap") return ["gsmap"];
         if (layer === "forecast") return ["forecast"];
         if (layer === "tmdRain") return ["tmdRain"];
+        if (layer === "floodExtent") return ["floodExtent"];
         if (layer === "alerts") return ["alerts"];
         if (layer === "soilMoisture") return ["soilMoisture"];
         if (layer === "waterlevel") return ["waterlevel"];
@@ -3815,6 +3838,11 @@
       }
       function tmdRainValueOf(en) {
         return window.TMD_DATA?.provinces?.[en]?.rain_48h_mm ?? null;
+      }
+      // GISTDA ปล่อยเฉพาะ polygon ที่พบน้ำท่วม จังหวัดที่ไม่อยู่ในไฟล์จึงแปลว่า
+      // "ไม่พบในภาพล่าสุด" ไม่ใช่ "ยืนยันว่าไม่ท่วม" — คืน null ให้จางไว้ ไม่ใช่ 0
+      function floodExtentValueOf(en) {
+        return window.FLOOD_DATA?.provinces?.[en]?.flood_rai ?? null;
       }
       // ในฤดูฝนมีจังหวัดติดเตือนพร้อมกัน 60-80% ของประเทศ การบอกว่า "🔴 26 จังหวัด"
       // จึงไม่ช่วยให้ตัดสินใจอะไรได้ — บอกว่าจังหวัดไหนหนักสุดใช้งานได้จริงกว่า
@@ -4698,6 +4726,8 @@
                                     ? `🌦 ${t("พยากรณ์ฝน 7 วันข้างหน้า", "7-Day Rain Forecast")} · Open-Meteo ${window.FORECAST_DATA?._meta?.updated || ""}`
                                     : S.layer === "tmdRain"
                                       ? `🌧️ ${t("ฝนล่วงหน้า 48 ชม.", "48h Rain Forecast")} · TMD ${window.TMD_DATA?._meta?.updated || ""}`
+                                    : S.layer === "floodExtent"
+                                      ? `🌊 ${t("น้ำท่วมจริง (ดาวเทียม)", "Observed Flood (Satellite)")} · GISTDA ${t("ดึงเมื่อ", "fetched")} ${window.FLOOD_DATA?._meta?.updated || ""}`
                                     : S.layer === "alerts"
                                       ? `🚨 ${t("พื้นที่เสี่ยงน้ำท่วม", "Flood Risk Areas")} · ${t("อัปเดต", "Updated")} ${window.ALERTS_DATA?._meta?.updated || ""}`
                                       : S.layer === "soilMoisture"
@@ -4816,6 +4846,22 @@
           refs.dataSourceNote.textContent = t(
             `🌧️ พยากรณ์ฝนสะสม 48 ชม. (2 วัน) ข้างหน้า ความละเอียดพื้นที่ 2 กม. · กรมอุตุนิยมวิทยา (TMD) · อัปเดตทุก 6 ชม. · ครอบคลุม ${covered} จังหวัด · เสริมเตือนภัยน้ำท่วม 7 วัน ไม่ได้แทน (TMD hourly พยากรณ์ได้สูงสุดแค่ 48 ชม.)`,
             `🌧️ 48-hour cumulative rain forecast, 2km resolution · Thai Meteorological Department (TMD) · Updated every 6 hrs · ${covered} provinces · Supplements the 7-day flood alert, does not replace it (TMD hourly only forecasts up to 48h)`,
+          );
+          return;
+        }
+        if (S.layer === "floodExtent") {
+          const meta = window.FLOOD_DATA?._meta;
+          const totalRai = meta?.total_flood_rai;
+          const seen = (meta?.scene_first_seen || "").slice(0, 10);
+          refs.dataSourceNote.textContent = t(
+            `🌊 พื้นที่น้ำท่วมที่ดาวเทียมเห็นจริง จาก GISTDA · ${covered} จังหวัด รวม ${totalRai ? fmtNumber(Math.round(totalRai)) : "—"} ไร่ · ` +
+              `ต่างจาก layer "พื้นที่เสี่ยงน้ำท่วม" ที่คำนวณจากพยากรณ์ฝน — อันนี้คือน้ำที่ท่วมอยู่แล้ว · ` +
+              `⚠️ ต้นทางไม่ระบุวันที่ถ่ายภาพ บอกได้แค่ว่าเห็นภาพชุดนี้ครั้งแรก ${seen || "—"} · ` +
+              `จังหวัดที่ไม่ขึ้นสี = ไม่พบในภาพล่าสุด ไม่ใช่ยืนยันว่าไม่ท่วม`,
+            `🌊 Satellite-observed flood extent from GISTDA · ${covered} provinces, ${totalRai ? fmtNumber(Math.round(totalRai)) : "—"} rai total · ` +
+              `Different from the "Flood Risk" layer (computed from rain forecast) — this is water already on the ground · ` +
+              `⚠️ Upstream publishes no capture date; this scene was first seen ${seen || "—"} · ` +
+              `Uncoloured provinces = not detected in the latest scene, not a confirmation of no flooding`,
           );
           return;
         }
@@ -4998,6 +5044,11 @@
                       `อัปเดต ${fmtDateISO(window.TMD_DATA?._meta?.updated)}`,
                       `Updated ${fmtDateISO(window.TMD_DATA?._meta?.updated)}`,
                     )
+                : S.layer === "floodExtent"
+                  ? t(
+                      `ดึงเมื่อ ${fmtDateISO(window.FLOOD_DATA?._meta?.updated)}`,
+                      `Fetched ${fmtDateISO(window.FLOOD_DATA?._meta?.updated)}`,
+                    )
                 : S.layer === "alerts"
                   ? t(
                       `อัปเดต ${fmtDateISO(window.ALERTS_DATA?._meta?.updated)}`,
@@ -5013,6 +5064,7 @@
           S.layer !== "gsmap" &&
           S.layer !== "forecast" &&
           S.layer !== "tmdRain" &&
+          S.layer !== "floodExtent" &&
           S.layer !== "alerts" &&
           S.layer !== "soilMoisture" &&
           prevYear
@@ -5032,6 +5084,7 @@
           S.layer === "gsmap" ||
           S.layer === "forecast" ||
           S.layer === "tmdRain" ||
+          S.layer === "floodExtent" ||
           S.layer === "alerts" ||
           S.layer === "soilMoisture"
             ? `${covered.length}/${visible.length} ${t("จว.", "Prov.")}`
@@ -5063,6 +5116,8 @@
                               ? t("แผนที่พยากรณ์ฝน 7 วันข้างหน้ารายจังหวัด", "7-Day Rain Forecast by Province")
                               : S.layer === "tmdRain"
                                 ? t("แผนที่พยากรณ์ฝน 48 ชม. ข้างหน้ารายจังหวัด (ละเอียด)", "48h Rain Forecast by Province (Detailed)")
+                              : S.layer === "floodExtent"
+                                ? t("แผนที่พื้นที่น้ำท่วมจริงจากดาวเทียม รายจังหวัด", "Satellite-Observed Flood Extent by Province")
                               : S.layer === "alerts"
                                 ? t("แผนที่พื้นที่เสี่ยงน้ำท่วมรายจังหวัด", "Agricultural Alert Map by Province")
                                 : S.layer === "soilMoisture"
@@ -5106,6 +5161,11 @@
                                 ? t(
                                     `พยากรณ์ปริมาณฝนสะสม 48 ชม. ข้างหน้ารายจังหวัด ความละเอียด 2 กม. จากกรมอุตุนิยมวิทยา (TMD) · อัปเดตทุก 6 ชม. · เสริมเตือนภัย 7 วัน ไม่ได้แทน · ข้อมูลล่าสุด ${fmtDateISO(window.TMD_DATA?._meta?.updated)}`,
                                     `48-hour cumulative rain forecast by province, 2km resolution, from Thai Meteorological Department (TMD) · Updated every 6 hrs · Supplements the 7-day alert, does not replace it · Latest: ${fmtDateISO(window.TMD_DATA?._meta?.updated)}`,
+                                  )
+                              : S.layer === "floodExtent"
+                                ? t(
+                                    `พื้นที่น้ำท่วมที่ดาวเทียมเห็นจริง รายตำบล รวมเป็นรายจังหวัด จาก GISTDA · สีเข้ม = ท่วมมาก · เป็นน้ำที่ท่วมอยู่แล้ว ไม่ใช่การคาดการณ์ · ต้นทางไม่ระบุวันถ่ายภาพ`,
+                                    `Satellite-observed flood extent, tambon-level, aggregated by province, from GISTDA · Dark = larger flooded area · Water already on the ground, not a forecast · Upstream gives no capture date`,
                                   )
                               : S.layer === "alerts"
                                 ? t(
@@ -5195,6 +5255,8 @@
                     ? `${metaLabel}<br>${t(`Open-Meteo · อัปเดต ${fmtDateISO(window.FORECAST_DATA?._meta?.updated)}`, `Open-Meteo · Updated ${fmtDateISO(window.FORECAST_DATA?._meta?.updated)}`)}`
                     : S.layer === "tmdRain"
                       ? `${metaLabel}<br>${t(`TMD · อัปเดต ${fmtDateISO(window.TMD_DATA?._meta?.updated)}`, `TMD · Updated ${fmtDateISO(window.TMD_DATA?._meta?.updated)}`)}`
+                    : S.layer === "floodExtent"
+                      ? `${metaLabel}<br>${t(`GISTDA · ดึงเมื่อ ${fmtDateISO(window.FLOOD_DATA?._meta?.updated)}`, `GISTDA · Fetched ${fmtDateISO(window.FLOOD_DATA?._meta?.updated)}`)}`
                     : S.layer === "alerts"
                       ? `${metaLabel}<br>${t(`อัปเดต ${fmtDateISO(window.ALERTS_DATA?._meta?.updated)}`, `Updated ${fmtDateISO(window.ALERTS_DATA?._meta?.updated)}`)}`
                       : S.layer === "soilMoisture"
@@ -5206,6 +5268,7 @@
         const isGsmap = S.layer === "gsmap";
         const isForecast = S.layer === "forecast";
         const isTmdRain = S.layer === "tmdRain";
+        const isFloodExtent = S.layer === "floodExtent";
         const isAlerts = S.layer === "alerts";
         const isSoilMoisture = S.layer === "soilMoisture";
         const allSorted = visible
@@ -5213,7 +5276,7 @@
           .map((en) => ({ en, v: valueOf(en), s: isAlerts ? alertSeverityOf(en) : null }))
           .sort((a, b) => (isAlerts ? b.s - a.s : b.v - a.v));
         const items =
-          isRiceEvi || isGsmap || isForecast || isTmdRain || isAlerts || isSoilMoisture
+          isRiceEvi || isGsmap || isForecast || isTmdRain || isFloodExtent || isAlerts || isSoilMoisture
             ? allSorted
             : allSorted.slice(0, 10);
 
@@ -5228,6 +5291,8 @@
                     ? `<span class="th-t">ทุกจังหวัด เรียงตามพยากรณ์ฝน</span><span class="en-t">All Provinces by Rain Forecast</span>`
                     : isTmdRain
                       ? `<span class="th-t">ทุกจังหวัด เรียงตามพยากรณ์ฝน 48 ชม.</span><span class="en-t">All Provinces by 48h Rain Forecast</span>`
+                    : isFloodExtent
+                      ? `<span class="th-t">จังหวัดที่พบน้ำท่วม เรียงตามพื้นที่</span><span class="en-t">Flooded Provinces by Area</span>`
                     : isAlerts
                       ? `<span class="th-t">ทุกจังหวัด เรียงตามระดับเตือนภัย</span><span class="en-t">All Provinces by Alert Level</span>`
                       : isSoilMoisture
@@ -6267,6 +6332,7 @@
             S.layer === "gsmap" ||
             S.layer === "forecast" ||
             S.layer === "tmdRain" ||
+            S.layer === "floodExtent" ||
             S.layer === "alerts" ||
             S.layer === "soilMoisture"
               ? "env"
@@ -6498,6 +6564,11 @@
                         ? t(
                             `พยากรณ์ฝน 48 ชม. ข้างหน้า อัปเดต ${window.TMD_DATA?._meta?.updated || ""} — TMD`,
                             `48h rain forecast updated ${window.TMD_DATA?._meta?.updated || ""} — TMD`,
+                          )
+                      : S.layer === "floodExtent"
+                        ? t(
+                            `น้ำท่วมจริงจากดาวเทียม ดึงเมื่อ ${window.FLOOD_DATA?._meta?.updated || ""} — GISTDA`,
+                            `Satellite flood extent fetched ${window.FLOOD_DATA?._meta?.updated || ""} — GISTDA`,
                           )
                       : S.layer === "alerts"
                         ? t(
@@ -6792,6 +6863,35 @@
 <div class="rank">${rank ? `${t("อันดับ", "Rank")} #${rank} / ${total}` : t("ไม่มีข้อมูล", "No data")}</div>
 `;
         }
+        // ── GISTDA observed flood tooltip ────────────────────────────────────
+        if (S.layer === "floodExtent") {
+          const fp = window.FLOOD_DATA?.provinces?.[en];
+          const rank = currentRank(en);
+          const total = getVisibleProvinces().filter((n) => hasLayerValue(n)).length;
+          if (!fp)
+            return `<div class="th">${t(NM[en] || en, en)}</div><div class="en">${en}</div>
+<div style="color:var(--muted);font-size:11px;margin-top:6px">${t("ไม่พบน้ำท่วมในภาพดาวเทียมชุดล่าสุด", "No flooding in the latest satellite scene")}</div>
+<div style="color:var(--muted);font-size:9px;margin-top:3px;opacity:.8">${t("ไม่ใช่การยืนยันว่าไม่ท่วม — GISTDA เผยแพร่เฉพาะพื้นที่ที่ตรวจพบ", "Not a confirmation of no flooding — GISTDA publishes only detected areas")}</div>`;
+          const rai = fp.flood_rai ?? 0;
+          // อำเภอที่ท่วมหนักสุด 3 อันดับ — เรียงมาจากสคริปต์แล้ว
+          const topAmphoe = Object.entries(fp.amphoe || {}).slice(0, 3);
+          const amphoeRows = topAmphoe
+            .map(
+              ([name, v]) =>
+                `<div style="display:flex;justify-content:space-between;gap:8px"><span>${t("อ.", "")}${name}</span><span style="font-family:'IBM Plex Mono'">${fmtNumber(Math.round(v.flood_rai))}</span></div>`,
+            )
+            .join("");
+          return `
+<div class="th">${t(NM[en] || en, en)}</div>
+<div class="en">${en}</div>
+<div class="type">${t("น้ำท่วมจริงจากภาพดาวเทียม · GISTDA", "Satellite-observed flood · GISTDA")}</div>
+<div class="metric-name">${t("พื้นที่น้ำท่วม", "Flooded Area")}</div>
+<div class="value" style="color:#039be5">${fmtNumber(Math.round(rai))} <small style="font-size:12px;color:var(--muted)">${t("ไร่", "rai")}</small></div>
+<div style="font-size:10px;color:var(--muted);margin-top:2px">${fp.tambon_count} ${t("ตำบล ใน", "tambon across")} ${Object.keys(fp.amphoe || {}).length} ${t("อำเภอ", "amphoe")}</div>
+${amphoeRows ? `<div style="font-size:10px;color:var(--text-soft);margin-top:5px;line-height:1.7"><div style="opacity:.7;margin-bottom:2px">${t("อำเภอที่ท่วมมากสุด (ไร่)", "Worst-hit amphoe (rai)")}</div>${amphoeRows}</div>` : ""}
+<div class="rank">${rank ? `${t("อันดับ", "Rank")} #${rank} / ${total}` : t("ไม่มีข้อมูล", "No data")}</div>
+`;
+        }
         // ── Soil Moisture tooltip ────────────────────────────────────────────
         if (S.layer === "soilMoisture") {
           const sp = window.SOIL_DATA?.provinces?.[en];
@@ -7056,6 +7156,13 @@ ${warningsHtml}
         if (S.layer === "tmdRain") {
           const updated = fmtDateISO(window.TMD_DATA?._meta?.updated);
           refs.yearButtons.innerHTML = `<button class="pill on" data-year="tmdRain">🌧️ ${t("พยากรณ์ฝน 48 ชม. ข้างหน้า", "48h Rain Forecast")} · ${t("อัปเดต", "Updated")} ${updated}</button>`;
+          return;
+        }
+        if (S.layer === "floodExtent") {
+          const fm = window.FLOOD_DATA?._meta;
+          const n = fm?.provinces_affected ?? 0;
+          const rai = fm?.total_flood_rai;
+          refs.yearButtons.innerHTML = `<button class="pill on" data-year="floodExtent">🌊 ${t("พบน้ำท่วม", "Flooding detected")} ${n} ${t("จังหวัด", "provinces")} · ${rai ? fmtNumber(Math.round(rai)) : "—"} ${t("ไร่", "rai")}</button>`;
           return;
         }
         if (S.layer === "alerts") {
@@ -7730,6 +7837,7 @@ ${warningsHtml}
         fetchLayerData("rain-gsmap.json", "GSMAP_DATA", "gsmap");
         fetchLayerData("rain-forecast.json", "FORECAST_DATA", "forecast");
         fetchLayerData("tmd-forecast.json", "TMD_DATA", "tmdRain");
+        fetchLayerData("gistda-flood.json", "FLOOD_DATA", "floodExtent");
         fetchLayerData("agri-warnings.json", "ALERTS_DATA", "alerts");
         fetchLayerData("soil-moisture.json", "SOIL_DATA", "soilMoisture", () => {
           if (S.layer === "soilMoisture") rerender();

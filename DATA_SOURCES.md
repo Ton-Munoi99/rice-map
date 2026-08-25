@@ -153,6 +153,18 @@
   - สมัคร token: <https://data.tmd.go.th/nwpapi/register>
 - **สคริปต์:** `scripts/fetch_tmd_forecast.py`
 
+### 🌊 น้ำท่วมจริงจากภาพดาวเทียม (GISTDA)
+- **คืออะไร:** พื้นที่ที่**น้ำท่วมอยู่จริง** ตรวจจากภาพดาวเทียม รายตำบล (รวมเป็นรายจังหวัด/อำเภอ) — ต่างจาก layer "พื้นที่เสี่ยงน้ำท่วม" ที่คำนวณจาก*พยากรณ์ฝน* อันนั้นคือน้ำที่*อาจจะ*มา อันนี้คือน้ำที่*มาแล้ว*
+- **ทำไมต้องมีทั้งสองอัน:** วัดจริง 25 ส.ค. 69 — GISTDA เห็นน้ำท่วม 13 จังหวัด เตือนภัยจากฝนของเราจับได้ 12 แต่**พลาดนครราชสีมาซึ่งท่วมหนักที่สุด** (62 ตำบล 46,178 ไร่) เพราะโคราชท่วมจากน้ำที่ไหลมาแล้ว ไม่ใช่ฝนที่กำลังจะตก
+- **ข้อมูล:** **GISTDA** — WFS เปิดสาธารณะ ไม่ต้องมี API key
+- **ลิงก์ตรง (WFS):** <https://flood-innotech.gistda.or.th/flooding_vis_public?service=WFS&version=2.0.0&request=GetFeature&typeNames=flooding_vis:FloodArea_Poly&outputFormat=application/json> · พอร์ทัล <https://flood-innotech.gistda.or.th/>
+- **⚠️ ข้อจำกัดสำคัญ 2 ข้อ** (ตรวจสอบเองแล้ว 25 ส.ค. 69):
+  1. **ต้นทางไม่ระบุวันที่ถ่ายภาพเลย** — ไม่มีฟิลด์เวลาในทุก property และ GetCapabilities ก็ไม่มี Abstract จึงบอกได้แค่ "เราดึงมาเมื่อไหร่" กับ "เห็นภาพชุดนี้ครั้งแรกเมื่อไหร่" (ลายนิ้วมือฉาก = hash ของชุดตำบล+พื้นที่) · **หน้าเว็บห้ามเขียนว่า "น้ำท่วมวันนี้"**
+  2. **ข้อความไทยเป็น cp874 ที่ถูกติดป้ายผิดเป็น UTF-8** มาถึงเป็น mojibake แบบ latin-1 (`µ.à·¾ÒÅÑÂ` = `ต.เทพาลัย`) สคริปต์ถอดกลับให้แล้ว
+- **จังหวัดที่ไม่ขึ้นสี = ไม่พบในภาพล่าสุด ไม่ใช่ยืนยันว่าไม่ท่วม** (GISTDA เผยแพร่เฉพาะพื้นที่ที่ตรวจพบ) — `valueFn` จึงคืน `null` ไม่ใช่ `0`
+- **หน่วย:** `flood_area` เป็น**ไร่** (ยืนยันจาก `F_AREA` ตร.ม. ÷ 1600)
+- **สคริปต์:** `scripts/fetch_gistda_flood.py` (ทุก 6 ชม.)
+
 ### 🌧️ สถานีฝน Realtime & 💧 ระดับน้ำในแม่น้ำ/คลอง
 - **คืออะไร:** ฝน 24 ชม. และระดับน้ำเทียบตลิ่ง จากสถานีวัดจริง (จุดต่อจุด)
 - **ข้อมูล:** **ThaiWater** — สถาบันสารสนเทศทรัพยากรน้ำ (สสน./HII)
@@ -269,6 +281,7 @@
 | พยากรณ์ฝน 7 วัน | Open-Meteo (p90) | โมเดล (API) | [api.open-meteo…forecast](https://api.open-meteo.com/v1/forecast) | fetch_rain_forecast.py |
 | ฝนรวม 7 วัน (ดาวเทียม) | JAXA GSMaP v8 | 🛰️ ดาวเทียม (GEE) | [GEE: GSMaP v8](https://developers.google.com/earth-engine/datasets/catalog/JAXA_GPM_L3_GSMaP_v8_operational) | fetch_rain_gsmap.py |
 | ฝนล่วงหน้า 48 ชม. (ละเอียด) | กรมอุตุนิยมวิทยา (TMD) | ราชการ (API) | [data.tmd…forecast_hourly](https://data.tmd.go.th/nwpapi/doc/apidoc/location/forecast_hourly.html) | fetch_tmd_forecast.py |
+| น้ำท่วมจริง (ดาวเทียม) | GISTDA | 🛰️ ดาวเทียม (WFS) | [flood-innotech.gistda.or.th](https://flood-innotech.gistda.or.th/) | fetch_gistda_flood.py |
 | สถานีฝน 24h | ThaiWater | ราชการ (API) | [api-v3.thaiwater…rain_24h](https://api-v3.thaiwater.net/api/v1/thaiwater30/public/rain_24h) | fetch_rain_stations.py |
 | ระดับน้ำแม่น้ำ | ThaiWater | ราชการ (API) | [api-v3.thaiwater…waterlevel](https://api-v3.thaiwater.net/api/v1/thaiwater30/public/waterlevel_load) | fetch_water_level.py |
 | ระดับน้ำเขื่อน | กรมชลประทาน (RID) | ราชการ (API) | [app.rid.go.th…dam/public](https://app.rid.go.th/reservoir/api/dam/public) | fetch_dam_water.py |
@@ -304,6 +317,7 @@
 | NASA (SMAP, MODIS) | ความชื้นดิน, NDVI | Full & open data policy | ✅ |
 | JAXA GSMaP (ผ่าน GEE) | ฝนดาวเทียม | Terms of use — ต้องอ้างอิงแหล่ง | ⚠️ ตรวจก่อน |
 | กรมอุตุนิยมวิทยา (TMD) | ฝนล่วงหน้า 48 ชม. | ไม่ได้ระบุ | ⚠️ ตรวจก่อน |
+| GISTDA | น้ำท่วมจริงจากดาวเทียม | Open Data Common | ✅ |
 | ThaiWater (สสน./HII) | ระดับน้ำ, สถานีฝน | ไม่ได้ระบุ | ⚠️ ตรวจก่อน |
 | MRC (Mekong River Commission) | ระดับน้ำโขง | ไม่ได้ระบุสำหรับ API นี้ | ⚠️ ตรวจก่อน |
 | กรมชลประทาน (RID) | ระดับน้ำเขื่อน | ไม่ได้ระบุ | ⚠️ ตรวจก่อน |
