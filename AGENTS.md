@@ -128,6 +128,27 @@ commit when nothing changed, and retries `git pull --rebase` + push up to 3× so
 cron runs do not collide. Add new data workflows by calling that action rather than
 re-inlining the git block.
 
+### Pushing to `main`
+
+~20 crons push to `main` continuously, so a manual push collides often. Use:
+
+```bash
+bash scripts/push-verified.sh          # defaults to origin main
+```
+
+It rebases on collision, auto-resolves conflicts **only** in `data/*.json`
+(regenerable; crons rewrite those constantly), aborts and hands back to a human
+for any code/doc conflict, and — the part that matters — **verifies by comparing
+the remote sha to local HEAD** instead of grepping push output.
+
+> Written after a real failure on 25 Aug 2569: an ad-hoc retry loop used
+> `git rebase … 2>/dev/null`, which swallowed a merge conflict and left the
+> worktree detached mid-rebase. The loop then "confirmed" success by reading
+> `main`'s sha — which happened to be a cron's commit — so a feature was
+> reported as pushed when it had never landed, and **CI stayed green because it
+> was running the old code**. A green workflow is not evidence that your change
+> shipped; compare the sha.
+
 ## Important Constraints
 
 - **`rice-data.js` = นาปีเท่านั้น** — main-season (นาปี) from OAE Table 1.4. Second-crop (นาปรัง) data lives separately in `naprang-data.js` and drives the `naprang` / `naprangArea` layers.
