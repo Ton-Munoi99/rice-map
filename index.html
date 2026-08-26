@@ -2890,10 +2890,11 @@
         production: { format: "bignum" },
         yield: { format: "bignum" },
         area: { format: "bignum" },
-        price: { format: "int" },
+        price: { format: "int", partialCoverage: true },
         households: { format: "households" },
         dam: {
           format: "pct1",
+          dataGlobal: "DAM_DATA", partialCoverage: true,
           valueFn: damValueOf,
           sourceTh: "กรมชลประทาน",
           sourceEn: "RID",
@@ -2901,18 +2902,21 @@
         },
         mills: {
           format: "int",
+          dataGlobal: "RICE_MILLS_DATA", partialCoverage: true,
           sourceTh: "กรมการค้าภายใน",
           sourceEn: "DIT",
           palette: { lo: [60, 40, 20], mid: [160, 110, 40], hi: [230, 170, 60], accent: "#e6aa3c" },
         },
         profit: {
           format: "signedInt",
+          partialCoverage: true,
           sourceTh: "OAE+สมาคมโรงสีฯ",
           sourceEn: "OAE+TRMAB",
           palette: { lo: [192, 57, 43], mid: [241, 196, 15], hi: [39, 174, 96], accent: "#27ae60" },
         },
         riceEvi: {
           format: "num3",
+          dataGlobal: "RICE_EVI_DATA",
           valueFn: riceEviValueOf,
           sourceTh: "ดาวเทียม",
           sourceEn: "Satellite",
@@ -2920,6 +2924,7 @@
         },
         gsmap: {
           format: "mm",
+          dataGlobal: "GSMAP_DATA", metaField: "period_end", rawDate: true, liveDated: true, partialCoverage: true,
           valueFn: gsmapValueOf,
           sourceTh: "ดาวเทียมตรวจฝน",
           sourceEn: "Satellite Rainfall",
@@ -2927,6 +2932,7 @@
         },
         forecast: {
           format: "mm",
+          dataGlobal: "FORECAST_DATA", liveDated: true, partialCoverage: true,
           valueFn: forecastValueOf,
           sourceTh: "พยากรณ์ฝน",
           sourceEn: "Rain Forecast",
@@ -2934,6 +2940,7 @@
         },
         tmdRain: {
           format: "mm",
+          dataGlobal: "TMD_DATA", liveDated: true, partialCoverage: true,
           valueFn: tmdRainValueOf,
           sourceTh: "กรมอุตุนิยมวิทยา",
           sourceEn: "TMD",
@@ -2941,6 +2948,7 @@
         },
         floodExtent: {
           format: "bignum",
+          dataGlobal: "FLOOD_DATA", liveDated: true, partialCoverage: true, updatedVerbTh: "ดึงเมื่อ", updatedVerbEn: "Fetched",
           valueFn: floodExtentValueOf,
           sourceTh: "GISTDA (ดาวเทียม)",
           sourceEn: "GISTDA (satellite)",
@@ -2948,6 +2956,7 @@
         },
         alerts: {
           format: "alertLevel",
+          dataGlobal: "ALERTS_DATA", liveDated: true, partialCoverage: true,
           valueFn: alertsValueOf,
           sourceTh: "พื้นที่เสี่ยงน้ำท่วม",
           sourceEn: "Flood Risk Areas",
@@ -2955,6 +2964,7 @@
         },
         soilMoisture: {
           format: "pct1",
+          dataGlobal: "SOIL_DATA", liveDated: true, partialCoverage: true,
           valueFn: soilMoistureValueOf,
           sourceTh: "NASA SMAP (GEE)",
           sourceEn: "NASA SMAP (GEE)",
@@ -3506,6 +3516,21 @@
       function usLabel(layer = S.layer) {
         const m = layerMeta[layer];
         return t(m.unitShort, m.unitShortEn ?? m.unitShort);
+      }
+      // วันที่ของข้อมูล layer นั้น — ต่างกันแค่ชื่อ global/ฟิลด์/รูปแบบ จึงอ่านจาก
+      // layerMeta แทนที่จะไล่เขียน ternary ซ้ำในทุกฟังก์ชันที่ต้องโชว์วันที่
+      function layerUpdated(layer = S.layer) {
+        const m = layerMeta[layer];
+        if (!m?.dataGlobal) return null;
+        const raw = window[m.dataGlobal]?._meta?.[m.metaField ?? "updated"];
+        return m.rawDate ? raw || "—" : fmtDateISO(raw);
+      }
+      // "อัปเดต <วันที่>" (บาง layer ใช้คำอื่น เช่น GISTDA = "ดึงเมื่อ")
+      function layerUpdatedLabel(layer = S.layer) {
+        const d = layerUpdated(layer);
+        if (d == null) return null;
+        const m = layerMeta[layer];
+        return t(`${m.updatedVerbTh ?? "อัปเดต"} ${d}`, `${m.updatedVerbEn ?? "Updated"} ${d}`);
       }
       function uLabel(layer = S.layer) {
         const m = layerMeta[layer];
@@ -5037,46 +5062,8 @@
         const leader = covered.map((en) => ({ en, v: valueOf(en) })).sort((a, b) => b.v - a.v)[0];
         const prevYear = previousYear(S.year);
         let yoyText =
-          S.layer === "gsmap"
-            ? t(
-                `อัปเดต ${window.GSMAP_DATA?._meta?.period_end || "—"}`,
-                `Updated ${window.GSMAP_DATA?._meta?.period_end || "—"}`,
-              )
-              : S.layer === "forecast"
-                ? t(
-                    `อัปเดต ${fmtDateISO(window.FORECAST_DATA?._meta?.updated)}`,
-                    `Updated ${fmtDateISO(window.FORECAST_DATA?._meta?.updated)}`,
-                  )
-                : S.layer === "tmdRain"
-                  ? t(
-                      `อัปเดต ${fmtDateISO(window.TMD_DATA?._meta?.updated)}`,
-                      `Updated ${fmtDateISO(window.TMD_DATA?._meta?.updated)}`,
-                    )
-                : S.layer === "floodExtent"
-                  ? t(
-                      `ดึงเมื่อ ${fmtDateISO(window.FLOOD_DATA?._meta?.updated)}`,
-                      `Fetched ${fmtDateISO(window.FLOOD_DATA?._meta?.updated)}`,
-                    )
-                : S.layer === "alerts"
-                  ? t(
-                      `อัปเดต ${fmtDateISO(window.ALERTS_DATA?._meta?.updated)}`,
-                      `Updated ${fmtDateISO(window.ALERTS_DATA?._meta?.updated)}`,
-                    )
-                  : S.layer === "soilMoisture"
-                    ? t(
-                        `อัปเดต ${fmtDateISO(window.SOIL_DATA?._meta?.updated)}`,
-                        `Updated ${fmtDateISO(window.SOIL_DATA?._meta?.updated)}`,
-                      )
-                    : t("ยังไม่มีฐานเทียบ", "No prior year");
-        if (
-          S.layer !== "gsmap" &&
-          S.layer !== "forecast" &&
-          S.layer !== "tmdRain" &&
-          S.layer !== "floodExtent" &&
-          S.layer !== "alerts" &&
-          S.layer !== "soilMoisture" &&
-          prevYear
-        ) {
+          (meta.liveDated ? layerUpdatedLabel() : null) ?? t("ยังไม่มีฐานเทียบ", "No prior year");
+        if (!meta.liveDated && prevYear) {
           const yoy = yoyForProvinces(visible, S.rice, S.year, S.layer, mode);
           if (Number.isFinite(yoy)) {
             const dir = yoy >= 0 ? t("เพิ่มขึ้น ▲", "▲ up") : t("ลดลง ▼", "▼ down");
@@ -5085,16 +5072,7 @@
         }
         refs.scopeLabel.textContent = t("ขอบเขต", "Scope");
         refs.scopeValue.textContent =
-          S.layer === "price" ||
-          S.layer === "dam" ||
-          S.layer === "mills" ||
-          S.layer === "profit" ||
-          S.layer === "gsmap" ||
-          S.layer === "forecast" ||
-          S.layer === "tmdRain" ||
-          S.layer === "floodExtent" ||
-          S.layer === "alerts" ||
-          S.layer === "soilMoisture"
+          meta.partialCoverage
             ? `${covered.length}/${visible.length} ${t("จว.", "Prov.")}`
             : `${visible.length} ${t("จว.", "Prov.")}`;
         refs.scopeSub.textContent =
