@@ -4854,20 +4854,19 @@
           const totalRai = meta?.total_flood_rai;
           const totalRice = meta?.total_rice_rai;
           const seen = (meta?.scene_first_seen || "").slice(0, 10);
-          const riceTh = totalRice != null
-            ? `ในนั้นเป็นนาข้าวประมาณ ${fmtNumber(Math.round(totalRice))} ไร่ (${Math.round((100 * totalRice) / totalRai)}%) — ค่าประมาณจาก mask ดาวเทียมของเราเอง น่าจะต่ำกว่าจริง · `
-            : "";
-          const riceEn = totalRice != null
-            ? `of which approx. ${fmtNumber(Math.round(totalRice))} rai (${Math.round((100 * totalRice) / totalRai)}%) is rice paddy — estimated from our own satellite mask, likely an under-estimate · `
-            : "";
+          const ricePct = totalRice != null ? Math.round((100 * totalRice) / totalRai) : null;
+          const riceLine = totalRice == null ? "" : t(
+            `ในนั้นเป็นนาข้าวประมาณ ${fmtNumber(Math.round(totalRice))} ไร่ (${ricePct}%) — ค่าประมาณจาก mask ดาวเทียมของเราเอง น่าจะต่ำกว่าจริง · `,
+            `of which approx. ${fmtNumber(Math.round(totalRice))} rai (${ricePct}%) is rice paddy — estimated from our own satellite mask, likely an under-estimate · `,
+          );
           refs.dataSourceNote.textContent = t(
             `🌊 พื้นที่น้ำท่วมที่ดาวเทียมเห็นจริง จาก GISTDA · ${covered} จังหวัด รวม ${totalRai ? fmtNumber(Math.round(totalRai)) : "—"} ไร่ · ` +
-              riceTh +
+              riceLine +
               `ต่างจาก layer "พื้นที่เสี่ยงน้ำท่วม" ที่คำนวณจากพยากรณ์ฝน — อันนี้คือน้ำที่ท่วมอยู่แล้ว · ` +
               `⚠️ ต้นทางไม่ระบุวันที่ถ่ายภาพ บอกได้แค่ว่าเห็นภาพชุดนี้ครั้งแรก ${seen || "—"} · ` +
               `จังหวัดที่ไม่ขึ้นสี = ไม่พบในภาพล่าสุด ไม่ใช่ยืนยันว่าไม่ท่วม`,
             `🌊 Satellite-observed flood extent from GISTDA · ${covered} provinces, ${totalRai ? fmtNumber(Math.round(totalRai)) : "—"} rai total · ` +
-              riceEn +
+              riceLine +
               `Different from the "Flood Risk" layer (computed from rain forecast) — this is water already on the ground · ` +
               `⚠️ Upstream publishes no capture date; this scene was first seen ${seen || "—"} · ` +
               `Uncoloured provinces = not detected in the latest scene, not a confirmation of no flooding`,
@@ -6901,7 +6900,7 @@ ${
   fp.rice_rai != null
     ? `<div style="margin-top:5px;padding:4px 6px;background:rgba(102,187,106,.10);border:1px solid rgba(102,187,106,.28);border-radius:5px">
 <div style="font-size:10px;color:var(--text-soft)">${t("ในนั้นเป็นนาข้าว <em>ประมาณ</em>", "Of which rice paddy, <em>approx.</em>")}</div>
-<div style="font-size:13px;font-weight:700;color:#66bb6a">~${fmtNumber(Math.round(fp.rice_rai))} ${t("ไร่", "rai")} <span style="font-size:10px;font-weight:400;color:var(--muted)">(${fp.rice_pct}% ${t("ของพื้นที่ท่วม", "of flooded area")})</span></div>
+<div style="font-size:13px;font-weight:700;color:#66bb6a">~${fmtNumber(Math.round(fp.rice_rai))} ${t("ไร่", "rai")} <span style="font-size:10px;font-weight:400;color:var(--muted)">(${((100 * fp.rice_rai) / rai).toFixed(1)}% ${t("ของพื้นที่ท่วม", "of flooded area")})</span></div>
 <div style="font-size:9px;color:var(--muted);margin-top:2px;line-height:1.5">${t("จาก mask ดาวเทียมของเราเอง — น่าจะต่ำกว่าจริง ไม่ใช่ตัวเลขเคลมชดเชย", "From our own satellite mask — likely an under-estimate, not a compensation figure")}</div>
 </div>`
     : ""

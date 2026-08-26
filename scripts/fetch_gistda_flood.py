@@ -55,35 +55,25 @@ GEE_CHUNK = 25
 COORD_PRECISION = 5    # ~1 ม. เกินพอสำหรับ mask 250 ม. และลด payload 25→20 MB
 
 
-def _cp874_byte_to_char(b):
-    """cp874 (TIS-620 superset) หนึ่งไบต์ → อักขระ Unicode (บล็อกไทยเรียงต่อกัน)"""
-    if b < 0x80:
-        return chr(b)
-    if 0xA1 <= b <= 0xDA:
-        return chr(0x0E01 + (b - 0xA1))
-    if 0xDF <= b <= 0xFB:
-        return chr(0x0E3F + (b - 0xDF))
-    if b == 0xA0:
-        return " "
-    return "�"
-
-
 def fix_thai(s):
-    """ถอด mojibake latin-1 → ไทย · ถ้าเป็นไทยอยู่แล้วปล่อยผ่าน (เผื่อต้นทางแก้วันหลัง)"""
+    """ถอด mojibake latin-1 → ไทย · ถ้าเป็นไทยอยู่แล้วปล่อยผ่าน (เผื่อต้นทางแก้วันหลัง)
+
+    ต้นทางส่ง cp874 มาแต่ติดป้ายเป็น UTF-8 — Python มี codec `cp874` อยู่แล้ว
+    ไม่ต้องไล่แปลงทีละไบต์เอง (เทียบกับตัวแปลงมือบนข้อมูลจริง 1,795 ค่า ตรงกันหมด)
+    """
     if not isinstance(s, str) or not s:
         return s
     if any("฀" <= c <= "๿" for c in s):
         return s
     try:
-        return "".join(_cp874_byte_to_char(b) for b in s.encode("latin-1"))
-    except UnicodeEncodeError:
+        return s.encode("latin-1").decode("cp874")
+    except (UnicodeEncodeError, UnicodeDecodeError):
         return s
 
 
 def strip_prefix(name, prefix):
     """'จ.นครราชสีมา' → 'นครราชสีมา'"""
-    name = (name or "").strip()
-    return name[len(prefix):].strip() if name.startswith(prefix) else name
+    return (name or "").strip().removeprefix(prefix).strip()
 
 
 def scene_fingerprint(features):
@@ -116,8 +106,8 @@ def rice_in_flood(features):
     **ค่าที่ได้น่าจะต่ำกว่าจริง** — mask ชุดนี้จับนาได้ ~0.70× ของ สศก.
     (บันทึกใน CHANGELOG หมวดทราบปัญหา) หน้าเว็บจึงต้องเขียนว่า "ประมาณ"
 
-    คืน None ถ้าไม่มี credential GEE หรือคำนวณไม่สำเร็จ — ข้อมูลน้ำท่วมยัง
-    ใช้ได้ตามปกติ แค่ไม่มีตัวเลขนา (ห้ามเดาค่าแทน)
+    โยน exception เมื่อคำนวณไม่ได้ — ผู้เรียกดักแล้วปล่อยให้ rice_rai เป็น null
+    ข้อมูลน้ำท่วมยังใช้ได้ตามปกติ (ห้ามเดาค่าแทน)
     """
     import ee  # lazy — workflow นี้ลง earthengine-api แต่ไม่ควรพังถ้าไม่มี
     from riceutils import (init_gee, load_rice_mask, load_exclusion_mask,
@@ -254,8 +244,7 @@ def main():
                 amp["rice_rai"] = None
         vals = [a["rice_rai"] for a in entry["amphoe"].values() if a.get("rice_rai") is not None]
         entry["rice_rai"] = round(sum(vals), 1) if vals else None
-        entry["rice_pct"] = (round(100 * entry["rice_rai"] / entry["flood_rai"], 1)
-                             if entry.get("rice_rai") is not None and entry["flood_rai"] else None)
+        # ไม่เก็บ % — หารเอาจาก rice_rai/flood_rai ตอนแสดงผลได้ ไม่ต้องมีค่าซ้ำให้เพี้ยนกัน
 
     # ปัดเศษ + เรียงจากหนักไปเบา
     for prov in provinces.values():
@@ -323,8 +312,8 @@ def main():
                 if total_rice is not None and total_rai else " · ไม่มีตัวเลขนา")
     print(f"\n✅ {len(provinces)} จังหวัด · น้ำท่วมรวม {total_rai:,.0f} ไร่{rice_txt} → {OUTPUT}")
     for en, p in list(provinces.items())[:5]:
-        r = (f"นา ~{p['rice_rai']:,.0f} ({p['rice_pct']:.0f}%)"
-             if p.get("rice_rai") is not None else "นา —")
+        r = (f"นา ~{p['rice_rai']:,.0f} ({100 * p['rice_rai'] / p['flood_rai']:.0f}%)"
+             if p.get("rice_rai") is not None and p["flood_rai"] else "นา —")
         print(f"   {p['province_th']:15s} ท่วม {p['flood_rai']:10,.0f} ไร่ ({p['tambon_count']} ตำบล) · {r}")
 
 
