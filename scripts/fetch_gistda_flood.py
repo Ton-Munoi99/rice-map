@@ -46,6 +46,14 @@ OUTPUT = "data/gistda-flood.json"
 TIMEOUT = 120          # ตอบ ~23 MB ให้เวลาเยอะหน่อย
 SQM_PER_RAI = 1600
 
+# ── ตัดกับ mask นาข้าว (GEE) ────────────────────────────────────────────────
+# scale 250 ม.: วัดแล้วสุ่มได้ 98.4% ของพื้นที่ที่ GISTDA แจ้ง (1 กม. ได้ 94.1%)
+# polygon ตำบลเฉลี่ยแค่ ~1.6 ตร.กม. จึงต้องละเอียดกว่า 1 กม. ไม่งั้นตกกริด
+GEE_SCALE = 250
+# payload ของ GEE จำกัด 10 MB — ทั้งชุด 359 polygon = 20 MB (ปัดพิกัดแล้ว) ต้องแบ่งส่ง
+GEE_CHUNK = 25
+COORD_PRECISION = 5    # ~1 ม. เกินพอสำหรับ mask 250 ม. และลด payload 25→20 MB
+
 
 def _cp874_byte_to_char(b):
     """cp874 (TIS-620 superset) หนึ่งไบต์ → อักขระ Unicode (บล็อกไทยเรียงต่อกัน)"""
@@ -82,12 +90,88 @@ def scene_fingerprint(features):
     """ลายนิ้วมือของฉาก — ชุด (ตำบล, พื้นที่ท่วม) ที่เรียงแล้ว
 
     ใช้ตรวจว่า GISTDA ปล่อยฉากใหม่หรือยัง เพราะ feature ไม่มีวันที่ให้ดู
+    และใช้ข้ามขั้นตอน GEE (แพง ~5 นาที) เมื่อฉากไม่เปลี่ยน
     """
     parts = sorted(
         f"{f.get('properties', {}).get('TB_IDN')}:{f.get('properties', {}).get('flood_area')}"
         for f in features
     )
     return hashlib.sha256("|".join(parts).encode()).hexdigest()[:16]
+
+
+def _round_coords(c, nd=COORD_PRECISION):
+    if isinstance(c, (int, float)):
+        return round(c, nd)
+    return [_round_coords(x, nd) for x in c]
+
+
+def rice_in_flood(features):
+    """ตัดพื้นที่น้ำท่วม × mask นาข้าว → {(prov, amphoe): ไร่นาที่จมน้ำ}
+
+    ใช้ mask ชุดเดียวกับ layer "สภาพนาข้าว" (GLAD rice ∪ MCD12Q1 cropland
+    กรองด้วย phenology gate) — วัดจริง 25 ส.ค. 69: GEE สุ่มได้ 98.4% ของ
+    พื้นที่ที่ GISTDA แจ้ง และสัดส่วนนากระจาย 18.9–74.6% ตามภูมิศาสตร์จริง
+    (ถ้า mask ไม่มีข้อมูลค่าจะเกาะกลุ่มกัน)
+
+    **ค่าที่ได้น่าจะต่ำกว่าจริง** — mask ชุดนี้จับนาได้ ~0.70× ของ สศก.
+    (บันทึกใน CHANGELOG หมวดทราบปัญหา) หน้าเว็บจึงต้องเขียนว่า "ประมาณ"
+
+    คืน None ถ้าไม่มี credential GEE หรือคำนวณไม่สำเร็จ — ข้อมูลน้ำท่วมยัง
+    ใช้ได้ตามปกติ แค่ไม่มีตัวเลขนา (ห้ามเดาค่าแทน)
+    """
+    import ee  # lazy — workflow นี้ลง earthengine-api แต่ไม่ควรพังถ้าไม่มี
+    from riceutils import (init_gee, load_rice_mask, load_exclusion_mask,
+                           build_rice_phenology_mask, PHENOLOGY_MONTHS,
+                           latest_q1_periods)
+
+    init_gee()
+    periods = latest_q1_periods(n=2)
+    if not periods:
+        raise RuntimeError("ไม่พบ composite MOD13Q1")
+    union_mask, _glad, src = load_rice_mask()
+    excl, _desc = load_exclusion_mask()
+    if excl is not None:
+        union_mask = union_mask.And(excl.Not())
+    pheno, win = build_rice_phenology_mask(periods[0][0], PHENOLOGY_MONTHS)
+    rice = pheno.updateMask(union_mask)
+    area = ee.Image.pixelArea()
+    combo = rice.unmask(0).multiply(area).rename("rice_m2").addBands(area.rename("m2"))
+    print(f"  mask: {src[:60]} · pheno {win}")
+
+    out, sampled_m2, total_m2 = {}, 0.0, 0.0
+    for i in range(0, len(features), GEE_CHUNK):
+        batch = []
+        for f in features[i:i + GEE_CHUNK]:
+            g = f.get("geometry")
+            if not g:
+                continue
+            p = f.get("properties") or {}
+            batch.append(ee.Feature(
+                ee.Geometry({**g, "coordinates": _round_coords(g["coordinates"])}),
+                {
+                    "prov": strip_prefix(fix_thai(p.get("PV_TN")), "จ."),
+                    "amph": strip_prefix(fix_thai(p.get("AP_TN")), "อ."),
+                    "frai": float(p.get("flood_area") or 0),
+                },
+            ))
+        if not batch:
+            continue
+        rows = (combo.reduceRegions(collection=ee.FeatureCollection(batch),
+                                    reducer=ee.Reducer.sum(), scale=GEE_SCALE)
+                .select(["prov", "amph", "frai", "rice_m2", "m2"]).getInfo()["features"])
+        for r in rows:
+            pr = r["properties"]
+            out[(pr["prov"], pr["amph"])] = out.get((pr["prov"], pr["amph"]), 0.0) + \
+                (pr.get("rice_m2") or 0) / SQM_PER_RAI
+            sampled_m2 += pr.get("m2") or 0
+            total_m2 += (pr.get("frai") or 0) * SQM_PER_RAI
+        print(f"  GEE {min(i + GEE_CHUNK, len(features))}/{len(features)} polygon", flush=True)
+
+    cover = 100 * sampled_m2 / total_m2 if total_m2 else 0
+    print(f"  GEE สุ่มได้ {cover:.1f}% ของพื้นที่ที่ GISTDA แจ้ง")
+    if cover < 80:
+        raise RuntimeError(f"GEE สุ่มได้แค่ {cover:.1f}% — ต่ำผิดปกติ ไม่ใช้ผลนี้")
+    return out, round(cover, 1)
 
 
 def main():
@@ -114,12 +198,27 @@ def main():
         except Exception as e:
             print(f"[WARN] อ่านไฟล์เดิมไม่ได้: {e}", file=sys.stderr)
     prev_meta = prev.get("_meta") or {}
-    if prev_meta.get("scene_id") == fp and prev_meta.get("scene_first_seen"):
+    same_scene = prev_meta.get("scene_id") == fp and prev_meta.get("scene_first_seen")
+    if same_scene:
         scene_first_seen = prev_meta["scene_first_seen"]
         print(f"  ฉากเดิม ({fp}) เห็นครั้งแรก {scene_first_seen}")
     else:
         scene_first_seen = fetched_at
         print(f"  ฉากใหม่ ({fp})")
+
+    # ── ตัดกับ mask นาข้าว — ทำเฉพาะตอนฉากเปลี่ยน (GEE ใช้เวลา ~5 นาที) ──────
+    rice_by_key, rice_cover, rice_err = None, None, None
+    reuse_rice = same_scene and prev_meta.get("rice_scene_id") == fp
+    if reuse_rice:
+        print("  ข้ามการคำนวณนา — ฉากเดิม ใช้ค่าที่คำนวณไว้แล้ว")
+    else:
+        try:
+            rice_by_key, rice_cover = rice_in_flood(features)
+        except Exception as e:
+            rice_err = f"{type(e).__name__}: {e}"
+            print(f"[WARN] คำนวณพื้นที่นาไม่สำเร็จ: {rice_err}", file=sys.stderr)
+            print("       → ข้อมูลน้ำท่วมยังใช้ได้ แต่ไม่มีตัวเลขนา (ไม่เดาค่าแทน)",
+                  file=sys.stderr)
 
     provinces = {}
     unknown = set()
@@ -143,6 +242,21 @@ def main():
         amp["flood_rai"] += rai
         amp["tambon"].append({"name": tambon_th, "flood_rai": round(rai, 1)})
 
+    # เติมพื้นที่นาที่จมน้ำ (ถ้าคำนวณได้รอบนี้ / หรือใช้ค่าเดิมเมื่อฉากไม่เปลี่ยน)
+    prev_provs = prev.get("provinces") or {}
+    for prov_en, entry in provinces.items():
+        for amphoe_th, amp in entry["amphoe"].items():
+            if rice_by_key is not None:
+                amp["rice_rai"] = round(rice_by_key.get((entry["province_th"], amphoe_th), 0.0), 1)
+            elif reuse_rice:
+                amp["rice_rai"] = ((prev_provs.get(prov_en) or {}).get("amphoe") or {})                     .get(amphoe_th, {}).get("rice_rai")
+            else:
+                amp["rice_rai"] = None
+        vals = [a["rice_rai"] for a in entry["amphoe"].values() if a.get("rice_rai") is not None]
+        entry["rice_rai"] = round(sum(vals), 1) if vals else None
+        entry["rice_pct"] = (round(100 * entry["rice_rai"] / entry["flood_rai"], 1)
+                             if entry.get("rice_rai") is not None and entry["flood_rai"] else None)
+
     # ปัดเศษ + เรียงจากหนักไปเบา
     for prov in provinces.values():
         prov["flood_rai"] = round(prov["flood_rai"], 1)
@@ -157,6 +271,8 @@ def main():
               file=sys.stderr)
 
     total_rai = round(sum(p["flood_rai"] for p in provinces.values()), 1)
+    _rv = [p["rice_rai"] for p in provinces.values() if p.get("rice_rai") is not None]
+    total_rice = round(sum(_rv), 1) if _rv else None
     result = {
         "_meta": {
             "kind": "observed",
@@ -170,6 +286,18 @@ def main():
             "features": len(features),
             "provinces_affected": len(provinces),
             "total_flood_rai": total_rai,
+            "total_rice_rai": total_rice,
+            "rice_scene_id": fp if (rice_by_key is not None or reuse_rice) else None,
+            "rice_kind": "derived",   # ต่างจากพื้นที่ท่วมที่เป็น observed
+            "rice_mask_scale_m": GEE_SCALE,
+            "rice_coverage_pct": rice_cover if rice_cover is not None else prev_meta.get("rice_coverage_pct"),
+            "rice_error": rice_err,
+            "rice_note_th": (
+                "พื้นที่นาที่จมน้ำ = พื้นที่น้ำท่วม (GISTDA) ตัดกับ mask นาข้าวจากดาวเทียมของเราเอง "
+                "(ชุดเดียวกับ layer สภาพนาข้าว) · **เป็นค่าประมาณและน่าจะต่ำกว่าจริง** เพราะ mask ชุดนี้ "
+                "จับพื้นที่นาได้ราว 0.70 เท่าของตัวเลข สศก. · ใช้ดูขนาดความเสียหายคร่าวๆ "
+                "ไม่ใช่ตัวเลขสำหรับเคลมชดเชย"
+            ),
             "unit": "ไร่ (rai)",
             "note_th": (
                 "พื้นที่น้ำท่วมที่**ดาวเทียมเห็นจริง** จาก GISTDA รายตำบล รวมเป็นรายจังหวัด/อำเภอ · "
@@ -191,9 +319,13 @@ def main():
     with open(OUTPUT, "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=2)
 
-    print(f"\n✅ {len(provinces)} จังหวัด · รวม {total_rai:,.0f} ไร่ → {OUTPUT}")
+    rice_txt = (f" · เป็นนาข้าวประมาณ {total_rice:,.0f} ไร่ ({100 * total_rice / total_rai:.0f}%)"
+                if total_rice is not None and total_rai else " · ไม่มีตัวเลขนา")
+    print(f"\n✅ {len(provinces)} จังหวัด · น้ำท่วมรวม {total_rai:,.0f} ไร่{rice_txt} → {OUTPUT}")
     for en, p in list(provinces.items())[:5]:
-        print(f"   {p['province_th']:15s} {p['flood_rai']:12,.0f} ไร่  ({p['tambon_count']} ตำบล)")
+        r = (f"นา ~{p['rice_rai']:,.0f} ({p['rice_pct']:.0f}%)"
+             if p.get("rice_rai") is not None else "นา —")
+        print(f"   {p['province_th']:15s} ท่วม {p['flood_rai']:10,.0f} ไร่ ({p['tambon_count']} ตำบล) · {r}")
 
 
 if __name__ == "__main__":

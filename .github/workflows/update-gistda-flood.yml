@@ -25,9 +25,13 @@ jobs:
           python-version: '3.11'
 
       - name: 📦 Install dependencies
-        run: pip install requests
+        run: pip install requests earthengine-api
 
-      - name: 🌊 Fetch GISTDA flood extent
+      - name: 🌊 Fetch GISTDA flood extent (+ ตัดกับ mask นาข้าว)
+        # GEE ใช้เฉพาะตอน GISTDA ปล่อยฉากใหม่ (~5 นาที) ฉากเดิมข้ามไป
+        # ถ้า GEE พังจะยังได้ข้อมูลน้ำท่วมตามปกติ แค่ไม่มีตัวเลขนา
+        env:
+          GEE_SERVICE_ACCOUNT_KEY: ${{ secrets.GEE_SERVICE_ACCOUNT_KEY }}
         run: python scripts/fetch_gistda_flood.py
 
       - name: Commit and push
