@@ -2916,6 +2916,7 @@
         },
         riceEvi: {
           format: "num3",
+          showAllRanked: true, rankTh: "ทุกจังหวัด เรียงตามความเขียวชอุ่มของนา", rankEn: "All Provinces by Rice Paddy EVI",
           dataGlobal: "RICE_EVI_DATA",
           valueFn: riceEviValueOf,
           sourceTh: "ดาวเทียม",
@@ -2924,6 +2925,7 @@
         },
         gsmap: {
           format: "mm",
+          showAllRanked: true, rankTh: "ทุกจังหวัด เรียงตามปริมาณฝน", rankEn: "All Provinces by Rainfall",
           dataGlobal: "GSMAP_DATA", metaField: "period_end", rawDate: true, liveDated: true, partialCoverage: true,
           valueFn: gsmapValueOf,
           sourceTh: "ดาวเทียมตรวจฝน",
@@ -2932,6 +2934,7 @@
         },
         forecast: {
           format: "mm",
+          showAllRanked: true, rankTh: "ทุกจังหวัด เรียงตามพยากรณ์ฝน", rankEn: "All Provinces by Rain Forecast",
           dataGlobal: "FORECAST_DATA", liveDated: true, partialCoverage: true,
           valueFn: forecastValueOf,
           sourceTh: "พยากรณ์ฝน",
@@ -2940,6 +2943,7 @@
         },
         tmdRain: {
           format: "mm",
+          showAllRanked: true, rankTh: "ทุกจังหวัด เรียงตามพยากรณ์ฝน 48 ชม.", rankEn: "All Provinces by 48h Rain Forecast",
           dataGlobal: "TMD_DATA", liveDated: true, partialCoverage: true,
           valueFn: tmdRainValueOf,
           sourceTh: "กรมอุตุนิยมวิทยา",
@@ -2948,6 +2952,7 @@
         },
         floodExtent: {
           format: "bignum",
+          showAllRanked: true, rankTh: "จังหวัดที่พบน้ำท่วม เรียงตามพื้นที่", rankEn: "Flooded Provinces by Area",
           dataGlobal: "FLOOD_DATA", liveDated: true, partialCoverage: true, updatedVerbTh: "ดึงเมื่อ", updatedVerbEn: "Fetched",
           valueFn: floodExtentValueOf,
           sourceTh: "GISTDA (ดาวเทียม)",
@@ -2956,6 +2961,7 @@
         },
         alerts: {
           format: "alertLevel",
+          showAllRanked: true, rankTh: "ทุกจังหวัด เรียงตามระดับเตือนภัย", rankEn: "All Provinces by Alert Level",
           dataGlobal: "ALERTS_DATA", liveDated: true, partialCoverage: true,
           valueFn: alertsValueOf,
           sourceTh: "พื้นที่เสี่ยงน้ำท่วม",
@@ -2964,6 +2970,7 @@
         },
         soilMoisture: {
           format: "pct1",
+          showAllRanked: true, rankTh: "ทุกจังหวัด เรียงตามความชื้นดิน", rankEn: "All Provinces by Soil Moisture",
           dataGlobal: "SOIL_DATA", liveDated: true, partialCoverage: true,
           valueFn: soilMoistureValueOf,
           sourceTh: "NASA SMAP (GEE)",
@@ -5250,40 +5257,18 @@
                         : S.layer === "riceEvi"
                           ? `${metaLabel}<br>${t(`ดัชนีความเขียวชอุ่ม EVI · ${eviPeriodLabel()}`, `Rice Paddy EVI · ${eviPeriodLabel()}`)}`
                           : `${riceLabel} &nbsp;·&nbsp; ${metaLabel}<br>${yearLabel}`;
-        const isRiceEvi = S.layer === "riceEvi";
-        const isGsmap = S.layer === "gsmap";
-        const isForecast = S.layer === "forecast";
-        const isTmdRain = S.layer === "tmdRain";
-        const isFloodExtent = S.layer === "floodExtent";
         const isAlerts = S.layer === "alerts";
-        const isSoilMoisture = S.layer === "soilMoisture";
         const allSorted = visible
           .filter((en) => hasLayerValue(en))
           .map((en) => ({ en, v: valueOf(en), s: isAlerts ? alertSeverityOf(en) : null }))
           .sort((a, b) => (isAlerts ? b.s - a.s : b.v - a.v));
-        const items =
-          isRiceEvi || isGsmap || isForecast || isTmdRain || isFloodExtent || isAlerts || isSoilMoisture
-            ? allSorted
-            : allSorted.slice(0, 10);
+        const items = meta.showAllRanked ? allSorted : allSorted.slice(0, 10);
 
         // Update rank title
         if (refs.rankTitle) {
-          refs.rankTitle.innerHTML =
-            isRiceEvi
-              ? `<span class="th-t">ทุกจังหวัด เรียงตามความเขียวชอุ่มของนา</span><span class="en-t">All Provinces by Rice Paddy EVI</span>`
-                : isGsmap
-                  ? `<span class="th-t">ทุกจังหวัด เรียงตามปริมาณฝน</span><span class="en-t">All Provinces by Rainfall</span>`
-                  : isForecast
-                    ? `<span class="th-t">ทุกจังหวัด เรียงตามพยากรณ์ฝน</span><span class="en-t">All Provinces by Rain Forecast</span>`
-                    : isTmdRain
-                      ? `<span class="th-t">ทุกจังหวัด เรียงตามพยากรณ์ฝน 48 ชม.</span><span class="en-t">All Provinces by 48h Rain Forecast</span>`
-                    : isFloodExtent
-                      ? `<span class="th-t">จังหวัดที่พบน้ำท่วม เรียงตามพื้นที่</span><span class="en-t">Flooded Provinces by Area</span>`
-                    : isAlerts
-                      ? `<span class="th-t">ทุกจังหวัด เรียงตามระดับเตือนภัย</span><span class="en-t">All Provinces by Alert Level</span>`
-                      : isSoilMoisture
-                        ? `<span class="th-t">ทุกจังหวัด เรียงตามความชื้นดิน</span><span class="en-t">All Provinces by Soil Moisture</span>`
-                        : `Top 10 <span class="th-t">จังหวัด</span><span class="en-t">Provinces</span>`;
+          refs.rankTitle.innerHTML = meta.rankTh
+            ? `<span class="th-t">${meta.rankTh}</span><span class="en-t">${meta.rankEn}</span>`
+            : `Top 10 <span class="th-t">จังหวัด</span><span class="en-t">Provinces</span>`;
         }
 
         const max = allSorted[0]?.v || 1;
