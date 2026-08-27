@@ -20,11 +20,10 @@ import json
 import os
 import sys
 import time
-from datetime import date
 
 import requests
 
-from riceutils import PROVINCE_TH_EN
+from riceutils import PROVINCE_TH_EN, bkk_today
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -114,7 +113,7 @@ def main():
 
     result = {
         "_meta": {
-            "updated": date.today().isoformat(),
+            "updated": bkk_today(),
             "source": "TMD NWP API — hourly forecast, 2km domain",
             "source_url": "https://data.tmd.go.th/nwpapi/doc/apidoc/location/forecast_hourly.html",
             "duration_hours": DURATION,
@@ -138,7 +137,12 @@ def main():
         print(f"WARNING: ภาคที่ดึงไม่สำเร็จ: {', '.join(failed_regions)}", file=sys.stderr)
     if missing:
         print(f"WARNING: จังหวัดที่ไม่มีข้อมูล ({len(missing)}): {', '.join(missing)}", file=sys.stderr)
-    if failed_regions and len(failed_regions) >= len(REGIONS) // 2:
+    # ภาคไหนพังก็ตาม = ไฟล์ขาดจังหวัดของภาคนั้นทั้งภาค แต่ freshness monitor
+    # เห็น commit ใหม่แล้วนึกว่าปกติ — ต้องให้ workflow แดงเพื่อให้มีคนรู้
+    # (ของเดิมยอมให้พังได้ถึงครึ่งหนึ่งโดยยัง exit 0 = เงียบแบบที่ตั้งใจเลี่ยงมาตลอด)
+    if failed_regions:
+        print(f"[FAIL] ดึงไม่สำเร็จ {len(failed_regions)}/{len(REGIONS)} ภาค "
+              f"— ไฟล์ขาด {len(missing)} จังหวัด", file=sys.stderr)
         sys.exit(1)
 
 

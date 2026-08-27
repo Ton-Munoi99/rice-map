@@ -158,9 +158,20 @@ def rice_in_flood(features):
         print(f"  GEE {min(i + GEE_CHUNK, len(features))}/{len(features)} polygon", flush=True)
 
     cover = 100 * sampled_m2 / total_m2 if total_m2 else 0
-    print(f"  GEE สุ่มได้ {cover:.1f}% ของพื้นที่ที่ GISTDA แจ้ง")
+    rice_rai = sum(out.values())
+    flood_rai = total_m2 / SQM_PER_RAI
+    print(f"  GEE สุ่มได้ {cover:.1f}% ของพื้นที่ที่ GISTDA แจ้ง · "
+          f"เป็นนา {rice_rai:,.0f} ไร่ ({100 * rice_rai / flood_rai if flood_rai else 0:.1f}%)")
     if cover < 80:
         raise RuntimeError(f"GEE สุ่มได้แค่ {cover:.1f}% — ต่ำผิดปกติ ไม่ใช้ผลนี้")
+    # cover วัดแค่ว่า "สุ่มพิกเซลได้ครบไหม" ซึ่งยัง 98% แม้ mask นาจะว่างเปล่า
+    # (เช่น asset GLAD ล่ม หรือ phenology gate คืนศูนย์หมด) แล้วเราจะเผยแพร่
+    # "นา 0 ไร่" เหมือนเป็นค่าที่วัดมาจริง — ต้องแยกให้ออกว่า mask พัง ไม่ใช่ไม่มีนา
+    if flood_rai and rice_rai / flood_rai < 0.001:
+        raise RuntimeError(
+            f"นาที่วัดได้แทบเป็นศูนย์ ({rice_rai:,.0f} ไร่ จากพื้นที่ท่วม {flood_rai:,.0f} ไร่) "
+            "— เป็นไปไม่ได้ที่ polygon น้ำท่วมในจังหวัดปลูกข้าวจะไม่มีนาเลย ถือว่า mask พัง"
+        )
     return out, round(cover, 1)
 
 
@@ -279,7 +290,10 @@ def main():
             "rice_scene_id": fp if (rice_by_key is not None or reuse_rice) else None,
             "rice_kind": "derived",   # ต่างจากพื้นที่ท่วมที่เป็น observed
             "rice_mask_scale_m": GEE_SCALE,
-            "rice_coverage_pct": rice_cover if rice_cover is not None else prev_meta.get("rice_coverage_pct"),
+            # ยกค่าเดิมมาได้เฉพาะตอน "ตั้งใจข้าม เพราะฉากเดิม" (ตัวเลขนาก็ของเดิมเช่นกัน)
+            # ถ้า GEE พังรอบนี้ ต้องเป็น null — ไม่ใช่โชว์ coverage ของรอบก่อนคู่กับ rice_error
+            "rice_coverage_pct": rice_cover if rice_cover is not None
+                                 else (prev_meta.get("rice_coverage_pct") if reuse_rice else None),
             "rice_error": rice_err,
             "rice_note_th": (
                 "พื้นที่นาที่จมน้ำ = พื้นที่น้ำท่วม (GISTDA) ตัดกับ mask นาข้าวจากดาวเทียมของเราเอง "

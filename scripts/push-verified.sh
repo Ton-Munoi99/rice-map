@@ -72,10 +72,17 @@ for try in $(seq 1 "$MAX_TRIES"); do
 
     echo "   conflict เฉพาะไฟล์ข้อมูล เอาฝั่งเรา: $(echo "$CONFLICTS" | tr '\n' ' ')"
     # ระหว่าง rebase ฝั่ง "เรา" (commit ที่กำลัง replay) คือ --theirs
-    echo "$CONFLICTS" | while read -r f; do
-      [ -n "$f" ] && git checkout --theirs -- "$f" && git add -- "$f"
-    done
-    GIT_EDITOR=true git rebase --continue || die "rebase --continue ไม่ผ่าน — ตรวจด้วยตัวเอง"
+    # ใช้ here-string ไม่ใช่ pipe — pipe ทำให้ loop รันใน subshell แล้ว checkout ที่ล้ม
+    # จะเงียบหายไป จบด้วย rebase --continue บนไฟล์ที่ยังไม่ resolve และค้างกลางคัน
+    while IFS= read -r f; do
+      [ -n "$f" ] || continue
+      git checkout --theirs -- "$f" || { git rebase --abort; die "checkout --theirs ล้มที่ $f"; }
+      git add -- "$f" || { git rebase --abort; die "git add ล้มที่ $f"; }
+    done <<< "$CONFLICTS"
+    if ! GIT_EDITOR=true git rebase --continue; then
+      git rebase --abort 2>/dev/null
+      die "rebase --continue ไม่ผ่าน — abort คืนสภาพเดิมแล้ว ตรวจด้วยตัวเอง"
+    fi
   fi
 done
 

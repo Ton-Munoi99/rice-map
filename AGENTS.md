@@ -110,7 +110,7 @@ Mutate `S` then call `rerender()`. Never read DOM state — always read from `S`
 
 ### JSON data files (`data/`)
 
-Auto-updated by GitHub Actions crons (29 files in `data/`, 20 of them cron-written and freshness-monitored). Key ones:
+Auto-updated by GitHub Actions crons (29 files in `data/`; 25 are cron-written, 22 of those freshness-monitored — the 3 unmonitored are listed by name in `check_data_freshness.py` with the reason). Key ones:
 - `prices-live.json` — Thai Rice Millers Association prices · `trea-fob.json` — TREA FOB export prices
 - `dam-water.json` — RID dam levels · `water-level.json` + `rain-stations.json` — ThaiWater station snapshots
 - `rain-daily.json` (Open-Meteo 7-day past) · `rain-forecast.json` (Open-Meteo 7-day forecast, multi-point p90) · `rain-gsmap.json` (JAXA GSMaP satellite) · `tmd-forecast.json` (TMD 48h hourly, 2km, every 6h) · `gistda-flood.json` (GISTDA observed flood extent, tambon-level, every 6h)

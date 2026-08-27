@@ -3520,6 +3520,12 @@
         return document.body.classList.contains("lang-en") ? en : th;
       }
       // Unit label helpers — always language-aware
+      // ชื่ออำเภอ/ตำบลมาจาก WFS ของ GISTDA (ข้อความจากภายนอก) และถูกยัดลง innerHTML
+      // ที่อื่นในไฟล์นี้แทรกจากตาราง NM ที่ hardcode ไว้จึงปลอดภัยอยู่แล้ว ตรงนี้ไม่ใช่
+      function esc(v) {
+        return String(v ?? "").replace(/[&<>"']/g, (c) =>
+          ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+      }
       function usLabel(layer = S.layer) {
         const m = layerMeta[layer];
         return t(m.unitShort, m.unitShortEn ?? m.unitShort);
@@ -6800,7 +6806,13 @@
           const rank = currentRank(en);
           const total = getVisibleProvinces().filter((n) => hasLayerValue(n)).length;
           if (!rp)
-            return `<div class="th">${t(NM[en] || en, en)}</div><div class="en">${en}</div><div style="color:var(--muted);font-size:11px;margin-top:6px">${t("กำลังโหลดข้อมูลพยากรณ์…", "Loading forecast data…")}</div>`;
+            // แยก "ยังโหลดไม่เสร็จ" ออกจาก "โหลดแล้วแต่ TMD ไม่มีจังหวัดนี้" — อย่างหลัง
+            // รอไปก็ไม่มา (เช่นภาคนั้นดึงไม่สำเร็จ) บอกตรงๆ ดีกว่าให้ผู้ใช้รอเก้อ
+            return `<div class="th">${t(NM[en] || en, en)}</div><div class="en">${en}</div><div style="color:var(--muted);font-size:11px;margin-top:6px">${
+              window.TMD_DATA
+                ? t("ไม่มีข้อมูลพยากรณ์ของจังหวัดนี้ในรอบล่าสุด", "No forecast for this province in the latest run")
+                : t("กำลังโหลดข้อมูลพยากรณ์…", "Loading forecast data…")
+            }</div>`;
           const rain = rp.rain_48h_mm ?? 0;
           const rain24 = rp.rain_24h_mm ?? 0;
           const rainCol =
@@ -6849,7 +6861,7 @@
           const amphoeRows = topAmphoe
             .map(
               ([name, v]) =>
-                `<div style="display:flex;justify-content:space-between;gap:8px"><span>${t("อ.", "")}${name}</span><span style="font-family:'IBM Plex Mono'">${fmtNumber(Math.round(v.flood_rai))}</span></div>`,
+                `<div style="display:flex;justify-content:space-between;gap:8px"><span>${t("อ.", "")}${esc(name)}</span><span style="font-family:'IBM Plex Mono'">${fmtNumber(Math.round(v.flood_rai))}</span></div>`,
             )
             .join("");
           return `

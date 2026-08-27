@@ -14,10 +14,20 @@ import re
 import json
 import math
 import calendar
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 # โปรเจกต์ Google Earth Engine
 GEE_PROJECT = "agriculture-monitoring-497007"
+
+
+def bkk_today():
+    """วันที่ตามเวลาไทย (ISO) — ไม่ใช่ date.today() ซึ่งบน runner คือ UTC
+
+    cron หลายตัวยิงช่วง 17:00–24:00 UTC ซึ่งเป็นวันถัดไปแล้วที่ไทย
+    ถ้าใช้ date.today() ป้าย "อัปเดตเมื่อ" บนเว็บจะขึ้นเป็นเมื่อวาน
+    (เช่น TMD cron 18:15 UTC = 01:15 น. ของวันรุ่งขึ้นตามเวลาไทย)
+    """
+    return (datetime.now(timezone.utc) + timedelta(hours=7)).date().isoformat()
 
 
 def haversine_km(lat1, lon1, lat2, lon2):
