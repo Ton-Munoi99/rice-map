@@ -4,6 +4,22 @@ Last updated: 2026-08-28 by Claude Code
 
 ## Log
 
+- 2026-08-28 (Claude, follow-ups 2): Cleared the Node.js 20 deprecation warning
+  GitHub was printing on every run — `actions/checkout@v4`→`v7` (19 sites) and
+  `actions/setup-python@v5`→`v7` (18 sites). Did not guess the target versions:
+  read `runs.using` out of each tag's own `action.yml` (checkout moved to node24
+  at v5, setup-python at v6, both are at v7 now), then read the release notes for
+  every major being skipped and checked the two real breaking changes against this
+  repo — v7 checkout blocks fork-PR checkout on `pull_request_target`/`workflow_run`
+  (neither trigger is used here) and v7 setup-python dropped the `pip-install`
+  input (this repo pip-installs in a separate step). The diff is 37 `uses:` lines
+  and nothing else; all 20 YAML files parse; proved it live by dispatching a real
+  run. Note `check-data-freshness.yml` has checkout but no setup-python — that is
+  pre-existing and fine, it uses the runner's preinstalled Python. Also wrote the
+  `bkk_today()` rule into `AGENTS.md`'s Important Constraints so it stops being
+  tribal knowledge, including the distinction that matters: date *labels* use
+  `bkk_today()`, date *logic* stays on runner time, and the four deliberate sites
+  are commented — don't "fix" them.
 - 2026-08-28 (Claude, same session, follow-ups): Swept `date.today()` → the
   existing `bkk_today()` across 16 scripts. Cron jobs firing 17:00–24:00 UTC
   are already the next day in Bangkok, so every "updated" label they wrote was

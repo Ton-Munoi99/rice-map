@@ -155,6 +155,12 @@ the remote sha to local HEAD** instead of grepping push output.
 - **ข้าวขาว = OAE "ข้าวเจ้าอื่นๆ"** — excludes glutinous rice (ข้าวเหนียว) and Pathum Thani 1
 - **Year keys are Thai Buddhist Era strings** — `"2567"` not `2567` (number)
 - **Province keys are English names** — matching `NM` lookup map and `thailand-data.js`
+- **Date labels use `bkk_today()` from `riceutils.py`, never `date.today()`** — runners are
+  UTC, and crons firing 17:00–24:00 UTC are already the next day in Bangkok, so `date.today()`
+  writes an "updated" label a day behind. Use `bkk_now()` when a timestamp needs the time too.
+  This applies to values that get *displayed*; date *logic* (an API date-range bound, a
+  season-year calculation, matching a UTC forecast window) should stay on runner time — the
+  four places that deliberately do so carry a comment saying why, so leave them alone.
 - **Do not push to git without owner review** — confirm before any `git push`
 - **Record every change in `CHANGELOG.md`** — owner's standing instruction. Any change that
   alters behaviour, data, or documentation goes in the current month's section under
