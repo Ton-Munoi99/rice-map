@@ -25,7 +25,7 @@ def bkk_today():
 
     cron หลายตัวยิงช่วง 17:00–24:00 UTC ซึ่งเป็นวันถัดไปแล้วที่ไทย
     ถ้าใช้ date.today() ป้าย "อัปเดตเมื่อ" บนเว็บจะขึ้นเป็นเมื่อวาน
-    (เช่น TMD cron 18:15 UTC = 01:15 น. ของวันรุ่งขึ้นตามเวลาไทย)
+    (เช่น update-rice-news cron 19:00 UTC = 02:00 น. ของวันรุ่งขึ้นตามเวลาไทย)
     """
     return (datetime.now(timezone.utc) + timedelta(hours=7)).date().isoformat()
 
@@ -69,7 +69,7 @@ GAUL_NAME_MAP = {
 }
 
 # ── Province name mapping: ภาษาไทย → rice-map (77 จังหวัด) ───────────────────
-# ย้ายมาจาก fetch_miller_prices.py (เดิมนิยามซ้ำที่เดียว) — TMD API และแหล่งอื่น
+# ย้ายมาจาก fetch_miller_prices.py (เดิมนิยามซ้ำที่เดียว) — ThaiWater และแหล่งอื่น
 # ที่คืนชื่อจังหวัดภาษาไทยก็ใช้ตัวเดียวกันนี้
 PROVINCE_TH_EN = {
     "กรุงเทพมหานคร": "Bangkok Metropolis",

@@ -15,7 +15,6 @@ import subprocess, sys, time
 MAX_AGE_DAYS = {
     "water-level.json":      1,   # cron ทุก 3 ชม.
     "rain-stations.json":    1,   # ทุก 3 ชม.
-    "tmd-forecast.json":     1,   # ทุก 6 ชม.
     "flood-status.json":     1,   # ทุก 3 ชม. (ต่อท้าย water-level)
     "storm-alerts.json":     2,   # ทุก 6 ชม.
     "rice-news.json":        2,   # 3 ครั้ง/วัน

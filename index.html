@@ -2063,10 +2063,6 @@
                 <span class="th-t">🌦 พยากรณ์ฝน 7 วันข้างหน้า</span>
                 <span class="en-t">🌦 7-Day Rain Forecast</span>
               </button>
-              <button class="pill" data-layer="tmdRain" onclick="setLayer('tmdRain')">
-                <span class="th-t">🌧️ ฝนล่วงหน้า 48 ชม. (ละเอียด)</span>
-                <span class="en-t">🌧️ 48h Rain Forecast (Detailed)</span>
-              </button>
               <button class="pill" data-layer="floodExtent" onclick="setLayer('floodExtent')">
                 <span class="th-t">🌊 น้ำท่วม (วัดจริง)</span>
                 <span class="en-t">🌊 Flooding (Gauged)</span>
@@ -2752,17 +2748,6 @@
           summary: "พยากรณ์ฝนเฉลี่ยต่อจังหวัด",
           summaryMode: "avg",
         },
-        tmdRain: {
-          noTimeseries: true,   // ไม่มีอนุกรมเวลารายปี — ไม่ต้องมีกราฟ spark / ป้ายปีประมาณการ
-          th: "ฝนล่วงหน้า 48 ชม. (ละเอียด)",
-          en: "48h Rain Forecast (Detailed)",
-          unit: "มม. (พยากรณ์ 48 ชม., TMD 2 กม.)",
-          unitEn: "mm (48h forecast, TMD 2km)",
-          unitShort: "มม.",
-          unitShortEn: "mm",
-          summary: "พยากรณ์ฝน 48 ชม. เฉลี่ยต่อจังหวัด",
-          summaryMode: "avg",
-        },
         floodExtent: {
           noTimeseries: true,   // ไม่มีอนุกรมเวลารายปี — ไม่ต้องมีกราฟ spark / ป้ายปีประมาณการ
           th: "น้ำท่วม (วัดจริง)",
@@ -2940,15 +2925,6 @@
           sourceTh: "พยากรณ์ฝน",
           sourceEn: "Rain Forecast",
           palette: { lo: [255, 243, 224], mid: [255, 152, 0], hi: [230, 81, 0], accent: "#ff9800" },
-        },
-        tmdRain: {
-          format: "mm",
-          showAllRanked: true, rankTh: "ทุกจังหวัด เรียงตามพยากรณ์ฝน 48 ชม.", rankEn: "All Provinces by 48h Rain Forecast",
-          dataGlobal: "TMD_DATA", liveDated: true, partialCoverage: true,
-          valueFn: tmdRainValueOf,
-          sourceTh: "กรมอุตุนิยมวิทยา",
-          sourceEn: "TMD",
-          palette: { lo: [255, 243, 224], mid: [255, 152, 0], hi: [191, 54, 12], accent: "#e65100" },
         },
         floodExtent: {
           format: "floodLevel",
@@ -3506,7 +3482,6 @@
         if (layer === "riceEvi") return ["riceEvi"];
         if (layer === "gsmap") return ["gsmap"];
         if (layer === "forecast") return ["forecast"];
-        if (layer === "tmdRain") return ["tmdRain"];
         if (layer === "floodExtent") return ["floodExtent"];
         if (layer === "alerts") return ["alerts"];
         if (layer === "soilMoisture") return ["soilMoisture"];
@@ -3872,9 +3847,6 @@
       }
       function forecastValueOf(en) {
         return window.FORECAST_DATA?.provinces?.[en]?.rain_7d ?? null;
-      }
-      function tmdRainValueOf(en) {
-        return window.TMD_DATA?.provinces?.[en]?.rain_48h_mm ?? null;
       }
       // ไฟล์มีเฉพาะจังหวัดที่สถานีวัดเข้าเกณฑ์ จังหวัดที่ไม่อยู่ในไฟล์แปลว่า
       // "ไม่มีสถานีเข้าเกณฑ์" ไม่ใช่ "ยืนยันว่าไม่ท่วม" — คืน null ให้จางไว้ ไม่ใช่ 0
@@ -4770,8 +4742,6 @@
                                   ? `🛰 ${t("ปริมาณฝนรวม 7 วัน (ดาวเทียม)", "7-Day Total Rainfall (Satellite)")} · ${window.GSMAP_DATA?._meta?.period_end || ""}`
                                   : S.layer === "forecast"
                                     ? `🌦 ${t("พยากรณ์ฝน 7 วันข้างหน้า", "7-Day Rain Forecast")} · Open-Meteo ${window.FORECAST_DATA?._meta?.updated || ""}`
-                                    : S.layer === "tmdRain"
-                                      ? `🌧️ ${t("ฝนล่วงหน้า 48 ชม.", "48h Rain Forecast")} · TMD ${window.TMD_DATA?._meta?.updated || ""}`
                                     : S.layer === "floodExtent"
                                       ? `🌊 ${t("น้ำท่วม (วัดจริง)", "Flooding (Gauged)")} · ThaiWater ${window.FLOOD_DATA?._meta?.updated || ""}`
                                     : S.layer === "alerts"
@@ -4884,14 +4854,6 @@
           refs.dataSourceNote.textContent = t(
             `🌦 พยากรณ์ฝนสะสม 7 วันข้างหน้า · Open-Meteo Forecast API · ฟรี ไม่ต้อง API key · อัปเดตทุกวัน · ครอบคลุม ${covered} จังหวัด · ช่วง: ${period}`,
             `🌦 7-day cumulative rain forecast · Open-Meteo Forecast API · Free, no API key · Daily update · ${covered} provinces · Period: ${period}`,
-          );
-          return;
-        }
-        if (S.layer === "tmdRain") {
-          const meta = window.TMD_DATA?._meta;
-          refs.dataSourceNote.textContent = t(
-            `🌧️ พยากรณ์ฝนสะสม 48 ชม. (2 วัน) ข้างหน้า ความละเอียดพื้นที่ 2 กม. · กรมอุตุนิยมวิทยา (TMD) · อัปเดตทุก 6 ชม. · ครอบคลุม ${covered} จังหวัด · เสริมเตือนภัยน้ำท่วม 7 วัน ไม่ได้แทน (TMD hourly พยากรณ์ได้สูงสุดแค่ 48 ชม.)`,
-            `🌧️ 48-hour cumulative rain forecast, 2km resolution · Thai Meteorological Department (TMD) · Updated every 6 hrs · ${covered} provinces · Supplements the 7-day flood alert, does not replace it (TMD hourly only forecasts up to 48h)`,
           );
           return;
         }
@@ -5115,8 +5077,6 @@
                               )
                             : S.layer === "forecast"
                               ? t("แผนที่พยากรณ์ฝน 7 วันข้างหน้ารายจังหวัด", "7-Day Rain Forecast by Province")
-                              : S.layer === "tmdRain"
-                                ? t("แผนที่พยากรณ์ฝน 48 ชม. ข้างหน้ารายจังหวัด (ละเอียด)", "48h Rain Forecast by Province (Detailed)")
                               : S.layer === "floodExtent"
                                 ? t("แผนที่สถานะน้ำท่วมรายจังหวัด จากสถานีวัดระดับน้ำ", "Flood Status by Province, from River Gauges")
                               : S.layer === "alerts"
@@ -5158,11 +5118,6 @@
                                   `พยากรณ์ปริมาณฝนสะสม 7 วันข้างหน้ารายจังหวัด จาก Open-Meteo Forecast API · อัปเดตทุกวัน · สีเข้ม = ฝนมาก · ข้อมูลล่าสุด ${fmtDateISO(window.FORECAST_DATA?._meta?.updated)}`,
                                   `7-day cumulative rain forecast by province via Open-Meteo Forecast API · Daily update · Dark = heavy rain · Latest: ${fmtDateISO(window.FORECAST_DATA?._meta?.updated)}`,
                                 )
-                              : S.layer === "tmdRain"
-                                ? t(
-                                    `พยากรณ์ปริมาณฝนสะสม 48 ชม. ข้างหน้ารายจังหวัด ความละเอียด 2 กม. จากกรมอุตุนิยมวิทยา (TMD) · อัปเดตทุก 6 ชม. · เสริมเตือนภัย 7 วัน ไม่ได้แทน · ข้อมูลล่าสุด ${fmtDateISO(window.TMD_DATA?._meta?.updated)}`,
-                                    `48-hour cumulative rain forecast by province, 2km resolution, from Thai Meteorological Department (TMD) · Updated every 6 hrs · Supplements the 7-day alert, does not replace it · Latest: ${fmtDateISO(window.TMD_DATA?._meta?.updated)}`,
-                                  )
                               : S.layer === "floodExtent"
                                 ? t(
                                     `สถานะน้ำท่วมรายจังหวัด จากสถานีวัดระดับน้ำจริงของ สสน. · แดง = มีสถานีล้นตลิ่งแล้ว · ส้ม = น้ำมากหลายจุด ใกล้ล้นตลิ่ง · เป็นน้ำที่วัดได้จริง ไม่ใช่การคาดการณ์ · ข่าวเป็นบทสรุปประกอบ ไม่มีผลกับสี`,
@@ -5254,8 +5209,6 @@
                   ? `${metaLabel}<br>${t(`ดาวเทียม · ข้อมูลถึง ${window.GSMAP_DATA?._meta?.period_end || "—"}`, `Satellite · Through ${window.GSMAP_DATA?._meta?.period_end || "—"}`)}`
                   : S.layer === "forecast"
                     ? `${metaLabel}<br>${t(`Open-Meteo · อัปเดต ${fmtDateISO(window.FORECAST_DATA?._meta?.updated)}`, `Open-Meteo · Updated ${fmtDateISO(window.FORECAST_DATA?._meta?.updated)}`)}`
-                    : S.layer === "tmdRain"
-                      ? `${metaLabel}<br>${t(`TMD · อัปเดต ${fmtDateISO(window.TMD_DATA?._meta?.updated)}`, `TMD · Updated ${fmtDateISO(window.TMD_DATA?._meta?.updated)}`)}`
                     : S.layer === "floodExtent"
                       ? `${metaLabel}<br>${t(`ThaiWater · อัปเดต ${fmtDateISO(window.FLOOD_DATA?._meta?.updated)}`, `ThaiWater · Updated ${fmtDateISO(window.FLOOD_DATA?._meta?.updated)}`)}`
                     : S.layer === "alerts"
@@ -6310,7 +6263,6 @@
             S.layer === "riceEvi" ||
             S.layer === "gsmap" ||
             S.layer === "forecast" ||
-            S.layer === "tmdRain" ||
             S.layer === "floodExtent" ||
             S.layer === "alerts" ||
             S.layer === "soilMoisture"
@@ -6539,11 +6491,6 @@
                           `พยากรณ์ฝน 7 วันข้างหน้า อัปเดต ${window.FORECAST_DATA?._meta?.updated || ""} — Open-Meteo`,
                           `7-Day rain forecast updated ${window.FORECAST_DATA?._meta?.updated || ""} — Open-Meteo`,
                         )
-                      : S.layer === "tmdRain"
-                        ? t(
-                            `พยากรณ์ฝน 48 ชม. ข้างหน้า อัปเดต ${window.TMD_DATA?._meta?.updated || ""} — TMD`,
-                            `48h rain forecast updated ${window.TMD_DATA?._meta?.updated || ""} — TMD`,
-                          )
                       : S.layer === "floodExtent"
                         ? t(
                             `สถานะน้ำท่วมจากสถานีวัดน้ำ อัปเดต ${window.FLOOD_DATA?._meta?.updated || ""} — ThaiWater (สสน.)`,
@@ -6799,52 +6746,6 @@
 <div class="metric-name">${t("ปริมาณฝนพยากรณ์", "Forecast Rainfall")}</div>
 <div class="value" style="color:${rainCol}">${fmtNumber(Math.round(rain))} <small style="font-size:12px;color:var(--muted)">มม.</small></div>
 <div style="font-size:11px;font-weight:700;color:${rainCol};margin:2px 0">${rainLabel}</div>
-<div class="rank">${rank ? `${t("อันดับ", "Rank")} #${rank} / ${total}` : t("ไม่มีข้อมูล", "No data")}</div>
-`;
-        }
-        // ── TMD 48h Forecast tooltip ─────────────────────────────────────────
-        if (S.layer === "tmdRain") {
-          const rp = window.TMD_DATA?.provinces?.[en];
-          const rank = currentRank(en);
-          const total = getVisibleProvinces().filter((n) => hasLayerValue(n)).length;
-          if (!rp)
-            // แยก "ยังโหลดไม่เสร็จ" ออกจาก "โหลดแล้วแต่ TMD ไม่มีจังหวัดนี้" — อย่างหลัง
-            // รอไปก็ไม่มา (เช่นภาคนั้นดึงไม่สำเร็จ) บอกตรงๆ ดีกว่าให้ผู้ใช้รอเก้อ
-            return `<div class="th">${t(NM[en] || en, en)}</div><div class="en">${en}</div><div style="color:var(--muted);font-size:11px;margin-top:6px">${
-              window.TMD_DATA
-                ? t("ไม่มีข้อมูลพยากรณ์ของจังหวัดนี้ในรอบล่าสุด", "No forecast for this province in the latest run")
-                : t("กำลังโหลดข้อมูลพยากรณ์…", "Loading forecast data…")
-            }</div>`;
-          const rain = rp.rain_48h_mm ?? 0;
-          const rain24 = rp.rain_24h_mm ?? 0;
-          const rainCol =
-            rain > 100
-              ? "#bf360c"
-              : rain > 50
-                ? "#e65100"
-                : rain > 15
-                  ? "#ff9800"
-                  : rain > 0
-                    ? "#ffcc80"
-                    : "var(--muted)";
-          const rainLabel =
-            rain > 100
-              ? t("คาดว่าฝนหนักมาก 🌧", "Expected Heavy Rain 🌧")
-              : rain > 50
-                ? t("คาดว่าฝนปานกลาง-หนัก 🌧", "Expected Moderate-Heavy 🌧")
-                : rain > 15
-                  ? t("คาดว่าฝนปานกลาง 🌦", "Expected Moderate 🌦")
-                  : rain > 0
-                    ? t("คาดว่าฝนเล็กน้อย 🌤", "Expected Light Rain 🌤")
-                    : t("คาดว่าแห้ง / ไม่มีฝน ☀️", "Expected Dry / No Rain ☀️");
-          return `
-<div class="th">${t(NM[en] || en, en)}</div>
-<div class="en">${en}</div>
-<div class="type">${t("พยากรณ์ฝน 48 ชม. ข้างหน้า · TMD (2 กม.)", "48h Rain Forecast · TMD (2km)")}</div>
-<div class="metric-name">${t("ปริมาณฝนพยากรณ์ (48 ชม.)", "Forecast Rainfall (48h)")}</div>
-<div class="value" style="color:${rainCol}">${fmtNumber(Math.round(rain))} <small style="font-size:12px;color:var(--muted)">มม.</small></div>
-<div style="font-size:11px;font-weight:700;color:${rainCol};margin:2px 0">${rainLabel}</div>
-<div style="font-size:10px;color:var(--muted);margin-top:2px">${t("24 ชม. แรก", "First 24h")}: ${fmtNumber(Math.round(rain24))} มม.</div>
 <div class="rank">${rank ? `${t("อันดับ", "Rank")} #${rank} / ${total}` : t("ไม่มีข้อมูล", "No data")}</div>
 `;
         }
@@ -7151,11 +7052,6 @@ ${warningsHtml}
           const dates = fcMeta?.dates;
           const period = dates?.length ? `${dates[0]} → ${dates[dates.length - 1]}` : t("ล่าสุด", "Latest");
           refs.yearButtons.innerHTML = `<button class="pill on" data-year="forecast">🌦 ${t("พยากรณ์ฝน 7 วันข้างหน้า", "7-Day Rain Forecast")} · ${period}</button>`;
-          return;
-        }
-        if (S.layer === "tmdRain") {
-          const updated = fmtDateISO(window.TMD_DATA?._meta?.updated);
-          refs.yearButtons.innerHTML = `<button class="pill on" data-year="tmdRain">🌧️ ${t("พยากรณ์ฝน 48 ชม. ข้างหน้า", "48h Rain Forecast")} · ${t("อัปเดต", "Updated")} ${updated}</button>`;
           return;
         }
         if (S.layer === "floodExtent") {
@@ -7836,7 +7732,6 @@ ${warningsHtml}
         fetchLayerData("rain-daily.json", "RAIN_DATA", "rain");
         fetchLayerData("rain-gsmap.json", "GSMAP_DATA", "gsmap");
         fetchLayerData("rain-forecast.json", "FORECAST_DATA", "forecast");
-        fetchLayerData("tmd-forecast.json", "TMD_DATA", "tmdRain");
         fetchLayerData("flood-status.json", "FLOOD_DATA", "floodExtent");
         fetchLayerData("agri-warnings.json", "ALERTS_DATA", "alerts");
         fetchLayerData("soil-moisture.json", "SOIL_DATA", "soilMoisture", () => {

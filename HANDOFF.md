@@ -4,6 +4,32 @@ Last updated: 2026-08-28 by Claude Code
 
 ## Log
 
+- 2026-08-28 (Claude, follow-ups 3): Removed the `tmdRain` layer entirely (21 →
+  20 layers, 19 → 18 workflows) after measuring it against the layer sitting
+  next to it. It was not merely redundant, it actively contradicted: over the
+  same 48h window across 77 provinces, TMD averaged 6.0mm and Open-Meteo
+  31.4mm, r = 0.21, and their top-5 wettest provinces shared no province at all
+  (Chanthaburi: TMD 5.6mm vs OM 104mm). Scored both against 4,273 ThaiWater
+  rain gauges in 76 provinces: TMD MAE 7.0 / r 0.39 (dry-biased, mean 4.0), OM
+  MAE 10.3 / r 0.41 (wet-biased, mean 14.6), measured 7.8 — comparable ranking
+  skill, and both missed Ranong's real 85mm. One day of ground truth is not
+  enough to crown a winner, which is exactly the point: neither is accurate
+  enough to be allowed to contradict the other in the UI. Three more findings
+  that made the call easy: the "(detailed)" label was wrong — TMD returns 77
+  items for 77 provinces, i.e. ONE point per province, while Open-Meteo samples
+  6 and takes p90, so TMD was the coarser of the two on a province choropleth;
+  `TMD_DATA` fed nothing but its own layer (Open-Meteo feeds the flood-risk
+  layer and the accuracy scoreboard); and 98% of its 204KB file was hourly data
+  the UI never read — we were storing the one thing TMD could do that
+  Open-Meteo cannot, and not showing it. Verified by baseline diff rather than
+  eyeballing: captured note/rank/yearButtons/legend/value-count/tooltip for
+  every layer before and after through the real `setLayer()` path — exactly one
+  layer disappeared and all 20 survivors are identical on all six fields, which
+  is what proves the ternary chains I cut branches out of are still intact.
+  Stale `#layer=tmdRain` deep links degrade correctly (whitelist rejects it,
+  falls back to the default layer, keeps the province selection, rewrites the
+  hash). The repo owner still needs to delete the now-unused `TMD_API_TOKEN`
+  secret in GitHub Settings — an agent should not touch secrets.
 - 2026-08-28 (Claude, follow-ups 2): Cleared the Node.js 20 deprecation warning
   GitHub was printing on every run — `actions/checkout@v4`→`v7` (19 sites) and
   `actions/setup-python@v5`→`v7` (18 sites). Did not guess the target versions:
