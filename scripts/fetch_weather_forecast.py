@@ -10,8 +10,8 @@ Useful for comparing with the current/upcoming season.
 Output: data/weather-forecast.json
 """
 import json, os, re, sys, time, requests
-from datetime import date, datetime
-from riceutils import load_centroids
+from datetime import date
+from riceutils import bkk_today, load_centroids
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -19,6 +19,7 @@ SEASON_MONTH_START = 6   # June
 SEASON_MONTH_END   = 11  # November
 N_YEARS = 5              # number of past seasons to average
 
+# ตั้งใจใช้เวลา runner ไม่ใช่ bkk_today() — ใช้คำนวณปีฤดูกาล ไม่ใช่ป้ายวันที่
 today = date.today()
 # Find the 5 most recently completed Jun–Nov seasons
 current_season_year = today.year if today.month >= SEASON_MONTH_START else today.year - 1
@@ -137,7 +138,7 @@ def main():
 
     output = {
         "_meta": {
-            "updated":    datetime.now().strftime("%Y-%m-%d"),
+            "updated":    bkk_today(),
             "base_years": yr_range,
             "n_years":    N_YEARS,
             "season_label": f"ค่าปกติ 5 ปี นาปี {yr_range} · 5-yr Normal (Jun–Nov {yr_range})",

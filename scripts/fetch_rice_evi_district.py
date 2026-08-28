@@ -25,8 +25,7 @@ import calendar
 import ee
 import json
 import os
-from datetime import date, timedelta
-from riceutils import init_gee, GAUL_NAME_MAP as PROV_MAP
+from riceutils import bkk_today, init_gee, GAUL_NAME_MAP as PROV_MAP
 from riceutils import PHENOLOGY_MONTHS, FLOOD_EVI_MAX, PEAK_MIN, AMP_MIN, MIN_EVI_MAX, RUBBER_ASSET, load_rice_mask, load_exclusion_mask, get_history_months, build_rice_phenology_mask, latest_q1_periods, q1_evi_image
 from rice_stage import TREND_EPS, classify_evi
 
@@ -175,7 +174,7 @@ def main():
             "period":            f"{start} to {end}",
             "month":             month_label,
             "phenology_window":  pheno_window,
-            "updated":           date.today().isoformat(),
+            "updated":           bkk_today(),
             "provinces_covered": len(provinces_data),
             "districts_covered": total_districts,
             "districts_with_data": len(valid),

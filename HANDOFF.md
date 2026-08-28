@@ -4,6 +4,26 @@ Last updated: 2026-08-28 by Claude Code
 
 ## Log
 
+- 2026-08-28 (Claude, same session, follow-ups): Swept `date.today()` → the
+  existing `bkk_today()` across 16 scripts. Cron jobs firing 17:00–24:00 UTC
+  are already the next day in Bangkok, so every "updated" label they wrote was
+  a day behind. Deliberately NOT a blanket replace — 4 remaining sites are date
+  *logic*, not labels, and are correct as runner time: the upper bound of the
+  Open-Meteo date range (a Thai date would request a future day), season-year
+  arithmetic, forecast-window matching against UTC GSMaP, and a news pubDate
+  fallback whose sibling line converts to UTC. All 4 now carry a comment saying
+  so, because they look identical to the bug that was just fixed. Added
+  `bkk_now()` for the dam `fetched_at` timestamp, and dropped the `date`/
+  `datetime` imports this orphaned. Smoke-tested `fetch_storm_alerts.py` and
+  `fetch_dam_water.py` live (dam `fetched_at` came back 11:09 Bangkok vs 04:09
+  UTC — the bug reproduced and is fixed), then reverted their data files so the
+  commit stays code-only. Also took an actual screenshot of the new flood layer
+  (via the Playwright MCP; the in-app Browser pane can't composite when it
+  isn't displayed) and it exposed a real problem the DOM checks had missed:
+  the palette's pale-cream `lo` end made 13 of the 14 flagged provinces nearly
+  invisible on the dark map — fine for a layer with a real gradient, wrong for
+  one with two levels where almost everything sits at the floor. `lo` is now
+  solid orange. Gitignored `.playwright-mcp/` and `.lighthouse-report.json`.
 - 2026-08-28 (Claude): Replaced the GISTDA satellite flood layer with a
   gauge-based one and removed GISTDA from the repo entirely. The layer key
   (`floodExtent`), global (`FLOOD_DATA`), and button position are unchanged;

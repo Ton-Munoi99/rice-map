@@ -12,7 +12,7 @@ Deduplication key: name + district + province (keeps highest-capacity entry).
 Output: data/rice-mills.json
 """
 import json, os, sys
-from datetime import date
+from riceutils import bkk_today
 
 import pandas as pd
 
@@ -120,7 +120,7 @@ def main() -> None:
     output = {
         "_meta": {
             "source":            "กรมการค้าภายใน (DIT) — Excel export รายชื่อโรงสี",
-            "updated":           date.today().isoformat(),
+            "updated":           bkk_today(),
             "total_mills":       total,
             "provinces_covered": len(provinces),
             "raw_excel_rows":    raw_total,

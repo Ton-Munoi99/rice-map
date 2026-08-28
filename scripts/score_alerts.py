@@ -126,6 +126,8 @@ def rollup(windows):
 def main():
     fc_data = load(FORECAST)
     gs_data = load(GSMAP)
+    # ตั้งใจใช้เวลา runner ไม่ใช่ bkk_today() — ค่านี้ใช้จับคู่หน้าต่างพยากรณ์
+    # กับ GSMaP ที่เป็น UTC ต้องอยู่มาตรฐานเดียวกันทั้งสองฝั่ง
     today = date.today().isoformat()
 
     board = load(OUT) if os.path.exists(OUT) else {"recent": [], "_pending": []}

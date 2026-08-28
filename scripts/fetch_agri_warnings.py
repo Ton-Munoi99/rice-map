@@ -7,7 +7,7 @@ Output: data/agri-warnings.json
 import json
 import os
 import sys
-from datetime import date
+from riceutils import bkk_today
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -335,7 +335,7 @@ def main():
     # Build output
     output = {
         "_meta": {
-            "updated": date.today().isoformat(),
+            "updated": bkk_today(),
             "sources": ["Open-Meteo Forecast", "JAXA GSMaP", "RID Dam"],
             "thresholds": {
                 "flood_basis":    "เกณฑ์เตือนน้ำท่วมเป็นทวีคูณของฝนปกติรายจังหวัด "

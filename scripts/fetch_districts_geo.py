@@ -29,8 +29,7 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 import ee
 import json
 import os
-from datetime import date
-from riceutils import init_gee, GAUL_NAME_MAP as PROV_MAP
+from riceutils import bkk_today, init_gee, GAUL_NAME_MAP as PROV_MAP
 
 
 # Simplification error in meters — 3km = ดีพอสำหรับ mini map
@@ -140,7 +139,7 @@ def main():
             "source":          "FAO GAUL 2015 level2 via Google Earth Engine",
             "simplify_error":  f"{SIMPLIFY_ERROR_M}m",
             "coord_precision": COORD_PRECISION,
-            "updated":         date.today().isoformat(),
+            "updated":         bkk_today(),
             "provinces":       len(provinces_data),
             "districts":       total_d,
             "note":            (

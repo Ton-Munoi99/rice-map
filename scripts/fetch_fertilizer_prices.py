@@ -17,7 +17,7 @@ import os
 import re
 import sys
 import urllib.request
-from datetime import date
+from riceutils import bkk_today
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -178,7 +178,7 @@ def parse_date(md, date_re):
 
 def fetch_live_row(src):
     md = firecrawl_markdown(src["url"])
-    d = parse_date(md, src["date_re"]) or {"th": f"ดึงล่าสุด {date.today().isoformat()}", "en": f"as of {date.today().isoformat()}"}
+    d = parse_date(md, src["date_re"]) or {"th": f"ดึงล่าสุด {bkk_today()}", "en": f"as of {bkk_today()}"}
 
     if src["type"] == "block":
         pairs = parse_prices_block(md, src["block_start"], src["block_end"], src["formula_re"])
@@ -231,7 +231,7 @@ def main():
     rows = live_rows + STATIC_ROWS
     result = {
         "_meta": {
-            "updated": date.today().isoformat(),
+            "updated": bkk_today(),
             "note": ("ราคาซื้อขายจริง — แถว live รีเฟรชทุกสัปดาห์จากตารางราคาสหกรณ์/ร้านค้า "
                      "ส่วนแถวราชการเป็นประกาศพาณิชย์จังหวัด (คงที่ ตามวันที่ระบุ) · "
                      "ตัวอย่างบางแหล่ง ไม่ใช่ค่าเฉลี่ยทั้งประเทศ"),

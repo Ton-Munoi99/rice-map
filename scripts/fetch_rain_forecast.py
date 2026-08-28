@@ -17,8 +17,7 @@ Shape ไม่เปลี่ยนจากเดิม: provinces[name] = {ra
 """
 import json, os, re, statistics, sys, time
 import requests
-from datetime import date
-from riceutils import load_sample_points
+from riceutils import bkk_today, load_sample_points
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -84,7 +83,7 @@ def fetch_batch(batch_pts):
 # ── Main ─────────────────────────────────────────────────────────────────────
 def main():
     sample_pts = load_sample_points()
-    today      = date.today().isoformat()
+    today      = bkk_today()
     names      = sorted(sample_pts.keys())
 
     # flatten: [(province, {'lat','lon'}), ...] เรียงตามจังหวัดเพื่อความ deterministic

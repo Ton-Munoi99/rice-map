@@ -2957,7 +2957,9 @@
           valueFn: floodValueOf,
           sourceTh: "ThaiWater (สสน.)",
           sourceEn: "ThaiWater (HII)",
-          palette: { lo: [255, 224, 178], mid: [239, 108, 0], hi: [183, 28, 28], accent: "#e65100" },
+          // layer นี้มีแค่ 2 ค่า และ 13 ใน 14 จังหวัดเป็นค่าต่ำสุด ถ้าปลาย lo จาง
+          // แบบ layer ที่ไล่เฉดจริงๆ จังหวัดเกือบทั้งหมดจะจมหายไปกับพื้นหลังเข้ม
+          palette: { lo: [255, 152, 0], mid: [230, 81, 0], hi: [183, 28, 28], accent: "#e65100" },
         },
         alerts: {
           format: "alertLevel",

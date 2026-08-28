@@ -9,8 +9,7 @@ Output: data/rain-daily.json
 """
 import json, os, re, sys, time
 import requests
-from datetime import date
-from riceutils import load_centroids
+from riceutils import bkk_today, load_centroids
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -65,7 +64,7 @@ def fetch_batch(batch_names, centroids):
 # ── Main ─────────────────────────────────────────────────────────────────────
 def main():
     centroids   = load_centroids()
-    today       = date.today().isoformat()
+    today       = bkk_today()
     names       = sorted(centroids.keys())
 
     provinces_out = {}

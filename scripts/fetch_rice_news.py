@@ -14,7 +14,8 @@ Headlines only (facts) + source attribution + link — no article text scraped.
 """
 import sys, io, os, re, json, html, urllib.parse, urllib.request
 import xml.etree.ElementTree as ET
-from datetime import date, datetime, timezone
+from datetime import date, timezone
+from riceutils import bkk_today
 from email.utils import parsedate_to_datetime
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -88,7 +89,7 @@ def archive_news(relevant):
         if k in seen:
             continue
         seen.add(k)
-        prev.append({**it, "archived": date.today().isoformat()})
+        prev.append({**it, "archived": bkk_today()})
         added += 1
 
     if not added:
@@ -98,7 +99,7 @@ def archive_news(relevant):
     prev.sort(key=lambda x: (x.get("date", ""), x.get("archived", "")), reverse=True)
     with open(ARCHIVE, "w", encoding="utf-8") as f:
         json.dump(
-            {"_meta": {"source": "Google News RSS", "updated": date.today().isoformat(),
+            {"_meta": {"source": "Google News RSS", "updated": bkk_today(),
                        "count": len(prev), "note": "คลังข่าวข้าวไทยสะสม (ดูย้อนหลัง) · หัวข้อ + ลิงก์ต้นฉบับ"},
              "items": prev},
             f, ensure_ascii=False, indent=2)
@@ -155,6 +156,8 @@ def main():
         try:
             iso = parsedate_to_datetime(pub).astimezone(timezone.utc).date().isoformat()
         except Exception:
+            # ตั้งใจใช้ UTC ไม่ใช่ bkk_today() — บรรทัดบนแปลง pubDate เป็น UTC
+            # ค่า fallback ต้องอยู่มาตรฐานเดียวกัน ไม่งั้นข่าวเรียงสลับกัน
             iso = date.today().isoformat()
 
         out.append({
@@ -179,7 +182,7 @@ def main():
     result = {
         "_meta": {
             "source":  "Google News RSS",
-            "updated": date.today().isoformat(),
+            "updated": bkk_today(),
             "query":   QUERY,
             "within":  WITHIN,
             "count":   len(out),

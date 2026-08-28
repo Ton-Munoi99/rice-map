@@ -30,6 +30,11 @@ def bkk_today():
     return (datetime.now(timezone.utc) + timedelta(hours=7)).date().isoformat()
 
 
+def bkk_now():
+    """วันที่+เวลาตามเวลาไทย ("YYYY-MM-DD HH:MM") — เหตุผลเดียวกับ bkk_today()"""
+    return (datetime.now(timezone.utc) + timedelta(hours=7)).strftime("%Y-%m-%d %H:%M")
+
+
 def haversine_km(lat1, lon1, lat2, lon2):
     """ระยะทางวงกลมใหญ่ระหว่างสองพิกัด (กม.)"""
     R = 6371.0

@@ -16,7 +16,7 @@ import ee
 import json
 import os
 from datetime import date, datetime, timedelta, timezone
-from riceutils import init_gee, build_provinces, GAUL_NAME_MAP as NAME_MAP
+from riceutils import bkk_today, init_gee, build_provinces, GAUL_NAME_MAP as NAME_MAP
 
 
 COLLECTION = "JAXA/GPM_L3/GSMaP/v8/operational"
@@ -138,7 +138,7 @@ def main():
             "lag_hours":    "~4",
             "period_start": start_str,
             "period_end":   end_str,
-            "updated":      date.today().isoformat(),
+            "updated":      bkk_today(),
             "days":         7,
             "dates":        dates,
             "note": (

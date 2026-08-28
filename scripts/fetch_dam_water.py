@@ -6,7 +6,7 @@ Free, no API key. 35 large dams updated daily.
 Output: data/dam-water.json
 """
 import json, sys, requests
-from datetime import datetime
+from riceutils import bkk_now
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -133,7 +133,7 @@ def main():
     output = {
         "_meta": {
             "updated":     api_date,
-            "fetched_at":  datetime.now().strftime("%Y-%m-%d %H:%M"),
+            "fetched_at":  bkk_now(),
             "source":      "กรมชลประทาน (RID) — app.rid.go.th/reservoir/api/dam/public",
             "n_dams":      len(all_dams),
             "n_provinces": len(provinces),

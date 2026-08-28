@@ -12,14 +12,16 @@ Variables fetched per province:
 Output: data/weather-province.json
 """
 import json, os, re, sys, time, requests
-from datetime import date, datetime
-from riceutils import load_centroids
+from datetime import date
+from riceutils import bkk_today, load_centroids
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 SEASON_MONTH_START = 6   # June
 SEASON_MONTH_END   = 11  # November
 
+# ตั้งใจใช้เวลา runner ไม่ใช่ bkk_today() — ค่านี้ไปเป็นขอบบนของช่วงวันที่ที่ขอ
+# จาก Open-Meteo ถ้าเลื่อนเป็นวันไทยจะขอวันอนาคตในมุมของ API
 today = date.today()
 year = today.year if today.month >= SEASON_MONTH_START else today.year - 1
 start_date = f"{year}-{SEASON_MONTH_START:02d}-01"
@@ -113,7 +115,7 @@ def main():
 
     output = {
         "_meta": {
-            "updated": datetime.now().strftime("%Y-%m-%d"),
+            "updated": bkk_today(),
             "season": f"{start_date} → {end_date}",
             "year": year,
             "season_label": f"นาปี {year + 543} (มิ.ย.–พ.ย.) · Main Season {year} (Jun–Nov)",

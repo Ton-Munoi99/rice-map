@@ -5,8 +5,7 @@ Output: data/storm-alerts.json
 """
 import os, sys, math, json, requests
 import xml.etree.ElementTree as ET
-from datetime import date
-from riceutils import haversine_km
+from riceutils import bkk_today, haversine_km
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -123,7 +122,7 @@ def main():
     output = {
         "_meta": {
             "source":  "GDACS — Global Disaster Alert and Coordination System",
-            "updated": date.today().isoformat(),
+            "updated": bkk_today(),
             "storms_near_thailand": len(storms),
         },
         "storms": storms,

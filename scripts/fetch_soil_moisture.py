@@ -18,7 +18,7 @@ import ee
 import json
 import os
 from datetime import date, datetime, timedelta, timezone
-from riceutils import init_gee, build_provinces, GAUL_NAME_MAP as NAME_MAP
+from riceutils import bkk_today, init_gee, build_provinces, GAUL_NAME_MAP as NAME_MAP
 
 COLLECTION = "NASA/SMAP/SPL4SMGP/008"
 BAND       = "sm_surface_wetness"  # relative wetness vs field capacity, 0–1
@@ -108,7 +108,7 @@ def main():
             "resolution":   "11 km — spatial average per province polygon",
             "period_start": start_str,
             "period_end":   end_str,
-            "updated":      date.today().isoformat(),
+            "updated":      bkk_today(),
             "note":         "ความชื้นในดินระดับผิว — 0% = แห้งสนิท, 100% = อิ่มตัว",
         },
         "provinces": dict(sorted(provinces_data.items())),
