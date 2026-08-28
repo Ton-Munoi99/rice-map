@@ -28,9 +28,14 @@ jobs:
       - name: Fetch water-level stations (ThaiWater API)
         run: python scripts/fetch_water_level.py
 
+      # ต่อท้ายใน workflow เดียวกัน ไม่แยก cron — สถานะน้ำท่วมคำนวณจาก
+      # water-level.json ที่เพิ่งดึงมา ถ้าแยก job จะอ่านไฟล์เก่ากว่าที่ commit ไว้
+      - name: Derive province flood status (gauges + news)
+        run: python scripts/fetch_flood_status.py
+
       - name: Commit and push
         uses: ./.github/actions/commit-data
         with:
-          paths: data/water-level.json
-          message: "auto: update water-level stations (ThaiWater)"
+          paths: data/water-level.json data/flood-status.json
+          message: "auto: update water level + flood status (ThaiWater)"
           date-format: ""

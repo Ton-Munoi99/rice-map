@@ -2068,8 +2068,8 @@
                 <span class="en-t">🌧️ 48h Rain Forecast (Detailed)</span>
               </button>
               <button class="pill" data-layer="floodExtent" onclick="setLayer('floodExtent')">
-                <span class="th-t">🌊 น้ำท่วมจริง (ดาวเทียม)</span>
-                <span class="en-t">🌊 Observed Flood (Satellite)</span>
+                <span class="th-t">🌊 น้ำท่วม (วัดจริง)</span>
+                <span class="en-t">🌊 Flooding (Gauged)</span>
               </button>
               <button class="pill" data-layer="waterlevel" onclick="setLayer('waterlevel')">
                 <span class="th-t">💧 ระดับน้ำในแม่น้ำ/คลอง</span>
@@ -2765,14 +2765,14 @@
         },
         floodExtent: {
           noTimeseries: true,   // ไม่มีอนุกรมเวลารายปี — ไม่ต้องมีกราฟ spark / ป้ายปีประมาณการ
-          th: "น้ำท่วมจริง (ดาวเทียม)",
-          en: "Observed Flood (Satellite)",
-          unit: "ไร่ (ภาพดาวเทียม GISTDA)",
-          unitEn: "rai (GISTDA satellite)",
-          unitShort: "ไร่",
-          unitShortEn: "rai",
-          summary: "พื้นที่น้ำท่วมรวม",
-          summaryMode: "sum",
+          th: "น้ำท่วม (วัดจริง)",
+          en: "Flooding (Gauged)",
+          unit: "ระดับ (จากสถานีวัดน้ำ)",
+          unitEn: "level (from river gauges)",
+          unitShort: "ระดับ",
+          unitShortEn: "level",
+          summary: "จังหวัดที่น้ำท่วม/ใกล้ล้นตลิ่ง",
+          summaryMode: "count",
         },
         alerts: {
           noTimeseries: true,   // ไม่มีอนุกรมเวลารายปี — ไม่ต้องมีกราฟ spark / ป้ายปีประมาณการ
@@ -2951,13 +2951,13 @@
           palette: { lo: [255, 243, 224], mid: [255, 152, 0], hi: [191, 54, 12], accent: "#e65100" },
         },
         floodExtent: {
-          format: "bignum",
-          showAllRanked: true, rankTh: "จังหวัดที่พบน้ำท่วม เรียงตามพื้นที่", rankEn: "Flooded Provinces by Area",
-          dataGlobal: "FLOOD_DATA", liveDated: true, partialCoverage: true, updatedVerbTh: "ดึงเมื่อ", updatedVerbEn: "Fetched",
-          valueFn: floodExtentValueOf,
-          sourceTh: "GISTDA (ดาวเทียม)",
-          sourceEn: "GISTDA (satellite)",
-          palette: { lo: [225, 245, 254], mid: [3, 155, 229], hi: [1, 42, 74], accent: "#039be5" },
+          format: "floodLevel",
+          showAllRanked: true, rankTh: "จังหวัดที่น้ำท่วม/ใกล้ล้นตลิ่ง", rankEn: "Provinces Flooding or Near Overbank",
+          dataGlobal: "FLOOD_DATA", liveDated: true, partialCoverage: true,
+          valueFn: floodValueOf,
+          sourceTh: "ThaiWater (สสน.)",
+          sourceEn: "ThaiWater (HII)",
+          palette: { lo: [255, 224, 178], mid: [239, 108, 0], hi: [183, 28, 28], accent: "#e65100" },
         },
         alerts: {
           format: "alertLevel",
@@ -3520,7 +3520,7 @@
         return document.body.classList.contains("lang-en") ? en : th;
       }
       // Unit label helpers — always language-aware
-      // ชื่ออำเภอ/ตำบลมาจาก WFS ของ GISTDA (ข้อความจากภายนอก) และถูกยัดลง innerHTML
+      // พาดหัวข่าว/ชื่อสถานี/ชื่อแม่น้ำ เป็นข้อความจากภายนอกและถูกยัดลง innerHTML
       // ที่อื่นในไฟล์นี้แทรกจากตาราง NM ที่ hardcode ไว้จึงปลอดภัยอยู่แล้ว ตรงนี้ไม่ใช่
       function esc(v) {
         return String(v ?? "").replace(/[&<>"']/g, (c) =>
@@ -3538,12 +3538,9 @@
         const raw = window[m.dataGlobal]?._meta?.[m.metaField ?? "updated"];
         return m.rawDate ? raw || "—" : fmtDateISO(raw);
       }
-      // "อัปเดต <วันที่>" (บาง layer ใช้คำอื่น เช่น GISTDA = "ดึงเมื่อ")
       function layerUpdatedLabel(layer = S.layer) {
         const d = layerUpdated(layer);
-        if (d == null) return null;
-        const m = layerMeta[layer];
-        return t(`${m.updatedVerbTh ?? "อัปเดต"} ${d}`, `${m.updatedVerbEn ?? "Updated"} ${d}`);
+        return d == null ? null : t(`อัปเดต ${d}`, `Updated ${d}`);
       }
       function uLabel(layer = S.layer) {
         const m = layerMeta[layer];
@@ -3877,10 +3874,10 @@
       function tmdRainValueOf(en) {
         return window.TMD_DATA?.provinces?.[en]?.rain_48h_mm ?? null;
       }
-      // GISTDA ปล่อยเฉพาะ polygon ที่พบน้ำท่วม จังหวัดที่ไม่อยู่ในไฟล์จึงแปลว่า
-      // "ไม่พบในภาพล่าสุด" ไม่ใช่ "ยืนยันว่าไม่ท่วม" — คืน null ให้จางไว้ ไม่ใช่ 0
-      function floodExtentValueOf(en) {
-        return window.FLOOD_DATA?.provinces?.[en]?.flood_rai ?? null;
+      // ไฟล์มีเฉพาะจังหวัดที่สถานีวัดเข้าเกณฑ์ จังหวัดที่ไม่อยู่ในไฟล์แปลว่า
+      // "ไม่มีสถานีเข้าเกณฑ์" ไม่ใช่ "ยืนยันว่าไม่ท่วม" — คืน null ให้จางไว้ ไม่ใช่ 0
+      function floodValueOf(en) {
+        return window.FLOOD_DATA?.provinces?.[en]?.severity ?? null;
       }
       // ในฤดูฝนมีจังหวัดติดเตือนพร้อมกัน 60-80% ของประเทศ การบอกว่า "🔴 26 จังหวัด"
       // จึงไม่ช่วยให้ตัดสินใจอะไรได้ — บอกว่าจังหวัดไหนหนักสุดใช้งานได้จริงกว่า
@@ -4059,6 +4056,10 @@
               : t("ปกติ", "Normal");
       }
 
+      function floodWord(n) {
+        return Math.round(n) >= 2 ? t("ท่วม", "Flooding") : t("ใกล้ล้นตลิ่ง", "Near Overbank");
+      }
+
       // รวม fmtCompact (compact=true) + fmtValue (compact=false) ตาม layerMeta.format
       function fmtLayer(n, layer, compact) {
         if (!Number.isFinite(n)) return "—";
@@ -4077,6 +4078,8 @@
             return compact ? (n >= 0 ? "+" : "") + fmtNumber(Math.round(n)) : fmtNumber(Math.round(n));
           case "alertLevel":
             return alertWord(n);
+          case "floodLevel":
+            return floodWord(n);
           case "households":
             return compact ? compactNum(n, 2) : fmtNumber(Math.round(n));
           default:
@@ -4097,6 +4100,9 @@
       function embedsUnit(layer = S.layer, compact = false) {
         const f = layerMeta[layer]?.format;
         if (f === "pct1" || f === "mm") return true;
+        // alertLevel/floodLevel คืนเป็นคำ ("เสี่ยงสูง"/"ท่วม") ไม่ใช่ตัวเลข
+        // ต่อ "ระดับ" ท้ายจะได้ "เสี่ยงสูง ระดับ" ซึ่งอ่านไม่รู้เรื่อง
+        if (f === "alertLevel" || f === "floodLevel") return true;
         if (f === "signedPct1") return compact;
         return false;
       }
@@ -4765,7 +4771,7 @@
                                     : S.layer === "tmdRain"
                                       ? `🌧️ ${t("ฝนล่วงหน้า 48 ชม.", "48h Rain Forecast")} · TMD ${window.TMD_DATA?._meta?.updated || ""}`
                                     : S.layer === "floodExtent"
-                                      ? `🌊 ${t("น้ำท่วมจริง (ดาวเทียม)", "Observed Flood (Satellite)")} · GISTDA ${t("ดึงเมื่อ", "fetched")} ${window.FLOOD_DATA?._meta?.updated || ""}`
+                                      ? `🌊 ${t("น้ำท่วม (วัดจริง)", "Flooding (Gauged)")} · ThaiWater ${window.FLOOD_DATA?._meta?.updated || ""}`
                                     : S.layer === "alerts"
                                       ? `🚨 ${t("พื้นที่เสี่ยงน้ำท่วม", "Flood Risk Areas")} · ${t("อัปเดต", "Updated")} ${window.ALERTS_DATA?._meta?.updated || ""}`
                                       : S.layer === "soilMoisture"
@@ -4889,25 +4895,19 @@
         }
         if (S.layer === "floodExtent") {
           const meta = window.FLOOD_DATA?._meta;
-          const totalRai = meta?.total_flood_rai;
-          const totalRice = meta?.total_rice_rai;
-          const seen = (meta?.scene_first_seen || "").slice(0, 10);
-          const ricePct = totalRice != null ? Math.round((100 * totalRice) / totalRai) : null;
-          const riceLine = totalRice == null ? "" : t(
-            `ในนั้นเป็นนาข้าวประมาณ ${fmtNumber(Math.round(totalRice))} ไร่ (${ricePct}%) — ค่าประมาณจาก mask ดาวเทียมของเราเอง น่าจะต่ำกว่าจริง · `,
-            `of which approx. ${fmtNumber(Math.round(totalRice))} rai (${ricePct}%) is rice paddy — estimated from our own satellite mask, likely an under-estimate · `,
-          );
+          const nFlood = meta?.provinces_flooded ?? 0;
+          const nNews = meta?.news_count ?? 0;
           refs.dataSourceNote.textContent = t(
-            `🌊 พื้นที่น้ำท่วมที่ดาวเทียมเห็นจริง จาก GISTDA · ${covered} จังหวัด รวม ${totalRai ? fmtNumber(Math.round(totalRai)) : "—"} ไร่ · ` +
-              riceLine +
-              `ต่างจาก layer "พื้นที่เสี่ยงน้ำท่วม" ที่คำนวณจากพยากรณ์ฝน — อันนี้คือน้ำที่ท่วมอยู่แล้ว · ` +
-              `⚠️ ต้นทางไม่ระบุวันที่ถ่ายภาพ บอกได้แค่ว่าเห็นภาพชุดนี้ครั้งแรก ${seen || "—"} · ` +
-              `จังหวัดที่ไม่ขึ้นสี = ไม่พบในภาพล่าสุด ไม่ใช่ยืนยันว่าไม่ท่วม`,
-            `🌊 Satellite-observed flood extent from GISTDA · ${covered} provinces, ${totalRai ? fmtNumber(Math.round(totalRai)) : "—"} rai total · ` +
-              riceLine +
-              `Different from the "Flood Risk" layer (computed from rain forecast) — this is water already on the ground · ` +
-              `⚠️ Upstream publishes no capture date; this scene was first seen ${seen || "—"} · ` +
-              `Uncoloured provinces = not detected in the latest scene, not a confirmation of no flooding`,
+            `🌊 สถานะน้ำท่วมจากสถานีวัดระดับน้ำจริงของ สสน. (ThaiWater) ${meta?.stations_total ?? "—"} สถานี · ` +
+              `เข้าเกณฑ์ ${covered} จังหวัด (ท่วมแล้ว ${nFlood}) · อัปเดตทุก 3 ชม. · ` +
+              `ข่าว ${nNews} ชิ้นเป็นบทสรุปประกอบ ไม่มีผลกับสีบนแผนที่ · ` +
+              `ต่างจาก layer "พื้นที่เสี่ยงน้ำท่วม" ที่คำนวณจากพยากรณ์ฝน — อันนี้คือน้ำที่วัดได้จริงแล้ว · ` +
+              `จังหวัดที่ไม่ขึ้นสี = ไม่มีสถานีเข้าเกณฑ์ ไม่ใช่ยืนยันว่าไม่ท่วม (น้ำท่วมขังนอกลำน้ำมองไม่เห็น)`,
+            `🌊 Flood status from ${meta?.stations_total ?? "—"} measured ThaiWater (HII) river gauges · ` +
+              `${covered} provinces meet the threshold (${nFlood} already flooding) · Updated every 3 hrs · ` +
+              `${nNews} news items are context only and never drive the map colour · ` +
+              `Different from the "Flood Risk" layer (computed from rain forecast) — this is water measured on the ground · ` +
+              `Uncoloured provinces = no gauge met the threshold, not a confirmation of no flooding (ponding away from rivers is invisible here)`,
           );
           return;
         }
@@ -5116,7 +5116,7 @@
                               : S.layer === "tmdRain"
                                 ? t("แผนที่พยากรณ์ฝน 48 ชม. ข้างหน้ารายจังหวัด (ละเอียด)", "48h Rain Forecast by Province (Detailed)")
                               : S.layer === "floodExtent"
-                                ? t("แผนที่พื้นที่น้ำท่วมจริงจากดาวเทียม รายจังหวัด", "Satellite-Observed Flood Extent by Province")
+                                ? t("แผนที่สถานะน้ำท่วมรายจังหวัด จากสถานีวัดระดับน้ำ", "Flood Status by Province, from River Gauges")
                               : S.layer === "alerts"
                                 ? t("แผนที่พื้นที่เสี่ยงน้ำท่วมรายจังหวัด", "Agricultural Alert Map by Province")
                                 : S.layer === "soilMoisture"
@@ -5163,8 +5163,8 @@
                                   )
                               : S.layer === "floodExtent"
                                 ? t(
-                                    `พื้นที่น้ำท่วมที่ดาวเทียมเห็นจริง รายตำบล รวมเป็นรายจังหวัด จาก GISTDA · สีเข้ม = ท่วมมาก · เป็นน้ำที่ท่วมอยู่แล้ว ไม่ใช่การคาดการณ์ · ต้นทางไม่ระบุวันถ่ายภาพ`,
-                                    `Satellite-observed flood extent, tambon-level, aggregated by province, from GISTDA · Dark = larger flooded area · Water already on the ground, not a forecast · Upstream gives no capture date`,
+                                    `สถานะน้ำท่วมรายจังหวัด จากสถานีวัดระดับน้ำจริงของ สสน. · แดง = มีสถานีล้นตลิ่งแล้ว · ส้ม = น้ำมากหลายจุด ใกล้ล้นตลิ่ง · เป็นน้ำที่วัดได้จริง ไม่ใช่การคาดการณ์ · ข่าวเป็นบทสรุปประกอบ ไม่มีผลกับสี`,
+                                    `Flood status by province from measured ThaiWater river gauges · Red = a gauge is already overbank · Orange = several gauges high and near overbank · Measured water, not a forecast · News is context and never drives the colour`,
                                   )
                               : S.layer === "alerts"
                                 ? t(
@@ -5255,7 +5255,7 @@
                     : S.layer === "tmdRain"
                       ? `${metaLabel}<br>${t(`TMD · อัปเดต ${fmtDateISO(window.TMD_DATA?._meta?.updated)}`, `TMD · Updated ${fmtDateISO(window.TMD_DATA?._meta?.updated)}`)}`
                     : S.layer === "floodExtent"
-                      ? `${metaLabel}<br>${t(`GISTDA · ดึงเมื่อ ${fmtDateISO(window.FLOOD_DATA?._meta?.updated)}`, `GISTDA · Fetched ${fmtDateISO(window.FLOOD_DATA?._meta?.updated)}`)}`
+                      ? `${metaLabel}<br>${t(`ThaiWater · อัปเดต ${fmtDateISO(window.FLOOD_DATA?._meta?.updated)}`, `ThaiWater · Updated ${fmtDateISO(window.FLOOD_DATA?._meta?.updated)}`)}`
                     : S.layer === "alerts"
                       ? `${metaLabel}<br>${t(`อัปเดต ${fmtDateISO(window.ALERTS_DATA?._meta?.updated)}`, `Updated ${fmtDateISO(window.ALERTS_DATA?._meta?.updated)}`)}`
                       : S.layer === "soilMoisture"
@@ -6544,8 +6544,8 @@
                           )
                       : S.layer === "floodExtent"
                         ? t(
-                            `น้ำท่วมจริงจากดาวเทียม ดึงเมื่อ ${window.FLOOD_DATA?._meta?.updated || ""} — GISTDA`,
-                            `Satellite flood extent fetched ${window.FLOOD_DATA?._meta?.updated || ""} — GISTDA`,
+                            `สถานะน้ำท่วมจากสถานีวัดน้ำ อัปเดต ${window.FLOOD_DATA?._meta?.updated || ""} — ThaiWater (สสน.)`,
+                            `Flood status from river gauges, updated ${window.FLOOD_DATA?._meta?.updated || ""} — ThaiWater (HII)`,
                           )
                       : S.layer === "alerts"
                         ? t(
@@ -6846,41 +6846,47 @@
 <div class="rank">${rank ? `${t("อันดับ", "Rank")} #${rank} / ${total}` : t("ไม่มีข้อมูล", "No data")}</div>
 `;
         }
-        // ── GISTDA observed flood tooltip ────────────────────────────────────
+        // ── Observed flood tooltip (ThaiWater gauges + news) ─────────────────
         if (S.layer === "floodExtent") {
           const fp = window.FLOOD_DATA?.provinces?.[en];
           const rank = currentRank(en);
           const total = getVisibleProvinces().filter((n) => hasLayerValue(n)).length;
           if (!fp)
             return `<div class="th">${t(NM[en] || en, en)}</div><div class="en">${en}</div>
-<div style="color:var(--muted);font-size:11px;margin-top:6px">${t("ไม่พบน้ำท่วมในภาพดาวเทียมชุดล่าสุด", "No flooding in the latest satellite scene")}</div>
-<div style="color:var(--muted);font-size:9px;margin-top:3px;opacity:.8">${t("ไม่ใช่การยืนยันว่าไม่ท่วม — GISTDA เผยแพร่เฉพาะพื้นที่ที่ตรวจพบ", "Not a confirmation of no flooding — GISTDA publishes only detected areas")}</div>`;
-          const rai = fp.flood_rai ?? 0;
-          // อำเภอที่ท่วมหนักสุด 3 อันดับ — เรียงมาจากสคริปต์แล้ว
-          const topAmphoe = Object.entries(fp.amphoe || {}).slice(0, 3);
-          const amphoeRows = topAmphoe
+<div style="color:var(--muted);font-size:11px;margin-top:6px">${t("ไม่มีสถานีวัดน้ำที่เข้าเกณฑ์", "No river gauge meets the threshold")}</div>
+<div style="color:var(--muted);font-size:9px;margin-top:3px;opacity:.8">${t("ไม่ใช่การยืนยันว่าไม่ท่วม — น้ำท่วมขังนอกลำน้ำไม่มีสถานีวัด", "Not a confirmation of no flooding — ponding away from rivers has no gauge")}</div>`;
+          const flooding = fp.severity >= 2;
+          // สถานีเรียงหนักสุดก่อนมาจากสคริปต์แล้ว
+          const stationRows = (fp.stations || [])
+            .slice(0, 3)
             .map(
-              ([name, v]) =>
-                `<div style="display:flex;justify-content:space-between;gap:8px"><span>${t("อ.", "")}${esc(name)}</span><span style="font-family:'IBM Plex Mono'">${fmtNumber(Math.round(v.flood_rai))}</span></div>`,
+              (st) =>
+                `<div style="display:flex;justify-content:space-between;gap:8px"><span>${esc(st.amphoe ? t("อ.", "") + st.amphoe + " · " : "")}${esc(st.river || st.name)}</span><span style="font-family:'IBM Plex Mono';color:${st.level >= 5 ? "#b71c1c" : "#e65100"}">${st.pct != null ? Math.round(st.pct) + "%" : "—"}</span></div>`,
+            )
+            .join("");
+          const newsRows = (fp.news || [])
+            .slice(0, 2)
+            .map(
+              (nw) =>
+                `<div style="margin-top:3px;line-height:1.5">• ${esc(nw.title)}${nw.source ? ` <span style="opacity:.6">— ${esc(nw.source)}</span>` : ""}</div>`,
             )
             .join("");
           return `
 <div class="th">${t(NM[en] || en, en)}</div>
 <div class="en">${en}</div>
-<div class="type">${t("น้ำท่วมจริงจากภาพดาวเทียม · GISTDA", "Satellite-observed flood · GISTDA")}</div>
-<div class="metric-name">${t("พื้นที่น้ำท่วม", "Flooded Area")}</div>
-<div class="value" style="color:#039be5">${fmtNumber(Math.round(rai))} <small style="font-size:12px;color:var(--muted)">${t("ไร่", "rai")}</small></div>
-<div style="font-size:10px;color:var(--muted);margin-top:2px">${fp.tambon_count} ${t("ตำบล ใน", "tambon across")} ${Object.keys(fp.amphoe || {}).length} ${t("อำเภอ", "amphoe")}</div>
+<div class="type">${t("สถานะน้ำท่วม · สถานีวัดน้ำ สสน.", "Flood status · ThaiWater gauges")}</div>
+<div class="metric-name">${t("สถานะ", "Status")}</div>
+<div class="value" style="color:${flooding ? "#b71c1c" : "#e65100"}">${flooding ? t("🔴 ท่วม", "🔴 Flooding") : t("🟠 ใกล้ล้นตลิ่ง", "🟠 Near Overbank")}</div>
+<div style="font-size:10px;color:var(--muted);margin-top:2px">${t("ล้นตลิ่ง", "Overbank")} ${fp.stations_overbank} · ${t("น้ำมาก", "High")} ${fp.stations_high} · ${t("จากทั้งหมด", "of")} ${fp.stations_total} ${t("สถานี", "gauges")}</div>
+${stationRows ? `<div style="font-size:10px;color:var(--text-soft);margin-top:5px;line-height:1.7"><div style="opacity:.7;margin-bottom:2px">${t("สถานีที่น้ำสูงสุด (% ตลิ่ง)", "Highest gauges (% of bank)")}</div>${stationRows}</div>` : ""}
 ${
-  fp.rice_rai != null
-    ? `<div style="margin-top:5px;padding:4px 6px;background:rgba(102,187,106,.10);border:1px solid rgba(102,187,106,.28);border-radius:5px">
-<div style="font-size:10px;color:var(--text-soft)">${t("ในนั้นเป็นนาข้าว <em>ประมาณ</em>", "Of which rice paddy, <em>approx.</em>")}</div>
-<div style="font-size:13px;font-weight:700;color:#66bb6a">~${fmtNumber(Math.round(fp.rice_rai))} ${t("ไร่", "rai")} <span style="font-size:10px;font-weight:400;color:var(--muted)">(${((100 * fp.rice_rai) / rai).toFixed(1)}% ${t("ของพื้นที่ท่วม", "of flooded area")})</span></div>
-<div style="font-size:9px;color:var(--muted);margin-top:2px;line-height:1.5">${t("จาก mask ดาวเทียมของเราเอง — น่าจะต่ำกว่าจริง ไม่ใช่ตัวเลขเคลมชดเชย", "From our own satellite mask — likely an under-estimate, not a compensation figure")}</div>
+  newsRows
+    ? `<div style="margin-top:5px;padding:4px 6px;background:rgba(255,152,0,.10);border:1px solid rgba(255,152,0,.28);border-radius:5px">
+<div style="font-size:10px;color:var(--text-soft);opacity:.8">${t("ข่าวล่าสุด (ประกอบ ไม่มีผลกับสี)", "Recent news (context only, not used for colour)")}</div>
+<div style="font-size:10px;color:var(--text-soft)">${newsRows}</div>
 </div>`
     : ""
 }
-${amphoeRows ? `<div style="font-size:10px;color:var(--text-soft);margin-top:5px;line-height:1.7"><div style="opacity:.7;margin-bottom:2px">${t("อำเภอที่ท่วมมากสุด (ไร่)", "Worst-hit amphoe (rai)")}</div>${amphoeRows}</div>` : ""}
 <div class="rank">${rank ? `${t("อันดับ", "Rank")} #${rank} / ${total}` : t("ไม่มีข้อมูล", "No data")}</div>
 `;
         }
@@ -7152,9 +7158,9 @@ ${warningsHtml}
         }
         if (S.layer === "floodExtent") {
           const fm = window.FLOOD_DATA?._meta;
-          const n = fm?.provinces_affected ?? 0;
-          const rai = fm?.total_flood_rai;
-          refs.yearButtons.innerHTML = `<button class="pill on" data-year="floodExtent">🌊 ${t("พบน้ำท่วม", "Flooding detected")} ${n} ${t("จังหวัด", "provinces")} · ${rai ? fmtNumber(Math.round(rai)) : "—"} ${t("ไร่", "rai")}</button>`;
+          const nFlood = fm?.provinces_flooded ?? 0;
+          const nAll = fm?.provinces_flagged ?? 0;
+          refs.yearButtons.innerHTML = `<button class="pill on" data-year="floodExtent">🌊 ${t("ท่วมแล้ว", "Flooding")} ${nFlood} · ${t("ใกล้ล้นตลิ่ง", "near overbank")} ${Math.max(0, nAll - nFlood)} ${t("จังหวัด", "provinces")}</button>`;
           return;
         }
         if (S.layer === "alerts") {
@@ -7829,7 +7835,7 @@ ${warningsHtml}
         fetchLayerData("rain-gsmap.json", "GSMAP_DATA", "gsmap");
         fetchLayerData("rain-forecast.json", "FORECAST_DATA", "forecast");
         fetchLayerData("tmd-forecast.json", "TMD_DATA", "tmdRain");
-        fetchLayerData("gistda-flood.json", "FLOOD_DATA", "floodExtent");
+        fetchLayerData("flood-status.json", "FLOOD_DATA", "floodExtent");
         fetchLayerData("agri-warnings.json", "ALERTS_DATA", "alerts");
         fetchLayerData("soil-moisture.json", "SOIL_DATA", "soilMoisture", () => {
           if (S.layer === "soilMoisture") rerender();

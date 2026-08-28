@@ -1,9 +1,48 @@
 # Rice Map Handoff
 
-Last updated: 2026-08-25 by Claude Code
+Last updated: 2026-08-28 by Claude Code
 
 ## Log
 
+- 2026-08-28 (Claude): Replaced the GISTDA satellite flood layer with a
+  gauge-based one and removed GISTDA from the repo entirely. The layer key
+  (`floodExtent`), global (`FLOOD_DATA`), and button position are unchanged;
+  only its data source and semantics changed. Why: checked the layer against
+  real news before trusting it and it failed three ways at once — the scene
+  had been stale 3 days (upstream publishes no capture date at all, verified
+  as an upstream property, not our bug), it entirely missed the Nan flash
+  flood that was the biggest flood story of the week (flash floods recede
+  before the next satellite pass), and it coloured Chaiyaphum as flooded while
+  the news there reported a drought emergency. New pipeline:
+  `scripts/fetch_flood_status.py` → `data/flood-status.json`, derived from the
+  `water-level.json` we already fetch (no new API calls), chained as a step
+  inside `update-water-level.yml` rather than its own cron — a separate job
+  would read a staler station file than the one just committed. Colour comes
+  only from measured gauges: severity 2 (flooding) = at least one gauge
+  overbank; severity 1 (near overbank) = 3+ high gauges AND 30%+ of that
+  province's gauges. News (Google News RSS, per-province) is attached as
+  summary text and never drives colour — headlines lie (the Chaiyaphum drought
+  story contains the words "flood"). Measured before shipping: 14/77 provinces
+  flagged, and the Chao Phraya group it produced (Ayutthaya, Lopburi,
+  Suphanburi, Samut Prakan, Bangkok) matches the DDPM warning list issued the
+  day before. A first threshold attempt flagged 47/77 and was rejected as the
+  same "warn everything" failure the rain alerts had just been fixed for.
+  Two real bugs found and fixed during verification: ThaiWater calls Bangkok
+  "Bangkok" while the map uses "Bangkok Metropolis" (it silently never
+  coloured), and ThaiWater ships Myanmar stations that were being aggregated
+  as a province — both fixed by keying on `PROVINCE_TH_EN` instead of the
+  API's `province_en`. Also fixed a pre-existing cosmetic bug this inherited:
+  word-valued formats (`alertLevel`, now `floodLevel`) had the unit appended,
+  reading "เสี่ยงสูง ระดับ"; `embedsUnit()` now suppresses it for both.
+  Removed: `scripts/fetch_gistda_flood.py`, `update-gistda-flood.yml`,
+  `data/gistda-flood.json`, the GEE flooded-rice estimate (it could never be
+  more accurate than the flood extent feeding it), and the now-unused
+  `updatedVerbTh/En` layerMeta option. Layer count stays 21; workflows 19→
+  actually unchanged in count for data purposes (18 write data). Verified
+  in-browser through the real `setLayer` path: 14/14 provinces resolve to map
+  polygons, tooltips/legend/rank/notes correct in both languages, other
+  layers' legends unaffected, console clean. `python
+  scripts/fetch_flood_status.py --selftest` covers the threshold logic.
 - 2026-08-25 (Claude): Stale-check sweep. Fixed one real monitor gap —
   `tmd-forecast.json` (new file below) was never added to
   `scripts/check_data_freshness.py`'s `MAX_AGE_DAYS`, so a silently-broken TMD
