@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "updated": "2026-08-28",
+    "updated": "2026-08-29",
     "method": "7-day rain forecast vs GSMaP satellite actual, matched by exact date window",
     "note": "วัดความแม่นพยากรณ์ฝน 7 วัน เทียบฝนจริงดาวเทียม GSMaP · heavy = ≥120มม. (เตือน 🔴), any = ≥30มม. · จับคู่เฉพาะช่วงวันที่ตรงกันเป๊ะ",
     "heavy_mm": 120,
@@ -10,58 +10,32 @@
     "windows_scored": 15,
     "province_days": 1155,
     "heavy": {
-      "precision": 0.117,
-      "recall": 0.855,
-      "tp": 47,
-      "fp": 353,
+      "precision": 0.105,
+      "recall": 0.833,
+      "tp": 40,
+      "fp": 340,
       "fn": 8
     },
     "heavy_calibrated": {
-      "windows_scored": 14,
-      "province_days": 1078,
-      "precision": 0.19,
-      "recall": 0.702,
+      "windows_scored": 15,
+      "province_days": 1155,
+      "precision": 0.185,
+      "recall": 0.688,
       "tp": 33,
-      "fp": 141,
-      "fn": 14
+      "fp": 145,
+      "fn": 15
     },
     "any": {
-      "accuracy": 0.535,
-      "tp": 533,
-      "tn": 85,
-      "fp": 527,
-      "fn": 10
+      "accuracy": 0.51,
+      "tp": 499,
+      "tn": 90,
+      "fp": 555,
+      "fn": 11
     },
-    "mae_mm": 67.2,
-    "bias_mm": 62.2
+    "mae_mm": 66.8,
+    "bias_mm": 62.5
   },
   "recent": [
-    {
-      "province_days": 77,
-      "heavy": {
-        "tp": 6,
-        "fp": 20,
-        "fn": 0,
-        "tn": 51
-      },
-      "any": {
-        "tp": 30,
-        "fp": 39,
-        "fn": 0,
-        "tn": 8
-      },
-      "mae_mm": 64.5,
-      "bias_mm": 61.2,
-      "heavy_cal": {
-        "tp": 5,
-        "fp": 8,
-        "fn": 1,
-        "tn": 63
-      },
-      "bias_applied": 46.6,
-      "window_end": "2026-08-13",
-      "window": "2026-08-07,2026-08-08,2026-08-09,2026-08-10,2026-08-11,2026-08-12,2026-08-13"
-    },
     {
       "province_days": 77,
       "heavy": {
@@ -399,93 +373,35 @@
       "bias_applied": 58.3,
       "window_end": "2026-08-26",
       "window": "2026-08-20,2026-08-21,2026-08-22,2026-08-23,2026-08-24,2026-08-25,2026-08-26"
+    },
+    {
+      "province_days": 77,
+      "heavy": {
+        "tp": 1,
+        "fp": 13,
+        "fn": 0,
+        "tn": 63
+      },
+      "any": {
+        "tp": 7,
+        "fp": 59,
+        "fn": 1,
+        "tn": 10
+      },
+      "mae_mm": 65.8,
+      "bias_mm": 65.7,
+      "heavy_cal": {
+        "tp": 0,
+        "fp": 4,
+        "fn": 1,
+        "tn": 72
+      },
+      "bias_applied": 60.2,
+      "window_end": "2026-08-27",
+      "window": "2026-08-21,2026-08-22,2026-08-23,2026-08-24,2026-08-25,2026-08-26,2026-08-27"
     }
   ],
   "_pending": [
-    {
-      "snapped": "2026-08-21",
-      "window": "2026-08-21,2026-08-22,2026-08-23,2026-08-24,2026-08-25,2026-08-26,2026-08-27",
-      "fc": {
-        "Amnat Charoen": 69.5,
-        "Ang Thong": 26.9,
-        "Bangkok Metropolis": 38.8,
-        "Bueng Kan": 130.7,
-        "Buri Ram": 34.9,
-        "Chachoengsao": 91.5,
-        "Chai Nat": 22.7,
-        "Chaiyaphum": 72.5,
-        "Chanthaburi": 176.5,
-        "Chiang Mai": 64.5,
-        "Chiang Rai": 70.5,
-        "Chon Buri": 38.6,
-        "Chumphon": 97.7,
-        "Kalasin": 69.0,
-        "Kamphaeng Phet": 122.5,
-        "Kanchanaburi": 312.7,
-        "Khon Kaen": 33.9,
-        "Krabi": 65.3,
-        "Lampang": 102.8,
-        "Lamphun": 37.5,
-        "Loei": 26.5,
-        "Lop Buri": 50.9,
-        "Mae Hong Son": 269.1,
-        "Maha Sarakham": 20.1,
-        "Mukdahan": 58.4,
-        "Nakhon Nayok": 119.4,
-        "Nakhon Pathom": 23.3,
-        "Nakhon Phanom": 159.3,
-        "Nakhon Ratchasima": 37.4,
-        "Nakhon Sawan": 69.0,
-        "Nakhon Si Thammarat": 51.9,
-        "Nan": 103.1,
-        "Narathiwat": 53.3,
-        "Nong Bua Lam Phu": 27.9,
-        "Nong Khai": 64.4,
-        "Nonthaburi": 32.6,
-        "Pathum Thani": 42.0,
-        "Pattani": 40.5,
-        "Phangnga": 138.8,
-        "Phatthalung": 26.4,
-        "Phayao": 76.3,
-        "Phetchabun": 100.2,
-        "Phetchaburi": 179.4,
-        "Phichit": 88.6,
-        "Phitsanulok": 147.6,
-        "Phra Nakhon Si Ayutthaya": 37.6,
-        "Phrae": 105.8,
-        "Phuket": 59.0,
-        "Prachin Buri": 150.4,
-        "Prachuap Khiri Khan": 88.4,
-        "Ranong": 129.1,
-        "Ratchaburi": 115.6,
-        "Rayong": 47.4,
-        "Roi Et": 37.2,
-        "Sa Kaeo": 102.1,
-        "Sakon Nakhon": 77.8,
-        "Samut Prakan": 35.6,
-        "Samut Sakhon": 26.6,
-        "Samut Songkhram": 36.9,
-        "Saraburi": 75.8,
-        "Satun": 30.3,
-        "Si Sa Ket": 55.8,
-        "Sing Buri": 21.9,
-        "Songkhla": 26.3,
-        "Sukhothai": 56.5,
-        "Suphan Buri": 37.3,
-        "Surat Thani": 61.5,
-        "Surin": 47.0,
-        "Tak": 202.4,
-        "Trang": 66.6,
-        "Trat": 222.6,
-        "Ubon Ratchathani": 80.9,
-        "Udon Thani": 63.3,
-        "Uthai Thani": 147.0,
-        "Uttaradit": 103.7,
-        "Yala": 28.2,
-        "Yasothon": 56.1
-      },
-      "bias": 60.2
-    },
     {
       "snapped": "2026-08-22",
       "window": "2026-08-22,2026-08-23,2026-08-24,2026-08-25,2026-08-26,2026-08-27,2026-08-28",
