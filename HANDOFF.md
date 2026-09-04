@@ -1,9 +1,41 @@
 # Rice Map Handoff
 
-Last updated: 2026-08-28 by Claude Code
+Last updated: 2026-09-04 by Claude Code
 
 ## Log
 
+- 2026-09-04 (Claude): Fixed the flood-risk alert layer, which had been warning
+  all 77 provinces every day. Root cause was not the relative-threshold design
+  added on 20 Aug but its multipliers: the lowest tier fired at 0.5x a
+  province's normal weekly rain, i.e. BELOW normal, so in the wet season almost
+  everything qualified. Measured over 14 days of real data (21 Aug - 3 Sep):
+  "normal" averaged 1.9 provinces/day out of 77 and "high risk" 29.6/day. Swept
+  six candidate multiplier sets against that history and against the DDPM
+  bulletin of 3 Sep (55 provinces warned for 4-7 Sep, from a newspaper clipping
+  the owner supplied) and picked 1.5/2.0/3.0 because it wins on both principle
+  (an alert should fire above normal, not below) and measurement: "normal"
+  returns to 20 provinces, "high risk" drops to 14, and precision against the
+  DDPM list rises 71% -> 84% at the watch level, with the layer flagging 57
+  provinces where DDPM itself named 55. Recall falls 100% -> 87%, which is the
+  point: the old 100% came from warning everyone.
+  The change surfaced two bugs that were invisible while "normal" never fired:
+  the normal card reported the fixed fallback threshold instead of the
+  province's own, and — more seriously — the map showed "normal, no risk" for
+  provinces our own gauge layer said were flooding (Uthai Thani on 4 Sep:
+  forecast 82mm under its 89mm threshold, but a gauge already overbank, because
+  rivers rise from upstream rain). `fetch_agri_warnings.py` now reads the
+  existing `flood-status.json` (no new API call) and floors those provinces,
+  citing the gauges in the message. The script's `_selftest` went red on its
+  own when the constants changed — it had been asserting against the fallback
+  constants rather than the thresholds passed in; it now takes explicit
+  thresholds and additionally asserts `NORMAL_MULT_LOW > 1.0` so this specific
+  bug cannot come back silently.
+  Housekeeping: this worktree had been parked on `claude/busy-lewin-54da15` at
+  an old commit with 10 commits not on main. Their content (dam layer, water
+  level, language toggle, etc.) was verified already present on main — merged
+  by another route, so the SHAs differ. Rather than reset that branch, work
+  moved to a fresh `fix/alert-thresholds` branch cut from origin/main, leaving
+  the old branch intact.
 - 2026-08-28 (Claude, follow-ups 3): Removed the `tmdRain` layer entirely (21 →
   20 layers, 19 → 18 workflows) after measuring it against the layer sitting
   next to it. It was not merely redundant, it actively contradicted: over the

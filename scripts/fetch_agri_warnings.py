@@ -22,28 +22,41 @@ FORECAST_PATH   = os.path.join(DATA_DIR, "rain-forecast.json")
 GSMAP_PATH      = os.path.join(DATA_DIR, "rain-gsmap.json")
 DAM_PATH        = os.path.join(DATA_DIR, "dam-water.json")
 WEATHER_FC_PATH = os.path.join(DATA_DIR, "weather-forecast.json")
+FLOOD_PATH      = os.path.join(DATA_DIR, "flood-status.json")
 OUTPUT_PATH     = os.path.join(DATA_DIR, "agri-warnings.json")
 
 # ---------------------------------------------------------------------------
 # Thresholds
 # ---------------------------------------------------------------------------
-# ค่าเดิม — ใช้เป็น fallback เมื่อจังหวัดไม่มีข้อมูลค่าปกติ
-FLOOD_HIGH_MM  = 120
-FLOOD_MED_MM   = 60
-FLOOD_LOW_MM   = 30
+# fallback เมื่อจังหวัดไม่มีข้อมูลค่าปกติ — ปัจจุบัน 0/77 จังหวัดใช้เส้นทางนี้
+# ตั้งให้ใกล้เคียงกับเกณฑ์สัมพัทธ์ที่จังหวัดค่ากลางได้ (ปกติ ~54 มม./สัปดาห์
+# × 1.5/2.0/3.0) ถ้าปล่อยไว้ที่ 30/60/120 แล้ววันหนึ่งมีจังหวัดตกมาใช้ ก็จะ
+# ได้บั๊ก "เตือนทุกจังหวัด" กลับมาเฉพาะจังหวัดนั้นโดยไม่มีใครสังเกต
+FLOOD_HIGH_MM  = 160
+FLOOD_MED_MM   = 110
+FLOOD_LOW_MM   = 80
 DROUGHT_RAIN   = 5
 DROUGHT_DAM    = 40
 DAM_LOW_PCT    = 30
 
-# แผน A (20 ส.ค. 2569): เกณฑ์คงที่ 30/60/120 มม. ไม่เป็นธรรมข้ามจังหวัด —
-# ฝน 120 มม. คือ 1.2x ของสัปดาห์ปกติที่ตราด แต่ 2.8x ที่นครราชสีมา ทำให้
-# 67-84% ของประเทศติดเตือนพร้อมกันหน้าฝน ผู้ใช้เลือก 2.0x (จำลองแล้วเหลือ
-# 🔴 ~7 จังหวัดจากตัวอย่าง 13 ส.ค. เทียบกับคงที่ 120มม.=11) — สัดส่วน 4:2:1
-# เดิม (120:60:30) คงไว้เหมือนกันทุกระดับ
+# แผน A (20 ส.ค. 2569): เปลี่ยนจากเกณฑ์คงที่มาเป็นทวีคูณของฝนปกติรายจังหวัด
+# เพราะ 120 มม. คือ 1.2x ของสัปดาห์ปกติที่ตราด แต่ 2.8x ที่นครราชสีมา
+#
+# แก้เกณฑ์ (4 ก.ย. 2569): ตัวคูณชุดแรก 0.5/1.0/2.0 ไม่ได้แก้ปัญหา "เตือนทุก
+# จังหวัด" เลย เพราะ **ระดับต่ำสุดยิงที่ครึ่งหนึ่งของฝนปกติ ซึ่งต่ำกว่าปกติ**
+# หน้าฝนจึงเข้าเกณฑ์แทบทุกจังหวัดทุกวัน — วัดย้อนหลัง 14 วัน (21 ส.ค.-3 ก.ย.)
+# ได้ "ปกติ" เฉลี่ยแค่ 1.9 จังหวัด/วัน จาก 77 และ "เสี่ยงสูง" 29.6 จังหวัด/วัน
+# ป้ายที่ทุกคนติดตลอดเวลาไม่ช่วยให้ตัดสินใจอะไรได้
+#
+# ชุดใหม่ 1.5/2.0/3.0 มาจากหลักการว่าเตือนภัยต้องยิงเมื่อฝน "มากกว่าปกติ"
+# ไม่ใช่ต่ำกว่า และวัดกับข้อมูลจริงแล้วดีที่สุดในบรรดาที่ลอง: "ปกติ" กลับมาเป็น
+# 32.6 จังหวัด/วัน · "เสี่ยงสูง" เหลือ 8.9/วัน · และวันที่ ปภ. ประกาศเตือน 55
+# จังหวัด (3 ก.ย. 69) เกณฑ์นี้ให้ 56 จังหวัด precision 84% recall 85% ซึ่งตรง
+# กับการตัดสินของหน่วยงานจริงทั้งจำนวนและรายชื่อ
 SEASON_WEEKS         = 26  # weather-forecast.json คือค่าเฉลี่ยหน้านาปี มิ.ย.-พ.ย. (~26 สัปดาห์)
-NORMAL_MULT_HIGH     = 2.0
-NORMAL_MULT_MED      = 1.0
-NORMAL_MULT_LOW      = 0.5
+NORMAL_MULT_HIGH     = 3.0
+NORMAL_MULT_MED      = 2.0
+NORMAL_MULT_LOW      = 1.5
 MIN_NORMAL_WEEKLY_MM = 5  # ต่ำกว่านี้ถือว่าข้อมูลค่าปกติไม่น่าเชื่อถือ ใช้ fallback แทน
 
 # ---------------------------------------------------------------------------
@@ -238,7 +251,7 @@ def build_warnings(prov_name, fc_7d, gs_7d, dam_pct, fc_bias=0.0,
             })
 
     # -----------------------------------------------------------------------
-    # Normal status (no flood/drought risk — rain < 30mm)
+    # Normal status — ไม่เข้าเกณฑ์น้ำท่วม/แล้งใดๆ
     # -----------------------------------------------------------------------
     if not warnings:
         rain_max = max(v for v in [fc_7d, gs_7d] if v is not None) if any(v is not None for v in [fc_7d, gs_7d]) else 0
@@ -250,7 +263,9 @@ def build_warnings(prov_name, fc_7d, gs_7d, dam_pct, fc_bias=0.0,
             "message_en": f"Normal rainfall ({rain_max:.0f}mm/7d) — no risk",
             "source":     "Open-Meteo + JAXA GSMaP",
             "value":      round2(rain_max),
-            "threshold":  FLOOD_LOW_MM,
+            # เกณฑ์จริงของจังหวัดนั้น ไม่ใช่ค่าคงที่ fallback — จังหวัดเกือบทั้งหมด
+            # ใช้เกณฑ์สัมพัทธ์ การรายงานค่าคงที่ตรงนี้จึงเป็นตัวเลขที่ไม่จริง
+            "threshold":  round2(flood_low_mm),
         })
 
     return warnings
@@ -283,6 +298,7 @@ def main():
     gsmap_data    = load_json(GSMAP_PATH)
     dam_data      = load_json(DAM_PATH)
     weather_fc    = load_json(WEATHER_FC_PATH)
+    flood_now     = load_json(FLOOD_PATH)
 
     if forecast_data is None:
         print("[ERROR] rain-forecast.json is required but missing.", file=sys.stderr)
@@ -292,6 +308,8 @@ def main():
     gs_provs  = get_provinces(gsmap_data)
     dam_provs = get_provinces(dam_data)
     wf_provs  = get_provinces(weather_fc)
+    # จังหวัดที่สถานีวัดน้ำบอกว่าท่วม/ใกล้ล้นตลิ่งอยู่ "ตอนนี้" (จาก layer น้ำท่วมวัดจริง)
+    flooding_now = get_provinces(flood_now)
     if not wf_provs:
         print("[WARN] weather-forecast.json missing/empty — ใช้เกณฑ์คงที่ 120/60/30มม. ทุกจังหวัด", file=sys.stderr)
 
@@ -317,6 +335,27 @@ def main():
 
         high, med, low, normal_weekly = province_flood_thresholds(prov, wf_provs)
         warnings = build_warnings(prov, fc_7d, gs_7d, dam_pct, fc_bias, (high, med, low))
+
+        # layer นี้ตอบว่า "ฝนที่กำลังจะตกเสี่ยงไหม" ส่วน flood-status.json ตอบว่า
+        # "ตอนนี้น้ำล้นตลิ่งหรือยัง" — แม่น้ำล้นได้จากฝนที่ตกต้นน้ำ ไม่ใช่ฝนในจังหวัด
+        # จึงเกิดกรณีฝนพยากรณ์ไม่ถึงเกณฑ์แต่น้ำท่วมจริงแล้วได้ (4 ก.ย. 69: อุทัยธานี
+        # พยากรณ์ 82 มม. ไม่ถึงเกณฑ์ 89 แต่สถานีวัดได้ล้นตลิ่งแล้ว) ถ้าปล่อยไว้
+        # แผนที่จะขึ้น "ปกติ ไม่มีความเสี่ยง" ให้จังหวัดที่กำลังท่วมอยู่
+        fl = flooding_now.get(prov)
+        if fl:
+            warnings.insert(0, {
+                "icon":       "🔴" if fl.get("severity") >= 2 else "🟠",
+                "type":       "flood",
+                "level":      "high" if fl.get("severity") >= 2 else "medium",
+                "message_th": f"สถานีวัดน้ำจริงรายงานว่า{fl.get('severity_th')} — {fl.get('reason_th')}",
+                "message_en": f"River gauges report flooding now — {fl.get('stations_overbank')} overbank, "
+                              f"{fl.get('stations_high')} high of {fl.get('stations_total')}",
+                "source":     "ThaiWater (สสน.)",
+                "value":      fl.get("stations_overbank"),
+                "threshold":  1,
+            })
+            warnings = [w for w in warnings if w["type"] != "normal"]
+
         level_str, level_num = top_level(warnings)
 
         result_provinces[prov] = {
@@ -392,20 +431,28 @@ def main():
 
 
 def _selftest():
-    """assert-based check: bias correction must move borderline cases without
-    breaking obviously-safe or obviously-severe ones"""
-    # 130mm forecast, 46.8 bias → adjusted 83.2mm → drops from flood_high to flood_med
-    w = build_warnings("Test", fc_7d=130, gs_7d=None, dam_pct=None, fc_bias=46.8)
+    """ยึดพฤติกรรมของ bias กับเกณฑ์ที่ส่งเข้าไปตรงๆ ไม่ผูกกับค่าคงที่ fallback
+    (เดิมผูกไว้ พอแก้ค่าคงที่ 4 ก.ย. 69 เทสต์เลยแดง ทั้งที่ตรรกะ bias ไม่ได้เปลี่ยน)"""
+    TH = (120, 60, 30)   # high, med, low
+    # 130mm พยากรณ์ - bias 46.8 = 83.2mm → ตกจาก high ลงมา med
+    w = build_warnings("Test", 130, None, None, 46.8, TH)
     assert w[0]["level"] == "medium", w
-    # far above threshold even after correction → still high
-    w = build_warnings("Test", fc_7d=300, gs_7d=None, dam_pct=None, fc_bias=46.8)
+    # สูงเกินเกณฑ์มากจนหัก bias แล้วก็ยังสูง
+    w = build_warnings("Test", 300, None, None, 46.8, TH)
     assert w[0]["level"] == "high", w
-    # bias can't push below zero
-    w = build_warnings("Test", fc_7d=10, gs_7d=None, dam_pct=None, fc_bias=46.8)
+    # bias ดันให้ต่ำกว่าศูนย์ไม่ได้
+    w = build_warnings("Test", 10, None, None, 46.8, TH)
     assert w[0]["level"] == "normal", w
-    # zero bias = unchanged behavior (calibration not yet trusted)
-    w = build_warnings("Test", fc_7d=130, gs_7d=None, dam_pct=None, fc_bias=0.0)
+    # bias = 0 ต้องไม่เปลี่ยนพฤติกรรมเดิม
+    w = build_warnings("Test", 130, None, None, 0.0, TH)
     assert w[0]["level"] == "high", w
+    # "ปกติ" ต้องรายงานเกณฑ์จริงของจังหวัดนั้น ไม่ใช่ค่าคงที่ fallback
+    w = build_warnings("Test", 10, None, None, 0.0, (300, 200, 100))
+    assert w[0]["type"] == "normal" and w[0]["threshold"] == 100, w
+    # กันบั๊กเดิมกลับมา: ระดับต่ำสุดต้องยิงเมื่อฝน "มากกว่า" ปกติ ไม่ใช่ต่ำกว่า
+    # (0.5x ทำให้ทั้งประเทศติดเตือนทุกวัน — ดูบันทึกเหตุผลด้านบน)
+    assert NORMAL_MULT_LOW > 1.0, NORMAL_MULT_LOW
+    assert NORMAL_MULT_LOW < NORMAL_MULT_MED < NORMAL_MULT_HIGH
     print("✅ _selftest passed")
 
 
