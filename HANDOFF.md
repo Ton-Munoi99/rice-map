@@ -30,6 +30,19 @@ Last updated: 2026-09-04 by Claude Code
   constants rather than the thresholds passed in; it now takes explicit
   thresholds and additionally asserts `NORMAL_MULT_LOW > 1.0` so this specific
   bug cannot come back silently.
+  A re-check pass afterwards found a third latent bug the same way: the flood
+  risk detail card guards on `level !== "none"` but the normal level is
+  `"normal"`, so it renders for those provinces — and contradicted itself three
+  ways in one card (status badge "Watch", warning heading "Low dam level" from
+  a ternary with no `normal` branch, red alert tint) while its own body read
+  "normal rainfall, no risk". Invisible while nothing was ever normal; now on
+  15-20 provinces a day. Fixed to a green ✅ "Normal" card, which also repaired
+  a pre-existing English bug where the warning heading fell back to the raw
+  type word ("dam"). A/B timed the layer sweep against origin/main to be sure
+  the shared detail-card edit cost nothing: 1577ms vs 1564ms across ten layers
+  including the 4,412-marker station layer. (An earlier apparent hang was an
+  exhausted tab from repeated reload/toggle loops, not the code — a fresh tab
+  reproduced neither.)
   Housekeeping: this worktree had been parked on `claude/busy-lewin-54da15` at
   an old commit with 10 commits not on main. Their content (dam layer, water
   level, language toggle, etc.) was verified already present on main — merged

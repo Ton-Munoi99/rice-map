@@ -6048,6 +6048,7 @@
         let alertsHtml = "";
         const alertsProv = window.ALERTS_DATA?.provinces?.[en];
         if (alertsProv && alertsProv.level !== "none") {
+          const alertsOk = alertsProv.level === "normal";
           const levelColor =
             alertsProv.level === "high"
               ? "#c62828"
@@ -6055,19 +6056,30 @@
                 ? "#e65100"
                 : alertsProv.level === "drought"
                   ? "#00838f"
-                  : "#f9a825";
+                  : alertsOk
+                    ? "#66bb6a"
+                    : "#f9a825";
           const warningItems = (alertsProv.warnings || [])
             .map(
               (w) =>
                 `<div style="margin-top:6px;padding:4px 8px;background:rgba(255,255,255,.06);border-radius:5px;font-size:10px;line-height:1.5">
-            ${w.icon} <strong style="color:${levelColor}">${t(w.type === "flood" ? "เสี่ยงน้ำท่วม" : w.type === "drought" ? "เสี่ยงแล้ง" : "เขื่อนน้ำน้อย", w.type)}</strong><br>
+            ${w.icon} <strong style="color:${levelColor}">${
+              w.type === "flood"
+                ? t("เสี่ยงน้ำท่วม", "Flood risk")
+                : w.type === "drought"
+                  ? t("เสี่ยงแล้ง", "Drought risk")
+                  : w.type === "dam"
+                    ? t("เขื่อนน้ำน้อย", "Low dam level")
+                    : t("ปกติ", "Normal")
+            }</strong><br>
             <span style="color:var(--muted)">${t(w.message_th, w.message_en)}</span>
           </div>`,
             )
             .join("");
-          alertsHtml = `<div class="rice-card" style="grid-column:1/-1;background:rgba(198,40,40,.07);border:1px solid rgba(198,40,40,.25)">
-          <div class="t">🚨 ${t("พื้นที่เสี่ยงน้ำท่วม", "Flood Risk Areas")}</div>
-          <div class="metric"><span class="val" style="color:${levelColor}">${alertsProv.level === "high" ? t("เสี่ยงสูง", "High Risk") : alertsProv.level === "medium" ? t("เสี่ยงปานกลาง", "Medium Risk") : alertsProv.level === "drought" ? t("เสี่ยงแล้ง", "Drought Risk") : t("เฝ้าระวัง", "Watch")}</span></div>
+          const alertsTint = alertsOk ? "102,187,106" : "198,40,40";
+          alertsHtml = `<div class="rice-card" style="grid-column:1/-1;background:rgba(${alertsTint},.07);border:1px solid rgba(${alertsTint},.25)">
+          <div class="t">${alertsOk ? "✅" : "🚨"} ${t("พื้นที่เสี่ยงน้ำท่วม", "Flood Risk Areas")}</div>
+          <div class="metric"><span class="val" style="color:${levelColor}">${alertsProv.level === "high" ? t("เสี่ยงสูง", "High Risk") : alertsProv.level === "medium" ? t("เสี่ยงปานกลาง", "Medium Risk") : alertsProv.level === "drought" ? t("เสี่ยงแล้ง", "Drought Risk") : alertsOk ? t("ปกติ", "Normal") : t("เฝ้าระวัง", "Watch")}</span></div>
           ${warningItems}
           <div style="font-size:9px;color:var(--muted);margin-top:8px">${t(`ที่มา: ${(window.ALERTS_DATA?._meta?.sources || []).join(" + ")} · อัปเดต ${fmtDateISO(window.ALERTS_DATA?._meta?.updated)}`, `Source: ${(window.ALERTS_DATA?._meta?.sources || []).join(" + ")} · Updated ${fmtDateISO(window.ALERTS_DATA?._meta?.updated)}`)}</div>
         </div>`;
