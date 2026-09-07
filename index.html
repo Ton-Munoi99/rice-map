@@ -2079,14 +2079,10 @@
                 <span class="th-t">🚨 พื้นที่เสี่ยงน้ำท่วม</span>
                 <span class="en-t">🚨 Flood Risk Areas</span>
               </button>
-              <button class="pill" data-layer="soilMoisture" onclick="setLayer('soilMoisture')">
-                <span class="th-t">💧 ความชื้นในดิน (SMAP)</span>
-                <span class="en-t">💧 Soil Moisture (SMAP)</span>
-              </button>
-              <button class="pill" data-layer="riceEvi" onclick="setLayer('riceEvi')">
-                <span class="th-t">🌾 สภาพนาข้าว</span>
-                <span class="en-t">🌾 Rice Paddy Status</span>
-              </button>
+              <!-- soilMoisture / riceEvi ถอดปุ่มออกจากรายการ (4 ก.ย. 69) แต่ layer ยังอยู่ครบ:
+                   ข้อมูล cron, layerMeta, valueFn, palette, tooltip, การ์ดรายละเอียดจังหวัด
+                   และ deep link #layer=soilMoisture / #layer=riceEvi ยังใช้ได้เหมือนเดิม
+                   ห้ามไล่ลบโค้ดที่ดู "ไม่มีใครเรียก" เพราะการ์ดในหน้ารายละเอียดใช้อยู่ -->
             </div>
           </section>
 

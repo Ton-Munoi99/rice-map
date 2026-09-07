@@ -318,10 +318,20 @@ new requirements or measurements.
 
 ### Hidden map layers: keep supporting code
 
-The buttons for `profit`, `rainfall`, `drought`, `ndvi`, and `rain` are intentionally
-absent. Their commented HTML was removed. Do not broadly delete their JavaScript:
-weather and NDVI data are also consumed by visible province details and district
-drill-down. A safe removal requires a product decision to retire those visible cards.
+`soilMoisture` and `riceEvi` had their layer buttons removed on 4 Sep 2026 at the
+owner's request — explicitly "remove the entry, do not delete it". Everything else
+about them is intact and must stay: the cron pipelines, `layerMeta`, `valueFn`,
+palette, tooltips, the province-detail cards (both render for every province on
+every layer), and `#layer=soilMoisture` / `#layer=riceEvi` deep links, which were
+verified still working. `index.html` carries a comment at the removal site saying
+the same thing.
+
+Historically the buttons for `rainfall`, `drought`, `ndvi`, and `rain` were also
+absent; those layers have since been deleted outright, and `profit` was given a
+button. The standing rule that produced this section still holds: **do not delete
+a layer's JavaScript because no button references it** — province details and
+district drill-down consume the same data. A safe removal requires a product
+decision to retire the visible cards too.
 
 ### Data loaders: consolidated
 
