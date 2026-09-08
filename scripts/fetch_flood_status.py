@@ -40,6 +40,7 @@ from riceutils import PROVINCE_TH_EN, bkk_today
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 WATER_LEVEL = "data/water-level.json"
+HISTORY = "data/water-level-history.json"
 OUTPUT = "data/flood-status.json"
 
 # ── เกณฑ์ตัดสินสี (จากสถานีวัดจริงเท่านั้น) ────────────────────────────────
@@ -47,6 +48,24 @@ OVERBANK_LEVEL = 5      # ล้นตลิ่ง
 HIGH_LEVEL = 4          # น้ำมาก (ยังไม่ล้น)
 HIGH_MIN_COUNT = 3      # ต้องมีหลายจุด ไม่ใช่สถานีเดียวโดดๆ
 HIGH_MIN_SHARE = 0.30   # และต้องเป็นสัดส่วนมีนัยของสถานีในจังหวัดนั้น
+
+# ── น้ำขึ้นเร็วผิดปกติที่สถานีเดียว (เพิ่ม 8 ก.ย. 69) ──────────────────────
+# เกณฑ์ "หลายจุด + สัดส่วน" ข้างบนออกแบบมาสำหรับน้ำท่วมทั้งลุ่มน้ำ และมองไม่เห็น
+# เหตุการณ์แม่น้ำสายเดียว/อำเภอเดียวโดยโครงสร้าง — 7 ก.ย. 69 แม่น้ำสายที่ อ.แม่สาย
+# ขึ้นจาก 48% เป็น 90.5% ของตลิ่ง (เหลือ 0.46 ม.) จนน้ำล้นแนวกำแพงเป็นข่าวหน้าหนึ่ง
+# แต่เชียงรายมี 29 สถานี ติดระดับ 4 แค่ 1-2 จุด จึงตกทั้งสองเงื่อนไข ไม่ขึ้นสีเลย
+#
+# เทียบกับ "ยอดสูงสุดของช่วงก่อนหน้า" ไม่ใช่ค่าล่าสุด เพราะสถานีปากแม่น้ำ/ประตู
+# ระบายน้ำแกว่งตามน้ำขึ้นน้ำลงทุกวัน (เช่น ปตร.คลองลัดบางยอ 10% → 94% ทุกวัน)
+# ถ้าวัดจากค่าล่าสุดมันจะติดทุกวันไม่มีวันหยุด แต่พอเทียบกับยอดเดิมของตัวเอง
+# มันขึ้นไม่เกินยอดเดิมจึงไม่ติด ส่วนแม่น้ำที่น้ำมาจริงจะทำยอดใหม่
+#
+# วัดกับข้อมูลจริง 10 วัน: เกณฑ์นี้เพิ่มเฉลี่ย 1.0 จังหวัด/วัน (เทียบกับกฎ
+# "สถานีเดี่ยว ≥90%" ที่เพิ่ม 10.7 จังหวัด/วันและติดจังหวัดเดิมซ้ำทุกวัน)
+# และจับแม่สาย 7 ก.ย. ได้ถูกต้อง โดยไม่มีสถานีน้ำขึ้นน้ำลงหลุดเข้ามาเลย
+SURGE_MIN_PCT = 70      # ต้องใกล้ตลิ่งจริงตอนนี้
+SURGE_MIN_JUMP = 20     # และสูงกว่ายอดเดิมของตัวเองในช่วง ~48 ชม. เท่านี้ (จุด %)
+HISTORY_KEEP = 16       # เก็บย้อนหลังกี่ค่า (cron ทุก 3 ชม. → ~48 ชม.)
 
 # ── ข่าว (บทสรุปเท่านั้น ไม่มีผลกับสี) ─────────────────────────────────────
 # ถามแยกรายจังหวัด ไม่ใช่ query รวม: query รวม "น้ำท่วม" ดึงข่าวต่างประเทศ
@@ -82,12 +101,22 @@ def strip_source_suffix(title, source):
     return title.strip()
 
 
-def station_severity(o, h, n):
+def station_key(s):
+    """คีย์ประจำสถานี — **ห้ามใช้ฟิลด์ id** ThaiWater เปลี่ยน id ทุกครั้งที่ดึง
+    (มันคือ id ของค่าที่อ่าน ไม่ใช่ของสถานี) ไล่ตามสถานีข้ามเวลาด้วย id จะไม่เจอ
+    อะไรเลยแบบเงียบๆ"""
+    return f"{s.get('province_th')}|{s.get('amphoe_th')}|{s.get('name_th')}"
+
+
+def station_severity(o, h, n, surge=None):
     """คืน (ระดับ, เหตุผล) — ตัดสินจากสถานีวัดจริงล้วน"""
     if o >= 1:
         return 2, f"มีสถานีล้นตลิ่ง {o} จุด"
     if h >= HIGH_MIN_COUNT and n and h / n >= HIGH_MIN_SHARE:
         return 1, f"สถานีน้ำมาก {h} จุด จาก {n} สถานี ({100 * h / n:.0f}%)"
+    if surge:
+        return 1, (f"น้ำขึ้นเร็วผิดปกติที่ {surge['name']} — "
+                   f"{surge['was']:.0f}% → {surge['now']:.0f}% ของตลิ่ง")
     return 0, ""
 
 
@@ -135,6 +164,31 @@ def main():
         print("[ERROR] water-level.json ไม่มีสถานีเลย", file=sys.stderr)
         sys.exit(1)
 
+    # ประวัติ %ตลิ่งย้อนหลัง ~48 ชม. — ใช้หา "ยอดเดิม" ของแต่ละสถานี
+    # ไฟล์หายหรือพังไม่เป็นไร รอบนี้แค่ไม่มี surge แล้วสร้างใหม่
+    try:
+        history = json.load(open(HISTORY, encoding="utf-8")).get("stations") or {}
+    except Exception:
+        history = {}
+        print(f"[WARN] อ่าน {HISTORY} ไม่ได้ — รอบนี้ข้ามการตรวจน้ำขึ้นเร็ว", file=sys.stderr)
+
+    surges, new_history = {}, {}
+    for s in stations:
+        pct = s.get("pct")
+        if pct is None:
+            continue
+        k = station_key(s)
+        past = history.get(k) or []
+        if pct >= SURGE_MIN_PCT and past and pct - max(past) >= SURGE_MIN_JUMP:
+            en_s = PROVINCE_TH_EN.get(s.get("province_th"))
+            cand = {"name": s.get("name_th") or "", "amphoe": s.get("amphoe_th") or "",
+                    "was": max(past), "now": pct, "dt": s.get("dt") or ""}
+            # จังหวัดหนึ่งเอาจุดที่ขึ้นแรงสุดจุดเดียวพอ
+            if en_s and (en_s not in surges or cand["now"] - cand["was"] >
+                         surges[en_s]["now"] - surges[en_s]["was"]):
+                surges[en_s] = cand
+        new_history[k] = (past + [round(pct, 1)])[-HISTORY_KEEP:]
+
     agg = defaultdict(lambda: {"o": 0, "h": 0, "n": 0, "th": "", "worst": []})
     for s in stations:
         # ใช้ชื่ออังกฤษจากตารางกลาง ไม่ใช่ province_en ของ API: API เรียก กทม. ว่า
@@ -164,8 +218,9 @@ def main():
 
     flagged = {}
     for en, a in agg.items():
-        sev, why = station_severity(a["o"], a["h"], a["n"])
+        sev, why = station_severity(a["o"], a["h"], a["n"], surges.get(en))
         if sev:
+            a["surge"] = surges.get(en)
             flagged[en] = (sev, why, a)
 
     # ถามข่าวเฉพาะจังหวัดที่ขึ้นสีแล้ว (ไม่กี่จังหวัด) ไม่ใช่ทั้ง 77
@@ -194,6 +249,7 @@ def main():
             "stations_high": a["h"],
             "stations_total": a["n"],
             "stations": a["worst"][:5],
+            "surge": a.get("surge"),
             "news": a["news"],
         }
 
@@ -219,7 +275,10 @@ def main():
             "thresholds": {
                 "flood": "มีสถานีระดับ 5 (ล้นตลิ่ง) ≥1 จุด",
                 "near": f"สถานีระดับ 4 (น้ำมาก) ≥{HIGH_MIN_COUNT} จุด และ ≥{HIGH_MIN_SHARE:.0%} ของสถานีในจังหวัด",
+                "surge": f"หรือมีสถานีเดียวที่ ≥{SURGE_MIN_PCT}% ของตลิ่ง และสูงกว่ายอดเดิมของตัวเองใน ~48 ชม. ≥{SURGE_MIN_JUMP} จุด",
             },
+            "provinces_surge": sum(1 for p in provinces.values() if p.get("surge")),
+            "stations_rated": sum(1 for s in stations if s.get("pct") is not None),
             "note_th": (
                 "**สีมาจากสถานีวัดระดับน้ำจริงของ สสน. เท่านั้น ข่าวเป็นบทสรุปประกอบ "
                 "ไม่มีผลกับสี** (พาดหัวข่าวหลอกได้ เช่นข่าวเรื่องแล้งที่มีคำว่าน้ำท่วมอยู่ในเนื้อหา) · "
@@ -238,6 +297,11 @@ def main():
     os.makedirs("data", exist_ok=True)
     with open(OUTPUT, "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=2)
+    with open(HISTORY, "w", encoding="utf-8") as f:
+        json.dump({"_meta": {"updated": bkk_today(), "keep": HISTORY_KEEP,
+                             "note": "ประวัติ %ตลิ่งรายสถานี ใช้หาน้ำขึ้นเร็วผิดปกติ · "
+                                     "คีย์คือ จังหวัด|อำเภอ|ชื่อสถานี ไม่ใช่ id (id เปลี่ยนทุกครั้งที่ดึง)"},
+                   "stations": new_history}, f, ensure_ascii=False)
 
     print(f"\n✅ ขึ้นสี {len(provinces)}/77 จังหวัด · ท่วมจริง {n2} → {OUTPUT}")
     for en, p in list(provinces.items())[:12]:
@@ -253,6 +317,17 @@ def _selftest():
     assert lv(0, 2, 2) == 0                  # 100% แต่แค่ 2 จุด ไม่พอ
     assert lv(0, 0, 0) == 0                  # ไม่มีสถานี ไม่หารศูนย์
     assert lv(2, 9, 14) == 2                 # ล้นตลิ่งชนะเสมอ
+
+    surge = {"name": "สะพานมิตรภาพแม่น้ำสายแห่งที่ 1", "was": 60.4, "now": 90.5}
+    # แม่สาย 7 ก.ย. 69: เชียงรายมี 29 สถานี ติดระดับ 4 แค่ 1 จุด — เกณฑ์นับจุดตกหมด
+    # แต่ต้องขึ้นสีเพราะสถานีเดียวนั้นทำยอดใหม่ 60% → 90.5% ของตลิ่ง
+    assert station_severity(0, 1, 29)[0] == 0
+    assert station_severity(0, 1, 29, surge)[0] == 1
+    assert "น้ำขึ้นเร็ว" in station_severity(0, 1, 29, surge)[1]
+    assert station_severity(1, 0, 29, surge)[0] == 2   # ล้นตลิ่งจริงยังชนะ surge
+    assert station_key({"province_th": "เชียงราย", "amphoe_th": "แม่สาย",
+                        "name_th": "ก", "id": 123}) == "เชียงราย|แม่สาย|ก"   # ไม่ผูกกับ id
+    assert SURGE_MIN_PCT >= 70 and SURGE_MIN_JUMP >= 20   # กันหย่อนเกณฑ์จนเตือนมั่ว
     print("selftest ok")
 
 

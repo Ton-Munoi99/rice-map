@@ -155,6 +155,11 @@ the remote sha to local HEAD** instead of grepping push output.
 - **ข้าวขาว = OAE "ข้าวเจ้าอื่นๆ"** — excludes glutinous rice (ข้าวเหนียว) and Pathum Thani 1
 - **Year keys are Thai Buddhist Era strings** — `"2567"` not `2567` (number)
 - **Province keys are English names** — matching `NM` lookup map and `thailand-data.js`
+- **`id` in `water-level.json` is a *reading* id, not a station id** — ThaiWater issues a new
+  one on every fetch, so the same gauge has a different `id` every 3 hours. Anything that
+  tracks a station across time must key on `province_th|amphoe_th|name_th` (see
+  `station_key()` in `fetch_flood_status.py`). Keying on `id` fails silently — it simply
+  matches nothing and reports zero, which looks like "no events" rather than a bug.
 - **Date labels use `bkk_today()` from `riceutils.py`, never `date.today()`** — runners are
   UTC, and crons firing 17:00–24:00 UTC are already the next day in Bangkok, so `date.today()`
   writes an "updated" label a day behind. Use `bkk_now()` when a timestamp needs the time too.

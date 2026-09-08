@@ -1,9 +1,42 @@
 # Rice Map Handoff
 
-Last updated: 2026-09-04 by Claude Code
+Last updated: 2026-09-08 by Claude Code
 
 ## Log
 
+- 2026-09-08 (Claude): Checked the flood layer against a Daily News front page
+  (flash flood in Mae Hong Son, Mae Sai's flood wall overtopped) and it matched
+  none of the three provinces named. Diagnosed each separately rather than
+  assuming one cause. Nan was correct — that story was compensation for an
+  earlier flood, not current flooding. Mae Hong Son is structurally invisible:
+  7 of its 8 gauges publish no bank reference at all (`level`/`pct` null), and
+  nationally 610 of 1,403 gauges (43%) are in that state, so they can never
+  meet any threshold however high the water. Chiang Rai was the real defect —
+  the Mae Sai gauge went 48% → 90.5% of bank (0.46 m to spare) and **our own
+  data recorded every step of it**, but my "3+ gauges AND 30% of the province"
+  rule is built for basin-wide flooding and structurally cannot see a
+  single-river event; Chiang Rai has 29 gauges and only 1-2 went high.
+  Added a surge rule: one gauge at >=70% of bank that is >=20 points above its
+  own previous ~48h maximum. Comparing against the previous *maximum* rather
+  than the previous reading is what makes it work — tidal river-mouth and
+  sluice-gate stations swing 10% → 94% every day but never exceed their own
+  prior peak, so they never fire. Measured three candidates over 10 days of
+  real history: "any gauge >=90%" added 10.7 provinces/day with the same
+  provinces recurring daily, "rose >=20 points in 24h" added 4.4/day of which
+  half were tidal, and this rule adds 1.0/day with no tidal false positives.
+  Replayed the real code against the 7 Sep peak snapshot: it flags Chiang Rai
+  and only Chiang Rai. New `data/water-level-history.json` (150 KB) holds 16
+  readings per rated gauge and is seeded from git history so the rule works
+  now rather than in 48 hours; it is committed by the water-level workflow and
+  monitored for staleness. The tooltip explains a surge-flagged province
+  explicitly, since such a province shows 0 overbank and 0 high gauges and
+  would otherwise look like a bug.
+  Two things worth knowing: `id` in `water-level.json` is a *reading* id, not a
+  station id — ThaiWater issues a new one every fetch, so tracking a gauge by
+  `id` silently matches nothing and looks like "no events" (this cost me a
+  false negative mid-investigation; `station_key()` and AGENTS.md now record
+  it). And the layer's coverage limit is now stated on the page itself: 794 of
+  1,404 gauges (57%) carry a bank reference.
 - 2026-09-04 (Claude): Fixed the flood-risk alert layer, which had been warning
   all 77 provinces every day. Root cause was not the relative-threshold design
   added on 20 Aug but its multipliers: the lowest tier fired at 0.5x a
