@@ -4,20 +4,22 @@
     "updated": "2026-09-09",
     "source": "ThaiWater (สสน./HII) — ระดับน้ำรายสถานี",
     "source_url": "https://www.thaiwater.net/",
-    "water_level_updated_at": "2026-09-09T04:20:39.588006+00:00",
+    "water_level_updated_at": "2026-09-08T04:14:40.464436+00:00",
     "news_source": "Google News RSS",
     "news_count": 2,
     "news_error": null,
-    "provinces_flooded": 1,
+    "provinces_flooded": 2,
     "provinces_flagged": 6,
-    "stations_total": 1400,
+    "stations_total": 1403,
     "thresholds": {
       "flood": "มีสถานีระดับ 5 (ล้นตลิ่ง) ≥1 จุด",
       "near": "สถานีระดับ 4 (น้ำมาก) ≥3 จุด และ ≥30% ของสถานีในจังหวัด",
-      "surge": "หรือมีสถานีเดียวที่ ≥70% ของตลิ่ง และสูงกว่ายอดเดิมของตัวเองใน ~48 ชม. ≥20 จุด"
+      "surge": "หรือมีสถานีเดียวที่ ≥70% ของตลิ่ง และสูงกว่ายอดเดิมของตัวเองใน ~40 ชม. ≥20 จุด",
+      "surge_msl": "หรือสถานีที่ไม่มีค่าอ้างอิงตลิ่ง มีระดับน้ำสูงกว่ายอดเดิมของตัวเองใน ~40 ชม. ≥1.0 ม."
     },
     "provinces_surge": 0,
-    "stations_rated": 791,
+    "provinces_surge_msl": 0,
+    "stations_rated": 793,
     "note_th": "**สีมาจากสถานีวัดระดับน้ำจริงของ สสน. เท่านั้น ข่าวเป็นบทสรุปประกอบ ไม่มีผลกับสี** (พาดหัวข่าวหลอกได้ เช่นข่าวเรื่องแล้งที่มีคำว่าน้ำท่วมอยู่ในเนื้อหา) · จังหวัดที่ไม่ขึ้นสี = ไม่มีสถานีเข้าเกณฑ์ **ไม่ใช่ยืนยันว่าไม่ท่วม** — น้ำท่วมขังนอกลำน้ำหรือพื้นที่ที่ไม่มีสถานีวัด ระบบนี้มองไม่เห็น",
     "note_en": "Colour comes only from measured ThaiWater river-gauge levels; news is context and never drives the colour. Unflagged provinces mean no gauge met the threshold — not a confirmation that nowhere is flooded."
   },
@@ -26,6 +28,7 @@
       "province_th": "สกลนคร",
       "severity": 2,
       "severity_th": "ท่วม",
+      "severity_en": "Flooding",
       "reason_th": "มีสถานีล้นตลิ่ง 1 จุด",
       "stations_overbank": 1,
       "stations_high": 6,
@@ -36,40 +39,62 @@
           "amphoe": "อากาศอำนวย",
           "river": "แม่น้ำสงคราม",
           "level": 5,
-          "pct": 104.94,
-          "dt": "2026-09-09 11:00"
+          "pct": 104.78,
+          "dt": "2026-09-08 11:00"
         },
         {
           "name": "บ้านโคกคำไหล",
           "amphoe": "สว่างแดนดิน",
           "river": "แม่น้ำสงคราม",
           "level": 4,
-          "pct": 97.05,
-          "dt": "2026-09-09 10:00"
+          "pct": 96.14,
+          "dt": "2026-09-08 10:00"
         },
         {
           "name": "บ้านโพธิ์ชัยทอง",
           "amphoe": "อากาศอำนวย",
           "river": "ลำน้ำยาม",
           "level": 4,
-          "pct": 92.26,
-          "dt": "2026-09-09 11:00"
+          "pct": 90.28,
+          "dt": "2026-09-08 11:00"
         },
         {
           "name": "สว่างแดนดิน",
           "amphoe": "สว่างแดนดิน",
           "river": "แม่น้ำสงคราม",
           "level": 4,
-          "pct": 91.44,
-          "dt": "2026-09-09 11:00"
+          "pct": 87.88,
+          "dt": "2026-09-08 11:00"
         },
         {
           "name": "บ้านท่ากกแดง",
           "amphoe": "คำตากล้า",
           "river": "แม่น้ำสงคราม",
           "level": 4,
-          "pct": 87.5,
-          "dt": "2026-09-09 10:00"
+          "pct": 86.81,
+          "dt": "2026-09-08 10:00"
+        }
+      ],
+      "surge": null,
+      "news": []
+    },
+    "Uthai Thani": {
+      "province_th": "อุทัยธานี",
+      "severity": 2,
+      "severity_th": "ท่วม",
+      "severity_en": "Flooding",
+      "reason_th": "มีสถานีล้นตลิ่ง 1 จุด",
+      "stations_overbank": 1,
+      "stations_high": 0,
+      "stations_total": 15,
+      "stations": [
+        {
+          "name": "เมืองอุทัยธานี",
+          "amphoe": "เมืองอุทัยธานี",
+          "river": "แม่น้ำสะแกกรัง",
+          "level": 5,
+          "pct": 105.06,
+          "dt": "2026-09-01 07:30"
         }
       ],
       "surge": null,
@@ -79,9 +104,10 @@
       "province_th": "นครพนม",
       "severity": 1,
       "severity_th": "ใกล้ล้นตลิ่ง",
-      "reason_th": "สถานีน้ำมาก 6 จุด จาก 16 สถานี (38%)",
+      "severity_en": "Near Overbank",
+      "reason_th": "สถานีน้ำมาก 8 จุด จาก 16 สถานี (50%)",
       "stations_overbank": 0,
-      "stations_high": 6,
+      "stations_high": 8,
       "stations_total": 16,
       "stations": [
         {
@@ -89,40 +115,40 @@
           "amphoe": "ธาตุพนม",
           "river": "ลำน้ำกำ",
           "level": 4,
-          "pct": 90.99,
-          "dt": "2026-09-09 11:00"
+          "pct": 91.41,
+          "dt": "2026-09-08 11:00"
         },
         {
           "name": "ปตร.ธรณิศนฤมิต-เหนือน้ำ",
           "amphoe": "ธาตุพนม",
           "river": "ลำน้ำกำ",
           "level": 4,
-          "pct": 83.6,
-          "dt": "2026-09-09 11:00"
+          "pct": 83.93,
+          "dt": "2026-09-08 11:00"
         },
         {
           "name": "ศรีสงคราม",
           "amphoe": "ศรีสงคราม",
           "river": "แม่น้ำสงคราม",
           "level": 4,
-          "pct": 79.67,
-          "dt": "2026-09-09 11:00"
+          "pct": 80.29,
+          "dt": "2026-09-08 11:00"
         },
         {
           "name": "ปตร.ธรณิศนฤมิต-ท้ายน้ำ",
           "amphoe": "ธาตุพนม",
           "river": "ลำน้ำกำ",
           "level": 4,
-          "pct": 77.79,
-          "dt": "2026-09-09 11:00"
+          "pct": 79.27,
+          "dt": "2026-09-08 11:00"
         },
         {
           "name": "ปตร. ห้วยแคน-เหนือน้ำ",
           "amphoe": "ธาตุพนม",
           "river": "ห้วยแคน",
           "level": 4,
-          "pct": 72.64,
-          "dt": "2026-09-09 11:00"
+          "pct": 76.01,
+          "dt": "2026-09-08 11:00"
         }
       ],
       "surge": null,
@@ -135,7 +161,7 @@
         },
         {
           "title": "นครพนมเร่งระบายน้ำรับฝนหนัก ผู้ว่าฯ สั่งเดินหน้ามาตรการเชิงรุก ลดผลกระทบปชช.",
-          "source": "77kaoded.news",
+          "source": "77 ข่าวเด็ด",
           "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTFB5MENEdldrY1BoV2NSOTE5VnhxOEREY2JscnF3YkE5ZFd3WmVGT0d3dU5rVXpOdm15d01PQjhkSXNCYk9JU0RscEF3aEQtbzFGVDhjMGdBSEtISnBnUWFOUnJhQQ?oc=5",
           "date": "Mon, 07 Sep 2026"
         }
@@ -145,6 +171,7 @@
       "province_th": "นครปฐม",
       "severity": 1,
       "severity_th": "ใกล้ล้นตลิ่ง",
+      "severity_en": "Near Overbank",
       "reason_th": "สถานีน้ำมาก 5 จุด จาก 11 สถานี (45%)",
       "stations_overbank": 0,
       "stations_high": 5,
@@ -155,130 +182,40 @@
           "amphoe": "นครชัยศรี",
           "river": "แม่น้ำท่าจีน",
           "level": 4,
-          "pct": 93.49,
-          "dt": "2026-09-09 10:00"
+          "pct": 92.83,
+          "dt": "2026-09-08 10:00"
         },
         {
           "name": "วัดบางไผ่นารถ",
           "amphoe": "บางเลน",
           "river": "แม่น้ำท่าจีน",
           "level": 4,
-          "pct": 93.1,
-          "dt": "2026-09-09 10:00"
+          "pct": 92.71,
+          "dt": "2026-09-08 10:00"
         },
         {
           "name": "บางเลน",
           "amphoe": "บางเลน",
           "river": "แม่น้ำท่าจีน",
           "level": 4,
-          "pct": 88.0,
-          "dt": "2026-09-09 11:00"
+          "pct": 87.61,
+          "dt": "2026-09-08 11:00"
         },
         {
           "name": "ร.ร.บ้านสามพราน",
           "amphoe": "สามพราน",
           "river": "แม่น้ำท่าจีน",
           "level": 4,
-          "pct": 87.72,
-          "dt": "2026-09-09 10:00"
+          "pct": 86.06,
+          "dt": "2026-09-08 10:00"
         },
         {
           "name": "สะพานนครชัยศรี",
           "amphoe": "นครชัยศรี",
           "river": "แม่น้ำท่าจีน",
           "level": 4,
-          "pct": 86.17,
-          "dt": "2026-09-09 11:00"
-        }
-      ],
-      "surge": null,
-      "news": []
-    },
-    "Yasothon": {
-      "province_th": "ยโสธร",
-      "severity": 1,
-      "severity_th": "ใกล้ล้นตลิ่ง",
-      "reason_th": "สถานีน้ำมาก 4 จุด จาก 8 สถานี (50%)",
-      "stations_overbank": 0,
-      "stations_high": 4,
-      "stations_total": 8,
-      "stations": [
-        {
-          "name": "ลำเซบาย",
-          "amphoe": "เลิงนกทา",
-          "river": "ลำเซบาย",
-          "level": 4,
-          "pct": 86.28,
-          "dt": "2026-09-09 11:00"
-        },
-        {
-          "name": "บ้านเชียงเพ็ง",
-          "amphoe": "ป่าติ้ว",
-          "river": "ลำเซบาย",
-          "level": 4,
-          "pct": 81.64,
-          "dt": "2026-09-09 10:00"
-        },
-        {
-          "name": "ประปายโสธร",
-          "amphoe": "เมืองยโสธร",
-          "river": "แม่น้ำชี",
-          "level": 4,
-          "pct": 78.4,
-          "dt": "2026-09-09 10:00"
-        },
-        {
-          "name": "บ้านฟ้าหยาด",
-          "amphoe": "มหาชนะชัย",
-          "river": "แม่น้ำชี",
-          "level": 4,
-          "pct": 70.46,
-          "dt": "2026-09-09 10:00"
-        }
-      ],
-      "surge": null,
-      "news": []
-    },
-    "Lop Buri": {
-      "province_th": "ลพบุรี",
-      "severity": 1,
-      "severity_th": "ใกล้ล้นตลิ่ง",
-      "reason_th": "สถานีน้ำมาก 4 จุด จาก 13 สถานี (31%)",
-      "stations_overbank": 0,
-      "stations_high": 4,
-      "stations_total": 13,
-      "stations": [
-        {
-          "name": "เมืองลพบุรี",
-          "amphoe": "เมืองลพบุรี",
-          "river": "แม่น้ำลพบุรี",
-          "level": 4,
-          "pct": 79.8,
-          "dt": "2026-09-09 11:00"
-        },
-        {
-          "name": "สถานีสูบน้ำปากคลองสายห้วยแก้ว (ทุ่งซ้ายคลองชัยนาท)",
-          "amphoe": "บ้านหมี่",
-          "river": "คลองท่าตะโก",
-          "level": 4,
-          "pct": 75.26,
-          "dt": "2026-09-09 11:00"
-        },
-        {
-          "name": "ทรบ. ปากคลองห้าวา (ทุ่งท่าวุ้ง)",
-          "amphoe": "เมืองลพบุรี",
-          "river": "คลองบางคะลาย",
-          "level": 4,
-          "pct": 73.0,
-          "dt": "2026-09-09 11:00"
-        },
-        {
-          "name": "สถานีสูบน้ำปากคลองสระตาแวว (ทุ่งซ้ายคลองชัยนาท)",
-          "amphoe": "บ้านหมี่",
-          "river": "คลองโพนทอง",
-          "level": 4,
-          "pct": 72.27,
-          "dt": "2026-09-09 11:00"
+          "pct": 85.26,
+          "dt": "2026-09-08 11:00"
         }
       ],
       "surge": null,
@@ -288,9 +225,10 @@
       "province_th": "กรุงเทพมหานคร",
       "severity": 1,
       "severity_th": "ใกล้ล้นตลิ่ง",
-      "reason_th": "สถานีน้ำมาก 3 จุด จาก 10 สถานี (30%)",
+      "severity_en": "Near Overbank",
+      "reason_th": "สถานีน้ำมาก 4 จุด จาก 10 สถานี (40%)",
       "stations_overbank": 0,
-      "stations_high": 3,
+      "stations_high": 4,
       "stations_total": 10,
       "stations": [
         {
@@ -298,24 +236,70 @@
           "amphoe": "ดุสิต",
           "river": "แม่น้ำเจ้าพระยา",
           "level": 4,
-          "pct": 85.46,
-          "dt": "2026-09-09 10:00"
+          "pct": 85.1,
+          "dt": "2026-09-08 10:00"
         },
         {
           "name": "สะพานกรุงเทพ",
           "amphoe": "ธนบุรี",
           "river": "แม่น้ำเจ้าพระยา",
           "level": 4,
-          "pct": 83.08,
-          "dt": "2026-09-09 11:00"
+          "pct": 83.7,
+          "dt": "2026-09-08 11:00"
         },
         {
           "name": "คลองลำปลาทิว ลาดกระบัง",
           "amphoe": "ลาดกระบัง",
           "river": "คลองลำปลาทิว",
           "level": 4,
-          "pct": 77.63,
-          "dt": "2026-09-09 11:00"
+          "pct": 78.23,
+          "dt": "2026-09-08 11:00"
+        },
+        {
+          "name": "คลองมหาสวัสดิ บางกรวย-สวนผัก",
+          "amphoe": "ตลิ่งชัน",
+          "river": "คลองมหาสวัสดิ์",
+          "level": 4,
+          "pct": 71.95,
+          "dt": "2026-09-08 07:40"
+        }
+      ],
+      "surge": null,
+      "news": []
+    },
+    "Yasothon": {
+      "province_th": "ยโสธร",
+      "severity": 1,
+      "severity_th": "ใกล้ล้นตลิ่ง",
+      "severity_en": "Near Overbank",
+      "reason_th": "สถานีน้ำมาก 3 จุด จาก 9 สถานี (33%)",
+      "stations_overbank": 0,
+      "stations_high": 3,
+      "stations_total": 9,
+      "stations": [
+        {
+          "name": "ลำเซบาย",
+          "amphoe": "เลิงนกทา",
+          "river": "ลำเซบาย",
+          "level": 4,
+          "pct": 84.91,
+          "dt": "2026-09-08 11:00"
+        },
+        {
+          "name": "ประปายโสธร",
+          "amphoe": "เมืองยโสธร",
+          "river": "แม่น้ำชี",
+          "level": 4,
+          "pct": 81.2,
+          "dt": "2026-09-08 10:00"
+        },
+        {
+          "name": "บ้านเชียงเพ็ง",
+          "amphoe": "ป่าติ้ว",
+          "river": "ลำเซบาย",
+          "level": 4,
+          "pct": 78.0,
+          "dt": "2026-09-08 10:00"
         }
       ],
       "surge": null,

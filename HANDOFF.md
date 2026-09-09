@@ -1,9 +1,41 @@
 # Rice Map Handoff
 
-Last updated: 2026-09-08 by Claude Code
+Last updated: 2026-09-09 by Claude Code
 
 ## Log
 
+- 2026-09-09 (Claude): Checked a second front page (Khao Sod 10 Sep: DDPM warns 71
+  provinces, Pang Mu in Mae Hong Son being cleaned up) and it forced a correction to
+  what I wrote the day before. I had said Mae Hong Son was "an upstream limitation
+  that no threshold can fix". That was wrong. The Pang Mu gauge — the village named
+  in the story — is in our data and recorded the flash flood in full: 193.89 → 194.86 m
+  in about 13 hours, with Ban Tha Pong Daeng rising 1.06 m at the same time. What is
+  missing for those gauges is the *bank reference*, not the *data*, and comparing a
+  gauge to its own recent past needs no bank reference. Added a second surge rule for
+  the 43% of gauges that publish raw level only: >=1.0 m above the gauge's own max over
+  the previous ~40h. Measured four thresholds over 14 days (0.5 m → 5.6 provinces/day,
+  0.75 → 2.7, 1.0 → 1.7, 1.5 → 0.6 but misses Mae Hong Son). Provinces flagged this way
+  are labelled "rising fast", never "near overbank", in the JSON, the tooltip and both
+  languages — we do not know where their bank is and must not imply we do.
+  Two defects found while wiring it up. First, `HISTORY_KEEP` was 16 while the rule had
+  been calibrated with a window of 8; the longer window raises the prior maximum, which
+  shrank Tha Pong Daeng's rise from +1.06 to +0.93 m and silently dropped it below the
+  threshold. The window is now 8, with a comment saying it must not be moved without
+  re-measuring. Second, the station key was name-only and collides on 187 keys; one is
+  genuinely dangerous — "Phitsanulok|Bang Rakam|Bang Rakam" holds five records from two
+  agencies at two coordinates with percent-of-bank 63.78 / 62.98 / 10.57, so any change
+  in the API's ordering would manufacture a 53-point surge. The key now includes lat/lon
+  (dangerous collisions: 0; keys stable across snapshots: 99.6%). Reported honestly: that
+  fix changed no current output, because the API's ordering happens to be stable today —
+  it closes a trap rather than a live bug, and Phitsanulok's five hits were verified to be
+  a real event (five Yom-river gauges up 1.1-1.8 m on 28 Aug).
+  Also compared our flood-risk layer against the reconstructed DDPM list: precision 98%,
+  recall 86%, one false positive. Six of the ten misses are northern mountain provinces
+  (Nan, Phayao, Chiang Rai, Chiang Mai, Phrae, Mae Hong Son) — the same blind spot as the
+  gauge layer, and for the same reason: steep terrain, flash floods, high normal rainfall
+  making a 1.5x threshold a high bar.
+  A workflow-based audit of this pipeline was attempted and died on the session usage
+  limit with all six agents failing; the audit above was done by hand instead.
 - 2026-09-08 (Claude): Checked the flood layer against a Daily News front page
   (flash flood in Mae Hong Son, Mae Sai's flood wall overtopped) and it matched
   none of the three provinces named. Diagnosed each separately rather than

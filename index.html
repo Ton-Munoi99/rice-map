@@ -4868,16 +4868,19 @@
               `เข้าเกณฑ์ ${covered} จังหวัด (ท่วมแล้ว ${nFlood}) · อัปเดตทุก 3 ชม. · ` +
               `ข่าว ${nNews} ชิ้นเป็นบทสรุปประกอบ ไม่มีผลกับสีบนแผนที่ · ` +
               `ต่างจาก layer "พื้นที่เสี่ยงน้ำท่วม" ที่คำนวณจากพยากรณ์ฝน — อันนี้คือน้ำที่วัดได้จริงแล้ว · ` +
-              `⚠️ layer นี้เห็นได้แค่ไหน: ต้นทางมี ${meta?.stations_total ?? "—"} สถานี แต่มีค่าอ้างอิงตลิ่งให้คำนวณแค่ ${meta?.stations_rated ?? "—"} สถานี ` +
-              `(${sRatedPct}%) ที่เหลือให้มาแต่ระดับน้ำดิบ · จังหวัดที่ไม่ขึ้นสี = ไม่มีสถานีเข้าเกณฑ์ ` +
-              `ไม่ใช่ยืนยันว่าไม่ท่วม — น้ำท่วมขังนอกลำน้ำและลำห้วยที่ไม่มีสถานีวัด มองไม่เห็นทั้งคู่`,
+              `⚠️ layer นี้เห็นได้แค่ไหน: ต้นทางมี ${meta?.stations_total ?? "—"} สถานี มีค่าอ้างอิงตลิ่ง ${meta?.stations_rated ?? "—"} สถานี ` +
+              `(${sRatedPct}%) — เฉพาะกลุ่มนี้บอกได้ว่า "ใกล้ล้นตลิ่งแค่ไหน" · อีก ${100 - sRatedPct}% ให้มาแต่ระดับน้ำดิบ ` +
+              `เราจึงดูได้แค่ว่า "น้ำขึ้นเร็วผิดปกติไหม" (สูงกว่ายอดเดิมของตัวเองเกิน 1 ม.) บอกไม่ได้ว่าใกล้ล้นแค่ไหน · ` +
+              `จังหวัดที่ไม่ขึ้นสี = ไม่มีสถานีเข้าเกณฑ์ ไม่ใช่ยืนยันว่าไม่ท่วม — น้ำท่วมขังนอกลำน้ำ ` +
+              `และลำห้วยที่ไม่มีสถานีวัดเลย ยังมองไม่เห็น`,
             `🌊 Flood status from measured ThaiWater (HII) river gauges · ` +
               `${covered} provinces meet the threshold (${nFlood} already flooding) · Updated every 3 hrs · ` +
               `${nNews} news items are context only and never drive the map colour · ` +
               `Different from the "Flood Risk" layer (computed from rain forecast) — this is water measured on the ground · ` +
-              `⚠️ Coverage: upstream publishes ${meta?.stations_total ?? "—"} gauges but only ${meta?.stations_rated ?? "—"} (${sRatedPct}%) ` +
-              `carry a bank reference we can compute against; the rest report raw level only · Uncoloured provinces = no gauge met the ` +
-              `threshold, not a confirmation of no flooding — ponding away from rivers and ungauged streams are both invisible here`,
+              `⚠️ Coverage: upstream publishes ${meta?.stations_total ?? "—"} gauges, of which ${meta?.stations_rated ?? "—"} (${sRatedPct}%) ` +
+              `carry a bank reference — only those can say how close to overflowing a river is. For the other ${100 - sRatedPct}% we get raw ` +
+              `level only, so all we can detect is an unusually fast rise (over 1 m above the gauge's own recent peak) · Uncoloured provinces = ` +
+              `no gauge met the threshold, not a confirmation of no flooding — ponding away from rivers, and streams with no gauge at all, stay invisible`,
           );
           return;
         }
@@ -6791,7 +6794,12 @@
             ? `<div style="margin-top:5px;padding:4px 6px;background:rgba(239,108,0,.12);border:1px solid rgba(239,108,0,.3);border-radius:5px;font-size:10px;line-height:1.5">
 <strong style="color:#e65100">${t("น้ำขึ้นเร็วผิดปกติ", "Unusually fast rise")}</strong><br>
 ${esc(fp.surge.amphoe ? t("อ.", "") + fp.surge.amphoe + " · " : "")}${esc(fp.surge.name)}<br>
-<span style="font-family:'IBM Plex Mono'">${Math.round(fp.surge.was)}% → ${Math.round(fp.surge.now)}%</span> ${t("ของตลิ่ง ภายใน ~48 ชม.", "of bank within ~48h")}</div>`
+${
+              fp.surge.kind === "msl"
+                ? // สถานีนี้ไม่มีค่าอ้างอิงตลิ่ง — บอกได้แค่ว่าขึ้นกี่เมตร ห้ามเขียนว่า "ของตลิ่ง"
+                  `<span style="font-family:'IBM Plex Mono'">+${Number(fp.surge.rise).toFixed(2)} ${t("ม.", "m")}</span> ${t("ภายใน ~40 ชม.", "within ~40h")}<br><span style="opacity:.7">${t("สถานีนี้ไม่มีค่าอ้างอิงตลิ่ง บอกได้แค่ว่าน้ำขึ้นเร็ว ไม่รู้ว่าใกล้ล้นแค่ไหน", "This gauge has no bank reference — a fast rise is all we can say, not how close to overflowing")}</span>`
+                : `<span style="font-family:'IBM Plex Mono'">${Math.round(fp.surge.was)}% → ${Math.round(fp.surge.now)}%</span> ${t("ของตลิ่ง ภายใน ~40 ชม.", "of bank within ~40h")}`
+            }</div>`
             : "";
           const newsRows = (fp.news || [])
             .slice(0, 2)
@@ -6805,7 +6813,7 @@ ${esc(fp.surge.amphoe ? t("อ.", "") + fp.surge.amphoe + " · " : "")}${esc(fp.
 <div class="en">${en}</div>
 <div class="type">${t("สถานะน้ำท่วม · สถานีวัดน้ำ สสน.", "Flood status · ThaiWater gauges")}</div>
 <div class="metric-name">${t("สถานะ", "Status")}</div>
-<div class="value" style="color:${flooding ? "#b71c1c" : "#e65100"}">${flooding ? t("🔴 ท่วม", "🔴 Flooding") : t("🟠 ใกล้ล้นตลิ่ง", "🟠 Near Overbank")}</div>
+<div class="value" style="color:${flooding ? "#b71c1c" : "#e65100"}">${flooding ? "🔴" : "🟠"} ${esc(t(fp.severity_th || "ใกล้ล้นตลิ่ง", fp.severity_en || "Near Overbank"))}</div>
 <div style="font-size:10px;color:var(--muted);margin-top:2px">${t("ล้นตลิ่ง", "Overbank")} ${fp.stations_overbank} · ${t("น้ำมาก", "High")} ${fp.stations_high} · ${t("จากทั้งหมด", "of")} ${fp.stations_total} ${t("สถานี", "gauges")}</div>
 ${stationRows ? `<div style="font-size:10px;color:var(--text-soft);margin-top:5px;line-height:1.7"><div style="opacity:.7;margin-bottom:2px">${t("สถานีที่น้ำสูงสุด (% ตลิ่ง)", "Highest gauges (% of bank)")}</div>${stationRows}</div>` : ""}
 ${surgeRow}
