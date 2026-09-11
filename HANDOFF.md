@@ -1,8 +1,43 @@
 # Rice Map Handoff
 
-Last updated: 2026-09-09 by Claude Code
+Last updated: 2026-09-11 by Claude Code
 
 ## Log
+
+- 2026-09-11 (Claude): Went after the three items left pending and two of the three turned
+  out to rest on a premise that does not hold. The "northern blind spot" was supposed to be
+  caused by northern provinces having high normal rainfall, making a 1.5x threshold a high
+  absolute bar. Measured it: the northern low threshold averages 85.7 mm against 86.0 mm for
+  the rest of the country. There is no northern penalty. What there is, is a much larger
+  error underneath it. The flood-risk baseline was the Jun–Nov rainfall total divided flat
+  by 26 weeks, and monsoon rain is not flat — Mae Hong Son's weekly normal is 115 mm in
+  September and 21 mm in November. The flat baseline understates the peak months by 1.1–1.9x,
+  so a 1.5x multiplier was firing *below* the month's actual normal (Nakhon Ratchasima in
+  September: 1.5 / 1.92 = 0.78x of normal). That is the same "warns below normal" bug I
+  reported fixed on 4 Sep, returning through the baseline instead of the multiplier. Measured
+  from the files that actually shipped over 53 days: 69.6 of 77 provinces warned per day, 90%.
+  `weather-forecast.json` now carries `rain_normal_weekly_mm` per month and
+  `province_flood_thresholds()` uses the current month. Replaying the real script over 10 days
+  on identical inputs: high risk 24.7 → 5.9 provinces/day, normal 13.8 → 31.5, multipliers
+  untouched. The six provinces that move *up* are all in the deep south, where the season
+  peaks in Nov–Dec and the flat baseline had been hiding a real anomaly.
+  Two bugs found while doing it. `fetch_weather_forecast.py` answered a 429 by writing `null`
+  over all 77 provinces — it retried 3 times at 2 s for a request covering 40 locations and
+  183 days, got 3 of 5 years, and wiped the file the whole alert layer depends on. It now
+  backs off 30/90/180/300 s and keeps the previous record when a refetch is incomplete. And
+  the surge rules in `fetch_flood_status.py` compared each gauge to its own previous maximum
+  without checking that a previous maximum existed: on the second run after an empty history,
+  a replay fires 14 provinces at once, nearly all estuary gauges doing an ordinary 2 m tide.
+  The `[WARN]` on a missing history file claims the surge check is skipped; `len(past) >= 8`
+  makes that claim true. Cost over a 24-day replay: 113 → 100 hits, with Mae Sai (+30.1 pct
+  points) and Mae Hong Son (+1.06 m) on 7 Sep still caught.
+  On the remaining msl key collisions: there are 2 today, not 6, and the 182 seen on 9 Sep
+  were an upstream glitch (282 gauges republishing a 6-day-old reading). I tested a staleness
+  guard against 20 snapshots and it changed nothing — 18 surges either way, none from a stale
+  record — so I did not add one. The northern blind spot is not closable by this layer: to
+  flag all six provinces you need a multiplier of 1.1, which flags 72 of 77. The honest fix
+  was to say so in the UI, which the alerts layer description now does, pointing the reader
+  at the measured-gauge layer instead.
 
 - 2026-09-09 (Claude): Checked a second front page (Khao Sod 10 Sep: DDPM warns 71
   provinces, Pang Mu in Mae Hong Son being cleaned up) and it forced a correction to
@@ -432,6 +467,17 @@ measurements and a schema-level consumer test exist.
   performance problem justifies a build system.
 - Do not add npm, a bundler, or a framework for cleanup alone.
 - Do not remove visible data cards merely because their map-layer buttons are hidden.
+- The flood-risk layer cannot see a flash flood in one valley, and no threshold will make it.
+  To flag all six northern provinces DDPM warned on 7 Sep 2026 you need a 1.1x multiplier,
+  which flags 72 of 77. The layer's own description now says this and points at the
+  measured-gauge layer. Closing that gap needs sub-province rainfall, not a different number.
+- `rain_7d` in `rain-forecast.json` is the p90 of up to 6 grid points, while the normal it is
+  compared against is a single-centroid climatology. That asymmetry biases toward
+  over-warning. Left alone deliberately on 11 Sep 2026 so the month-baseline change could be
+  measured on its own; worth revisiting as a separate, separately-measured change.
+- `alert-scoreboard.json` scores the rain *forecast* against observed rain at a fixed mm
+  threshold. It does not score the alert levels, so do not read its precision as a verdict on
+  the warning thresholds — the name suggests otherwise.
 
 ## Handoff Protocol
 

@@ -5134,8 +5134,18 @@
                                   )
                               : S.layer === "alerts"
                                 ? t(
-                                    `แผนที่แสดงระดับความเสี่ยงน้ำท่วม/แล้งรายจังหวัด สร้างอัตโนมัติจากข้อมูลพยากรณ์ฝน ดาวเทียม และระดับเขื่อน อัปเดตทุกวัน`,
-                                    `Province-level flood/drought risk map. Auto-generated from rainfall forecast, satellite data, and dam levels. Daily update.`,
+                                    `แผนที่ความเสี่ยงน้ำท่วม/แล้งรายจังหวัด จากพยากรณ์ฝน ดาวเทียม และระดับเขื่อน อัปเดตทุกวัน · ` +
+                                      `เทียบฝน 7 วันข้างหน้ากับ "ฝนปกติรายสัปดาห์ของเดือนนี้" ของจังหวัดนั้นเอง (ค่าปกติ 5 ปี) ` +
+                                      `ไม่ใช่ค่าปกติเฉลี่ยทั้งฤดู — เพราะ 100 มม./สัปดาห์ เป็นเรื่องปกติของแม่ฮ่องสอนในเดือน ก.ย. แต่มากผิดปกติในเดือน พ.ย. · ` +
+                                      `⚠️ layer นี้มองเห็นเฉพาะ "ฝนมากผิดปกติทั้งจังหวัด" — น้ำป่าในหุบเขาแคบๆ ที่ฝนตกหนักจุดเดียว ` +
+                                      `ค่าเฉลี่ยรายจังหวัดมองไม่เห็น (7 ก.ย. 69 น้ำป่าแม่ฮ่องสอน: พยากรณ์ 78 มม. ต่ำกว่าปกติเดือน ก.ย. ที่ 115 มม.) ` +
+                                      `ให้ดู layer "🌊 น้ำท่วม (วัดจริง)" ควบคู่ เพราะอันนั้นวัดน้ำในลำน้ำจริง`,
+                                    `Province-level flood/drought risk from rain forecast, satellite data and dam levels · Daily update · ` +
+                                      `Compares the 7-day forecast against that province's own normal weekly rainfall for the CURRENT MONTH (5-yr normal), ` +
+                                      `not a flat season average — 100 mm/week is ordinary for Mae Hong Son in September but extreme in November · ` +
+                                      `⚠️ This layer only sees province-wide rainfall anomalies. A flash flood in one narrow valley is invisible to a ` +
+                                      `province mean (7 Sep 2026 Mae Hong Son flash flood: forecast 78 mm, below the 115 mm September normal) · ` +
+                                      `Read it alongside the "Flood (measured)" layer, which measures water in the rivers themselves`,
                                   )
                                 : S.layer === "soilMoisture"
                                   ? t(

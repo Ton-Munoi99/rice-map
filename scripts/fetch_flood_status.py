@@ -71,6 +71,17 @@ SURGE_MIN_JUMP = 20     # และสูงกว่ายอดเดิมข
 # ของจริง water-level.json ลงจริงราว 4.7 ครั้ง/วัน (ไม่ใช่ 8 ตาม cron ทุก 3 ชม.
 # เพราะบางรอบไม่มี commit) → 8 ค่า ≈ 40 ชม. ซึ่งเป็นหน้าต่างที่วัดเกณฑ์ทั้งสองไว้
 HISTORY_KEEP = 8
+# "ยอดเดิม" ต้องมาจากหน้าต่างที่เต็มแล้ว ไม่ใช่ค่าเดียวสองค่า: สถานีปากแม่น้ำแกว่งตาม
+# น้ำขึ้นน้ำลงราว 2 ม. ในครึ่งวัน ถ้าประวัติมีค่าเดียวแล้วค่านั้นเป็นช่วงน้ำลง น้ำขึ้น
+# ตามปกติจะอ่านว่า "สูงขึ้น 2 ม." ทันที — replay จริงพบว่ารอบที่สองหลังประวัติว่าง
+# ยิง 14 จังหวัดพร้อมกัน เกือบทั้งหมดเป็นสถานีปากแม่น้ำ (บ้านแหลม ปากแม่น้ำบางปะกง
+# สมุทรสงคราม ตราด 4 จุด) ซึ่งไม่ได้น้ำท่วมเลย
+#
+# ข้อความ [WARN] ตอนอ่านไฟล์ประวัติไม่ได้บอกว่า "รอบนี้ข้ามการตรวจน้ำขึ้นเร็ว" ซึ่งจริง
+# แค่รอบนั้น รอบถัดไปประวัติมี 1 ค่าแล้วระเบิด — เงื่อนไขนี้ทำให้คำเตือนนั้นเป็นจริง
+# ราคาที่จ่าย: replay 24 วัน (18 ส.ค.-10 ก.ย. 69) ลดจาก 113 เหลือ 100 ครั้ง และยังจับ
+# ทั้งแม่สาย (%ตลิ่ง +30.1) และแม่ฮ่องสอน (msl +1.06 ม.) วันที่ 7 ก.ย. ได้เหมือนเดิม
+SURGE_MIN_HISTORY = HISTORY_KEEP
 
 # ── สถานีที่ไม่มีค่าอ้างอิงตลิ่ง (เพิ่ม 9 ก.ย. 69) ─────────────────────────
 # 43% ของสถานี ThaiWater ส่งมาแต่ระดับน้ำดิบ (msl) ไม่มี level/pct จึงเข้าเกณฑ์
@@ -235,7 +246,8 @@ def main():
         if pct is not None:
             # สถานีที่มีค่าอ้างอิงตลิ่ง — วัดเป็น %ตลิ่ง
             past = history.get(k) or []
-            if pct >= SURGE_MIN_PCT and past and pct - max(past) >= SURGE_MIN_JUMP:
+            if (pct >= SURGE_MIN_PCT and len(past) >= SURGE_MIN_HISTORY
+                    and pct - max(past) >= SURGE_MIN_JUMP):
                 keep_surge(surges, en_s, {
                     "name": s.get("name_th") or "", "amphoe": s.get("amphoe_th") or "",
                     "kind": "pct", "was": max(past), "now": pct,
@@ -245,7 +257,7 @@ def main():
         elif msl is not None:
             # สถานีที่ไม่มีค่าอ้างอิงตลิ่ง — วัดเป็นเมตรเหนือยอดเดิมของตัวเอง
             past = history_msl.get(k) or []
-            if past and msl - max(past) >= MSL_SURGE_MIN_RISE:
+            if len(past) >= SURGE_MIN_HISTORY and msl - max(past) >= MSL_SURGE_MIN_RISE:
                 keep_surge(surges, en_s, {
                     "name": s.get("name_th") or "", "amphoe": s.get("amphoe_th") or "",
                     "kind": "msl", "was": max(past), "now": msl,
@@ -347,6 +359,7 @@ def main():
                 "flood": "มีสถานีระดับ 5 (ล้นตลิ่ง) ≥1 จุด",
                 "near": f"สถานีระดับ 4 (น้ำมาก) ≥{HIGH_MIN_COUNT} จุด และ ≥{HIGH_MIN_SHARE:.0%} ของสถานีในจังหวัด",
                 "surge": f"หรือมีสถานีเดียวที่ ≥{SURGE_MIN_PCT}% ของตลิ่ง และสูงกว่ายอดเดิมของตัวเองใน ~40 ชม. ≥{SURGE_MIN_JUMP} จุด",
+                "surge_needs_history": f"กฎน้ำขึ้นเร็วทั้งสองข้อใช้ได้เมื่อสถานีนั้นมีประวัติครบ {SURGE_MIN_HISTORY} ค่าแล้ว (สถานีใหม่จึงยังไม่ถูกตัดสิน)",
                 "surge_msl": f"หรือสถานีที่ไม่มีค่าอ้างอิงตลิ่ง มีระดับน้ำสูงกว่ายอดเดิมของตัวเองใน ~40 ชม. ≥{MSL_SURGE_MIN_RISE} ม.",
             },
             "provinces_surge": sum(1 for p in provinces.values() if p.get("surge")),

@@ -48,12 +48,20 @@ DAM_LOW_PCT    = 30
 # ได้ "ปกติ" เฉลี่ยแค่ 1.9 จังหวัด/วัน จาก 77 และ "เสี่ยงสูง" 29.6 จังหวัด/วัน
 # ป้ายที่ทุกคนติดตลอดเวลาไม่ช่วยให้ตัดสินใจอะไรได้
 #
-# ชุดใหม่ 1.5/2.0/3.0 มาจากหลักการว่าเตือนภัยต้องยิงเมื่อฝน "มากกว่าปกติ"
-# ไม่ใช่ต่ำกว่า และวัดกับข้อมูลจริงแล้วดีที่สุดในบรรดาที่ลอง: "ปกติ" กลับมาเป็น
-# 32.6 จังหวัด/วัน · "เสี่ยงสูง" เหลือ 8.9/วัน · และวันที่ ปภ. ประกาศเตือน 55
-# จังหวัด (3 ก.ย. 69) เกณฑ์นี้ให้ 56 จังหวัด precision 84% recall 85% ซึ่งตรง
-# กับการตัดสินของหน่วยงานจริงทั้งจำนวนและรายชื่อ
-SEASON_WEEKS         = 26  # weather-forecast.json คือค่าเฉลี่ยหน้านาปี มิ.ย.-พ.ย. (~26 สัปดาห์)
+# ชุดใหม่ 1.5/2.0/3.0 มาจากหลักการว่าเตือนภัยต้องยิงเมื่อฝน "มากกว่าปกติ" ไม่ใช่ต่ำกว่า
+#
+# แก้ฐานเทียบ (11 ก.ย. 2569): ตัวคูณถูกแล้วแต่ **ฐานผิด** — ของเดิมเอายอดฝนทั้งฤดู
+# หารด้วย 26 สัปดาห์แบนๆ ทั้งที่ฝนนาปีไม่ได้ตกเท่ากันทุกสัปดาห์ ค่าปกติรายสัปดาห์
+# ของแม่ฮ่องสอนคือ ก.ย. 115 มม. แต่ พ.ย. 21 มม. (ต่างกัน 5 เท่า) ฐานแบนจึงให้
+# 70 มม. ตลอดฤดู → เดือนพีคฐานต่ำเกินจริง 1.1-1.9 เท่า ทำให้ 1.5x กลายเป็นต่ำกว่า
+# ฝนปกติของเดือนนั้นจริงๆ (นครราชสีมา ก.ย.: 1.5 ÷ 1.92 = 0.78x ของปกติ) = บั๊ก
+# "ยิงต่ำกว่าปกติ" ตัวเดิมที่คิดว่าแก้แล้วกลับมาทางอ้อม และปลายฤดูจะตาบอดแทน
+#
+# วัดจากไฟล์ที่ขึ้นเว็บจริง 53 วัน (19 ก.ค.-10 ก.ย. 69): เตือนเฉลี่ย 69.6/77 จังหวัด
+# (90%) — ป้ายที่ติด 90% ของประเทศทุกวันไม่ได้บอกอะไร · replay สคริปต์ตัวจริง 10 วัน
+# (1-10 ก.ย. 69) บน input ชุดเดียวกัน: ฐานแบน → เสี่ยงสูง 24.7 จว./วัน ปกติ 13.8
+# · ฐานรายเดือน → **เสี่ยงสูง 5.9 ปกติ 31.5** ตัวคูณเดิมไม่ต้องแตะ
+SEASON_WEEKS         = 26  # fallback เท่านั้น (เดือนนอกฤดู/ไฟล์เก่าที่ไม่มีค่ารายเดือน)
 NORMAL_MULT_HIGH     = 3.0
 NORMAL_MULT_MED      = 2.0
 NORMAL_MULT_LOW      = 1.5
@@ -103,12 +111,17 @@ def round2(v):
     return round(float(v), 2) if v is not None else None
 
 
-def province_flood_thresholds(prov_name, wf_provs):
+def province_flood_thresholds(prov_name, wf_provs, month=None):
     """เกณฑ์เตือนน้ำท่วม (high, med, low, normal_weekly_mm) เฉพาะจังหวัดนั้น
-    คำนวณจากค่าปกติฝนหน้านาปี ÷ 26 สัปดาห์ — ไม่มีข้อมูลหรือค่าต่ำผิดปกติ
-    ใช้เกณฑ์คงที่ 120/60/30 มม. แทน (normal_weekly_mm = None บอกว่าใช้ fallback)"""
-    normal_season = (wf_provs.get(prov_name) or {}).get("forecast_rainfall_mm")
-    normal_weekly = normal_season / SEASON_WEEKS if normal_season else 0
+    ฐานคือ "ฝนปกติรายสัปดาห์ของเดือนนี้" ไม่ใช่ยอดฤดูกาลหารแบน — ไม่มีข้อมูลหรือ
+    ค่าต่ำผิดปกติใช้เกณฑ์คงที่ 160/110/80 มม. แทน (normal_weekly_mm = None)"""
+    wf = wf_provs.get(prov_name) or {}
+    mth = month or int(bkk_today()[5:7])   # เดือนตามเวลาไทย (runner เป็น UTC)
+    normal_weekly = (wf.get("rain_normal_weekly_mm") or {}).get(str(mth))
+    if normal_weekly is None:
+        # เดือนนอกฤดูนาปี (ธ.ค.-พ.ค.) หรือไฟล์รุ่นเก่าที่ยังไม่มีค่ารายเดือน
+        normal_season = wf.get("forecast_rainfall_mm")
+        normal_weekly = normal_season / SEASON_WEEKS if normal_season else 0
     if normal_weekly < MIN_NORMAL_WEEKLY_MM:
         return FLOOD_HIGH_MM, FLOOD_MED_MM, FLOOD_LOW_MM, None
     return (
@@ -378,7 +391,8 @@ def main():
             "sources": ["Open-Meteo Forecast", "JAXA GSMaP", "RID Dam"],
             "thresholds": {
                 "flood_basis":    "เกณฑ์เตือนน้ำท่วมเป็นทวีคูณของฝนปกติรายจังหวัด "
-                                   f"({NORMAL_MULT_LOW}x/{NORMAL_MULT_MED}x/{NORMAL_MULT_HIGH}x ค่าปกติรายสัปดาห์ หน้านาปี) "
+                                   f"({NORMAL_MULT_LOW}x/{NORMAL_MULT_MED}x/{NORMAL_MULT_HIGH}x ค่าปกติรายสัปดาห์ "
+                                   "**ของเดือนนี้** ไม่ใช่เฉลี่ยทั้งฤดู) "
                                    f"— จังหวัดไม่มีข้อมูลค่าปกติใช้เกณฑ์คงที่ {FLOOD_LOW_MM}/{FLOOD_MED_MM}/{FLOOD_HIGH_MM}มม. แทน "
                                    "(ดู rain_normal_weekly_mm รายจังหวัด)",
                 "normal_mult_high": NORMAL_MULT_HIGH,
@@ -453,6 +467,17 @@ def _selftest():
     # (0.5x ทำให้ทั้งประเทศติดเตือนทุกวัน — ดูบันทึกเหตุผลด้านบน)
     assert NORMAL_MULT_LOW > 1.0, NORMAL_MULT_LOW
     assert NORMAL_MULT_LOW < NORMAL_MULT_MED < NORMAL_MULT_HIGH
+
+    # ฐานเทียบต้องเป็นค่าปกติ "ของเดือนนี้" ไม่ใช่ยอดฤดูหาร 26 — ใช้จังหวัดสมมติที่ฝน
+    # กระจุกอยู่เดือนเดียว ถ้าใครเปลี่ยนกลับไปหารแบน เกณฑ์ ก.ย. จะหล่นจาก 150 เป็น 50
+    peak = {"P": {"forecast_rainfall_mm": 26 * 100 / 3,   # ฤดูกาล/26 = 33.3 มม./สัปดาห์
+                  "rain_normal_weekly_mm": {"9": 100.0, "11": 10.0}}}
+    assert province_flood_thresholds("P", peak, 9)[2] == 150.0, province_flood_thresholds("P", peak, 9)
+    assert province_flood_thresholds("P", peak, 11)[2] == 15.0   # ปลายฤดูเกณฑ์ต้องลดลงด้วย
+    # เดือนนอกฤดูนาปี (ไม่มีคีย์) ถอยไปใช้ยอดฤดูหาร 26 ตามเดิม
+    assert round(province_flood_thresholds("P", peak, 1)[2], 1) == 50.0
+    # ไฟล์ค่าปกติหาย/ค่าต่ำผิดปกติ → เกณฑ์คงที่ ไม่ใช่หารศูนย์
+    assert province_flood_thresholds("X", {}, 9) == (FLOOD_HIGH_MM, FLOOD_MED_MM, FLOOD_LOW_MM, None)
     print("✅ _selftest passed")
 
 

@@ -1,39 +1,39 @@
 {
   "_meta": {
-    "updated": "2026-09-10",
+    "updated": "2026-09-11",
     "method": "7-day rain forecast vs GSMaP satellite actual, matched by exact date window",
     "note": "วัดความแม่นพยากรณ์ฝน 7 วัน เทียบฝนจริงดาวเทียม GSMaP · heavy = ≥120มม. (เตือน 🔴), any = ≥30มม. · จับคู่เฉพาะช่วงวันที่ตรงกันเป๊ะ",
     "heavy_mm": 120,
     "any_mm": 30
   },
   "rolling": {
-    "windows_scored": 15,
-    "province_days": 1155,
+    "windows_scored": 14,
+    "province_days": 1078,
     "heavy": {
-      "precision": 0.058,
-      "recall": 0.88,
-      "tp": 22,
-      "fp": 356,
+      "precision": 0.049,
+      "recall": 0.85,
+      "tp": 17,
+      "fp": 329,
       "fn": 3
     },
     "heavy_calibrated": {
-      "windows_scored": 15,
-      "province_days": 1155,
-      "precision": 0.09,
-      "recall": 0.52,
-      "tp": 13,
-      "fp": 131,
+      "windows_scored": 14,
+      "province_days": 1078,
+      "precision": 0.064,
+      "recall": 0.4,
+      "tp": 8,
+      "fp": 117,
       "fn": 12
     },
     "any": {
-      "accuracy": 0.484,
-      "tp": 480,
-      "tn": 79,
-      "fp": 565,
-      "fn": 31
+      "accuracy": 0.463,
+      "tp": 425,
+      "tn": 74,
+      "fp": 550,
+      "fn": 29
     },
-    "mae_mm": 68.1,
-    "bias_mm": 64.9
+    "mae_mm": 68.5,
+    "bias_mm": 65.3
   },
   "recent": [
     {

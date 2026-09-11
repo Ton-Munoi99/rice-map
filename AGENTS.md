@@ -160,6 +160,18 @@ the remote sha to local HEAD** instead of grepping push output.
   tracks a station across time must key on `province_th|amphoe_th|name_th` (see
   `station_key()` in `fetch_flood_status.py`). Keying on `id` fails silently — it simply
   matches nothing and reports zero, which looks like "no events" rather than a bug.
+- **Seasonal normals are NOT flat across the season** — `weather-forecast.json` carries both a
+  Jun–Nov total (`forecast_rainfall_mm`) and a per-month weekly normal
+  (`rain_normal_weekly_mm`, keys `"6"`–`"11"`). Anything comparing current rain to "normal"
+  must use the month's value. Dividing the season total by 26 weeks looks reasonable and is
+  wrong by 1.1–1.9× in the peak months and the other way at the tail: Mae Hong Son's weekly
+  normal is 115 mm in September and 21 mm in November. That flat baseline is what made the
+  flood-risk layer warn 90% of provinces every day while going blind late in the season.
+- **A fetch that comes back partial must not overwrite good data** — several sources answer
+  429/500 under load. `fetch_weather_forecast.py` once wrote `null` over all 77 provinces after
+  a 429 on 2 of 5 years, which silently drops the whole alert layer onto fixed fallback
+  thresholds. Keep the previous record when a refetch is incomplete, and back off in tens of
+  seconds, not twos — a rate limit does not reset in 2 seconds.
 - **Date labels use `bkk_today()` from `riceutils.py`, never `date.today()`** — runners are
   UTC, and crons firing 17:00–24:00 UTC are already the next day in Bangkok, so `date.today()`
   writes an "updated" label a day behind. Use `bkk_now()` when a timestamp needs the time too.
