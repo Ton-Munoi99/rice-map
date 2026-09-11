@@ -4888,8 +4888,11 @@
           const meta = window.ALERTS_DATA?._meta;
           const sum = window.ALERTS_DATA?.summary;
           refs.dataSourceNote.textContent = t(
-            `🚨 สร้างอัตโนมัติจากข้อมูล: ${(meta?.sources || []).join(" · ")} · อัปเดตทุกวัน · เรียงจากหนักไปเบา · ช่วงฤดูฝนมีจังหวัดเข้าเกณฑ์พร้อมกันมาก (วันนี้ ${(sum?.high || 0) + (sum?.medium || 0) + (sum?.low || 0)}/${covered} จังหวัด) — ให้ดูลำดับความรุนแรง ไม่ใช่จำนวนจังหวัด`,
-            `🚨 Auto-generated from: ${(meta?.sources || []).join(" · ")} · Daily update · ranked worst-first · in the wet season most provinces clear the thresholds at once (${(sum?.high || 0) + (sum?.medium || 0) + (sum?.low || 0)} of ${covered} today) — read the ordering, not the count`,
+            // เดิมต่อท้ายว่า "ให้ดูลำดับความรุนแรง ไม่ใช่จำนวนจังหวัด" ซึ่งเป็นคำแก้ตัวให้บั๊ก
+            // ฐานเกณฑ์ผิด (เตือน ~90% ของประเทศทุกวัน) แก้ที่ต้นเหตุแล้วเมื่อ 11 ก.ย. 69
+            // จำนวนจังหวัดกลับมามีความหมาย จึงไม่ต้องบอกผู้ใช้ให้เมินมันอีก
+            `🚨 สร้างอัตโนมัติจากข้อมูล: ${(meta?.sources || []).join(" · ")} · อัปเดตทุกวัน · เรียงจากหนักไปเบา · วันนี้เข้าเกณฑ์ ${(sum?.high || 0) + (sum?.medium || 0) + (sum?.low || 0)}/${covered} จังหวัด (เสี่ยงสูง ${sum?.high || 0}) · เกณฑ์เทียบกับฝนปกติของเดือนนี้รายจังหวัด ไม่ใช่ค่าคงที่ทั้งประเทศ`,
+            `🚨 Auto-generated from: ${(meta?.sources || []).join(" · ")} · Daily update · ranked worst-first · ${(sum?.high || 0) + (sum?.medium || 0) + (sum?.low || 0)} of ${covered} provinces over threshold today (${sum?.high || 0} high) · Thresholds are per-province multiples of this month's normal rainfall, not one fixed national number`,
           );
           return;
         }
@@ -5127,6 +5130,23 @@
                                   `พยากรณ์ปริมาณฝนสะสม 7 วันข้างหน้ารายจังหวัด จาก Open-Meteo Forecast API · อัปเดตทุกวัน · สีเข้ม = ฝนมาก · ข้อมูลล่าสุด ${fmtDateISO(window.FORECAST_DATA?._meta?.updated)}`,
                                   `7-day cumulative rain forecast by province via Open-Meteo Forecast API · Daily update · Dark = heavy rain · Latest: ${fmtDateISO(window.FORECAST_DATA?._meta?.updated)}`,
                                 )
+                              : S.layer === "biomass"
+                                ? t(
+                                    // ไม่มีสาขาของตัวเองจะหล่นไปใช้ข้อความ default ซึ่งเขียนว่า "ข้อมูลทางการ สศก."
+                                    // และปิดท้ายด้วย `ปี ${S.year}` — layer นี้ไม่มีอนุกรมรายปี yearsForLayer จึงคืน
+                                    // sentinel ทำให้ขึ้นว่า "ปี biomass" บนหน้าเว็บ และยกข้อมูลทะเบียนโรงไฟฟ้าของ
+                                    // พพ. ไปให้ สศก. · layer sentinel อื่นมีสาขาของตัวเองครบแล้ว เหลือตัวนี้ตัวเดียว
+                                    `แผนที่จำนวนโรงไฟฟ้าชีวมวลรายจังหวัด จากทะเบียนของกรมพัฒนาพลังงานทดแทนและอนุรักษ์พลังงาน (พพ.) · ` +
+                                      `${window.BIOMASS_DATA?._meta?.total ?? "—"} โรง รวม ${window.BIOMASS_DATA?._meta?.total_mw ?? "—"} MW ใน ` +
+                                      `${window.BIOMASS_DATA?._meta?.provinces_covered ?? "—"} จังหวัด · ` +
+                                      `${window.BIOMASS_DATA?._meta?.rice_fuel_plants ?? "—"} โรงใช้เชื้อเพลิงจากข้าว (ฟาง/แกลบ) · ` +
+                                      `ข้อมูล ณ ${window.BIOMASS_DATA?._meta?.as_of || "—"} · ไม่ใช่ข้อมูล สศก.`,
+                                    `Biomass power plants per province, from the DEDE (Thailand) plant registry · ` +
+                                      `${window.BIOMASS_DATA?._meta?.total ?? "—"} plants totalling ${window.BIOMASS_DATA?._meta?.total_mw ?? "—"} MW across ` +
+                                      `${window.BIOMASS_DATA?._meta?.provinces_covered ?? "—"} provinces · ` +
+                                      `${window.BIOMASS_DATA?._meta?.rice_fuel_plants ?? "—"} are rice-fuelled (straw/husk) · ` +
+                                      `As of ${window.BIOMASS_DATA?._meta?.as_of_en || "—"} · Not an OAE dataset`,
+                                  )
                               : S.layer === "floodExtent"
                                 ? t(
                                     `สถานะน้ำท่วมรายจังหวัด จากสถานีวัดระดับน้ำจริงของ สสน. · แดง = มีสถานีล้นตลิ่งแล้ว · ส้ม = น้ำมากหลายจุด ใกล้ล้นตลิ่ง · เป็นน้ำที่วัดได้จริง ไม่ใช่การคาดการณ์ · ข่าวเป็นบทสรุปประกอบ ไม่มีผลกับสี`,
@@ -5362,7 +5382,7 @@
         if (WEATHER_DATA?.provinces?.[en]) {
           const wp = WEATHER_DATA.provinces[en];
           const seasonLabel = WEATHER_DATA._meta?.season_label?.split("·")[0]?.trim() || "นาปี 2568";
-          const avgRain = WEATHER_FORECAST?.provinces?.[en]?.forecast_rainfall_mm;
+          const avgRain = seasonNormalToDate(en);   // ค่าปกติของช่วงเดียวกัน ไม่ใช่ทั้งฤดู
           const baseYrs = WEATHER_FORECAST?._meta?.base_years || "—";
           const anomaly = weatherValueOf(en, "drought"); // reuse existing calculation
           const anomColor =
@@ -5389,9 +5409,9 @@
           <div class="rice-card" style="grid-column:1/-1;background:rgba(30,100,195,.08);border:1px solid rgba(30,100,195,.2)">
             <div class="t">🌧 ${t("สภาพภูมิอากาศ", "Climate")} · <span style="font-size:9px;font-weight:400;opacity:.7">${t(seasonLabel, "Main Season 2025")}</span></div>
             <div class="metric">
-              <div class="m-label">${t("ปริมาณฝนสะสม (มิ.ย.–พ.ย.)", "Season Rainfall (Jun–Nov)")}</div>
+              <div class="m-label">${t(`ฝนสะสมฤดูนี้ถึงวันที่ ${WEATHER_DATA?._meta?.season?.split("→")[1]?.trim() || "—"}`, `Season rainfall to ${WEATHER_DATA?._meta?.season?.split("→")[1]?.trim() || "—"}`)}</div>
               <div class="m-value">${wp.season_rainfall_mm?.toFixed(0) ?? "—"} <small>mm</small>
-                ${avgRain ? `<div class="m-label" style="margin-top:2px">${t("ค่าปกติ", "Normal")} ${baseYrs}: ${avgRain.toFixed(0)} mm</div>` : ""}
+                ${avgRain ? `<div class="m-label" style="margin-top:2px">${t("ค่าปกติช่วงเดียวกัน", "Normal, same window")} ${baseYrs}: ${avgRain.toFixed(0)} mm</div>` : ""}
               </div>
             </div>
             <div class="metric">
@@ -8146,12 +8166,53 @@ ${warningsHtml}
         // rerender ถ้าผู้ใช้กด weather layer ก่อนที่ข้อมูลจะโหลดเสร็จ
       }
 
+      // ค่าปกติของ "ช่วงที่ผ่านมาแล้วในฤดูนี้" ไม่ใช่ทั้งฤดู
+      //
+      // weather-province.json คือฝนสะสม *ถึงวันนี้* (1 มิ.ย. → วันที่ดึง) แต่
+      // forecast_rainfall_mm คือค่าปกติ *ทั้งฤดู มิ.ย.–พ.ย.* เอามาหารกันตรงๆ กลางฤดู
+      // จะได้ติดลบมหาศาลทุกจังหวัด: วัด 11 ก.ย. 69 ได้ -24% ถึง -74% ทั้งประเทศ
+      // (น่าน -27%, นครศรีธรรมราช -74%) แล้วการ์ดจะขึ้น "แห้งแล้งรุนแรง ⚠️" ทั้งแผ่นดิน
+      // ทั้งที่เทียบช่วงเดียวกันจริงๆ ได้ +20% ถึง -24% ซึ่งสมเหตุสมผล
+      //
+      // เดิมไม่เห็นบั๊กนี้เพราะ fetch_weather.py แช่ข้อมูลฤดูที่แล้วไว้ (ครบ 183 วัน)
+      // จึงบังเอิญเป็นการเทียบเต็มฤดูกับเต็มฤดู — พอแก้ให้ดึงสดบั๊กนี้ก็โผล่
+      //
+      // ใช้ค่าปกติรายเดือนที่วัดแบบ centroid ให้ตรงกับวิธีวัดของ weather-province.json
+      function seasonNormalToDate(en) {
+        const f = WEATHER_FORECAST?.provinces?.[en];
+        if (!f) return null;
+        const nm = f.rain_normal_weekly_centroid_mm;
+        const win = WEATHER_DATA?._meta?.season || "";
+        const [a, b] = win.split("→").map((x) => x.trim());
+        // ไฟล์รุ่นเก่าที่ยังไม่มีค่าปกติรายเดือน → คืน null ให้ขึ้นขีด "—"
+        // ห้าม fallback เป็น forecast_rainfall_mm (ค่าปกติทั้งฤดู) เพราะกลางฤดูมันจะให้
+        // "ติดลบ 74% แห้งแล้งรุนแรง" ที่ดูน่าเชื่อถือแต่ผิด — ไม่มีค่าให้แสดงดีกว่าค่าผิด
+        if (!nm || !a || !b) return null;
+        const start = new Date(a + "T00:00:00Z"), end = new Date(b + "T00:00:00Z");
+        if (isNaN(start) || isNaN(end)) return null;
+        const WEEKS_PER_MONTH = 365.25 / 12 / 7;
+        let total = 0;
+        for (let m = 6; m <= 11; m++) {
+          const wk = nm[String(m)];
+          if (wk == null) continue;
+          const first = new Date(Date.UTC(end.getUTCFullYear(), m - 1, 1));
+          const last = new Date(Date.UTC(end.getUTCFullYear(), m, 0));
+          const from = start > first ? start : first;
+          const to = end < last ? end : last;
+          const days = Math.floor((to - from) / 86400000) + 1;
+          if (days <= 0) continue;
+          const inMonth = last.getUTCDate();
+          total += wk * WEEKS_PER_MONTH * (Math.min(days, inMonth) / inMonth);
+        }
+        return total > 0 ? total : null;
+      }
+
       function weatherValueOf(en, layer) {
         const p = WEATHER_DATA?.provinces?.[en];
         if (!p) return null;
         if (layer === "drought") {
-          // % เบี่ยงเบนจากค่าปกติ 5 ปี (2020–2024)
-          const avg = WEATHER_FORECAST?.provinces?.[en]?.forecast_rainfall_mm;
+          // % เบี่ยงเบนจากค่าปกติ 5 ปี เทียบ "ช่วงเวลาเดียวกัน" ไม่ใช่ทั้งฤดู
+          const avg = seasonNormalToDate(en);
           if (avg == null || !p.season_rainfall_mm) return null;
           return Math.round(((p.season_rainfall_mm - avg) / avg) * 100 * 10) / 10;
         }

@@ -4,6 +4,51 @@ Last updated: 2026-09-11 by Claude Code
 
 ## Log
 
+- 2026-09-11 (Claude, later): Ran the full stale-check sweep that had never completed, and
+  cleared the two smaller pending items. The sweep found four real bugs, all of the same
+  shape: a green workflow producing a file whose label no longer matches its contents.
+  The worst is `weather-province.json`. Its resume cache skips any province that already has
+  a value but never checked whether the *date window* had moved, so after the first complete
+  run it rewrote only `_meta` forever. The season label advanced every month — 2026-06-01 to
+  06-01, then 07-01, 08-01, 09-01 — while every number stayed the completed 2025 season, Nan
+  at 1557.8 mm over 183 days under a label claiming a one-day window. It had been wrong since
+  21 April. The monitor could not see it because the file *was* committed monthly. The cache
+  now keys on the window, and the script refuses to write a file whose `days_covered`
+  disagrees with its own `_meta.season`; replayed over the last eight versions, that assert
+  catches all four bad ones and passes all four good ones.
+  Fixing that exposed a second bug it had been masking: the climate card compared
+  rainfall-to-date against the *full-season* normal. With frozen full-season data the
+  comparison happened to be like-for-like; with live data it read −24% to −74% for every
+  province, which would have labelled the whole country "severe drought" in the middle of the
+  wet season. It now compares against the normal for the same elapsed window, which gives
+  +20% to −24%, and returns an em dash rather than a guess when the monthly normals are absent.
+  Third: the flood-risk baseline I shipped this morning was still measured the wrong way.
+  `rain-forecast.json` summarises a province with the p90 of up to 6 sample points, on purpose,
+  to catch orographic rain a centroid misses — but the normal it was divided by was measured at
+  the centroid alone. Across 10 provinces and 5 years that inflates the ratio by a median 1.28x
+  and, worse, unevenly: 0.97x for Trat, flat terrain, against 2.16x for Nakhon Si Thammarat,
+  coast to mountain inside one province. Uneven bias distorts the ranking between provinces,
+  which is the entire content of a choropleth. The normal is now computed with the same p90 over
+  the same sample points, and `percentile()` moved into `riceutils.py` so the two cannot drift
+  apart. A centroid-measured monthly normal is kept alongside it for the climate card, whose
+  actuals are centroid-measured too — each consumer gets the baseline that matches how its own
+  numerator was sampled.
+  Fourth, smaller and user-visible: the biomass layer was the only one of 18 without its own
+  caption branch, so it inherited the default, which credited OAE for a DEDE power-plant
+  registry and ended with the literal words "ปี biomass" — `yearsForLayer` returns the layer
+  name as a sentinel for layers with no yearly series. Clicked through all 18 layers to confirm
+  nothing else leaks.
+  Also hardened the class rather than the instance where I could. `fetch_weather_forecast.py`
+  now stamps `rain_normal_method` on every record, because I hit exactly the trap it prevents:
+  changed the method from centroid to p90, reran, and got "Reusing 77, fetching 0" with the file
+  unchanged. And the Open-Meteo archive backoff went from 3 tries at 2 s to 30/90/180/300 s,
+  since 429 is the normal answer to a heavy request and the quota does not reset in two seconds.
+  Passes that found nothing, so nobody needs to re-check them: monitor coverage (the three
+  unwatched files are documented with reasons and each reason holds), secrets (both referenced
+  are set), the hardcoded-fallback checker (0 contradictions), doc counts (18 workflows, 20
+  layers, 18 buttons — all match), and dead config (the two button-less layers are the
+  deliberate ones).
+
 - 2026-09-11 (Claude): Went after the three items left pending and two of the three turned
   out to rest on a premise that does not hold. The "northern blind spot" was supposed to be
   caused by northern provinces having high normal rainfall, making a 1.5x threshold a high

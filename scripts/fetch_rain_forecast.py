@@ -17,7 +17,7 @@ Shape ไม่เปลี่ยนจากเดิม: provinces[name] = {ra
 """
 import json, os, re, statistics, sys, time
 import requests
-from riceutils import bkk_today, load_sample_points
+from riceutils import bkk_today, load_sample_points, percentile
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -28,14 +28,6 @@ BATCH_SIZE = 40          # sample points per request
 MAX_RETRY  = 3
 TIMEOUT    = 60          # seconds per batch request
 PCTL       = 90          # percentile ข้ามจุดตัวอย่างรายวัน (100 = max)
-
-
-def percentile(values, p):
-    """Linear-interpolation percentile (นิยามเดียวกับ numpy default)"""
-    # ponytail: stdlib quantiles แทนสูตรเขียนเอง — พิสูจน์แล้วค่าตรงกันทุกกรณี 2-6 จุด
-    if len(values) == 1:
-        return values[0]
-    return statistics.quantiles(values, n=100, method="inclusive")[p - 1]
 
 
 # ── Fetch one batch of sample points in a single API call ───────────────────

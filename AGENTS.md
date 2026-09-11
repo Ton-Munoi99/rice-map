@@ -167,6 +167,24 @@ the remote sha to local HEAD** instead of grepping push output.
   wrong by 1.1–1.9× in the peak months and the other way at the tail: Mae Hong Son's weekly
   normal is 115 mm in September and 21 mm in November. That flat baseline is what made the
   flood-risk layer warn 90% of provinces every day while going blind late in the season.
+- **A baseline must be measured the same way as the number divided by it** — `rain-forecast.json`
+  summarises a province as the p90 over up to 6 sample points; `weather-province.json` measures the
+  centroid. `weather-forecast.json` therefore carries two monthly normals,
+  `rain_normal_weekly_mm` (p90, for the forecast comparison) and `rain_normal_weekly_centroid_mm`
+  (for the climate card). Crossing them inflates the ratio by a median 1.28x and unevenly —
+  0.97x for Trat, 2.16x for Nakhon Si Thammarat — which distorts the ranking between provinces,
+  not just the level. `percentile()` lives in `riceutils.py` so both sides cannot drift apart.
+- **A resume cache needs a version for how its values were computed** — scripts that skip work
+  already present (`fetch_weather_forecast.py`, `fetch_weather.py`) will happily keep values
+  produced by an algorithm you just replaced. `rain_normal_method` is that stamp; bump it when
+  the calculation changes. `fetch_weather.py` has the same hazard on its *date window* and keys
+  its cache on it — without that it rewrote only `_meta` for five months while serving the
+  previous season's numbers under a current label.
+- **Say it in the data, then assert it** — a label and its payload drift apart silently because
+  no test covers prose. Where a file's `_meta` makes a checkable claim, assert it before writing
+  (`fetch_weather.py` refuses to write when `days_covered` disagrees with `_meta.season`). The
+  freshness monitor cannot catch this class: the file is committed on schedule, only its
+  contents are wrong.
 - **A fetch that comes back partial must not overwrite good data** — several sources answer
   429/500 under load. `fetch_weather_forecast.py` once wrote `null` over all 77 provinces after
   a 429 on 2 of 5 years, which silently drops the whole alert layer onto fixed fallback

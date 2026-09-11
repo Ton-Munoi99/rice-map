@@ -13,6 +13,7 @@ import os
 import re
 import json
 import math
+import statistics
 import calendar
 from datetime import date, datetime, timedelta, timezone
 
@@ -33,6 +34,19 @@ def bkk_today():
 def bkk_now():
     """วันที่+เวลาตามเวลาไทย ("YYYY-MM-DD HH:MM") — เหตุผลเดียวกับ bkk_today()"""
     return (datetime.now(timezone.utc) + timedelta(hours=7)).strftime("%Y-%m-%d %H:%M")
+
+
+def percentile(values, p):
+    """Linear-interpolation percentile (นิยามเดียวกับ numpy default)
+
+    อยู่ที่นี่เพราะสองสคริปต์ต้องใช้สูตรเดียวกันเป๊ะ: fetch_rain_forecast.py สรุปฝน
+    พยากรณ์ข้ามจุดตัวอย่างด้วย p90 และ fetch_weather_forecast.py ต้องสรุป "ค่าปกติ"
+    ด้วยวิธีเดียวกัน ไม่งั้นเป็นการเทียบ p90 กับค่าจุดเดียว ซึ่งเอนไปทางเตือนเกิน
+    (วัดจริง 11 ก.ย. 69: ค่ากลาง 1.28x และแกว่ง 0.97x-2.16x แล้วแต่จังหวัด)
+    """
+    if len(values) == 1:
+        return values[0]
+    return statistics.quantiles(values, n=100, method="inclusive")[p - 1]
 
 
 def haversine_km(lat1, lon1, lat2, lon2):

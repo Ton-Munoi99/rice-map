@@ -11,7 +11,7 @@ Output: data/weather-forecast.json
 """
 import json, os, re, sys, time, requests
 from datetime import date
-from riceutils import bkk_today, load_centroids
+from riceutils import bkk_today, load_centroids, load_sample_points, percentile
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -37,18 +37,47 @@ def _season_totals(daily):
     def m(vals):
         v = [x for x in vals if x is not None]
         return sum(v) / len(v) if v else None
-    # ฝนรายเดือนด้วย ไม่ใช่แค่ยอดรวมฤดูกาล: ฝนนาปีไม่ได้ตกเท่ากันทุกสัปดาห์
-    # (แม่ฮ่องสอน ก.ย. 107 มม./สัปดาห์ แต่ พ.ย. 13) ใครหารยอดฤดูกาลด้วย 26
-    # สัปดาห์แบนๆ จะได้ฐานที่ต่ำเกินจริงในเดือนพีค และสูงเกินจริงปลายฤดู
-    monthly = {}
-    for t, v in zip(daily["time"], daily["precipitation_sum"]):
-        monthly[int(t[5:7])] = monthly.get(int(t[5:7]), 0.0) + (v or 0)
     return {
         "rain": s(daily["precipitation_sum"]),
         "et0":  s(daily["et0_fao_evapotranspiration"]),
         "temp": m(daily["temperature_2m_mean"]),
-        "monthly": monthly,
+        "monthly": monthly_totals(daily),
     }
+
+
+def monthly_totals(daily):
+    """ฝนรวมรายเดือนของจุดเดียว 1 ปี → {เดือน: มม.}"""
+    out = {}
+    for t, v in zip(daily["time"], daily["precipitation_sum"]):
+        out[int(t[5:7])] = out.get(int(t[5:7]), 0.0) + (v or 0)
+    return out
+
+
+def fetch_rain_points_batch(batch_pts, year):
+    """ฝนรายวันของจุดตัวอย่าง (ขอแค่ precipitation ตัวเดียว — request เบากว่ามาก)
+    batch_pts: [(province, {'lat','lon'}), ...] → {index: {เดือน: มม.}}"""
+    params = {
+        "latitude":  ",".join(str(pt["lat"]) for _, pt in batch_pts),
+        "longitude": ",".join(str(pt["lon"]) for _, pt in batch_pts),
+        "start_date": f"{year}-{SEASON_MONTH_START:02d}-01",
+        "end_date":   f"{year}-{SEASON_MONTH_END:02d}-30",
+        "daily": "precipitation_sum",
+        "timezone": "Asia/Bangkok",
+    }
+    for wait in (0, 30, 90, 180, 300):
+        if wait:
+            time.sleep(wait)
+        try:
+            r = requests.get(API_URL, params=params, timeout=60)
+            r.raise_for_status()
+            results = r.json()
+            if isinstance(results, dict):
+                results = [results]
+            return {i: monthly_totals(res["daily"]) for i, res in enumerate(results)}
+        except Exception as e:
+            err = e
+    print(f"  rain-points batch {year} ERROR - {err}", file=sys.stderr)
+    return {}
 
 
 # ── Fetch one season for a batch of provinces in one API call ───────────────
@@ -82,22 +111,71 @@ def fetch_season_batch(batch_names, centroids, year):
 
 
 WEEKS_PER_MONTH = 365.25 / 12 / 7   # 4.345
+NORMAL_PCTL = 90   # ต้องเท่ากับ PCTL ใน fetch_rain_forecast.py — ดูเหตุผลใน weekly_normal()
 
-def _average_normal(rains, et0s, temps, monthlies, lat, lon):
-    """เฉลี่ย N ปี → output schema เดิม + ค่าปกติรายสัปดาห์แยกเดือน"""
-    rain_avg = round(sum(rains) / len(rains), 1)
-    et0_avg  = round(sum(et0s)  / len(et0s),  1)
-    temp_avg = round(sum(temps) / len(temps),  2) if temps else None
+# ป้ายวิธีคำนวณ ติดไว้กับ record ทุกจังหวัด — สคริปต์นี้ข้ามจังหวัดที่มีข้อมูลแล้ว
+# (ดึงครบทีเดียวใช้ทั้งฤดู) ถ้าไม่มีป้ายนี้ พอเปลี่ยน "วิธี" คิดค่า ของเก่าจะถูกเก็บไว้
+# เงียบๆ ตลอดไป — เกิดจริงแล้ว 11 ก.ย. 69: เปลี่ยนจาก centroid มาเป็น p90 แล้วรันใหม่
+# ได้ "Reusing 77 existing, fetching 0" ไฟล์ไม่ขยับสักจังหวัด
+# ⚠️ เปลี่ยนวิธีคิด rain_normal_weekly_mm เมื่อไหร่ ต้องขยับสตริงนี้ด้วย
+NORMAL_METHOD = "p90-sample-points+centroid-v2"
+
+
+def weekly_normal(per_year_points):
+    """ค่าปกติฝนรายสัปดาห์แยกเดือน — สรุปข้ามจุดด้วย p90 "วิธีเดียวกับฝั่งพยากรณ์"
+
+    per_year_points: {ปี: [ {เดือน: มม.} ต่อจุดตัวอย่าง ]}
+
+    ทำไมต้อง p90 ไม่ใช่ centroid: rain-forecast.json สรุปฝนพยากรณ์ของจังหวัดด้วย p90
+    ข้ามจุดตัวอย่าง ≤6 จุด (จงใจ เพื่อจับฝนกระจุกแถบเทือกเขาที่ centroid มองไม่เห็น)
+    ถ้าฐาน "ค่าปกติ" คิดจาก centroid จุดเดียว = เอา p90 ไปหารค่าจุดเดียว ซึ่งเอนไป
+    ทางเตือนเกิน และเอนไม่เท่ากันทุกจังหวัด — วัดจริง 11 ก.ย. 69 จาก 10 จังหวัด:
+    ค่ากลาง 1.28x แต่แกว่ง 0.97x (ตราด ภูมิประเทศราบ) ถึง 2.16x (นครศรีธรรมราช
+    ชายฝั่งถึงเขาหลวงในจังหวัดเดียว) — ความไม่เท่ากันนี้บิด "ลำดับ" ระหว่างจังหวัด
+    ซึ่งเป็นสาระทั้งหมดของ choropleth ไม่ใช่แค่ระดับโดยรวม
+    """
+    wk = {}
+    for mth in range(SEASON_MONTH_START, SEASON_MONTH_END + 1):
+        yearly = []
+        for pts in per_year_points.values():
+            vals = sorted(p[mth] for p in pts if mth in p)
+            if vals:
+                yearly.append(percentile(vals, NORMAL_PCTL))
+        if yearly:
+            wk[str(mth)] = round(sum(yearly) / len(yearly) / WEEKS_PER_MONTH, 1)
+    return wk
+
+
+def centroid_weekly_normal(monthlies):
+    """ค่าปกติรายสัปดาห์แยกเดือน วัดที่ centroid จุดเดียว — คู่กับ weekly_normal() ที่เป็น p90
+
+    ต้องมีสองชุดเพราะผู้ใช้สองรายวัดคนละวิธี และ "ฐานต้องวัดวิธีเดียวกับตัวตั้ง":
+      · rain_normal_weekly_mm (p90)  → เทียบกับ rain-forecast.json ซึ่งเป็น p90 ของ ≤6 จุด
+      · rain_normal_weekly_centroid_mm → เทียบกับ weather-province.json ซึ่งวัดที่ centroid
+    ถ้าจับคู่ผิดข้าง ตัวเลขจะเอนไป 1.28x โดยเฉลี่ย และไม่เท่ากันทุกจังหวัด (0.97x-2.16x)
+    """
     wk = {}
     for mth in range(SEASON_MONTH_START, SEASON_MONTH_END + 1):
         vals = [d[mth] for d in monthlies if mth in d]
         if vals:
             wk[str(mth)] = round(sum(vals) / len(vals) / WEEKS_PER_MONTH, 1)
+    return wk
+
+
+def _average_normal(rains, et0s, temps, wk, wk_cen, lat, lon):
+    """เฉลี่ย N ปี → output schema เดิม + ค่าปกติรายสัปดาห์แยกเดือน"""
+    rain_avg = round(sum(rains) / len(rains), 1)
+    et0_avg  = round(sum(et0s)  / len(et0s),  1)
+    temp_avg = round(sum(temps) / len(temps),  2) if temps else None
     return {
         "forecast_rainfall_mm": rain_avg,
         # ค่าปกติ "รายสัปดาห์" ของแต่ละเดือนในฤดู — fetch_agri_warnings.py ใช้ตัวนี้
         # เป็นฐานเกณฑ์น้ำท่วม แทนการหารยอดฤดูกาลด้วย 26 สัปดาห์แบนๆ
         "rain_normal_weekly_mm": wk,
+        # ค่าปกติรายสัปดาห์ที่ centroid — การ์ดภูมิอากาศใช้ตัวนี้ เพราะ weather-province.json
+        # วัดฝนจริงที่ centroid เหมือนกัน (ห้ามเอาไปเทียบกับพยากรณ์ p90 ดู centroid_weekly_normal)
+        "rain_normal_weekly_centroid_mm": wk_cen,
+        "rain_normal_method":     NORMAL_METHOD,
         "forecast_et0_mm":      et0_avg,
         "forecast_wb_mm":       round(rain_avg - et0_avg, 1),
         "rainfall_p10_mm":      round(min(rains), 1),
@@ -127,11 +205,11 @@ def main():
         except Exception:
             pass
 
-    # ข้อมูลเดิมที่ยังไม่มีค่าปกติรายเดือน ต้องดึงใหม่ (ฟิลด์เพิ่มหลังไฟล์ถูกสร้าง)
+    # ข้อมูลเดิมที่คิดด้วยวิธีอื่น (หรือยังไม่มีค่าปกติรายเดือน) ต้องดึงใหม่
     # แต่เก็บของเดิมไว้เป็น fallback — ห้ามทิ้งข้อมูลที่ใช้ได้เพราะ API ล่มชั่วคราว
     previous = dict(existing)
     existing = {k: v for k, v in existing.items()
-                if v is None or v.get("rain_normal_weekly_mm")}
+                if v is None or v.get("rain_normal_method") == NORMAL_METHOD}
     provinces = dict(existing)
     skipped = sum(1 for v in existing.values() if v is not None)
     print(f"  Reusing {skipped} existing, fetching {len(centroids)-skipped} missing...")
@@ -152,14 +230,31 @@ def main():
                     if d["temp"] is not None:
                         acc[name]["temps"].append(d["temp"])
             time.sleep(2)
-        print(f"  year {yr} done")
+        print(f"  year {yr} done (season totals)")
+
+    # รอบสอง: ฝนรายเดือนของ "จุดตัวอย่าง" (~424 จุด) สำหรับค่าปกติรายสัปดาห์
+    # ขอแค่ precipitation ตัวเดียวจึงเบากว่ารอบแรกทั้งที่จุดเยอะกว่า 5 เท่า
+    sample_pts = load_sample_points()
+    flat = [(n, pt) for n in todo for pt in sample_pts.get(n, [])]
+    pt_acc = {n: {} for n in todo}        # จังหวัด → {ปี: [ {เดือน: มม.} ต่อจุด ]}
+    for yr in base_years:
+        for i in range(0, len(flat), BATCH_SIZE):
+            batch = flat[i:i + BATCH_SIZE]
+            res = fetch_rain_points_batch(batch, yr)
+            for j, (name, _) in enumerate(batch):
+                if j in res:
+                    pt_acc[name].setdefault(yr, []).append(res[j])
+            time.sleep(2)
+        print(f"  year {yr} done (sample points)")
 
     for name in todo:
         a = acc[name]
-        if len(a["rains"]) == N_YEARS:   # ครบทุกปีเท่านั้น
+        wk = weekly_normal(pt_acc.get(name) or {})
+        if len(a["rains"]) == N_YEARS and wk:   # ครบทุกปี และได้ค่าปกติรายเดือน
             c = centroids[name]
             provinces[name] = _average_normal(a["rains"], a["et0s"], a["temps"],
-                                              a["monthlies"], c["lat"], c["lon"])
+                                              wk, centroid_weekly_normal(a["monthlies"]),
+                                              c["lat"], c["lon"])
         else:
             # API ล่มกลางทาง → คืนค่าเดิมไป ไม่เขียน null ทับ: weather-forecast.json
             # เป็นฐานเกณฑ์น้ำท่วมของทั้ง layer เตือนภัย ถ้าโดนล้างเป็น null จะหล่นไป
@@ -167,8 +262,8 @@ def main():
             # ค่าปกติรายเดือน: 2 ใน 5 ปีโดน rate limit แล้วไฟล์กลายเป็น 0/77 ทันที)
             provinces[name] = previous.get(name)
             kept = "คงค่าเดิม" if provinces[name] else "ไม่มีค่าเดิม"
-            print(f"  {name}: incomplete ({len(a['rains'])}/{N_YEARS} yrs) — {kept}",
-                  file=sys.stderr)
+            print(f"  {name}: incomplete ({len(a['rains'])}/{N_YEARS} yrs, "
+                  f"monthly={'ok' if wk else 'missing'}) — {kept}", file=sys.stderr)
 
     output = {
         "_meta": {
@@ -179,7 +274,12 @@ def main():
             "forecast_model": f"Climatological average of {yr_range}",
             "source":  "Open-Meteo Archive API — archive-api.open-meteo.com",
             "note":    f"ค่าเฉลี่ยนาปี {N_YEARS} ปี ({yr_range}) ใช้เป็นฐานเทียบกับฤดูกาลปัจจุบัน · {N_YEARS}-year climatological mean used as seasonal baseline reference",
-            "rain_normal_weekly_note": "rain_normal_weekly_mm = ฝนปกติรายสัปดาห์ของแต่ละเดือน (คีย์ 6-11) · ใช้เป็นฐานเกณฑ์น้ำท่วมใน fetch_agri_warnings.py",
+            "rain_normal_weekly_note": (
+                f"rain_normal_weekly_mm = ฝนปกติรายสัปดาห์ของแต่ละเดือน (คีย์ 6-11) · "
+                f"สรุปข้ามจุดตัวอย่าง ≤6 จุด/จังหวัด ด้วย p{NORMAL_PCTL} วิธีเดียวกับ rain-forecast.json "
+                f"(ถ้าใช้ centroid จุดเดียวจะเป็นการเทียบ p90 กับค่าจุดเดียว = เอนไปทางเตือนเกิน "
+                f"ค่ากลาง 1.28x และไม่เท่ากันทุกจังหวัด 0.97x-2.16x) · "
+                f"ใช้เป็นฐานเกณฑ์น้ำท่วมใน fetch_agri_warnings.py"),
         },
         "provinces": provinces,
     }

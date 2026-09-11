@@ -87,11 +87,25 @@ def main():
     print(f"Provinces found: {len(centroids)}")
 
     # โหลดข้อมูลเดิม (ถ้ามี) — ข้ามจังหวัดที่มีข้อมูลแล้ว รันเฉพาะที่ null
+    #
+    # ⚠️ ใช้ซ้ำได้เฉพาะเมื่อ "ช่วงวันที่" เดียวกันเท่านั้น cache นี้มีไว้กันดึงใหม่ทั้ง
+    # ประเทศตอน batch ล้มบางส่วน ไม่ใช่กันดึงข้ามฤดู — ของเดิมไม่เช็กช่วงวันที่เลย
+    # พอทุกจังหวัดมีค่าแล้วมันจะ "Reusing 77, fetching 0" ตลอดไป เขียนทับแค่ _meta
+    # ผลคือ 11 ก.ย. 69 ตรวจพบว่าไฟล์นี้มีป้าย season เลื่อนทุกเดือน (2026-06-01 →
+    # 07-01 → 08-01 → 09-01) แต่ตัวเลขเป็นของฤดู 2025 ที่ดึงไว้ตั้งแต่ 21 เม.ย. 69
+    # ไม่ขยับเลยสักจังหวัด (น่าน 1557.8 มม. · days_covered 183 ทั้งที่ป้ายบอกช่วง 1 วัน)
+    # monitor จับไม่ได้เพราะไฟล์ถูก commit ทุกเดือนจริง — แค่เนื้อในไม่เปลี่ยน
+    window = f"{start_date} → {end_date}"
     existing = {}
     if os.path.exists(OUTPUT):
         try:
             with open(OUTPUT, encoding="utf-8") as f:
-                existing = json.load(f).get("provinces", {})
+                old = json.load(f)
+            if (old.get("_meta") or {}).get("season") == window:
+                existing = old.get("provinces", {})
+            else:
+                print(f"  ช่วงวันที่เปลี่ยน ({(old.get('_meta') or {}).get('season')} → {window}) "
+                      f"— ดึงใหม่ทั้งหมด ไม่ใช้ของเดิม")
         except Exception:
             pass
 
@@ -116,7 +130,7 @@ def main():
     output = {
         "_meta": {
             "updated": bkk_today(),
-            "season": f"{start_date} → {end_date}",
+            "season": window,
             "year": year,
             "season_label": f"นาปี {year + 543} (มิ.ย.–พ.ย.) · Main Season {year} (Jun–Nov)",
             "source": "Open-Meteo Archive API — archive-api.open-meteo.com",
@@ -129,6 +143,17 @@ def main():
         },
         "provinces": provinces,
     }
+
+    # ป้ายกับเนื้อในต้องตรงกัน — assert นี้จับบั๊ก cache แช่ข้ามฤดูได้ตั้งแต่วันแรก
+    # (ไฟล์เคยมีป้าย season ช่วง 1 วัน แต่ days_covered = 183 อยู่หลายเดือนโดยไม่มีใครเห็น
+    #  เพราะ monitor ดูแค่ว่าไฟล์ถูก commit ไหม ไม่ได้ดูว่าเนื้อในตรงกับป้ายหรือเปล่า)
+    want_days = (date.fromisoformat(end_date) - date.fromisoformat(start_date)).days + 1
+    got = [v["days_covered"] for v in provinces.values() if v]
+    if got and abs(max(got) - want_days) > 3:      # เผื่อ archive API ตามหลัง 1-2 วัน
+        print(f"[ERROR] ป้ายบอกช่วง {window} = {want_days} วัน แต่ข้อมูลครอบคลุมแค่ "
+              f"{max(got)} วัน — ไม่เขียนไฟล์ทับ", file=sys.stderr)
+        sys.exit(1)
+    print(f"  ตรวจป้ายกับเนื้อใน: {max(got) if got else 0}/{want_days} วัน ✓")
 
     with open(OUTPUT, "w", encoding="utf-8") as f:
         json.dump(output, f, ensure_ascii=False, indent=2)
