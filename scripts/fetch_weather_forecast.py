@@ -53,9 +53,16 @@ def monthly_totals(daily):
     return out
 
 
+def daily_rain(daily):
+    """ฝนรายวันของจุดเดียว 1 ปี → [(เดือน, มม.), ...] ตามลำดับวัน
+    None นับเป็น 0 เหมือนฝั่ง fetch_rain_forecast.py"""
+    return [(int(t[5:7]), v if v is not None else 0.0)
+            for t, v in zip(daily["time"], daily["precipitation_sum"])]
+
+
 def fetch_rain_points_batch(batch_pts, year):
     """ฝนรายวันของจุดตัวอย่าง (ขอแค่ precipitation ตัวเดียว — request เบากว่ามาก)
-    batch_pts: [(province, {'lat','lon'}), ...] → {index: {เดือน: มม.}}"""
+    batch_pts: [(province, {'lat','lon'}), ...] → {index: [(เดือน, มม.) รายวัน]}"""
     params = {
         "latitude":  ",".join(str(pt["lat"]) for _, pt in batch_pts),
         "longitude": ",".join(str(pt["lon"]) for _, pt in batch_pts),
@@ -73,7 +80,7 @@ def fetch_rain_points_batch(batch_pts, year):
             results = r.json()
             if isinstance(results, dict):
                 results = [results]
-            return {i: monthly_totals(res["daily"]) for i, res in enumerate(results)}
+            return {i: daily_rain(res["daily"]) for i, res in enumerate(results)}
         except Exception as e:
             err = e
     print(f"  rain-points batch {year} ERROR - {err}", file=sys.stderr)
@@ -118,32 +125,47 @@ NORMAL_PCTL = 90   # ต้องเท่ากับ PCTL ใน fetch_rain_fo
 # เงียบๆ ตลอดไป — เกิดจริงแล้ว 11 ก.ย. 69: เปลี่ยนจาก centroid มาเป็น p90 แล้วรันใหม่
 # ได้ "Reusing 77 existing, fetching 0" ไฟล์ไม่ขยับสักจังหวัด
 # ⚠️ เปลี่ยนวิธีคิด rain_normal_weekly_mm เมื่อไหร่ ต้องขยับสตริงนี้ด้วย
-NORMAL_METHOD = "p90-sample-points+centroid-v2"
+NORMAL_METHOD = "p90-daily-sample-points+centroid-v3"
 
 
 def weekly_normal(per_year_points):
     """ค่าปกติฝนรายสัปดาห์แยกเดือน — สรุปข้ามจุดด้วย p90 "วิธีเดียวกับฝั่งพยากรณ์"
 
-    per_year_points: {ปี: [ {เดือน: มม.} ต่อจุดตัวอย่าง ]}
+    per_year_points: {ปี: [ [(เดือน, มม.) รายวัน] ต่อจุดตัวอย่าง ]}
 
     ทำไมต้อง p90 ไม่ใช่ centroid: rain-forecast.json สรุปฝนพยากรณ์ของจังหวัดด้วย p90
     ข้ามจุดตัวอย่าง ≤6 จุด (จงใจ เพื่อจับฝนกระจุกแถบเทือกเขาที่ centroid มองไม่เห็น)
-    ถ้าฐาน "ค่าปกติ" คิดจาก centroid จุดเดียว = เอา p90 ไปหารค่าจุดเดียว ซึ่งเอนไป
-    ทางเตือนเกิน และเอนไม่เท่ากันทุกจังหวัด — วัดจริง 11 ก.ย. 69 จาก 10 จังหวัด:
-    ค่ากลาง 1.28x แต่แกว่ง 0.97x (ตราด ภูมิประเทศราบ) ถึง 2.16x (นครศรีธรรมราช
-    ชายฝั่งถึงเขาหลวงในจังหวัดเดียว) — ความไม่เท่ากันนี้บิด "ลำดับ" ระหว่างจังหวัด
-    ซึ่งเป็นสาระทั้งหมดของ choropleth ไม่ใช่แค่ระดับโดยรวม
+    ฐานที่วัดจาก centroid จุดเดียวจึงเอนไปทางเตือนเกิน และเอนไม่เท่ากันทุกจังหวัด
+
+    ⚠️ ลำดับการรวมต้องตรงกับพยากรณ์ด้วย ไม่ใช่แค่ใช้ p90 เหมือนกัน: พยากรณ์ทำ
+    "p90 ข้ามจุด ของแต่ละวัน → แล้วรวม 7 วัน" ถ้าฝั่งนี้ทำ "รวมรายเดือนของแต่ละจุด →
+    แล้ว p90 ข้ามจุด" ผลจะต่ำกว่าเสมอ (p90 ของ 6 จุด = ค่าเฉลี่ย 2 อันดับบนสุด ซึ่ง
+    subadditive: รวมของ p90 รายวัน ≥ p90 ของยอดรวม) และห่างขึ้นเมื่อฝนกระจุกคนละจุด
+    คนละวัน — ฐานต่ำ = เตือนเกิน ซึ่งคือบั๊กที่ฟังก์ชันนี้มีไว้แก้ (รุ่น v2 ทำผิดลำดับนี้)
     """
-    wk = {}
-    for mth in range(SEASON_MONTH_START, SEASON_MONTH_END + 1):
-        yearly = []
-        for pts in per_year_points.values():
-            vals = sorted(p[mth] for p in pts if mth in p)
-            if vals:
-                yearly.append(percentile(vals, NORMAL_PCTL))
-        if yearly:
-            wk[str(mth)] = round(sum(yearly) / len(yearly) / WEEKS_PER_MONTH, 1)
-    return wk
+    yearly = {}
+    for pts in per_year_points.values():
+        n_days = min(len(pt) for pt in pts)
+        month_sum = {}
+        for d in range(n_days):
+            mth = pts[0][d][0]
+            month_sum[mth] = (month_sum.get(mth, 0.0)
+                              + percentile([pt[d][1] for pt in pts], NORMAL_PCTL))
+        for mth, v in month_sum.items():
+            yearly.setdefault(mth, []).append(v)
+    return {str(mth): round(sum(v) / len(v) / WEEKS_PER_MONTH, 1)
+            for mth, v in sorted(yearly.items())
+            if SEASON_MONTH_START <= mth <= SEASON_MONTH_END}
+
+
+def points_complete(per_year_points, n_points):
+    """ครบทุกปี และทุกปีได้ครบทุกจุดตัวอย่างของจังหวัดนั้น
+
+    ต้องเช็กก่อนบันทึก เพราะ record ที่บันทึกแล้วติดป้าย NORMAL_METHOD จะไม่ถูกดึงใหม่อีก
+    เลย ถ้าปล่อยข้อมูลไม่ครบผ่าน: batch ล่มหนึ่งปี = ค่าปกติเฉลี่ยแค่ 4 ปี · จังหวัดที่จุด
+    ถูกแบ่งอยู่สอง batch แล้ว batch หนึ่งล่ม = p90 จาก 2-3 จุด ซึ่งดึงฐานให้ต่ำ"""
+    return (n_points > 0 and len(per_year_points) == N_YEARS
+            and all(len(pts) == n_points for pts in per_year_points.values()))
 
 
 def centroid_weekly_normal(monthlies):
@@ -152,7 +174,7 @@ def centroid_weekly_normal(monthlies):
     ต้องมีสองชุดเพราะผู้ใช้สองรายวัดคนละวิธี และ "ฐานต้องวัดวิธีเดียวกับตัวตั้ง":
       · rain_normal_weekly_mm (p90)  → เทียบกับ rain-forecast.json ซึ่งเป็น p90 ของ ≤6 จุด
       · rain_normal_weekly_centroid_mm → เทียบกับ weather-province.json ซึ่งวัดที่ centroid
-    ถ้าจับคู่ผิดข้าง ตัวเลขจะเอนไป 1.28x โดยเฉลี่ย และไม่เท่ากันทุกจังหวัด (0.97x-2.16x)
+    ถ้าจับคู่ผิดข้าง ตัวเลขจะเอน ค่ากลาง 1.38x และแกว่ง 1.00x-2.54x แล้วแต่จังหวัด (ก.ย. ครบ 77 จังหวัด)
     """
     wk = {}
     for mth in range(SEASON_MONTH_START, SEASON_MONTH_END + 1):
@@ -236,7 +258,7 @@ def main():
     # ขอแค่ precipitation ตัวเดียวจึงเบากว่ารอบแรกทั้งที่จุดเยอะกว่า 5 เท่า
     sample_pts = load_sample_points()
     flat = [(n, pt) for n in todo for pt in sample_pts.get(n, [])]
-    pt_acc = {n: {} for n in todo}        # จังหวัด → {ปี: [ {เดือน: มม.} ต่อจุด ]}
+    pt_acc = {n: {} for n in todo}        # จังหวัด → {ปี: [ [(เดือน, มม.) รายวัน] ต่อจุด ]}
     for yr in base_years:
         for i in range(0, len(flat), BATCH_SIZE):
             batch = flat[i:i + BATCH_SIZE]
@@ -249,8 +271,9 @@ def main():
 
     for name in todo:
         a = acc[name]
-        wk = weekly_normal(pt_acc.get(name) or {})
-        if len(a["rains"]) == N_YEARS and wk:   # ครบทุกปี และได้ค่าปกติรายเดือน
+        pts_ok = points_complete(pt_acc.get(name) or {}, len(sample_pts.get(name, [])))
+        wk = weekly_normal(pt_acc[name]) if pts_ok else {}
+        if len(a["rains"]) == N_YEARS and wk:   # ครบทุกปี และทุกจุดตัวอย่าง
             c = centroids[name]
             provinces[name] = _average_normal(a["rains"], a["et0s"], a["temps"],
                                               wk, centroid_weekly_normal(a["monthlies"]),
@@ -262,8 +285,10 @@ def main():
             # ค่าปกติรายเดือน: 2 ใน 5 ปีโดน rate limit แล้วไฟล์กลายเป็น 0/77 ทันที)
             provinces[name] = previous.get(name)
             kept = "คงค่าเดิม" if provinces[name] else "ไม่มีค่าเดิม"
-            print(f"  {name}: incomplete ({len(a['rains'])}/{N_YEARS} yrs, "
-                  f"monthly={'ok' if wk else 'missing'}) — {kept}", file=sys.stderr)
+            got_pts = {yr: len(v) for yr, v in (pt_acc.get(name) or {}).items()}
+            print(f"  {name}: incomplete (season {len(a['rains'])}/{N_YEARS} yrs · "
+                  f"sample points {got_pts} of {len(sample_pts.get(name, []))}/yr) — {kept}",
+                  file=sys.stderr)
 
     output = {
         "_meta": {
@@ -278,7 +303,7 @@ def main():
                 f"rain_normal_weekly_mm = ฝนปกติรายสัปดาห์ของแต่ละเดือน (คีย์ 6-11) · "
                 f"สรุปข้ามจุดตัวอย่าง ≤6 จุด/จังหวัด ด้วย p{NORMAL_PCTL} วิธีเดียวกับ rain-forecast.json "
                 f"(ถ้าใช้ centroid จุดเดียวจะเป็นการเทียบ p90 กับค่าจุดเดียว = เอนไปทางเตือนเกิน "
-                f"ค่ากลาง 1.28x และไม่เท่ากันทุกจังหวัด 0.97x-2.16x) · "
+                f"ค่ากลาง 1.38x และแกว่ง 1.00x-2.54x แล้วแต่จังหวัด (ก.ย. ครบ 77 จังหวัด)) · "
                 f"ใช้เป็นฐานเกณฑ์น้ำท่วมใน fetch_agri_warnings.py"),
         },
         "provinces": provinces,
@@ -291,5 +316,28 @@ def main():
     print(f"\nSaved {ok}/{len(provinces)} provinces → {OUTPUT}")
 
 
+def _selftest():
+    # ลำดับการรวม: ฝนกระจุกคนละจุดคนละวัน — จุด A ตก 10 วันแรก จุด B ตก 10 วันที่สอง
+    # p90 ของ 2 จุด = 0.9 ของค่าสูง → รายวันได้ 9 ทั้งสองวัน รวม 18
+    # ถ้ารวมรายจุดก่อน (ลำดับผิด v2) จะได้ p90(10, 10) = 10 → ฐานต่ำเกือบครึ่ง
+    yr = {2024: [[(9, 10.0), (9, 0.0)], [(9, 0.0), (9, 10.0)]]}
+    got = weekly_normal(yr)["9"]
+    assert got == round(18 / WEEKS_PER_MONTH, 1), got
+    assert got != round(10 / WEEKS_PER_MONTH, 1)
+    # เดือนนอกฤดูไม่หลุดเข้ามา
+    assert "12" not in weekly_normal({2024: [[(12, 5.0)], [(12, 5.0)]]})
+
+    full = {y: [[(9, 1.0)]] * 6 for y in range(N_YEARS)}
+    assert points_complete(full, 6)
+    assert not points_complete({y: v for y, v in list(full.items())[:-1]}, 6)   # ขาดหนึ่งปี
+    short = dict(full); short[0] = short[0][:3]
+    assert not points_complete(short, 6)                                     # ปีหนึ่งได้แค่ 3 จุด
+    assert not points_complete({}, 0)
+    print("selftest ok")
+
+
 if __name__ == "__main__":
+    if "--selftest" in sys.argv:
+        _selftest()
+        sys.exit(0)
     main()

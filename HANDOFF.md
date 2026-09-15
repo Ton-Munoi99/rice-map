@@ -1,8 +1,25 @@
 # Rice Map Handoff
 
-Last updated: 2026-09-11 by Claude Code
+Last updated: 2026-09-15 by Claude Code
 
 ## Log
+
+- 2026-09-15 (Claude): `/code-review` found two real bugs in the p90 normal I shipped on 11 Sep,
+  and both held up when checked. First, the aggregation order was wrong. The forecast takes the
+  p90 across a province's points for each day and then sums the week; `weekly_normal()` summed
+  each point's month first and took the p90 afterwards. The p90 of six points is the mean of the
+  top two, which is subadditive, so the second order is always lower — refetched with the right
+  order, the normal rose by a median 1.26x (September range 1.00–1.36x). The baseline had been
+  21% low, which is over-warning, the very thing it was meant to fix. On identical inputs
+  (15 Sep forecast) high risk goes 8 → 5 and normal 24 → 44; 30 provinces drop a level, none
+  rise. The bias figures I had reported (1.28x, 0.97–2.16x over 10 provinces) were measured with
+  the same wrong order; over all 77 in September it is 1.38x, 1.00–2.54x, now corrected in code
+  and docs. Second, a province was saved as soon as `weekly_normal()` returned anything, with no
+  check that all five years and every sample point came back, and the saved record carries the
+  method stamp so it would never be refetched. `points_complete()` now requires 5 years × every
+  point, and `fetch_weather_forecast.py --selftest` covers both the order and the completeness
+  rule. Not yet validated: with 44 of 77 provinces now "normal" I have no current DDPM warning
+  list to check the corrected layer against — the 3 Sep comparison was made on a broken baseline.
 
 - 2026-09-11 (Claude, later): Ran the full stale-check sweep that had never completed, and
   cleared the two smaller pending items. The sweep found four real bugs, all of the same

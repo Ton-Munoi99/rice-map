@@ -171,9 +171,12 @@ the remote sha to local HEAD** instead of grepping push output.
   summarises a province as the p90 over up to 6 sample points; `weather-province.json` measures the
   centroid. `weather-forecast.json` therefore carries two monthly normals,
   `rain_normal_weekly_mm` (p90, for the forecast comparison) and `rain_normal_weekly_centroid_mm`
-  (for the climate card). Crossing them inflates the ratio by a median 1.28x and unevenly —
-  0.97x for Trat, 2.16x for Nakhon Si Thammarat — which distorts the ranking between provinces,
-  not just the level. `percentile()` lives in `riceutils.py` so both sides cannot drift apart.
+  (for the climate card). Crossing them inflates the ratio by a median 1.38x and unevenly —
+  1.00x for Satun, 2.54x for Nakhon Si Thammarat (September, all 77) — which distorts the
+  ranking between provinces, not just the level. Matching the percentile is not enough: the
+  forecast takes the p90 across points *per day* and then sums, so the normal must do the same.
+  Summing each point first and taking the p90 afterwards is always lower (the p90 of 6 points is
+  the mean of the top two, which is subadditive) — v2 did that and sat 21% low. `percentile()` lives in `riceutils.py` so both sides cannot drift apart.
 - **A resume cache needs a version for how its values were computed** — scripts that skip work
   already present (`fetch_weather_forecast.py`, `fetch_weather.py`) will happily keep values
   produced by an algorithm you just replaced. `rain_normal_method` is that stamp; bump it when
