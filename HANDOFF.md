@@ -12,7 +12,9 @@ Last updated: 2026-09-17 by Claude Code
   The three `--selftest` scripts were never run by anything; each workflow now runs its script's
   self-test as the first step, so broken logic fails the job instead of committing wrong
   thresholds. Checked all touched scripts for 3.12-only syntax since CI is on 3.11; none found.
-  The CI steps themselves have not run yet — they will on the next cron after this is pushed.
+  Pushed as 8e26516 and triggered all three workflows by hand on 17 Sep 2026: each self-test step
+  passed on CI (Python 3.11) and each run committed data normally; `weather-forecast.json` on
+  origin still carries the v3 normals for 77/77 provinces.
 
 - 2026-09-15 (Claude): `/code-review` found two real bugs in the p90 normal I shipped on 11 Sep,
   and both held up when checked. First, the aggregation order was wrong. The forecast takes the
