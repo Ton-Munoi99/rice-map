@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
+This file provides guidance to AI coding agents (Claude Code, Codex and others) when working with code in this repository.
 
 ## Local Development
 
@@ -26,6 +26,11 @@ python scripts/clear_estimated_trend_prices.py # strip estimated prices + final 
 # Rebuild rice mills JSON from DIT Excel export
 # Requires: thai_rice_mills_dit_YYYY-MM-DD.xlsx in repo root
 python scripts/build_rice_mills.py
+
+# Assert-based self-tests — no test runner; CI runs each before its script's fetch
+python scripts/fetch_agri_warnings.py --selftest
+python scripts/fetch_flood_status.py --selftest
+python scripts/fetch_weather_forecast.py --selftest
 
 # Fetch live data manually (normally run by GitHub Actions)
 python scripts/fetch_dam_water.py
@@ -89,8 +94,16 @@ Mutate `S` then call `rerender()`. Never read DOM state — always read from `S`
 3. Add color palette case in `getPalette()`
 4. Add format case in `fmtCompact()` if needed
 5. Add layer button in HTML `#layerButtons`
-6. Add badge/title/description/data-source-note cases in render functions
+6. Add badge/title/description/data-source-note cases in render functions — **every layer needs
+   its own branch in the `refs.headlineDesc` ternary chain**. A missing branch silently falls
+   through to the default OAE rice caption; `biomass` shipped that way and credited OAE for a
+   DEDE power-plant registry
 7. Add detail card case in `selectProvince()`
+8. If the layer has no yearly series, add it to `yearsForLayer()`, which returns the layer name
+   itself as a pseudo-year — `S.year` then becomes e.g. `"biomass"`. Any text that interpolates
+   `S.year` must not run for that layer (the default caption did, and printed "ปี biomass")
+9. Verify by clicking every layer button and comparing captions: identical captions on layers with
+   different data sources mean one of them never wrote its own
 
 **Data flow:** `valueOf(en, rice, year, layer)` → dispatches to per-layer value functions → `rerender()` → SVG fill colors via `getPalette()` + `lerp()`.
 

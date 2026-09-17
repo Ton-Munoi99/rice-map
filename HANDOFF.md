@@ -1,8 +1,18 @@
 # Rice Map Handoff
 
-Last updated: 2026-09-15 by Claude Code
+Last updated: 2026-09-17 by Claude Code
 
 ## Log
+
+- 2026-09-17 (Claude): Rewrote `CLAUDE.md` so it adds only what `AGENTS.md` lacks — the self-test
+  commands, reading just the newest `HANDOFF.md` entry plus Deferred Decisions, UI verification
+  through real clicks, and the push rule. Added the two layer-checklist traps behind the
+  "ปี biomass" bug to `AGENTS.md` (a caption branch per layer; `yearsForLayer()` sentinels), fixed
+  its first line that addressed "Codex", and pointed README's dev-commands link at `AGENTS.md`.
+  The three `--selftest` scripts were never run by anything; each workflow now runs its script's
+  self-test as the first step, so broken logic fails the job instead of committing wrong
+  thresholds. Checked all touched scripts for 3.12-only syntax since CI is on 3.11; none found.
+  The CI steps themselves have not run yet — they will on the next cron after this is pushed.
 
 - 2026-09-15 (Claude): `/code-review` found two real bugs in the p90 normal I shipped on 11 Sep,
   and both held up when checked. First, the aggregation order was wrong. The forecast takes the

@@ -25,6 +25,10 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
+      # self-test ครอบลำดับการรวม p90 และเงื่อนไขข้อมูลครบ — รันเดือนละครั้ง ถ้าพังต้องรู้ก่อนดึง
+      - name: Self-test normals logic
+        run: python scripts/fetch_weather_forecast.py --selftest
+
       - name: Fetch seasonal forecast (Open-Meteo ECMWF)
         run: python scripts/fetch_weather_forecast.py
 

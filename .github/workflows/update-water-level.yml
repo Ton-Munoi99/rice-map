@@ -30,6 +30,9 @@ jobs:
 
       # ต่อท้ายใน workflow เดียวกัน ไม่แยก cron — สถานะน้ำท่วมคำนวณจาก
       # water-level.json ที่เพิ่งดึงมา ถ้าแยก job จะอ่านไฟล์เก่ากว่าที่ commit ไว้
+      - name: Self-test flood status logic
+        run: python scripts/fetch_flood_status.py --selftest
+
       - name: Derive province flood status (gauges + news)
         run: python scripts/fetch_flood_status.py
 

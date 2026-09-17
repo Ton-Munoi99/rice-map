@@ -36,6 +36,10 @@ jobs:
       - name: Fetch 7-day rain forecast from Open-Meteo
         run: python scripts/fetch_rain_forecast.py
 
+      # self-test ก่อน — ตรรกะพังให้ workflow แดงแทนที่จะเขียนเกณฑ์ผิดทับข้อมูลจริง
+      - name: Self-test agricultural warnings logic
+        run: python scripts/fetch_agri_warnings.py --selftest
+
       - name: Generate agricultural warnings
         run: python scripts/fetch_agri_warnings.py
 

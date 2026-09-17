@@ -21,7 +21,7 @@
 
 > รายละเอียดครบทุก layer (ใช้ข้อมูลอะไร คำนวณอย่างไร ลิงก์ต้นทาง) อยู่ใน
 > **[DATA_SOURCES.md](DATA_SOURCES.md)** · สถาปัตยกรรมโค้ดและคำสั่ง dev อยู่ใน
-> **[CLAUDE.md](CLAUDE.md)** · ประวัติการพัฒนาอยู่ใน **[CHANGELOG.md](CHANGELOG.md)**
+> **[AGENTS.md](AGENTS.md)** · ประวัติการพัฒนาอยู่ใน **[CHANGELOG.md](CHANGELOG.md)**
 
 ---
 
