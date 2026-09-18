@@ -7,61 +7,35 @@
     "any_mm": 30
   },
   "rolling": {
-    "windows_scored": 14,
-    "province_days": 1078,
+    "windows_scored": 15,
+    "province_days": 1155,
     "heavy": {
-      "precision": 0.035,
-      "recall": 0.9,
-      "tp": 18,
-      "fp": 495,
+      "precision": 0.038,
+      "recall": 0.917,
+      "tp": 22,
+      "fp": 551,
       "fn": 2
     },
     "heavy_calibrated": {
-      "windows_scored": 14,
-      "province_days": 1078,
-      "precision": 0.035,
-      "recall": 0.3,
-      "tp": 6,
-      "fp": 167,
-      "fn": 14
-    },
-    "any": {
-      "accuracy": 0.578,
-      "tp": 604,
-      "tn": 19,
-      "fp": 438,
+      "windows_scored": 15,
+      "province_days": 1155,
+      "precision": 0.036,
+      "recall": 0.292,
+      "tp": 7,
+      "fp": 186,
       "fn": 17
     },
-    "mae_mm": 79.0,
-    "bias_mm": 76.7
+    "any": {
+      "accuracy": 0.596,
+      "tp": 669,
+      "tn": 19,
+      "fp": 450,
+      "fn": 17
+    },
+    "mae_mm": 80.5,
+    "bias_mm": 78.3
   },
   "recent": [
-    {
-      "province_days": 77,
-      "heavy": {
-        "tp": 1,
-        "fp": 22,
-        "fn": 0,
-        "tn": 54
-      },
-      "any": {
-        "tp": 36,
-        "fp": 31,
-        "fn": 7,
-        "tn": 3
-      },
-      "mae_mm": 69.7,
-      "bias_mm": 60.1,
-      "heavy_cal": {
-        "tp": 0,
-        "fp": 13,
-        "fn": 1,
-        "tn": 63
-      },
-      "bias_applied": 57.3,
-      "window_end": "2026-08-31",
-      "window": "2026-08-25,2026-08-26,2026-08-27,2026-08-28,2026-08-29,2026-08-30,2026-08-31"
-    },
     {
       "province_days": 77,
       "heavy": {
@@ -399,6 +373,32 @@
       "bias_applied": 61.5,
       "window_end": "2026-09-15",
       "window": "2026-09-09,2026-09-10,2026-09-11,2026-09-12,2026-09-13,2026-09-14,2026-09-15"
+    },
+    {
+      "province_days": 77,
+      "heavy": {
+        "tp": 4,
+        "fp": 56,
+        "fn": 0,
+        "tn": 17
+      },
+      "any": {
+        "tp": 65,
+        "fp": 12,
+        "fn": 0,
+        "tn": 0
+      },
+      "mae_mm": 100.6,
+      "bias_mm": 100.0,
+      "heavy_cal": {
+        "tp": 1,
+        "fp": 19,
+        "fn": 3,
+        "tn": 54
+      },
+      "bias_applied": 63.2,
+      "window_end": "2026-09-16",
+      "window": "2026-09-10,2026-09-11,2026-09-12,2026-09-13,2026-09-14,2026-09-15,2026-09-16"
     }
   ],
   "_pending": [
@@ -485,90 +485,6 @@
         "Yasothon": 184.9
       },
       "bias": 55.9
-    },
-    {
-      "snapped": "2026-09-10",
-      "window": "2026-09-10,2026-09-11,2026-09-12,2026-09-13,2026-09-14,2026-09-15,2026-09-16",
-      "fc": {
-        "Amnat Charoen": 105.1,
-        "Ang Thong": 139.1,
-        "Bangkok Metropolis": 186.5,
-        "Bueng Kan": 180.3,
-        "Buri Ram": 142.8,
-        "Chachoengsao": 181.4,
-        "Chai Nat": 148.3,
-        "Chaiyaphum": 120.1,
-        "Chanthaburi": 208.0,
-        "Chiang Mai": 73.0,
-        "Chiang Rai": 93.6,
-        "Chon Buri": 190.4,
-        "Chumphon": 233.5,
-        "Kalasin": 126.9,
-        "Kamphaeng Phet": 185.3,
-        "Kanchanaburi": 172.4,
-        "Khon Kaen": 122.6,
-        "Krabi": 274.5,
-        "Lampang": 102.8,
-        "Lamphun": 109.9,
-        "Loei": 167.3,
-        "Lop Buri": 153.2,
-        "Mae Hong Son": 111.6,
-        "Maha Sarakham": 125.1,
-        "Mukdahan": 140.2,
-        "Nakhon Nayok": 175.2,
-        "Nakhon Pathom": 153.8,
-        "Nakhon Phanom": 191.5,
-        "Nakhon Ratchasima": 114.7,
-        "Nakhon Sawan": 185.2,
-        "Nakhon Si Thammarat": 185.0,
-        "Nan": 99.6,
-        "Narathiwat": 100.5,
-        "Nong Bua Lam Phu": 149.0,
-        "Nong Khai": 164.6,
-        "Nonthaburi": 163.6,
-        "Pathum Thani": 166.5,
-        "Pattani": 93.0,
-        "Phangnga": 327.1,
-        "Phatthalung": 155.6,
-        "Phayao": 101.1,
-        "Phetchabun": 164.8,
-        "Phetchaburi": 193.5,
-        "Phichit": 184.6,
-        "Phitsanulok": 165.5,
-        "Phra Nakhon Si Ayutthaya": 136.5,
-        "Phrae": 82.1,
-        "Phuket": 269.2,
-        "Prachin Buri": 195.0,
-        "Prachuap Khiri Khan": 175.0,
-        "Ranong": 301.3,
-        "Ratchaburi": 147.8,
-        "Rayong": 224.1,
-        "Roi Et": 123.0,
-        "Sa Kaeo": 139.1,
-        "Sakon Nakhon": 146.0,
-        "Samut Prakan": 172.2,
-        "Samut Sakhon": 171.7,
-        "Samut Songkhram": 170.1,
-        "Saraburi": 165.6,
-        "Satun": 188.8,
-        "Si Sa Ket": 104.1,
-        "Sing Buri": 159.6,
-        "Songkhla": 108.7,
-        "Sukhothai": 123.1,
-        "Suphan Buri": 170.0,
-        "Surat Thani": 187.4,
-        "Surin": 133.5,
-        "Tak": 172.3,
-        "Trang": 292.5,
-        "Trat": 302.9,
-        "Ubon Ratchathani": 167.1,
-        "Udon Thani": 142.8,
-        "Uthai Thani": 125.1,
-        "Uttaradit": 114.4,
-        "Yala": 80.3,
-        "Yasothon": 104.4
-      },
-      "bias": 63.2
     },
     {
       "snapped": "2026-09-11",
