@@ -33,6 +33,9 @@ jobs:
           GEE_SERVICE_ACCOUNT_KEY: ${{ secrets.GEE_SERVICE_ACCOUNT_KEY }}
         run: python scripts/fetch_rain_gsmap.py
 
+      - name: Self-test forecast completeness check
+        run: python scripts/fetch_rain_forecast.py --selftest
+
       - name: Fetch 7-day rain forecast from Open-Meteo
         run: python scripts/fetch_rain_forecast.py
 

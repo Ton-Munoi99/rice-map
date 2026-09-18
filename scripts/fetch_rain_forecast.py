@@ -49,9 +49,10 @@ def fetch_batch(batch_pts):
     for attempt in range(MAX_RETRY):
         try:
             r = requests.get(API_URL, params=params, timeout=TIMEOUT)
-            if r.status_code == 429:
+            # 5xx ถอยยาวเหมือน 429 — 17 ก.ย. 69 batch โดน 503 แล้ว retry ห่าง 5 วิ หมด 3 ครั้งทันที
+            if r.status_code == 429 or r.status_code >= 500:
                 wait = 60 * (attempt + 1)
-                print(f"  429 rate-limit → wait {wait}s ...", flush=True)
+                print(f"  {r.status_code} → wait {wait}s ...", flush=True)
                 time.sleep(wait)
                 continue
             r.raise_for_status()
@@ -72,6 +73,16 @@ def fetch_batch(batch_pts):
     raise RuntimeError(f"batch failed after {MAX_RETRY} attempts")
 
 
+def incomplete_provinces(series, sample_pts):
+    """จังหวัดที่ได้จุดตัวอย่างไม่ครบ — ห้ามเขียนผลของจังหวัดพวกนี้
+
+    ได้ไม่ครบแล้วยังคิด p90 ต่อ = ค่าจากจุดที่เหลือ ซึ่งไม่ใช่ตัวเลขเดียวกับวันอื่น
+    ได้ศูนย์จุด = จังหวัดหายจากไฟล์ แล้วหายจาก layer เตือนภัยด้วย เพราะ
+    fetch_agri_warnings.py วนตามจังหวัดในไฟล์นี้ (17 ก.ย. 69 หายไป 13 จังหวัด
+    อีก 4 ได้ p90 จากจุดไม่ครบ ช่วงที่ ปภ. เตือนทั้งประเทศพอดี)"""
+    return sorted(n for n, pts in sample_pts.items() if len(series.get(n, [])) != len(pts))
+
+
 # ── Main ─────────────────────────────────────────────────────────────────────
 def main():
     sample_pts = load_sample_points()
@@ -84,33 +95,40 @@ def main():
     # per-province daily series ของแต่ละจุด: {name: [[7 วัน], [7 วัน], ...]}
     series       = {name: [] for name in names}
     shared_dates = None
-    failed_provs = set()
 
     total_batches = (len(flat) + BATCH_SIZE - 1) // BATCH_SIZE
     print(f"Fetching {len(flat)} sample points across {len(names)} provinces "
           f"in {total_batches} batch(es) of ≤{BATCH_SIZE} ...")
 
-    for i in range(0, len(flat), BATCH_SIZE):
-        batch = flat[i : i + BATCH_SIZE]
-        batch_num = i // BATCH_SIZE + 1
-        print(f"Batch {batch_num}/{total_batches}: {batch[0][0]} … {batch[-1][0]} ({len(batch)} pts)")
-
-        try:
-            data = fetch_batch(batch)
-            for j, (name, _pt) in enumerate(batch):
-                daily  = data[j]["daily"]
-                dates  = daily["time"][:DAYS]
-                values = [v if v is not None else 0.0
-                          for v in daily["precipitation_sum"][:DAYS]]
-                if shared_dates is None:
-                    shared_dates = dates
-                series[name].append(values)
-        except Exception as e:
-            print(f"  ✗ batch {batch_num} failed: {e}", file=sys.stderr)
-            failed_provs.update(name for name, _ in batch)
-
-        if i + BATCH_SIZE < len(flat):
-            time.sleep(1)   # 1s pause between batches
+    pending = [(i // BATCH_SIZE + 1, flat[i : i + BATCH_SIZE]) for i in range(0, len(flat), BATCH_SIZE)]
+    # รอบสอง: batch ที่ล้มลองใหม่หลังพัก — ต้นทางล่มชั่วคราวเป็นเรื่องปกติ
+    for round_no, pause in ((1, 0), (2, 120)):
+        if not pending:
+            break
+        if pause:
+            print(f"retry {len(pending)} failed batch(es) after {pause}s ...", flush=True)
+            time.sleep(pause)
+        failed = []
+        for batch_num, batch in pending:
+            print(f"Batch {batch_num}/{total_batches}: {batch[0][0]} … {batch[-1][0]} ({len(batch)} pts)")
+            try:
+                data = fetch_batch(batch)
+                if len(data) != len(batch):
+                    raise RuntimeError(f"got {len(data)} results for {len(batch)} points")
+                rows = []
+                for j, (name, _pt) in enumerate(batch):
+                    daily = data[j]["daily"]
+                    rows.append((name, daily["time"][:DAYS],
+                                 [v if v is not None else 0.0 for v in daily["precipitation_sum"][:DAYS]]))
+                for name, dates, values in rows:   # เพิ่มทีเดียวทั้ง batch — ไม่ครึ่งๆ กลางๆ
+                    if shared_dates is None:
+                        shared_dates = dates
+                    series[name].append(values)
+            except Exception as e:
+                print(f"  ✗ batch {batch_num} failed (round {round_no}): {e}", file=sys.stderr)
+                failed.append((batch_num, batch))
+            time.sleep(1)
+        pending = failed
 
     # ── Aggregate: daily p90 across sample points per province ──────────────
     provinces_out = {}
@@ -125,8 +143,15 @@ def main():
         provinces_out[name] = {"rain_7d": rain_7d, "values": values}
         print(f"  ✓ {name}: {rain_7d} mm (p{PCTL} of {len(pt_series)} pts)")
 
-    if not provinces_out:
-        print("ERROR: No data fetched!", file=sys.stderr)
+    bad = incomplete_provinces(series, sample_pts)
+    if bad:
+        msg = (f"พยากรณ์ไม่ครบ {len(bad)}/{len(names)} จังหวัด ({', '.join(bad)}) — "
+               f"ไม่เขียนทับ {OUTPUT} ให้ layer ใช้ไฟล์เดิมที่ครบ (ช่วงวันที่ติดอยู่ใน _meta.dates)")
+        if os.path.exists(OUTPUT):
+            print(f"::warning::{msg}")   # ขึ้นเตือนบนหน้า run ของ GitHub Actions
+            print(msg, file=sys.stderr)
+            return
+        print(f"ERROR: {msg} และไม่มีไฟล์เดิม", file=sys.stderr)
         sys.exit(1)
 
     result = {
@@ -149,16 +174,19 @@ def main():
     with open(OUTPUT, "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=2)
 
-    ok      = len(provinces_out)
-    missing = sorted(set(names) - set(provinces_out))
-    print(f"\n✅ Saved {ok} provinces → {OUTPUT}")
-    if failed_provs:
-        print(f"⚠️  Batches failed touching: {', '.join(sorted(failed_provs))}", file=sys.stderr)
-    if missing:
-        print(f"⚠️  Missing provinces ({len(missing)}): {', '.join(missing)}", file=sys.stderr)
-        if len(missing) > ok:
-            sys.exit(1)
+    print(f"\n✅ Saved {len(provinces_out)}/{len(names)} provinces → {OUTPUT}")
+
+
+def _selftest():
+    pts = {"A": [1, 2, 3], "B": [1, 2]}
+    assert incomplete_provinces({"A": [[0]] * 3, "B": [[0]] * 2}, pts) == []
+    assert incomplete_provinces({"A": [[0]] * 2, "B": [[0]] * 2}, pts) == ["A"]   # จุดไม่ครบ
+    assert incomplete_provinces({"A": [[0]] * 3}, pts) == ["B"]                     # หายทั้งจังหวัด
+    print("selftest ok")
 
 
 if __name__ == "__main__":
+    if "--selftest" in sys.argv:
+        _selftest()
+        sys.exit(0)
     main()

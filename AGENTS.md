@@ -31,6 +31,7 @@ python scripts/build_rice_mills.py
 python scripts/fetch_agri_warnings.py --selftest
 python scripts/fetch_flood_status.py --selftest
 python scripts/fetch_weather_forecast.py --selftest
+python scripts/fetch_rain_forecast.py --selftest
 
 # Fetch live data manually (normally run by GitHub Actions)
 python scripts/fetch_dam_water.py
@@ -205,7 +206,11 @@ the remote sha to local HEAD** instead of grepping push output.
   429/500 under load. `fetch_weather_forecast.py` once wrote `null` over all 77 provinces after
   a 429 on 2 of 5 years, which silently drops the whole alert layer onto fixed fallback
   thresholds. Keep the previous record when a refetch is incomplete, and back off in tens of
-  seconds, not twos — a rate limit does not reset in 2 seconds.
+  seconds, not twos — a rate limit does not reset in 2 seconds. `fetch_rain_forecast.py` had
+  the same hole in a different shape: on 17 Sep 2026 two batches got a 503, it saved 64 of 77
+  provinces, and `fetch_agri_warnings.py` (which iterates the forecast's provinces) silently
+  dropped the other 13 from the flood-risk map. It now retries failed batches and refuses to
+  write an incomplete file, keeping the previous complete one.
 - **Date labels use `bkk_today()` from `riceutils.py`, never `date.today()`** — runners are
   UTC, and crons firing 17:00–24:00 UTC are already the next day in Bangkok, so `date.today()`
   writes an "updated" label a day behind. Use `bkk_now()` when a timestamp needs the time too.

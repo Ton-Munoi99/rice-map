@@ -1,8 +1,22 @@
 # Rice Map Handoff
 
-Last updated: 2026-09-17 by Claude Code
+Last updated: 2026-09-18 by Claude Code
 
 ## Log
+
+- 2026-09-18 (Claude): Checked the Matichon 19 Sep clipping — the Department of Mineral Resources
+  warned 15 provinces of landslides and flash floods for 17–19 Sep. Comparing it exposed a live bug
+  first: the 17 Sep evening forecast run hit a 503 on two batches, saved 64 of 77 provinces, and the
+  flood-risk layer dropped the other 13 (Tak, Trat, Ranong, Trang among them). Fixed in
+  `fetch_rain_forecast.py` (long backoff on 5xx, second retry round, never write an incomplete file)
+  with a self-test wired into CI. On the complete 17 Sep snapshot the layer does **not** match the
+  DMR list: 4/15 caught, precision 12% against a 19% base rate, and listed provinces were warned
+  less often (27%) than unlisted ones (45%). No rain signal we have matches it either — ranking by
+  our ratio, raw 7-day mm or the heaviest day each gets 3–5 of 15 — and the forecast put 11 of the
+  15 at or below their September normal. The DMR list is a landslide list driven by terrain, the
+  same valley-scale blind spot recorded in Deferred Decisions; it is not evidence for moving the
+  thresholds. The measured-gauge layer had three of the 15 near bank (Phetchabun, Phitsanulok,
+  Chanthaburi).
 
 - 2026-09-17 (Claude): Rewrote `CLAUDE.md` so it adds only what `AGENTS.md` lacks — the self-test
   commands, reading just the newest `HANDOFF.md` entry plus Deferred Decisions, UI verification
