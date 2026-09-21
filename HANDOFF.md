@@ -588,6 +588,10 @@ measurements and a schema-level consumer test exist.
 
 ## Deferred Decisions
 
+- Do not surface per-province water-gauge data age in the UI. Proposed on 21 Sep 2026 after
+  finding 309 of 1,107 stations more than 36 h stale; the owner declined. Stale stations carry
+  `level: null` and are already excluded from the severity counts, and no province is stale in
+  full, so nothing goes blind silently.
 - Do not build a disease/pest risk map layer. The owner declined it on 20 Sep 2026 after it
   was proposed. `disease-risk.json` keeps feeding the province detail cards as it does today;
   do not propose promoting it to a layer again.
