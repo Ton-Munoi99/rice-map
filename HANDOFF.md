@@ -4,6 +4,14 @@ Last updated: 2026-09-18 by Claude Code
 
 ## Log
 
+- 2026-09-20 (Claude): The OAE price workflow went red for the first time — Firecrawl answered 500
+  on the white-paddy scrape while jasmine succeeded seconds later, a transient on Firecrawl's side,
+  not OAE's. Nothing was lost: the script starts from the existing file, withholds `updated_at`
+  when a product fails, and the commit step never ran. Gave the Firecrawl call urllib3's `Retry`
+  (3 attempts, 5/10/20 s, on 429 and 5xx) through the session it already uses, rather than a
+  hand-rolled loop. `fetch_fertilizer_prices.py` hits Firecrawl too but keeps the previous row and
+  exits 0, so it was left alone.
+
 - 2026-09-18 (Claude): Checked the Matichon 19 Sep clipping — the Department of Mineral Resources
   warned 15 provinces of landslides and flash floods for 17–19 Sep. Comparing it exposed a live bug
   first: the 17 Sep evening forecast run hit a 503 on two batches, saved 64 of 77 provinces, and the
@@ -551,6 +559,9 @@ measurements and a schema-level consumer test exist.
 
 ## Deferred Decisions
 
+- Do not build a disease/pest risk map layer. The owner declined it on 20 Sep 2026 after it
+  was proposed. `disease-risk.json` keeps feeding the province detail cards as it does today;
+  do not propose promoting it to a layer again.
 - Keep the single-file `index.html` architecture unless a concrete maintenance or
   performance problem justifies a build system.
 - Do not add npm, a bundler, or a framework for cleanup alone.

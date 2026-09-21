@@ -23,6 +23,8 @@ import urllib.parse
 from datetime import datetime, timedelta, timezone
 
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 API = "https://agriapi.nabc.go.th/api/weekly-prices/product"
 # API อยู่หลัง Cloudflare ซึ่งตอบ 403 ให้ IP ดาต้าเซ็นเตอร์ — ยิงจากไทยผ่านทุก UA
@@ -35,6 +37,13 @@ FIRECRAWL_KEY = os.environ.get("FIRECRAWL_API_KEY", "")
 MAX_LAG_MONTHS = 3
 CATALOG_URL = "https://catalog.oae.go.th/dataset/weekly-prices-paddy"
 TIMEOUT = 30
+
+# Firecrawl ตอบ 500 เป็นครั้งคราว (20 ก.ย. 2569 ทำ workflow แดงทั้งที่ต้นทางปกติ)
+# ลองใหม่ให้เองแทนที่จะปล่อยให้ทั้งวันไม่มีราคาใหม่
+_FIRECRAWL = requests.Session()
+_FIRECRAWL.mount("https://", HTTPAdapter(max_retries=Retry(
+    total=3, backoff_factor=5, status_forcelist=[429, 500, 502, 503, 504],
+    allowed_methods=["POST"])))
 
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUTPUT_FILE = os.path.join(_ROOT, "data", "prices-live.json")
@@ -65,7 +74,7 @@ def _via_firecrawl(url):
     ตอบกลับเป็น markdown ที่ห่อ JSON ไว้ในโค้ดบล็อก จึงต้องแกะออกมาก่อน"""
     if not FIRECRAWL_KEY:
         raise RuntimeError("โดนบล็อก และไม่มี FIRECRAWL_API_KEY ให้ใช้ทางสำรอง")
-    r = requests.post(
+    r = _FIRECRAWL.post(
         "https://api.firecrawl.dev/v1/scrape",
         json={"url": url, "formats": ["markdown"], "onlyMainContent": False},
         headers={"Authorization": f"Bearer {FIRECRAWL_KEY}"},
