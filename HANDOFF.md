@@ -4,6 +4,25 @@ Last updated: 2026-09-18 by Claude Code
 
 ## Log
 
+- 2026-09-21 (Claude): Checked the Naew Na front page of 21 Sep (Phang Nga flash floods in three
+  districts; Saraburi evacuating Muak Lek) against the layers. **Phang Nga is the clearest hit so
+  far**: the measured-gauge layer read near-overbank at 11:22 Thai on 18 Sep and overbank from
+  18:00 that evening, peaking at 4 stations over bank, and stayed flooded until midday 20 Sep —
+  about 2 days 19 hours before the paper went to press. The gauges that carried it sit in Takua Pa
+  and Kapong, two of the three districts the DDPM later named. The forecast layer flagged Phang Nga
+  เฝ้าระวัง on 16 Sep but toggled normal/low four times before the gauges took over, so it is the
+  measured layer that held the signal, not the forecast.
+  **Saraburi was missed, and could not have been caught.** The flood was 13 houses at Ban Tha Sao,
+  moo 13, tambon Muak Lek. Our only gauge on the Muak Lek creek is at Wat Tha Rahat in Wang Muang
+  district — flat at 22–24% of bank all week — and the Pa Sak gauges in Muang Saraburi peaked at
+  48% on 19 Sep. The 7-day forecast never rose above 177 mm against a 201 mm threshold. This is the
+  sub-district blind spot already in Deferred Decisions, one village rather than one valley; no
+  threshold reaches it.
+  Of the 10 central provinces plus Bangkok that DDPM put on notice for the Chao Phraya release, the
+  measured layer currently flags 6 (Suphan Buri, Ayutthaya, Lop Buri, Pathum Thani, Samut Prakan,
+  Bangkok). That list is preparatory for a 27 Sep peak, not provinces flooded today, so the five it
+  does not flag are not false negatives. No code changed.
+
 - 2026-09-20 (Claude): The OAE price workflow went red for the first time — Firecrawl answered 500
   on the white-paddy scrape while jasmine succeeded seconds later, a transient on Firecrawl's side,
   not OAE's. Nothing was lost: the script starts from the existing file, withholds `updated_at`
