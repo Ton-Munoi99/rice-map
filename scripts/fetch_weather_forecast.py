@@ -128,6 +128,16 @@ NORMAL_PCTL = 90   # ต้องเท่ากับ PCTL ใน fetch_rain_fo
 NORMAL_METHOD = "p90-daily-sample-points+centroid-v3"
 
 
+def is_current(rec):
+    """record เดิมใช้ต่อได้ต่อเมื่อคิดด้วย *วิธี* เดียวกันและ *ชุดปี* เดียวกัน
+
+    ป้ายวิธีอย่างเดียวไม่พอ: หน้าต่าง 5 ปีเลื่อนเองทุกวันที่ 1 มิ.ย. (base_years) พอถึง
+    วันนั้น record เก่ายังติดป้ายวิธีเดิมจึงถูกใช้ต่อทั้ง 77 จังหวัด แต่ _meta.base_years
+    ถูกเขียนใหม่เป็นช่วงปีใหม่ — ป้ายจะโกหกว่าเป็นค่าปกติของอีกชุดปีหนึ่ง"""
+    return (rec.get("rain_normal_method") == NORMAL_METHOD
+            and rec.get("base_years") == base_years)
+
+
 def weekly_normal(per_year_points):
     """ค่าปกติฝนรายสัปดาห์แยกเดือน — สรุปข้ามจุดด้วย p90 "วิธีเดียวกับฝั่งพยากรณ์"
 
@@ -231,7 +241,7 @@ def main():
     # แต่เก็บของเดิมไว้เป็น fallback — ห้ามทิ้งข้อมูลที่ใช้ได้เพราะ API ล่มชั่วคราว
     previous = dict(existing)
     existing = {k: v for k, v in existing.items()
-                if v is None or v.get("rain_normal_method") == NORMAL_METHOD}
+                if v is None or is_current(v)}
     provinces = dict(existing)
     skipped = sum(1 for v in existing.values() if v is not None)
     print(f"  Reusing {skipped} existing, fetching {len(centroids)-skipped} missing...")
@@ -333,6 +343,12 @@ def _selftest():
     short = dict(full); short[0] = short[0][:3]
     assert not points_complete(short, 6)                                     # ปีหนึ่งได้แค่ 3 จุด
     assert not points_complete({}, 0)
+
+    cur = {"rain_normal_method": NORMAL_METHOD, "base_years": base_years}
+    assert is_current(cur)
+    assert not is_current({**cur, "base_years": [y - 1 for y in base_years]})  # หน้าต่างเลื่อน
+    assert not is_current({**cur, "rain_normal_method": "v2"})                 # เปลี่ยนวิธี
+    assert not is_current({})                                                  # record เก่าไม่มีป้าย
     print("selftest ok")
 
 

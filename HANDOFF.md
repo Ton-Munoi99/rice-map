@@ -4,6 +4,16 @@ Last updated: 2026-09-18 by Claude Code
 
 ## Log
 
+- 2026-09-21 (Claude): Looked into what the 1 Oct run of `update-weather-forecast.yml` will do.
+  Answer: nothing — `base_years` is derived from the season year, which does not move until
+  1 Jun 2027, so all 77 records stay current and the run fetches 0. Nobody needs to watch it.
+  But the check found the next bug: the resume cache compared only `rain_normal_method`, so when
+  the window does roll on 1 Jun 2027 every province would be reused while `_meta.base_years` was
+  rewritten to 2022–2026 — the label would claim a year range the numbers never came from, the
+  same failure as 11 Sep. Reuse now requires the method *and* the year set to match (`is_current()`,
+  covered by `--selftest`). Measured against the live file: 77/77 current today, 0/77 once the
+  window is simulated forward.
+
 - 2026-09-21 (Claude): Checked the Naew Na front page of 21 Sep (Phang Nga flash floods in three
   districts; Saraburi evacuating Muak Lek) against the layers. **Phang Nga is the clearest hit so
   far**: the measured-gauge layer read near-overbank at 11:22 Thai on 18 Sep and overbank from
