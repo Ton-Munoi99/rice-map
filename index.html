@@ -6822,7 +6822,7 @@
           // ถ้าไม่บอกเหตุผลตรงนี้ tooltip จะขึ้น "ล้นตลิ่ง 0 · น้ำมาก 0" ลอยๆ
           const surgeRow = fp.surge
             ? `<div style="margin-top:5px;padding:4px 6px;background:rgba(239,108,0,.12);border:1px solid rgba(239,108,0,.3);border-radius:5px;font-size:10px;line-height:1.5">
-<strong style="color:#e65100">${t("น้ำขึ้นเร็วผิดปกติ", "Unusually fast rise")}</strong><br>
+<strong style="color:#e65100">${fp.surge.kind === "brim" ? t("น้ำเกือบถึงตลิ่ง และยังขึ้นต่อ", "Near the brim and still rising") : t("น้ำขึ้นเร็วผิดปกติ", "Unusually fast rise")}</strong><br>
 ${esc(fp.surge.amphoe ? t("อ.", "") + fp.surge.amphoe + " · " : "")}${esc(fp.surge.name)}<br>
 ${
               fp.surge.kind === "msl"

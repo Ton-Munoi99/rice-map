@@ -4,6 +4,20 @@ Last updated: 2026-09-18 by Claude Code
 
 ## Log
 
+- 2026-09-22 (Claude): Checked the Daily News front page of 23 Sep (RID warning #3 to 11 Chao
+  Phraya provinces; flash floods in Phitsanulok and Chaiyaphum) against the layers. 8 of the 11
+  provinces were already coloured, Phitsanulok read overbank at Bang Krathum (102.5%), and the
+  gauge below the Chao Phraya dam climbed 57% → 72% in 40 h, matching the reported release.
+  The check exposed a gap between the two existing rules: the count rule needs 3 stations and 30%
+  of a province, the surge rule needs a +20-point jump, and a lone gauge creeping slowly to the
+  brim satisfies neither. Five provinces sat at 95–99.4% of bank showing nothing, Chai Nat among
+  them while RID was warning it. Added a third rule: one gauge ≥95% of bank that is still rising
+  ≥2 points off its own 40 h low. The rise term matters — a plain ≥95% rule adds 5.5 provinces per
+  snapshot and pins Tak and Nakhon Nayok permanently (their bank references look set low); with it,
+  +1.4 per snapshot, and on today's data exactly two: Chaiyaphum and Chanthaburi. Chai Nat still
+  does not show, because its 99.3% gauge has been flat at ~98% for 40 h — left that way rather than
+  loosening the rule to hit one named province.
+
 - 2026-09-21 (Claude): Looked into what the 1 Oct run of `update-weather-forecast.yml` will do.
   Answer: nothing — `base_years` is derived from the season year, which does not move until
   1 Jun 2027, so all 77 records stay current and the run fetches 0. Nobody needs to watch it.

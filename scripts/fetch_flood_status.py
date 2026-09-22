@@ -97,6 +97,23 @@ SURGE_MIN_HISTORY = HISTORY_KEEP
 # ⚠️ บอกได้แค่ "น้ำขึ้นเร็ว" ไม่ใช่ "ใกล้ล้นตลิ่ง" เพราะไม่รู้ว่าตลิ่งอยู่ตรงไหน
 MSL_SURGE_MIN_RISE = 1.0   # เมตร เหนือยอดเดิมของตัวเองใน ~40 ชม.
 
+# ── น้ำเกือบถึงตลิ่งแบบค่อยๆ ไต่ (เพิ่ม 22 ก.ย. 69) ────────────────────────
+# กฎน้ำขึ้นเร็วข้างบนจับ "การกระโดด" ส่วนกฎนับจุดจับ "ทั้งลุ่มน้ำ" — ระหว่างสองอันนี้
+# มีช่องว่าง: สถานีเดียวที่ไต่ขึ้นช้าๆ จนเกือบถึงตลิ่ง ไม่กระโดดพอและไม่มีเพื่อน
+# 22 ก.ย. 69 มี 5 จังหวัดที่สถานีอยู่ 95-99.4% ของตลิ่งแล้วแผนที่ยังว่างเปล่า
+# (ชัยภูมิ 99.4% ไต่จาก 94.7 ใน 40 ชม. · ชัยนาท 99.3% ซึ่งเป็น 1 ใน 11 จังหวัด
+# ที่กรมชลประทานเตือนวันนั้นพอดี)
+#
+# ต้อง "กำลังขึ้น" ด้วย ไม่ใช่แค่สูง เพราะบางสถานีปักอยู่ 96-98% ตลอดเวลา (ตาก
+# อุ้มผาง 97.8-98.9% ทั้ง 8 ค่า · นครนายก องครักษ์ 95.9-97.3%) ซึ่งน่าจะเป็นค่า
+# อ้างอิงตลิ่งที่ตั้งไว้ต่ำ ไม่ใช่น้ำท่วม — ป้ายที่ติดตลอดเวลาไม่ช่วยให้ตัดสินใจอะไร
+#
+# replay กับประวัติจริง 8 snapshot: เกณฑ์ปัจจุบันขึ้น 26.1 จว./snapshot ·
+# +≥95% เฉยๆ เพิ่ม 5.5 (ตาก/นครนายกติดทั้ง 8 รอบ = ป้ายค้าง) · **+≥95% และขึ้น
+# ≥2 จุด เพิ่ม 1.4** (ชัยภูมิ กาญจนบุรี จันทบุรี ไม่มีสถานีปักนิ่งหลุดเข้ามา)
+BRIM_MIN_PCT = 95.0     # เกือบถึงตลิ่งแล้วจริงๆ
+BRIM_MIN_RISE = 2.0     # และยังขึ้นจากจุดต่ำสุดของตัวเองใน ~40 ชม. เท่านี้ (จุด %)
+
 # ── ข่าว (บทสรุปเท่านั้น ไม่มีผลกับสี) ─────────────────────────────────────
 # ถามแยกรายจังหวัด ไม่ใช่ query รวม: query รวม "น้ำท่วม" ดึงข่าวต่างประเทศ
 # ท่วมกระแสมาเต็ม (28 ส.ค. 69 ได้ 93 ข่าว เป็นเนปาล/ทิเบตเกือบทั้งหมด
@@ -147,23 +164,23 @@ def station_key(s):
 
 
 def keep_surge(surges, en, cand):
-    """จังหวัดหนึ่งเก็บจุดที่ขึ้นแรงสุดจุดเดียว · เทียบข้ามหน่วยไม่ได้ (จุด% vs เมตร)
-    จึงให้สถานีที่มีค่าตลิ่งชนะเสมอ เพราะบอกได้ว่าใกล้ล้นแค่ไหน ไม่ใช่แค่ขึ้นเร็ว"""
+    """จังหวัดหนึ่งเก็บสัญญาณเดียว — หลักฐานแรงกว่าชนะ ไม่ใช่ตัวเลข rise ที่คนละหน่วย
+
+    pct (ทำยอดใหม่ +20 จุด) > brim (เกือบถึงตลิ่งและยังขึ้น) > msl (ขึ้นกี่เมตร
+    โดยไม่รู้ตลิ่ง) · เทียบ rise ข้ามหน่วยไม่ได้ จึงจัดอันดับก่อน แล้วค่อยเทียบ rise
+    ภายในชนิดเดียวกัน"""
     if not en:
         return
+    rank = {"pct": 2, "brim": 1, "msl": 0}
     cur = surges.get(en)
-    if cur is None:
-        surges[en] = cand
-        return
-    if cur["kind"] != cand["kind"]:
-        if cand["kind"] == "pct":
-            surges[en] = cand
-        return
-    if cand["rise"] > cur["rise"]:
+    if cur is None or (rank[cand["kind"]], cand["rise"]) > (rank[cur["kind"]], cur["rise"]):
         surges[en] = cand
 
 
 def surge_reason(surge):
+    if surge["kind"] == "brim":
+        return (f"น้ำเกือบถึงตลิ่งที่ {surge['name']} — {surge['now']:.0f}% ของตลิ่ง "
+                f"และยังขึ้นต่อ (+{surge['rise']:.1f} จุดใน ~40 ชม.)")
     if surge["kind"] == "pct":
         return (f"น้ำขึ้นเร็วผิดปกติที่ {surge['name']} — "
                 f"{surge['was']:.0f}% → {surge['now']:.0f}% ของตลิ่ง")
@@ -252,6 +269,13 @@ def main():
                     "name": s.get("name_th") or "", "amphoe": s.get("amphoe_th") or "",
                     "kind": "pct", "was": max(past), "now": pct,
                     "rise": round(pct - max(past), 1), "dt": s.get("dt") or "",
+                })
+            elif (pct >= BRIM_MIN_PCT and len(past) >= SURGE_MIN_HISTORY
+                    and pct - min(past) >= BRIM_MIN_RISE):
+                keep_surge(surges, en_s, {
+                    "name": s.get("name_th") or "", "amphoe": s.get("amphoe_th") or "",
+                    "kind": "brim", "was": min(past), "now": pct,
+                    "rise": round(pct - min(past), 1), "dt": s.get("dt") or "",
                 })
             new_history[k] = (past + [round(pct, 1)])[-HISTORY_KEEP:]
         elif msl is not None:
@@ -359,10 +383,13 @@ def main():
                 "flood": "มีสถานีระดับ 5 (ล้นตลิ่ง) ≥1 จุด",
                 "near": f"สถานีระดับ 4 (น้ำมาก) ≥{HIGH_MIN_COUNT} จุด และ ≥{HIGH_MIN_SHARE:.0%} ของสถานีในจังหวัด",
                 "surge": f"หรือมีสถานีเดียวที่ ≥{SURGE_MIN_PCT}% ของตลิ่ง และสูงกว่ายอดเดิมของตัวเองใน ~40 ชม. ≥{SURGE_MIN_JUMP} จุด",
+                "brim": f"หรือมีสถานีเดียวที่ ≥{BRIM_MIN_PCT:.0f}% ของตลิ่ง และยังขึ้นจากจุดต่ำสุดของตัวเองใน ~40 ชม. ≥{BRIM_MIN_RISE:.0f} จุด",
                 "surge_needs_history": f"กฎน้ำขึ้นเร็วทั้งสองข้อใช้ได้เมื่อสถานีนั้นมีประวัติครบ {SURGE_MIN_HISTORY} ค่าแล้ว (สถานีใหม่จึงยังไม่ถูกตัดสิน)",
                 "surge_msl": f"หรือสถานีที่ไม่มีค่าอ้างอิงตลิ่ง มีระดับน้ำสูงกว่ายอดเดิมของตัวเองใน ~40 ชม. ≥{MSL_SURGE_MIN_RISE} ม.",
             },
             "provinces_surge": sum(1 for p in provinces.values() if p.get("surge")),
+            "provinces_brim": sum(1 for p in provinces.values()
+                                  if (p.get("surge") or {}).get("kind") == "brim"),
             "provinces_surge_msl": sum(1 for p in provinces.values()
                                        if (p.get("surge") or {}).get("kind") == "msl"),
             "stations_rated": sum(1 for s in stations if s.get("pct") is not None),
@@ -431,13 +458,28 @@ def _selftest():
     assert "ตลิ่ง" not in why.split("(")[0]      # ส่วนที่เป็นข้อสรุปห้ามพูดถึงตลิ่ง
     assert MSL_SURGE_MIN_RISE >= 1.0             # กันหย่อนจนสถานีแกว่งปกติติดหมด
 
-    # เทียบข้ามหน่วยไม่ได้ — สถานีที่มีค่าตลิ่งต้องชนะเสมอ ไม่ว่าตัวเลข rise จะน้อยกว่า
+    # เกือบถึงตลิ่งแบบไต่ช้า (ชัยภูมิ 22 ก.ย. 69: 94.7% → 99.4% ใน ~40 ชม.)
+    brim = {"name": "บ้านโนนหัน", "kind": "brim", "was": 94.7, "now": 99.4, "rise": 4.7}
+    assert station_severity(0, 2, 12)[0] == 0            # 2 จุดจาก 12 ตกทั้งสองเงื่อนไข
+    assert station_severity(0, 2, 12, brim)[0] == 1
+    assert "เกือบถึงตลิ่ง" in station_severity(0, 2, 12, brim)[1]
+    assert station_severity(1, 0, 12, brim)[0] == 2      # ล้นตลิ่งจริงยังชนะ
+    assert BRIM_MIN_PCT >= 95 and BRIM_MIN_RISE >= 2     # ต้อง "เกือบถึง" และ "กำลังขึ้น"
+    # ป้ายของ brim ต้องเป็น "ใกล้ล้นตลิ่ง" ได้ เพราะสถานีมีค่าอ้างอิงตลิ่งจริง (ต่างจาก msl)
+
+    # เทียบข้ามหน่วยไม่ได้ — หลักฐานแรงกว่าชนะ ไม่ใช่ตัวเลข rise ที่คนละหน่วย
     box = {}
     keep_surge(box, "X", {"kind": "msl", "rise": 9.9, "name": "a"})
     keep_surge(box, "X", {"kind": "pct", "rise": 20.0, "name": "b"})
     assert box["X"]["kind"] == "pct", box
     keep_surge(box, "X", {"kind": "msl", "rise": 99.0, "name": "c"})
     assert box["X"]["kind"] == "pct", box       # msl ห้ามแย่งคืน
+    keep_surge(box, "X", {"kind": "brim", "rise": 90.0, "name": "d"})
+    assert box["X"]["kind"] == "pct", box       # brim ก็แย่งจาก pct ไม่ได้
+    box2 = {}
+    keep_surge(box2, "Y", {"kind": "msl", "rise": 99.0, "name": "e"})
+    keep_surge(box2, "Y", {"kind": "brim", "rise": 2.0, "name": "f"})
+    assert box2["Y"]["kind"] == "brim", box2    # แต่ชนะ msl ได้ เพราะรู้ตลิ่ง
     keep_surge(box, None, {"kind": "pct", "rise": 99.0, "name": "d"})   # จังหวัดไม่รู้จัก
     assert len(box) == 1
     print("selftest ok")
