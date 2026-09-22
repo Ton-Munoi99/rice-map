@@ -189,6 +189,18 @@ def surge_reason(surge):
             f"ใน ~40 ชม. (สถานีนี้ไม่มีค่าอ้างอิงตลิ่ง บอกได้แค่ว่าขึ้นเร็ว)")
 
 
+def colored_by_surge(p, kind=None):
+    """จังหวัดนี้ "ขึ้นสีเพราะ" สัญญาณสถานีเดียวจริงไหม
+
+    ตัวนับเดิมนับทุกจังหวัดที่ *มี* surge ติดมา ซึ่งรวมจังหวัดที่ล้นตลิ่งอยู่แล้ว
+    (สัญญาณถูกเก็บไว้แต่ไม่ได้เป็นเหตุผลของสี) — 22 ก.ย. 69 provinces_brim อ่านได้ 9
+    ทั้งที่กฎใหม่ทำให้ขึ้นสีจริงแค่ 2 จังหวัด ตัวเลขใน _meta ต้องไม่โกหก"""
+    sg = p.get("surge")
+    if not sg or (kind and sg["kind"] != kind):
+        return False
+    return p.get("reason_th") == surge_reason(sg)
+
+
 def station_severity(o, h, n, surge=None):
     """คืน (ระดับ, เหตุผล) — ตัดสินจากสถานีวัดจริงล้วน"""
     if o >= 1:
@@ -387,11 +399,9 @@ def main():
                 "surge_needs_history": f"กฎน้ำขึ้นเร็วทั้งสองข้อใช้ได้เมื่อสถานีนั้นมีประวัติครบ {SURGE_MIN_HISTORY} ค่าแล้ว (สถานีใหม่จึงยังไม่ถูกตัดสิน)",
                 "surge_msl": f"หรือสถานีที่ไม่มีค่าอ้างอิงตลิ่ง มีระดับน้ำสูงกว่ายอดเดิมของตัวเองใน ~40 ชม. ≥{MSL_SURGE_MIN_RISE} ม.",
             },
-            "provinces_surge": sum(1 for p in provinces.values() if p.get("surge")),
-            "provinces_brim": sum(1 for p in provinces.values()
-                                  if (p.get("surge") or {}).get("kind") == "brim"),
-            "provinces_surge_msl": sum(1 for p in provinces.values()
-                                       if (p.get("surge") or {}).get("kind") == "msl"),
+            "provinces_surge": sum(1 for p in provinces.values() if colored_by_surge(p)),
+            "provinces_brim": sum(1 for p in provinces.values() if colored_by_surge(p, "brim")),
+            "provinces_surge_msl": sum(1 for p in provinces.values() if colored_by_surge(p, "msl")),
             "stations_rated": sum(1 for s in stations if s.get("pct") is not None),
             "note_th": (
                 "**สีมาจากสถานีวัดระดับน้ำจริงของ สสน. เท่านั้น ข่าวเป็นบทสรุปประกอบ "
@@ -457,6 +467,12 @@ def _selftest():
     assert "สูงขึ้น" in why and "ม." in why
     assert "ตลิ่ง" not in why.split("(")[0]      # ส่วนที่เป็นข้อสรุปห้ามพูดถึงตลิ่ง
     assert MSL_SURGE_MIN_RISE >= 1.0             # กันหย่อนจนสถานีแกว่งปกติติดหมด
+
+    # ตัวนับใน _meta ต้องนับเฉพาะจังหวัดที่ "ขึ้นสีเพราะ" สัญญาณนั้นจริง
+    sg = {"name": "ก", "kind": "brim", "was": 94.7, "now": 99.4, "rise": 4.7}
+    assert colored_by_surge({"surge": sg, "reason_th": surge_reason(sg)}, "brim")
+    assert not colored_by_surge({"surge": sg, "reason_th": "มีสถานีล้นตลิ่ง 1 จุด"}, "brim")
+    assert not colored_by_surge({"surge": None, "reason_th": ""})
 
     # เกือบถึงตลิ่งแบบไต่ช้า (ชัยภูมิ 22 ก.ย. 69: 94.7% → 99.4% ใน ~40 ชม.)
     brim = {"name": "บ้านโนนหัน", "kind": "brim", "was": 94.7, "now": 99.4, "rise": 4.7}
