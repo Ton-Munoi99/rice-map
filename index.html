@@ -2752,7 +2752,7 @@
           unitEn: "level (from river gauges)",
           unitShort: "ระดับ",
           unitShortEn: "level",
-          summary: "จังหวัดที่น้ำท่วม/ใกล้ล้นตลิ่ง",
+          summary: "จังหวัดที่น้ำท่วม/เฝ้าระวัง",
           summaryMode: "count",
         },
         alerts: {
@@ -2764,7 +2764,7 @@
           unitShort: "ระดับ",
           unitShortEn: "Level",
           summary: "จังหวัดที่มีการเตือนภัย",
-          summaryMode: "avg",
+          summaryMode: "count",
         },
         soilMoisture: {
           noTimeseries: true,   // ไม่มีอนุกรมเวลารายปี — ไม่ต้องมีกราฟ spark / ป้ายปีประมาณการ
@@ -2924,7 +2924,7 @@
         },
         floodExtent: {
           format: "floodLevel",
-          showAllRanked: true, rankTh: "จังหวัดที่น้ำท่วม/ใกล้ล้นตลิ่ง", rankEn: "Provinces Flooding or Near Overbank",
+          showAllRanked: true, rankTh: "จังหวัดที่น้ำท่วม/เฝ้าระวัง", rankEn: "Provinces Flooding or on Watch",
           dataGlobal: "FLOOD_DATA", liveDated: true, partialCoverage: true,
           valueFn: floodValueOf,
           sourceTh: "ThaiWater (สสน.)",
@@ -4027,7 +4027,8 @@
       }
 
       function floodWord(n) {
-        return Math.round(n) >= 2 ? t("ท่วม", "Flooding") : t("ใกล้ล้นตลิ่ง", "Near Overbank");
+        // ระดับ 1 รวมกฎ "น้ำขึ้นเร็ว" ของสถานีไม่มีค่าตลิ่งด้วย จึงใช้คำกลาง ป้ายจริงรายจังหวัดอยู่ใน severity_th
+        return Math.round(n) >= 2 ? t("ท่วม", "Flooding") : t("เฝ้าระวัง", "Watch");
       }
 
       // รวม fmtCompact (compact=true) + fmtValue (compact=false) ตาม layerMeta.format
@@ -4101,6 +4102,7 @@
             .map((en) => valueOf(en, rice, year, layer));
           return values.length ? average(values) : 0;
         }
+        if (mode === "count") return provinces.filter((en) => valueOf(en, rice, year, layer) > 0).length;
         const values = provinces.map((en) => valueOf(en, rice, year, layer));
         return mode === "avg" ? average(values) : sum(values);
       }
@@ -4971,6 +4973,13 @@
           );
           return;
         }
+        if (S.layer === "households") {
+          refs.dataSourceNote.textContent = t(
+            `จำนวนครัวเรือนเกษตรกรรายจังหวัด สศก. (OAE) ปี 2566 (ปีเพาะปลูก 2565/66) · ข้อมูลชุดเดียว ไม่เปลี่ยนตามปีที่เลือก และไม่แยกตามชนิดข้าว · ครอบคลุม ${covered} จังหวัด`,
+            `Farmer households by province, OAE 2566 (crop year 2565/66) · single snapshot — does not change with the selected year or rice type · ${covered} provinces`,
+          );
+          return;
+        }
         const isEstYearNote = !layerMeta[S.layer]?.noTimeseries && S.layer !== "price" && S.year >= "2568";
         if (isEstYearNote) {
           refs.dataSourceNote.innerHTML = `<strong style="color:#f5c065">📊 ข้อมูลปี ${S.year} เป็นการประมาณการ / Estimated Data</strong><br>คำนวณจากค่าเฉลี่ย YoY Growth Rate ปี 2565–2567 รายจังหวัด (capped ±30%/ปี)<br>${S.year === "2568" ? "เนื้อที่เพาะปลูกปรับด้วย scale factor จากข้อมูลกรมการข้าว ณ 2 มี.ค. 2569 (58.5 ล้านไร่ทั้งประเทศ)" : "ประมาณการต่อเนื่องจากปี 2568"}<br><span style="color:var(--muted)">Trend estimation: avg 2-year YoY (2565→2566→2567) applied to ${S.year}. ${S.year === "2568" ? "Area_planted calibrated using Department of Rice 2568 regional planted-area data (58.5M rai national)." : ""} Not official OAE data — replace via Import CSV when official data is released.</span>`;
@@ -4988,6 +4997,13 @@
           refs.dataSourceNote.textContent = t(
             `ราคาใช้รายงานสมาคมโรงสีข้าวไทย อัปเดต ${dateText}. บันทึกความชื้น 15%. ครอบคลุม ${covered} จังหวัด`,
             `Prices from Thai Rice Millers Association. Updated ${dateText}. 15% moisture basis. Covers ${covered} provinces.`,
+          );
+          return;
+        }
+        if (S.layer === "straw") {
+          refs.dataSourceNote.textContent = t(
+            `ฟางข้าว = (ผลผลิตนาปี ข้าวขาว+หอมมะลิ + นาปรัง) × RPR ${STRAW.rpr} (พพ.) · ผลผลิตจาก OAE ปี ${S.year} · รวมทุกชนิดข้าว ไม่เปลี่ยนตามปุ่มข้าวขาว/หอมมะลิ · ครอบคลุม ${covered} จังหวัด`,
+            `Rice straw = (main-season white + Hom Mali + second-crop production) × RPR ${STRAW.rpr} (DEDE) · production from OAE ${S.year} · all rice types combined, unaffected by the White/Hom Mali toggle · ${covered} provinces`,
           );
           return;
         }
@@ -5071,7 +5087,7 @@
               ? t("ทั้งประเทศ", "Nationwide")
               : t(`ภาค${thaiRegionName(S.reg)}`, `${S.reg.charAt(0).toUpperCase() + S.reg.slice(1)} Region`);
         refs.aggLabel.textContent = t(meta.th, meta.en);
-        refs.aggValue.textContent = fmtCompact(agg);
+        refs.aggValue.textContent = mode === "count" ? `${fmtNumber(agg)} ${t("จว.", "Prov.")}` : fmtCompact(agg);
         refs.aggSub.textContent = `${uLabel()} · ${yoyText}`;
         refs.headlineTitle.textContent =
           S.layer === "dam"
@@ -5149,8 +5165,8 @@
                                   )
                               : S.layer === "floodExtent"
                                 ? t(
-                                    `สถานะน้ำท่วมรายจังหวัด จากสถานีวัดระดับน้ำจริงของ สสน. · แดง = มีสถานีล้นตลิ่งแล้ว · ส้ม = น้ำมากหลายจุด ใกล้ล้นตลิ่ง · เป็นน้ำที่วัดได้จริง ไม่ใช่การคาดการณ์ · ข่าวเป็นบทสรุปประกอบ ไม่มีผลกับสี`,
-                                    `Flood status by province from measured ThaiWater river gauges · Red = a gauge is already overbank · Orange = several gauges high and near overbank · Measured water, not a forecast · News is context and never drives the colour`,
+                                    `สถานะน้ำท่วมรายจังหวัด จากสถานีวัดระดับน้ำจริงของ สสน. · แดง = มีสถานีล้นตลิ่งแล้ว · ส้ม = เฝ้าระวัง: น้ำมากหลายจุด, สถานีเกือบถึงตลิ่งและยังขึ้น หรือน้ำขึ้นเร็วผิดปกติ (ชี้จังหวัดเพื่อดูว่าเข้าเกณฑ์ไหน) · เป็นน้ำที่วัดได้จริง ไม่ใช่การคาดการณ์ · ข่าวเป็นบทสรุปประกอบ ไม่มีผลกับสี`,
+                                    `Flood status by province from measured ThaiWater river gauges · Red = a gauge is already overbank · Orange = watch: several gauges high, a gauge near the brim and still rising, or an unusually fast rise (hover a province to see which) ·Measured water, not a forecast · News is context and never drives the colour`,
                                   )
                               : S.layer === "alerts"
                                 ? t(
@@ -5172,6 +5188,16 @@
                                       `ความชื้นในดินระดับผิว (0–100%) เฉลี่ยต่อจังหวัด จาก NASA SMAP 10km · อัปเดตรายสัปดาห์ · ข้อมูล ${window.SOIL_DATA?._meta?.period_start || "—"} ถึง ${window.SOIL_DATA?._meta?.period_end || "—"}`,
                                       `Surface soil moisture (0–100%) per province from NASA SMAP 10km · Weekly update · Data ${window.SOIL_DATA?._meta?.period_start || "—"} to ${window.SOIL_DATA?._meta?.period_end || "—"}`,
                                     )
+                                  : S.layer === "households"
+                                    ? t(
+                                        `จำนวนครัวเรือนเกษตรกรรายจังหวัด สศก. (OAE) ปี 2566 (ปีเพาะปลูก 2565/66) · เป็นข้อมูลชุดเดียว ไม่แยกตามชนิดข้าวและไม่เปลี่ยนตามปีที่เลือก`,
+                                        `Farmer households by province, OAE 2566 (crop year 2565/66) · a single snapshot, not split by rice type and unaffected by the selected year`,
+                                      )
+                                  : S.layer === "straw"
+                                    ? t(
+                                        `ปริมาณฟางข้าวรายจังหวัด ปี ${S.year} = ผลผลิตข้าวทุกชนิด (นาปี ข้าวขาว+หอมมะลิ และนาปรัง) × ${STRAW.rpr} ตามค่า RPR ของ พพ. · ไม่เปลี่ยนตามปุ่มข้าวขาว/หอมมะลิ`,
+                                        `Rice straw by province, ${S.year} = all rice production (main-season white + Hom Mali, plus second crop) × ${STRAW.rpr} (DEDE RPR) · unaffected by the White/Hom Mali toggle`,
+                                      )
                                   : S.layer === "price"
                                     ? t(
                                         `แผนที่ fit ตามสัดส่วนประเทศไทยและใช้รายงานราคาข้าวเปลือกรายวันของสมาคมโรงสีข้าวไทย โดยไฮไลต์ราคาของ ${riceTypeDescription(S.rice, S.layer)} ปี ${S.year}`,
@@ -5871,7 +5897,7 @@
                 <div class="m-value" style="font-size:12px">${t(`ใหญ่ ${mp.large} · กลาง ${mp.medium} · เล็ก ${mp.small}`, `L:${mp.large} · M:${mp.medium} · S:${mp.small}`)}</div>
               </div>
               ${listHtml}
-              <div style="font-size:9px;color:var(--muted);margin-top:6px">${t("ที่มา: กรมการค้าภายใน (DIT) 23 เม.ย. 2569", "Source: Dept. of Internal Trade (DIT) 23 Apr 2026")}</div>
+              <div style="font-size:9px;color:var(--muted);margin-top:6px">${t("ที่มา: กรมการค้าภายใน (DIT)", "Source: Dept. of Internal Trade (DIT)")} ${fmtDateISO(RICE_MILLS_DATA?._meta?.updated)}</div>
             </div>`;
           }
         }
@@ -6555,7 +6581,10 @@
                         : S.layer === "dam"
                           ? t("ไม่มีข้อมูลอนุกรมเวลา", "No time-series data")
                           : S.layer === "mills"
-                            ? t("ข้อมูล ณ เม.ย. 2569 — ไม่มีอนุกรมเวลา", "Apr 2026 snapshot — no time series")
+                            ? t(
+                                `ข้อมูล ณ ${fmtDateISO(RICE_MILLS_DATA?._meta?.updated)} — ไม่มีอนุกรมเวลา`,
+                                `Snapshot ${fmtDateISO(RICE_MILLS_DATA?._meta?.updated)} — no time series`,
+                              )
                             : S.layer === "profit"
                               ? t(
                                   "ใช้ราคาปีปัจจุบัน — ไม่มีอนุกรมเวลาที่สมบูรณ์",
@@ -6843,7 +6872,7 @@ ${
 <div class="en">${en}</div>
 <div class="type">${t("สถานะน้ำท่วม · สถานีวัดน้ำ สสน.", "Flood status · ThaiWater gauges")}</div>
 <div class="metric-name">${t("สถานะ", "Status")}</div>
-<div class="value" style="color:${flooding ? "#b71c1c" : "#e65100"}">${flooding ? "🔴" : "🟠"} ${esc(t(fp.severity_th || "ใกล้ล้นตลิ่ง", fp.severity_en || "Near Overbank"))}</div>
+<div class="value" style="color:${flooding ? "#b71c1c" : "#e65100"}">${flooding ? "🔴" : "🟠"} ${esc(t(fp.severity_th || "เฝ้าระวัง", fp.severity_en || "Watch"))}</div>
 <div style="font-size:10px;color:var(--muted);margin-top:2px">${t("ล้นตลิ่ง", "Overbank")} ${fp.stations_overbank} · ${t("น้ำมาก", "High")} ${fp.stations_high} · ${t("จากทั้งหมด", "of")} ${fp.stations_total} ${t("สถานี", "gauges")}</div>
 ${stationRows ? `<div style="font-size:10px;color:var(--text-soft);margin-top:5px;line-height:1.7"><div style="opacity:.7;margin-bottom:2px">${t("สถานีที่น้ำสูงสุด (% ตลิ่ง)", "Highest gauges (% of bank)")}</div>${stationRows}</div>` : ""}
 ${surgeRow}
@@ -7022,6 +7051,8 @@ ${warningsHtml}
     <div class="type">${
       S.layer === "households"
         ? t("ครัวเรือนเกษตรกร (OAE 2566)", "Farmer Households (OAE 2566)")
+        : S.layer === "straw"
+          ? t("ข้าวทุกชนิด (นาปี + นาปรัง)", "All rice (main + second crop)")
             : riceTypeDescription(S.rice, S.layer)
     }</div>
     <div class="metric-name">${t(layerMeta[S.layer].th, layerMeta[S.layer].en)}</div>
@@ -7123,7 +7154,7 @@ ${warningsHtml}
           const fm = window.FLOOD_DATA?._meta;
           const nFlood = fm?.provinces_flooded ?? 0;
           const nAll = fm?.provinces_flagged ?? 0;
-          refs.yearButtons.innerHTML = `<button class="pill on" data-year="floodExtent">🌊 ${t("ท่วมแล้ว", "Flooding")} ${nFlood} · ${t("ใกล้ล้นตลิ่ง", "near overbank")} ${Math.max(0, nAll - nFlood)} ${t("จังหวัด", "provinces")}</button>`;
+          refs.yearButtons.innerHTML = `<button class="pill on" data-year="floodExtent">🌊 ${t("ท่วมแล้ว", "Flooding")} ${nFlood} · ${t("เฝ้าระวัง", "on watch")} ${Math.max(0, nAll - nFlood)} ${t("จังหวัด", "provinces")}</button>`;
           return;
         }
         if (S.layer === "alerts") {

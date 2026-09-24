@@ -4,6 +4,15 @@ Last updated: 2026-09-18 by Claude Code
 
 ## Log
 
+- 2026-09-24 (Claude): Audited every layer's captions against the code. Fixed three: `households`
+  and `straw` fell through to the default OAE Table 1.4 / rice-type captions (households is a fixed
+  2566 snapshot from `farmer_households.csv`; straw sums all rice types and ignores `S.rice`), and
+  the `mills` detail card + sparkline hardcoded "23 Apr 2026" while `_meta.updated` is 8 May.
+  Then fixed `floodExtent`: severity 1 is now called "เฝ้าระวัง" (it includes the no-bank-reference
+  rapid-rise rule), and `summaryMode: "count"` is implemented (it was summing severities, so the
+  card read "ท่วม" instead of a province count). `alerts` had the same shape (titled "provinces with
+  warnings" but showed a word for the average level) and now counts too.
+
 - 2026-09-22 (Claude): Checked the Daily News front page of 23 Sep (RID warning #3 to 11 Chao
   Phraya provinces; flash floods in Phitsanulok and Chaiyaphum) against the layers. 8 of the 11
   provinces were already coloured, Phitsanulok read overbank at Bang Krathum (102.5%), and the
