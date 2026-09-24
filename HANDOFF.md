@@ -10,8 +10,8 @@ Last updated: 2026-09-18 by Claude Code
   the `mills` detail card + sparkline hardcoded "23 Apr 2026" while `_meta.updated` is 8 May.
   Then fixed `floodExtent`: severity 1 is now called "เฝ้าระวัง" (it includes the no-bank-reference
   rapid-rise rule), and `summaryMode: "count"` is implemented (it was summing severities, so the
-  card read "ท่วม" instead of a province count). Still open, not fixed: `alerts` summary is titled
-  "จังหวัดที่มีการเตือนภัย" but shows `alertWord(average level)`, not a count.
+  card read "ท่วม" instead of a province count). `alerts` had the same shape (titled "provinces with
+  warnings" but showed a word for the average level) and now counts too.
 
 - 2026-09-22 (Claude): Checked the Daily News front page of 23 Sep (RID warning #3 to 11 Chao
   Phraya provinces; flash floods in Phitsanulok and Chaiyaphum) against the layers. 8 of the 11
