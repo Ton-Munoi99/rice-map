@@ -3535,6 +3535,10 @@
         const src = entryOf(en, rice, year).source || "";
         return src === "estimated_trend";
       }
+      // กำไรใช้ผลผลิตต่อไร่ของปีนั้น — ปีที่ OAE ยังไม่ออก ผลผลิตเป็นค่าคาดการณ์จากแนวโน้ม
+      function profitYieldEstimated(rice = S.rice, year = S.year) {
+        return getVisibleProvinces().some((en) => isEstimated(en, rice, year));
+      }
 
       function householdValueOf(en) {
         const thName = NM[en];
@@ -3919,7 +3923,7 @@
           .map((m) => {
             const typeLabel = t(m.type, MILL_TYPE_EN[m.type] || m.type);
             const capLabel = m.capacity ? `, ${fmtNumber(m.capacity)} ${t("ต./วัน", "t/day")}` : "";
-            return `<div style="font-size:9px;color:var(--muted);margin-top:2px">· ${m.name} <span style="opacity:.6">(${typeLabel}${capLabel})</span></div>`;
+            return `<div style="font-size:9px;color:var(--muted);margin-top:2px">· ${esc(m.name)} <span style="opacity:.6">(${typeLabel}${capLabel})</span></div>`;
           })
           .join("");
       }
@@ -4639,12 +4643,12 @@
         const amphoe = t(st.amphoe_th || "", st.amphoe_en || "");
         const where = [amphoe, prov].filter(Boolean).join(" · ");
         refs.tooltip.innerHTML = `
-        <div class="th">${t(st.name_th || st.name_en, st.name_en || st.name_th)}</div>
-        ${where ? `<div class="en">${where}</div>` : ""}
-        ${st.river ? `<div class="type">🌊 ${st.river}</div>` : ""}
+        <div class="th">${esc(t(st.name_th || st.name_en, st.name_en || st.name_th))}</div>
+        ${where ? `<div class="en">${esc(where)}</div>` : ""}
+        ${st.river ? `<div class="type">🌊 ${esc(st.river)}</div>` : ""}
         <div class="value" style="color:${col}">${st.pct != null ? st.pct.toFixed(0) + "%" : "—"} <small style="font-size:9px;opacity:.7">${t("ของตลิ่ง", "of bank")}</small></div>
         <div style="font-size:10px;margin-top:2px">${lbl}${st.diff_text ? " · " + st.diff_text : ""}${wlTrend(st)}</div>
-        <div class="rank" style="font-size:9px;margin-top:3px;opacity:.7">${st.agency || "ThaiWater"} · ${st.dt || ""}</div>
+        <div class="rank" style="font-size:9px;margin-top:3px;opacity:.7">${esc(st.agency || "ThaiWater")} · ${esc(st.dt || "")}</div>
       `;
         refs.tooltip.classList.add("show");
         moveTooltip(event);
@@ -4665,11 +4669,11 @@
         const amphoe = st.amphoe_th || "";
         const where = [amphoe, prov].filter(Boolean).join(" · ");
         refs.tooltip.innerHTML = `
-        <div class="th">${t(st.name_th || st.name_en, st.name_en || st.name_th)}</div>
-        ${where ? `<div class="en">${where}</div>` : ""}
+        <div class="th">${esc(t(st.name_th || st.name_en, st.name_en || st.name_th))}</div>
+        ${where ? `<div class="en">${esc(where)}</div>` : ""}
         <div class="value" style="color:${col}">${st.rain_24h != null ? st.rain_24h.toFixed(1) + " mm" : "—"}</div>
         <div style="font-size:10px;margin-top:2px">${lbl}</div>
-        <div class="rank" style="font-size:9px;margin-top:3px;opacity:.7">${st.agency || "ThaiWater"} · ${st.dt || ""}</div>
+        <div class="rank" style="font-size:9px;margin-top:3px;opacity:.7">${esc(st.agency || "ThaiWater")} · ${esc(st.dt || "")}</div>
       `;
         refs.tooltip.classList.add("show");
         moveTooltip(event);
@@ -4817,13 +4821,16 @@
         if (S.layer === "profit") {
           const rice = t(riceMeta[S.rice].th, riceMeta[S.rice].en);
           const cost = fmtNumber(COST_BASE[S.rice]?.oaeRaiCost);
+          const yldEst = profitYieldEstimated();
           refs.dataSourceNote.textContent = t(
             `ประมาณการกำไร/ขาดทุนต่อไร่ = (ราคาโรงสี × ผลผลิตเฉลี่ยของจังหวัด) − ต้นทุน สศก. ${cost} ฿/ไร่ (${rice}) ` +
               `· ต้นทุนนี้เป็น "ค่าเฉลี่ยทั้งประเทศ" ไม่ใช่ต้นทุนรายจังหวัด จึงใช้เทียบจังหวัดต่อจังหวัดได้ ` +
-              `แต่ไม่ใช่กำไรจริงของแปลงใด · ครอบคลุม ${covered} จังหวัดที่มีข้อมูลราคา`,
+              `แต่ไม่ใช่กำไรจริงของแปลงใด · ครอบคลุม ${covered} จังหวัดที่มีข้อมูลราคา` +
+              (yldEst ? ` · ⚠️ ผลผลิตต่อไร่ปี ${S.year} เป็นค่าคาดการณ์จากแนวโน้ม 2565–2567 ยังไม่ใช่ตัวเลขทางการ สศก.` : ""),
             `Est. profit/loss per rai = (mill price × province-average yield) − OAE cost ${cost} ฿/rai (${rice}) ` +
               `· that cost is a NATIONAL average, not per-province, so this compares provinces but is not any farm's actual margin ` +
-              `· ${covered} provinces with price data`,
+              `· ${covered} provinces with price data` +
+              (yldEst ? ` · ⚠️ ${S.year} yield is a trend projection (2565–2567), not official OAE data` : ""),
           );
           return;
         }
@@ -5223,7 +5230,7 @@
             const prov = t(s.province_th || "", s.province_en || "");
             return `<div class="top-item" style="cursor:default">
           <span class="rank" style="color:${col}">${i + 1}</span>
-          <span class="name">${name} <small style="opacity:.6">${prov}</small></span>
+          <span class="name">${esc(name)} <small style="opacity:.6">${esc(prov)}</small></span>
           <span class="value" style="color:${col}">${s.pct != null ? s.pct.toFixed(0) + "%" : "—"} <small style="font-size:9px">${lbl}</small></span>
         </div>`;
           })
@@ -5244,7 +5251,7 @@
             const prov = t(s.province_th || "", s.province_en || s.province_th || "");
             return `<div class="top-item" style="cursor:default">
           <span class="rank" style="color:${col}">${i + 1}</span>
-          <span class="name">${name} <small style="opacity:.6">${prov}</small></span>
+          <span class="name">${esc(name)} <small style="opacity:.6">${esc(prov)}</small></span>
           <span class="value" style="color:${col}">${s.rain_24h != null ? s.rain_24h.toFixed(1) + " mm" : "—"} <small style="font-size:9px">${lbl}</small></span>
         </div>`;
           })
@@ -5267,9 +5274,15 @@
         const metaLabel = t(meta.th, meta.en);
         refs.topSub.innerHTML =
           S.layer === "mills"
-            ? `${metaLabel}<br>${t("DIT 2569", "DIT 2026")}`
+            ? `${metaLabel}<br>DIT · ${fmtDateISO(RICE_MILLS_DATA?._meta?.updated)}`
+            : S.layer === "biomass"
+              ? `${metaLabel}<br>DEDE · ${t(window.BIOMASS_DATA?._meta?.as_of || "ธ.ค. 2568", window.BIOMASS_DATA?._meta?.as_of_en || "Dec 2025")}`
+            : S.layer === "straw"
+              ? `${t("ข้าวทุกชนิด", "All rice")} &nbsp;·&nbsp; ${metaLabel}<br>${yearLabel}`
+            : S.layer === "households"
+              ? `${metaLabel}<br>${t("สศก. ปี 2566", "OAE 2566")}`
             : S.layer === "profit"
-              ? `${riceLabel} &nbsp;·&nbsp; ${metaLabel}<br>${yearLabel} · ${t("ประมาณการ", "Est.")}`
+              ? `${riceLabel} &nbsp;·&nbsp; ${metaLabel}<br>${yearLabel} · ${t("ประมาณการ", "Est.")}${profitYieldEstimated() ? ` · ${t("ผลผลิตเป็นค่าคาดการณ์", "projected yield")}` : ""}`
                 : S.layer === "gsmap"
                   ? `${metaLabel}<br>${t(`ดาวเทียม · ข้อมูลถึง ${window.GSMAP_DATA?._meta?.period_end || "—"}`, `Satellite · Through ${window.GSMAP_DATA?._meta?.period_end || "—"}`)}`
                   : S.layer === "forecast"
@@ -5767,7 +5780,7 @@
                   : t("ขาดทุน ❌", "Loss ❌");
             profitHtml = `
             <div class="rice-card" style="grid-column:1/-1;background:rgba(39,174,96,.07);border:1px solid rgba(39,174,96,.2)">
-              <div class="t">💰 ${t("กำไร/ขาดทุนประมาณการ", "Est. Profit/Loss")} · ${t(riceMeta[S.rice].th, riceMeta[S.rice].en)} ${S.year}</div>
+              <div class="t">💰 ${t("กำไร/ขาดทุนประมาณการ", "Est. Profit/Loss")} · ${t(riceMeta[S.rice].th, riceMeta[S.rice].en)} ${S.year}${isEstimated(en) ? ` · <span style="color:#f5c065">${t("ผลผลิตเป็นค่าคาดการณ์", "projected yield")}</span>` : ""}</div>
               <div class="metric">
                 <div class="m-label">${t("กำไร/ขาดทุนต่อไร่", "Profit/Loss per Rai")}</div>
                 <div class="m-value" style="color:${col}">${pval >= 0 ? "+" : ""}${fmtNumber(pval)} <small>฿/ไร่</small></div>
@@ -6214,7 +6227,7 @@
               .map((p) => {
                 const fuelTags = riceFuelTags(p);
                 return `<div style="padding:4px 0;border-bottom:1px solid rgba(245,158,11,.1);display:flex;justify-content:space-between;align-items:flex-start;gap:4px">
-                  <span style="font-size:10px;flex:1;line-height:1.4">${p.name}${p.fuel && !/^(Renewable|Biomass)$/.test(p.fuel) ? `<span style="color:var(--muted);font-size:9px"> · ${p.fuel}</span>` : ""}</span>
+                  <span style="font-size:10px;flex:1;line-height:1.4">${esc(p.name)}${p.fuel && !/^(Renewable|Biomass)$/.test(p.fuel) ? `<span style="color:var(--muted);font-size:9px"> · ${esc(p.fuel)}</span>` : ""}</span>
                   <span style="white-space:nowrap;font-size:10px;color:var(--muted);margin-left:4px">${p.mw} MW</span>
                   ${fuelTags.length ? `<span style="white-space:nowrap">${fuelTags.join(" ")}</span>` : ""}
                 </div>`;
@@ -6268,7 +6281,7 @@
                       ? `<div class="m-label" style="margin-top:2px">${t("เหลืออีก", "still")} ${x.to_flood_m.toFixed(2)} ${t("ม. ถึงระดับวิกฤต", "m below flood stage")}</div>`
                       : `<div class="m-label" style="margin-top:2px;color:${COL.flood}">${t("เกินระดับวิกฤตแล้ว", "over flood stage by")} ${Math.abs(x.to_flood_m).toFixed(2)} ${t("ม.", "m")}</div>`;
                 return `<div class="metric">
-                  <div class="m-label">${x.name} · ${LBL[x.status] || x.status}</div>
+                  <div class="m-label">${esc(x.name)} · ${LBL[x.status] || esc(x.status)}</div>
                   <div class="m-value" style="color:${c}">${x.level_m ?? "—"} <small>${t("ม.", "m")}</small></div>
                   ${gap}
                   <div class="m-label" style="margin-top:2px">${t("เตือน", "alarm")} ${x.alarm_m ?? "—"} · ${t("วิกฤต", "flood")} ${x.flood_m ?? "—"} ${t("ม.", "m")}</div>
@@ -6713,7 +6726,7 @@
           const plantListHtml = plants
             .map((p) => {
               const fuelTags = riceFuelTags(p);
-              return `<div style="font-size:9px;color:var(--muted);margin-top:3px;display:flex;justify-content:space-between;gap:4px"><span>· ${p.name}</span><span style="white-space:nowrap">${p.mw} MW ${fuelTags.join(" ")}</span></div>`;
+              return `<div style="font-size:9px;color:var(--muted);margin-top:3px;display:flex;justify-content:space-between;gap:4px"><span>· ${esc(p.name)}</span><span style="white-space:nowrap">${p.mw} MW ${fuelTags.join(" ")}</span></div>`;
             })
             .join("");
           return `
@@ -6741,7 +6754,7 @@
           return `
     <div class="th">${t(NM[en] || en, en)}</div>
     <div class="en">${en}</div>
-    <div class="type">${t("กำไร/ขาดทุนประมาณการ", "Est. Profit/Loss")} · ${S.year}</div>
+    <div class="type">${t("กำไร/ขาดทุนประมาณการ", "Est. Profit/Loss")} · ${S.year}${isEstimated(en) ? ` · <span style="color:#f5c065">${t("ผลผลิตเป็นค่าคาดการณ์", "projected yield")}</span>` : ""}</div>
     <div class="metric-name">${t("กำไร/ขาดทุนต่อไร่", "Profit/Loss per Rai")}</div>
     <div class="value" style="color:${col}">${pval >= 0 ? "+" : ""}${fmtNumber(pval)} <small style="font-size:12px;color:var(--muted)">฿/ไร่</small></div>
     <div class="rank">${rank ? `${t("อันดับ", "Rank")} #${rank} / ${total}` : t("ไม่มีข้อมูล", "No data")}</div>
@@ -7338,10 +7351,12 @@ ${warningsHtml}
       }
 
       function setLayer(layer) {
+        // layer ที่มีปีเดียว (เช่นครัวเรือน = 2566) บังคับปีเอง ผู้ใช้ไม่ได้เลือก จึงไม่พาปีนั้นติดไป layer ถัดไป
+        const forcedYear = yearsForLayer(S.layer).length === 1;
         S.layer = layer;
         // นาปรัง = ข้าวเจ้าไม่ไวแสง (รวมทุกพันธุ์) — หอมมะลิไม่มีนาปรัง จึงสลับเป็นข้าวขาวอัตโนมัติ
         if ((layer === "naprang" || layer === "naprangArea") && S.rice === "jasmine") S.rice = "white";
-        if (!yearsForLayer(layer).includes(S.year)) {
+        if (forcedYear || !yearsForLayer(layer).includes(S.year)) {
           S.year = yearsForLayer(layer)[yearsForLayer(layer).length - 1];
         }
         if (layer === "mills" && !RICE_MILLS_DATA && !RICE_MILLS_LOADING) fetchMillsData();
@@ -7755,7 +7770,7 @@ ${warningsHtml}
         storms.forEach((s) => {
           rows.push(`<div class="ww-row ww-storm">
           <span style="font-size:13px">${s.alert_icon}</span>
-          <span class="ww-label"><strong style="color:#ef9a9a">${t(s.type_th, s.type_en)} ${s.name}</strong><br>
+          <span class="ww-label"><strong style="color:#ef9a9a">${t(s.type_th, s.type_en)} ${esc(s.name)}</strong><br>
           <span style="font-size:9px">${t("ห่าง", "Distance")} ${s.distance_km.toLocaleString()} km · ${t("ทิศ", "")}${t(s.direction_th, s.direction_en)}</span></span>
           <span class="ww-badge" style="background:rgba(198,40,40,.2);color:#ef9a9a">${t(s.alert_th, s.alert_en)}</span>
         </div>`);
@@ -7955,7 +7970,7 @@ ${warningsHtml}
               entry.price_high_alt = live.white_high_25;
             }
             entry.price_basis = "moisture_15_pct";
-            entry.source = "mill_pdf";
+            // ไม่ทับ entry.source — ช่องนั้นบอกที่มาของผลผลิต/เนื้อที่ ถ้าทับ isEstimated() จะมองไม่เห็นปีคาดการณ์
             entry.source_title = LIVE_PRICES?.provincial_prices?.source_th || "สมาคมโรงสีข้าวไทย";
             entry.source_url = LIVE_PRICES?.provincial_prices?.source_url || "";
             entry.source_note = date ? `PDF ${date}` : "";
