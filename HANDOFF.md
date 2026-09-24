@@ -8,9 +8,10 @@ Last updated: 2026-09-18 by Claude Code
   and `straw` fell through to the default OAE Table 1.4 / rice-type captions (households is a fixed
   2566 snapshot from `farmer_households.csv`; straw sums all rice types and ignores `S.rice`), and
   the `mills` detail card + sparkline hardcoded "23 Apr 2026" while `_meta.updated` is 8 May.
-  Still open: `floodExtent` headline says orange = "several gauges near overbank" and `floodWord()`
-  prints "ใกล้ล้นตลิ่ง" for every severity-1 province, but severity 1 now also covers the
-  rapid-rise rule that `fetch_flood_status.py` says must never be labelled near-overbank.
+  Then fixed `floodExtent`: severity 1 is now called "เฝ้าระวัง" (it includes the no-bank-reference
+  rapid-rise rule), and `summaryMode: "count"` is implemented (it was summing severities, so the
+  card read "ท่วม" instead of a province count). Still open, not fixed: `alerts` summary is titled
+  "จังหวัดที่มีการเตือนภัย" but shows `alertWord(average level)`, not a count.
 
 - 2026-09-22 (Claude): Checked the Daily News front page of 23 Sep (RID warning #3 to 11 Chao
   Phraya provinces; flash floods in Phitsanulok and Chaiyaphum) against the layers. 8 of the 11
