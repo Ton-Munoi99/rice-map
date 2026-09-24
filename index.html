@@ -4971,6 +4971,13 @@
           );
           return;
         }
+        if (S.layer === "households") {
+          refs.dataSourceNote.textContent = t(
+            `จำนวนครัวเรือนเกษตรกรรายจังหวัด ปี 2566 (ปีเพาะปลูก 2565/66) · ข้อมูลชุดเดียว ไม่เปลี่ยนตามปีที่เลือก และไม่แยกตามชนิดข้าว · ครอบคลุม ${covered} จังหวัด`,
+            `Farmer households by province, 2566 (crop year 2565/66) · single snapshot — does not change with the selected year or rice type · ${covered} provinces`,
+          );
+          return;
+        }
         const isEstYearNote = !layerMeta[S.layer]?.noTimeseries && S.layer !== "price" && S.year >= "2568";
         if (isEstYearNote) {
           refs.dataSourceNote.innerHTML = `<strong style="color:#f5c065">📊 ข้อมูลปี ${S.year} เป็นการประมาณการ / Estimated Data</strong><br>คำนวณจากค่าเฉลี่ย YoY Growth Rate ปี 2565–2567 รายจังหวัด (capped ±30%/ปี)<br>${S.year === "2568" ? "เนื้อที่เพาะปลูกปรับด้วย scale factor จากข้อมูลกรมการข้าว ณ 2 มี.ค. 2569 (58.5 ล้านไร่ทั้งประเทศ)" : "ประมาณการต่อเนื่องจากปี 2568"}<br><span style="color:var(--muted)">Trend estimation: avg 2-year YoY (2565→2566→2567) applied to ${S.year}. ${S.year === "2568" ? "Area_planted calibrated using Department of Rice 2568 regional planted-area data (58.5M rai national)." : ""} Not official OAE data — replace via Import CSV when official data is released.</span>`;
@@ -4988,6 +4995,13 @@
           refs.dataSourceNote.textContent = t(
             `ราคาใช้รายงานสมาคมโรงสีข้าวไทย อัปเดต ${dateText}. บันทึกความชื้น 15%. ครอบคลุม ${covered} จังหวัด`,
             `Prices from Thai Rice Millers Association. Updated ${dateText}. 15% moisture basis. Covers ${covered} provinces.`,
+          );
+          return;
+        }
+        if (S.layer === "straw") {
+          refs.dataSourceNote.textContent = t(
+            `ฟางข้าว = (ผลผลิตนาปี ข้าวขาว+หอมมะลิ + นาปรัง) × RPR ${STRAW.rpr} (พพ.) · ผลผลิตจาก OAE ปี ${S.year} · รวมทุกชนิดข้าว ไม่เปลี่ยนตามปุ่มข้าวขาว/หอมมะลิ · ครอบคลุม ${covered} จังหวัด`,
+            `Rice straw = (main-season white + Hom Mali + second-crop production) × RPR ${STRAW.rpr} (DEDE) · production from OAE ${S.year} · all rice types combined, unaffected by the White/Hom Mali toggle · ${covered} provinces`,
           );
           return;
         }
@@ -5172,6 +5186,16 @@
                                       `ความชื้นในดินระดับผิว (0–100%) เฉลี่ยต่อจังหวัด จาก NASA SMAP 10km · อัปเดตรายสัปดาห์ · ข้อมูล ${window.SOIL_DATA?._meta?.period_start || "—"} ถึง ${window.SOIL_DATA?._meta?.period_end || "—"}`,
                                       `Surface soil moisture (0–100%) per province from NASA SMAP 10km · Weekly update · Data ${window.SOIL_DATA?._meta?.period_start || "—"} to ${window.SOIL_DATA?._meta?.period_end || "—"}`,
                                     )
+                                  : S.layer === "households"
+                                    ? t(
+                                        `จำนวนครัวเรือนเกษตรกรรายจังหวัด ปี 2566 (ปีเพาะปลูก 2565/66) · เป็นข้อมูลชุดเดียว ไม่แยกตามชนิดข้าวและไม่เปลี่ยนตามปีที่เลือก`,
+                                        `Farmer households by province, 2566 (crop year 2565/66) · a single snapshot, not split by rice type and unaffected by the selected year`,
+                                      )
+                                  : S.layer === "straw"
+                                    ? t(
+                                        `ปริมาณฟางข้าวรายจังหวัด ปี ${S.year} = ผลผลิตข้าวทุกชนิด (นาปี ข้าวขาว+หอมมะลิ และนาปรัง) × ${STRAW.rpr} ตามค่า RPR ของ พพ. · ไม่เปลี่ยนตามปุ่มข้าวขาว/หอมมะลิ`,
+                                        `Rice straw by province, ${S.year} = all rice production (main-season white + Hom Mali, plus second crop) × ${STRAW.rpr} (DEDE RPR) · unaffected by the White/Hom Mali toggle`,
+                                      )
                                   : S.layer === "price"
                                     ? t(
                                         `แผนที่ fit ตามสัดส่วนประเทศไทยและใช้รายงานราคาข้าวเปลือกรายวันของสมาคมโรงสีข้าวไทย โดยไฮไลต์ราคาของ ${riceTypeDescription(S.rice, S.layer)} ปี ${S.year}`,
@@ -5871,7 +5895,7 @@
                 <div class="m-value" style="font-size:12px">${t(`ใหญ่ ${mp.large} · กลาง ${mp.medium} · เล็ก ${mp.small}`, `L:${mp.large} · M:${mp.medium} · S:${mp.small}`)}</div>
               </div>
               ${listHtml}
-              <div style="font-size:9px;color:var(--muted);margin-top:6px">${t("ที่มา: กรมการค้าภายใน (DIT) 23 เม.ย. 2569", "Source: Dept. of Internal Trade (DIT) 23 Apr 2026")}</div>
+              <div style="font-size:9px;color:var(--muted);margin-top:6px">${t("ที่มา: กรมการค้าภายใน (DIT)", "Source: Dept. of Internal Trade (DIT)")} ${fmtDateISO(RICE_MILLS_DATA?._meta?.updated)}</div>
             </div>`;
           }
         }
@@ -6555,7 +6579,10 @@
                         : S.layer === "dam"
                           ? t("ไม่มีข้อมูลอนุกรมเวลา", "No time-series data")
                           : S.layer === "mills"
-                            ? t("ข้อมูล ณ เม.ย. 2569 — ไม่มีอนุกรมเวลา", "Apr 2026 snapshot — no time series")
+                            ? t(
+                                `ข้อมูล ณ ${fmtDateISO(RICE_MILLS_DATA?._meta?.updated)} — ไม่มีอนุกรมเวลา`,
+                                `Snapshot ${fmtDateISO(RICE_MILLS_DATA?._meta?.updated)} — no time series`,
+                              )
                             : S.layer === "profit"
                               ? t(
                                   "ใช้ราคาปีปัจจุบัน — ไม่มีอนุกรมเวลาที่สมบูรณ์",
@@ -7022,6 +7049,8 @@ ${warningsHtml}
     <div class="type">${
       S.layer === "households"
         ? t("ครัวเรือนเกษตรกร (OAE 2566)", "Farmer Households (OAE 2566)")
+        : S.layer === "straw"
+          ? t("ข้าวทุกชนิด (นาปี + นาปรัง)", "All rice (main + second crop)")
             : riceTypeDescription(S.rice, S.layer)
     }</div>
     <div class="metric-name">${t(layerMeta[S.layer].th, layerMeta[S.layer].en)}</div>
