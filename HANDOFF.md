@@ -4,6 +4,14 @@ Last updated: 2026-09-18 by Claude Code
 
 ## Log
 
+- 2026-09-24 (Claude): Bug hunt over index.html (self-tests, freshness, and a Playwright sweep of every
+  layer × year × rice type × 5 provinces checking for undefined/NaN/"ปี <layer>"). Main fix: the
+  live-price overlay overwrote `entry.source` with "mill_pdf", so `isEstimated()` was false for every
+  province with a live price and the 2569 estimate tag vanished there. Also fixed "ปี biomass" in the
+  Top 10 subtitle, unlabelled projected yield in profit 2569, a forced 2566 year carrying over from
+  households, unescaped external names, missing `rainstation` in `yearsForLayer()`, and no
+  `hashchange` listener. The Python scripts beyond their self-tests were not reviewed this round.
+
 - 2026-09-24 (Claude): Audited every layer's captions against the code. Fixed three: `households`
   and `straw` fell through to the default OAE Table 1.4 / rice-type captions (households is a fixed
   2566 snapshot from `farmer_households.csv`; straw sums all rice types and ignores `S.rice`), and

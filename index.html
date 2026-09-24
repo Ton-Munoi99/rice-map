@@ -3482,6 +3482,7 @@
         if (layer === "alerts") return ["alerts"];
         if (layer === "soilMoisture") return ["soilMoisture"];
         if (layer === "waterlevel") return ["waterlevel"];
+        if (layer === "rainstation") return ["rainstation"];
         if (layer === "profit") return PRICE_YEARS;
         if (layer === "naprang") return NAPRANG_YEARS;
         if (layer === "naprangArea") return NAPRANG_YEARS;
@@ -7871,6 +7872,13 @@ ${warningsHtml}
         initMapInteractions();
         resize();
         window.addEventListener("resize", resize);
+        // แก้ hash ในแท็บเดิม (วางลิงก์ใหม่/กดย้อนกลับ) — ค่าที่ไม่อยู่ใน hash กลับเป็นค่าเริ่มต้น
+        // syncHash ใช้ replaceState ซึ่งไม่ยิง hashchange จึงไม่วนซ้ำ
+        window.addEventListener("hashchange", () => {
+          Object.assign(S, { layer: "production", rice: "white", reg: "all", sel: null });
+          applyHash();
+          rerender();
+        });
       }
 
       window.setRice = setRice;
