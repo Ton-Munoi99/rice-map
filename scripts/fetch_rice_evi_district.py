@@ -112,7 +112,6 @@ def main():
         evi_prev_v  = props.get("EVIprev_mean")
         scan_count  = int(props.get("EVIscan_count", 0) or 0)
         conf_count  = int(props.get("flooded_sum",  0) or 0)
-        glad_count  = int(props.get("glad_sum",     0) or 0)
 
         prov_mapped = PROV_MAP.get(prov_gaul, prov_gaul)
         if prov_mapped not in provinces_data:
