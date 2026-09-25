@@ -4,6 +4,16 @@ Last updated: 2026-09-18 by Claude Code
 
 ## Log
 
+- 2026-09-25 (Claude): Reviewed the cron scripts in `scripts/`. Fixed the storm bearing (it was
+  reversed 180°; a South China Sea storm read "west"), GDACS errors that wrote "no storms", and
+  GSMaP turning missing values into 0 mm (now needs 24 hourly images/day and all 77 provinces, or
+  keeps the old file without failing the rain workflow). Added "don't overwrite with a partial fetch"
+  guards to rain stations, mill prices, dams, TREA FOB and the fertilizer `updated` label. New
+  self-tests: `fetch_rain_gsmap`, `fetch_storm_alerts`, `fetch_trea_fob` (wired into their workflows).
+  Not verified against live sources: GDACS, TREA and GEE are unreachable from the test sandbox, so the
+  GEE and HTML paths were exercised with fakes built from the committed data. Not reviewed: the manual
+  `build_*` / `update_rice_data.py` pipeline.
+
 - 2026-09-24 (Claude): Bug hunt over index.html (self-tests, freshness, and a Playwright sweep of every
   layer × year × rice type × 5 provinces checking for undefined/NaN/"ปี <layer>"). Main fix: the
   live-price overlay overwrote `entry.source` with "mill_pdf", so `isEstimated()` was false for every

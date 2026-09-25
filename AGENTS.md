@@ -34,6 +34,7 @@ python scripts/fetch_weather_forecast.py --selftest
 python scripts/fetch_rain_forecast.py --selftest
 python scripts/fetch_rain_gsmap.py --selftest
 python scripts/fetch_storm_alerts.py --selftest
+python scripts/fetch_trea_fob.py --selftest
 
 # Fetch live data manually (normally run by GitHub Actions)
 python scripts/fetch_dam_water.py

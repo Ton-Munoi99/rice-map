@@ -122,6 +122,11 @@ def main():
             dam_names = ", ".join(dm["name"] for dm in dams)
             print(f"  {tag} {province:25s} {weighted_pct:5.1f}%  ({len(dams)} เขื่อน: {dam_names})")
 
+    if not provinces:
+        # null_pct ด้านล่างจะเป็น 0 เมื่อไม่มีจังหวัดเลย แล้วผ่าน guard ไปเขียนไฟล์ว่าง
+        print("\n[warn] RID ไม่ส่งข้อมูลเขื่อนมาเลย — ไม่บันทึกทับข้อมูลเดิม")
+        return
+
     # ── Quality guard: ถ้า > 40% ของจังหวัดไม่มี volume → RID ยังไม่อัปเดต อย่าบันทึกทับ
     null_count = sum(1 for p in provinces.values() if p["dam_level_pct"] is None)
     null_pct   = null_count / len(provinces) * 100 if provinces else 0

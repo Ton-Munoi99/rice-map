@@ -24,6 +24,7 @@ python scripts/fetch_weather_forecast.py --selftest
 python scripts/fetch_rain_forecast.py --selftest
 python scripts/fetch_rain_gsmap.py --selftest
 python scripts/fetch_storm_alerts.py --selftest
+python scripts/fetch_trea_fob.py --selftest
 ```
 
 `python scripts/check_data_freshness.py` reports stale `data/*.json` by commit age. It cannot see
