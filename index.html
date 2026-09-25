@@ -3261,6 +3261,7 @@
         sel: null,
         wlShowAll: false,
         rsShowAll: false,
+        yearPicked: false,
       };
       let DATA = {};
       let DATA_META = { mode: "loading", label: "กำลังโหลดข้อมูล CSV", detail: "กำลังอ่านไฟล์ชุดเริ่มต้น" };
@@ -3486,6 +3487,8 @@
         if (layer === "profit") return PRICE_YEARS;
         if (layer === "naprang") return NAPRANG_YEARS;
         if (layer === "naprangArea") return NAPRANG_YEARS;
+        // ฟาง = นาปี + นาปรัง — ปีที่ยังไม่มีนาปรังจะขาดไปราว 30% ดูเหมือนฟางลดลงทั้งที่ไม่ใช่
+        if (layer === "straw") return NAPRANG_YEARS;
         if (layer === "biomass") return ["biomass"];
         return layer === "price" ? PRICE_YEARS : PRODUCTION_YEARS;
       }
@@ -3535,6 +3538,9 @@
       function isEstimated(en, rice = S.rice, year = S.year) {
         const src = entryOf(en, rice, year).source || "";
         return src === "estimated_trend";
+      }
+      function yearEstimated(year) {
+        return allEN.some((en) => RICE_TYPES.some((rice) => isEstimated(en, rice, year)));
       }
       // กำไรใช้ผลผลิตต่อไร่ของปีนั้น — ปีที่ OAE ยังไม่ออก ผลผลิตเป็นค่าคาดการณ์จากแนวโน้ม
       function profitYieldEstimated(rice = S.rice, year = S.year) {
@@ -4988,9 +4994,11 @@
           );
           return;
         }
-        const isEstYearNote = !layerMeta[S.layer]?.noTimeseries && S.layer !== "price" && S.year >= "2568";
+        // ตัดสินจาก source ของแถวจริง ไม่ใช่เลขปี — ปี 2568 เป็นตัวเลขทางการ OAE แล้ว
+        const isEstYearNote = !layerMeta[S.layer]?.noTimeseries && S.layer !== "price" && yearEstimated(S.year);
         if (isEstYearNote) {
-          refs.dataSourceNote.innerHTML = `<strong style="color:#f5c065">📊 ข้อมูลปี ${S.year} เป็นการประมาณการ / Estimated Data</strong><br>คำนวณจากค่าเฉลี่ย YoY Growth Rate ปี 2565–2567 รายจังหวัด (capped ±30%/ปี)<br>${S.year === "2568" ? "เนื้อที่เพาะปลูกปรับด้วย scale factor จากข้อมูลกรมการข้าว ณ 2 มี.ค. 2569 (58.5 ล้านไร่ทั้งประเทศ)" : "ประมาณการต่อเนื่องจากปี 2568"}<br><span style="color:var(--muted)">Trend estimation: avg 2-year YoY (2565→2566→2567) applied to ${S.year}. ${S.year === "2568" ? "Area_planted calibrated using Department of Rice 2568 regional planted-area data (58.5M rai national)." : ""} Not official OAE data — replace via Import CSV when official data is released.</span>`;
+          const steps = Number(S.year) - 2567;
+          refs.dataSourceNote.innerHTML = `<strong style="color:#f5c065">📊 ข้อมูลปี ${S.year} เป็นการประมาณการ / Estimated Data</strong><br>ต่อยอดจากตัวเลขปี 2567 ไป ${steps} ปี ด้วยค่าเฉลี่ย YoY Growth Rate ปี 2565–2567 รายจังหวัด (capped ±30%/ปี)${yearEstimated("2568") ? "" : " · ยังไม่ได้ปรับตามตัวเลขทางการปี 2568"}<br><span style="color:var(--muted)">Trend estimate: ${S.year} = 2567 × (1 + avg YoY 2565→2567)^${steps}, capped ±30%/yr${yearEstimated("2568") ? "" : "; not yet re-based on official 2568 data"}. Not official OAE data — replace via Import CSV when official data is released.</span>`;
           return;
         }
         if (S.layer === "price") {
@@ -7198,7 +7206,7 @@ ${warningsHtml}
         refs.yearButtons.innerHTML = years
           .map((year, idx) => {
             const suffix = idx === years.length - 1 ? " ล่าสุด" : "";
-            const isForecast = S.layer !== "price" && year >= "2568";
+            const isForecast = S.layer !== "price" && yearEstimated(year);
             const note = isForecast ? " <small style='font-size:9px;opacity:.6'>f</small>" : "";
             return `<button class="pill${year === S.year ? " on" : ""}" data-year="${year}" onclick="setYear('${year}')">${year}${suffix}${note}</button>`;
           })
@@ -7325,6 +7333,7 @@ ${warningsHtml}
         const years = yearsForLayer();
         const year = p.get("year");
         S.year = years.includes(year) ? year : years[years.length - 1];
+        S.yearPicked = years.includes(year);
         const reg = p.get("reg");
         if (reg && (reg === "all" || REG_KEYS.includes(reg))) S.reg = reg;
         const sel = p.get("sel");
@@ -7352,13 +7361,15 @@ ${warningsHtml}
       }
 
       function setLayer(layer) {
-        // layer ที่มีปีเดียว (เช่นครัวเรือน = 2566) บังคับปีเอง ผู้ใช้ไม่ได้เลือก จึงไม่พาปีนั้นติดไป layer ถัดไป
-        const forcedYear = yearsForLayer(S.layer).length === 1;
         S.layer = layer;
         // นาปรัง = ข้าวเจ้าไม่ไวแสง (รวมทุกพันธุ์) — หอมมะลิไม่มีนาปรัง จึงสลับเป็นข้าวขาวอัตโนมัติ
         if ((layer === "naprang" || layer === "naprangArea") && S.rice === "jasmine") S.rice = "white";
-        if (forcedYear || !yearsForLayer(layer).includes(S.year)) {
-          S.year = yearsForLayer(layer)[yearsForLayer(layer).length - 1];
+        // พาปีติดไปเฉพาะปีที่ผู้ใช้กดเลือกเอง — ปีที่ layer ก่อนบังคับหรือตัดให้ (ครัวเรือน 2566,
+        // นาปรัง/ฟางสุดที่ 2568) ไม่ใช่ความตั้งใจ ถ้าพาไปด้วย ราคาจะค้างที่ปีเก่าแทนราคาสด
+        const years = yearsForLayer(layer);
+        if (!S.yearPicked || !years.includes(S.year)) {
+          S.year = years[years.length - 1];
+          S.yearPicked = false;
         }
         if (layer === "mills" && !RICE_MILLS_DATA && !RICE_MILLS_LOADING) fetchMillsData();
         rerender();
@@ -7366,6 +7377,7 @@ ${warningsHtml}
 
       function setYear(year) {
         S.year = year;
+        S.yearPicked = true;
         rerender();
       }
 
@@ -7972,6 +7984,9 @@ ${warningsHtml}
             if (!entry) continue;
             entry.price_low = lo;
             entry.price_high = hi;
+            // สีแผนที่ อันดับ YoY และกำไรอ่าน entry.price — ถ้าไม่ตั้ง จะยังเป็นราคาคาดการณ์จาก CSV
+            // ขณะที่ tooltip โชว์ช่วงราคาสด (แถวทางการ price = จุดกึ่งกลาง low/high ทุกแถว)
+            entry.price = Math.round((lo + hi) / 2);
             // ข้าวเปลือกเจ้า: คอลัมน์ความชื้น 25% จาก PDF (ถ้ามี) → overlay ทับ CSV เก่า
             if (rice === "white" && live.white_low_25 && live.white_high_25) {
               entry.price_low_alt = live.white_low_25;

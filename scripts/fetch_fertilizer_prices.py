@@ -218,9 +218,11 @@ def main():
         live_rows = []
     else:
         live_rows = []
+        refreshed = 0
         for src in LIVE_SOURCES:
             try:
                 live_rows.append(fetch_live_row(src))
+                refreshed += 1
                 got = ", ".join(f"{p['formula']}={p['price']['th']}" for p in live_rows[-1]["prices"])
                 print(f"✓ {src['url']} → {got}")
             except Exception as e:
@@ -229,9 +231,14 @@ def main():
                     live_rows.append(prev_live[src["url"]])
 
     rows = live_rows + STATIC_ROWS
+    # ไม่มีแหล่งไหนรีเฟรชได้ → แถวทั้งหมดคือของเดิม อย่าติดป้ายว่าอัปเดตวันนี้
+    updated = bkk_today()
+    if FIRECRAWL_KEY and refreshed == 0 and prev.get("_meta", {}).get("updated"):
+        updated = prev["_meta"]["updated"]
+        print("[WARN] no live source refreshed — keeping previous 'updated' date", file=sys.stderr)
     result = {
         "_meta": {
-            "updated": bkk_today(),
+            "updated": updated,
             "note": ("ราคาซื้อขายจริง — แถว live รีเฟรชทุกสัปดาห์จากตารางราคาสหกรณ์/ร้านค้า "
                      "ส่วนแถวราชการเป็นประกาศพาณิชย์จังหวัด (คงที่ ตามวันที่ระบุ) · "
                      "ตัวอย่างบางแหล่ง ไม่ใช่ค่าเฉลี่ยทั้งประเทศ"),

@@ -4,6 +4,24 @@ Last updated: 2026-09-18 by Claude Code
 
 ## Log
 
+- 2026-09-25 (Claude, later): Found that 2569 price colouring/ranking/YoY/profit read `entry.price`
+  (a trend-estimated CSV value) while tooltips showed the live range; fixed the overlay and the
+  clear-prices stage, re-ran it (30 `price` cells). Official 2568 was labelled "estimated"; straw
+  2569 lacked the second crop. **Open decision (owner):** `estimate_2568_2569.js` projects 2569 from
+  2567 (`^2`) and skips rows that already hold estimates, so 2569 has never been re-based on the
+  official 2568 figures (e.g. Songkhla white 2568 = 53,386 t official, 2569 est = 68,278 t). Changing
+  that rewrites ~140 forecast rows, so it was left for the owner to approve.
+
+- 2026-09-25 (Claude): Reviewed the cron scripts in `scripts/`. Fixed the storm bearing (it was
+  reversed 180°; a South China Sea storm read "west"), GDACS errors that wrote "no storms", and
+  GSMaP turning missing values into 0 mm (now needs 24 hourly images/day and all 77 provinces, or
+  keeps the old file without failing the rain workflow). Added "don't overwrite with a partial fetch"
+  guards to rain stations, mill prices, dams, TREA FOB and the fertilizer `updated` label. New
+  self-tests: `fetch_rain_gsmap`, `fetch_storm_alerts`, `fetch_trea_fob` (wired into their workflows).
+  Not verified against live sources: GDACS, TREA and GEE are unreachable from the test sandbox, so the
+  GEE and HTML paths were exercised with fakes built from the committed data. Not reviewed: the manual
+  `build_*` / `update_rice_data.py` pipeline.
+
 - 2026-09-24 (Claude): Bug hunt over index.html (self-tests, freshness, and a Playwright sweep of every
   layer × year × rice type × 5 provinces checking for undefined/NaN/"ปี <layer>"). Main fix: the
   live-price overlay overwrote `entry.source` with "mill_pdf", so `isEstimated()` was false for every

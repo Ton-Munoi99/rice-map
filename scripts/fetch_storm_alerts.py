@@ -48,7 +48,18 @@ NS = {
 }
 
 
+def storm_direction(lat, lon):
+    """ทิศที่พายุอยู่ เมื่อมองจากศูนย์กลางประเทศไทย (initial great-circle bearing)"""
+    p1, p2 = math.radians(TH_CENTER[0]), math.radians(lat)
+    dl = math.radians(lon - TH_CENTER[1])
+    x = math.sin(dl) * math.cos(p2)
+    y = math.cos(p1) * math.sin(p2) - math.sin(p1) * math.cos(p2) * math.cos(dl)
+    bearing = math.degrees(math.atan2(x, y)) % 360
+    return DIRECTIONS[round(bearing / 45) % 8]
+
+
 def fetch_gdacs_storms():
+    """คืน None เมื่อดึงไม่ได้ — ต่างจาก [] ที่แปลว่า "ไม่มีพายุใกล้ไทย" จริง"""
     try:
         r = requests.get(GDACS_URL, timeout=20, headers={"User-Agent": "RiceMap/1.0"})
         r.raise_for_status()
@@ -56,7 +67,7 @@ def fetch_gdacs_storms():
         print(f"GDACS RSS: {len(items)} total events")
     except Exception as e:
         print(f"GDACS error: {e}")
-        return []
+        return None
 
     storms = []
     for item in items:
@@ -94,9 +105,8 @@ def fetch_gdacs_storms():
                 type_th, type_en = th_val, en_val
                 break
 
-        # ทิศของพายุเทียบกับไทย (ทิศที่พายุอยู่ ไม่ใช่ทิศที่กำลังเคลื่อน — GDACS ไม่ให้ track vector)
-        bearing = math.degrees(math.atan2(TH_CENTER[1] - lon, TH_CENTER[0] - lat)) % 360
-        dir_th, dir_en = DIRECTIONS[round(bearing / 45) % 8]
+        # ทิศที่พายุอยู่เทียบกับไทย ไม่ใช่ทิศที่กำลังเคลื่อน — GDACS ไม่ให้ track vector
+        dir_th, dir_en = storm_direction(lat, lon)
 
         storms.append({
             "name":         name,
@@ -115,9 +125,28 @@ def fetch_gdacs_storms():
     return storms
 
 
+def _selftest():
+    # พายุทะเลจีนใต้อยู่ตะวันออกของไทย อ่าวเบงกอลอยู่ตะวันตก — สูตรเดิมกลับด้านทั้งคู่
+    assert storm_direction(15, 115)[1] == "E", storm_direction(15, 115)
+    assert storm_direction(15, 88)[1] == "W", storm_direction(15, 88)
+    assert storm_direction(20, 125)[1] in ("E", "NE"), storm_direction(20, 125)
+    assert storm_direction(25, 101)[1] == "N"
+    assert storm_direction(3, 101)[1] == "S"
+    assert storm_direction(5, 92)[1] == "SW"
+    assert storm_direction(22, 110)[1] == "NE"
+    print("selftest ok")
+
+
 def main():
+    if "--selftest" in sys.argv:
+        _selftest()
+        return
     print("Fetching GDACS storm data...")
     storms = fetch_gdacs_storms()
+    if storms is None:
+        # ดึงไม่ได้ ≠ ไม่มีพายุ — ถ้าเขียน [] ทับ การ์ดพายุบนเว็บจะหายไปเงียบๆ
+        print("[ERROR] ดึง GDACS ไม่ได้ — ไม่เขียนทับ storm-alerts.json เดิม", file=sys.stderr)
+        sys.exit(1)
 
     output = {
         "_meta": {

@@ -31,6 +31,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install beautifulsoup4 requests
 
+      - name: Self-test TREA table parsing
+        run: python scripts/fetch_trea_fob.py --selftest
+
       - name: Fetch FOB Prices from TREA
         run: python scripts/fetch_trea_fob.py
 

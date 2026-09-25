@@ -22,16 +22,34 @@ from riceutils import bkk_today, init_gee, build_provinces, GAUL_NAME_MAP as NAM
 COLLECTION = "JAXA/GPM_L3/GSMaP/v8/operational"
 BAND       = "hourlyPrecipRate"   # mm/hr, 1-hour cadence
 SCALE      = 11132                # GSMaP native resolution: 0.1° ≈ 11.132 km at equator
+EXPECTED_PROVINCES = 77
 
 
-# ── Find latest available date in GSMaP catalog ──────────────────────────────
-def get_gsmap_window(gsmap_col):
-    """
-    Find the most recent complete 7-day window available in GEE.
-    GSMaP Operational lag: ~4 hours + GEE ingestion ~0–12 hr ≈ < 1 day total.
-    Returns (start_str, end_str, dates_list) — all ISO date strings.
-    end_str = exclusive upper bound for filterDate.
-    """
+MIN_IMAGES_PER_DAY = 24   # ภาพรายชั่วโมง — วันที่ได้ไม่ครบ 24 ภาพคือวันที่ยังไม่ครบ ฝนจะออกมาต่ำเกินจริง
+MAX_SHIFT_DAYS = 3        # ถอยหน้าต่างหาวันที่ครบได้ไม่เกินเท่านี้ ก่อนจะยอมเก็บไฟล์เดิมไว้
+
+
+def window_dates(end_day):
+    """7 วันก่อน end_day (end_day เองไม่นับ เพราะเป็นวันที่ภาพล่าสุดยังเข้าไม่ครบ)"""
+    start_day = end_day - timedelta(days=7)
+    return [(start_day + timedelta(days=i)).isoformat() for i in range(7)]
+
+
+def pick_complete_window(end_day, count_images):
+    """ถอยหน้าต่างทีละวันจนทุกวันมีภาพครบ — คืน (dates, counts) หรือ (None, counts ล่าสุด)"""
+    counts = []
+    for shift in range(MAX_SHIFT_DAYS + 1):
+        dates = window_dates(end_day - timedelta(days=shift))
+        counts = count_images(dates)
+        if all(c >= MIN_IMAGES_PER_DAY for c in counts):
+            if shift:
+                print(f"  ⚠️ ถอยหน้าต่าง {shift} วัน — วันล่าสุดภาพยังเข้าไม่ครบ")
+            return dates, counts
+        print(f"  ภาพต่อวัน {dict(zip(dates, counts))} — ยังไม่ครบ {MIN_IMAGES_PER_DAY}")
+    return None, counts
+
+
+def latest_image_day(gsmap_col):
     latest_ts = (
         gsmap_col.sort("system:time_start", False)
         .first()
@@ -39,22 +57,73 @@ def get_gsmap_window(gsmap_col):
         .getInfo()
     )
     latest_dt = datetime.fromtimestamp(latest_ts / 1000, tz=timezone.utc)
-    end_day   = latest_dt.date()                    # most recent complete day
-    start_day = end_day - timedelta(days=7)
+    print(f"GSMaP latest image: {latest_dt.strftime('%Y-%m-%d %H:%M UTC')}")
+    return latest_dt.date()
 
-    dates = [(start_day + timedelta(days=i)).isoformat() for i in range(7)]
-    print(f"GSMaP window: {start_day} → {end_day}  (latest image: {latest_dt.strftime('%Y-%m-%d %H:%M UTC')})")
-    return start_day.isoformat(), end_day.isoformat(), dates
+
+def province_values(props):
+    """ค่าฝนรายวัน 7 ค่าของจังหวัดหนึ่ง — None ถ้าวันนั้นไม่มีค่า (ห้ามแปลงเป็น 0 มม.)"""
+    values = []
+    for i in range(7):
+        # GEE multi-band mean reducer → try "{band}_mean" first, then "{band}"
+        v = props.get(f"d{i}_mean")
+        if v is None:
+            v = props.get(f"d{i}")
+        values.append(round(float(v), 1) if v is not None else None)
+    return values
+
+
+def _selftest():
+    end = date(2026, 9, 23)
+    assert window_dates(end) == [f"2026-09-{d}" for d in range(16, 23)]
+    # ครบทุกวัน → ใช้หน้าต่างเดิม
+    ds, cs = pick_complete_window(end, lambda ds: [24] * 7)
+    assert ds[-1] == "2026-09-22" and cs == [24] * 7
+    # วันล่าสุดขาดภาพ → ถอยหนึ่งวัน
+    calls = []
+    def partial_last(ds):
+        calls.append(ds[-1])
+        return [24] * 6 + [18 if ds[-1] == "2026-09-22" else 24]
+    ds, _ = pick_complete_window(end, partial_last)
+    assert ds[-1] == "2026-09-21" and calls == ["2026-09-22", "2026-09-21"]
+    # ไม่ครบเลย → None (เก็บไฟล์เดิม) และถอยไม่เกิน MAX_SHIFT_DAYS
+    calls.clear()
+    ds, _ = pick_complete_window(end, lambda ds: calls.append(1) or [24] * 6 + [0])
+    assert ds is None and len(calls) == MAX_SHIFT_DAYS + 1
+    # ค่าที่หายต้องเป็น None ไม่ใช่ 0 มม. — ส่วน 0.0 ที่มีจริงต้องคงเป็น 0.0
+    props = {f"d{i}": 1.25 for i in range(7)}
+    props["d3"] = 0.0
+    assert province_values(props) == [1.2, 1.2, 1.2, 0.0, 1.2, 1.2, 1.2]
+    del props["d5"]
+    assert province_values(props)[5] is None
+    assert province_values({"d0_mean": 2.0, **{f"d{i}": 1 for i in range(1, 7)}})[0] == 2.0
+    print("selftest ok")
 
 
 # ── Main ─────────────────────────────────────────────────────────────────────
 def main():
+    if "--selftest" in sys.argv:
+        _selftest()
+        return
     init_gee()
 
     # GSMaP v8: hourlyPrecipRate band (mm/hr), 1-hour cadence
     gsmap = ee.ImageCollection(COLLECTION).select(BAND)
 
-    start_str, end_str, dates = get_gsmap_window(gsmap)
+    def count_images(ds):
+        return ee.List([
+            gsmap.filterDate(d, (date.fromisoformat(d) + timedelta(days=1)).isoformat()).size()
+            for d in ds
+        ]).getInfo()
+
+    dates, counts = pick_complete_window(latest_image_day(gsmap), count_images)
+    if dates is None:
+        # คงไฟล์เดิมไว้ และไม่ exit 1 — ขั้นถัดไปของ workflow (พยากรณ์/คำเตือน) ยังต้องรันต่อ
+        print("::warning::GSMaP ยังมีภาพไม่ครบทุกวันในหน้าต่าง — ไม่เขียนทับ rain-gsmap.json เดิม")
+        return
+    start_str = dates[0]
+    end_str = (date.fromisoformat(dates[-1]) + timedelta(days=1)).isoformat()
+    print(f"GSMaP window: {dates[0]} → {dates[-1]}  (images/day: {counts})")
 
     provinces = build_provinces()
     print(f"✓ Provinces: GAUL 76 + Bueng Kan = 77 total")
@@ -101,17 +170,16 @@ def main():
     provinces_out = {}
     null_provinces = []
 
+    missing = []
     for f in features:
         props     = f["properties"]
         gaul_name = props.get("ADM1_NAME", "")
         mapped    = NAME_MAP.get(gaul_name, gaul_name)
 
-        values = []
-        for i in range(7):
-            # GEE multi-band mean reducer → try "{band}_mean" first, then "{band}"
-            v = props.get(f"d{i}_mean") if props.get(f"d{i}_mean") is not None \
-                else props.get(f"d{i}")
-            values.append(round(float(v), 1) if v is not None else 0.0)
+        values = province_values(props)
+        if any(v is None for v in values):
+            missing.append(mapped)
+            continue
 
         rain_7d = round(sum(values), 1)
         provinces_out[mapped] = {
@@ -120,11 +188,18 @@ def main():
         }
         print(f"  ✓ {mapped}: {rain_7d} mm")
 
-        if rain_7d == 0.0 and all(v == 0.0 for v in values):
+        if rain_7d == 0.0:
             null_provinces.append(mapped)
 
+    if missing or len(provinces_out) < EXPECTED_PROVINCES:
+        # เดิมค่าที่หายกลายเป็น 0 มม. — ทำให้ขึ้นเตือนแล้งผิด และกดค่า bias ของ scoreboard
+        # ที่ปรับเกณฑ์เตือนน้ำท่วม จึงเก็บไฟล์เดิมไว้แทนการเขียนข้อมูลไม่ครบทับ
+        print(f"::warning::GSMaP ไม่มีค่าบางวันใน {len(missing)} จังหวัด ({', '.join(missing[:10])}) "
+              f"ได้ครบ {len(provinces_out)}/{EXPECTED_PROVINCES} — ไม่เขียนทับ rain-gsmap.json เดิม")
+        return
+
     if null_provinces:
-        print(f"  ⚠️  All-zero provinces (no data?): {', '.join(null_provinces)}")
+        print(f"  ℹ️  ฝน 0 มม. ทั้ง 7 วัน (ภาพครบ ค่าจริง): {', '.join(null_provinces)}")
 
     ok_vals = [v["rain_7d"] for v in provinces_out.values() if v["rain_7d"] > 0]
     if ok_vals:
@@ -141,6 +216,7 @@ def main():
             "updated":      bkk_today(),
             "days":         7,
             "dates":        dates,
+            "images_per_day": counts,
             "note": (
                 f"ฝนสะสม 7 วัน (spatial average ทั้งจังหวัด) จาก JAXA GSMaP v8 Operational "
                 "ผ่าน Google Earth Engine · Near Real-Time (~4 ชม.) · ดีกว่า centroid เพราะครอบคลุมทั้งพื้นที่จังหวัด"

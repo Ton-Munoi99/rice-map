@@ -48,6 +48,17 @@ def rain_level(mm):
     return 5
 
 
+MIN_SHARE_OF_PREVIOUS = 0.5   # ปกติ ~4,480 สถานี แกว่งไม่ถึง ±1%
+
+
+def previous_total():
+    try:
+        with open(OUTPUT, encoding="utf-8") as f:
+            return json.load(f).get("_meta", {}).get("total") or 0
+    except (OSError, ValueError):
+        return 0
+
+
 def fetch_rows():
     for attempt in range(3):
         try:
@@ -89,6 +100,12 @@ def main():
             "agency":      _loc((r.get("agency") or {}).get("agency_shortname"), "th"),
             "dt":          r.get("rainfall_datetime") or "",
         })
+
+    # ต้นทางตอบกลับว่างหรือมาไม่ครบ → อย่าเขียนทับ (workflow นี้ไม่มีขั้นอื่นกันไว้ให้)
+    prev_total = previous_total()
+    if not stations or (prev_total and len(stations) < prev_total * MIN_SHARE_OF_PREVIOUS):
+        print(f"[ERROR] ได้ {len(stations)} สถานี (รอบก่อน {prev_total}) — ไม่เขียนทับ {OUTPUT}", file=sys.stderr)
+        sys.exit(1)
 
     counts = Counter(s["rain_level"] for s in stations)
     counts_by_level = {str(k): counts[k] for k in sorted(counts)}

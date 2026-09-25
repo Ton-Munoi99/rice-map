@@ -28,6 +28,9 @@ jobs:
       - name: Fetch 7-day rainfall data from Open-Meteo
         run: python scripts/fetch_rain_daily.py
 
+      - name: Self-test GSMaP window/missing-value logic
+        run: python scripts/fetch_rain_gsmap.py --selftest
+
       - name: Fetch 7-day rainfall data from JAXA GSMaP (GEE)
         env:
           GEE_SERVICE_ACCOUNT_KEY: ${{ secrets.GEE_SERVICE_ACCOUNT_KEY }}

@@ -83,7 +83,9 @@ def main():
         props     = f["properties"]
         gaul_name = props.get("ADM1_NAME", "")
         mapped    = NAME_MAP.get(gaul_name, gaul_name)
-        val = props.get("mean") or props.get("sm_mean")
+        val = props.get("mean")
+        if val is None:          # ไม่ใช้ `or` — ความชื้น 0.0 เป็นค่าจริง ไม่ใช่ "ไม่มีข้อมูล"
+            val = props.get("sm_mean")
 
         if val is not None:
             provinces_data[mapped] = {"smp": round(float(val), 1)}

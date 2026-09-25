@@ -16,6 +16,8 @@ jobs:
         with:
           python-version: '3.11'
       - run: pip install requests
+      - name: Self-test storm direction logic
+        run: python scripts/fetch_storm_alerts.py --selftest
       - name: Fetch storm alerts
         run: python scripts/fetch_storm_alerts.py
       - name: Commit and push
