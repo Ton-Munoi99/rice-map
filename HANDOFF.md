@@ -4,6 +4,24 @@ Last updated: 2026-09-18 by Claude Code
 
 ## Log
 
+- 2026-09-25 (Claude): Checked the Daily News front page of 26 Sep (DDPM warning four Chao Phraya
+  provinces; Chao Phraya dam releasing 1,750 m³/s) against the layers. All four are coloured and the
+  gauges match the article station by station: Hua Wiang bridge in Sena reads 117.7% of bank and the
+  paper names it, Khlong Bang Luang and Ban Bang Luang Dot in Bang Ban read 110.9% and 109.7% and
+  the paper names both. Ayutthaya has four gauges over bank, Ang Thong 4 of 4 high, Sing Buri 6 of 6,
+  Suphan Buri three over bank against the reported five flooded districts.
+  **Chai Nat settles the 22 Sep decision.** It was the province the new brim rule did not catch,
+  because its 99% gauge had been flat for 40 h, and the rule was deliberately left strict rather than
+  loosened to force one named province in. Three days later the water actually arrived and the
+  ordinary count rule caught it properly: 4 of 5 gauges high, 80%. The brim gauge is still creeping
+  (99.0 → 99.7, under the 2-point bar) and still does not fire. Leaving the threshold alone was right.
+  **Pattaya answers the 22 Sep accuracy test.** Chon Buri had road flooding 50 cm–1 m from an hour of
+  rain, with no river over bank — the gauge layer shows nothing, correctly, while the rain layer reads
+  medium (243 mm forecast against a 110 mm weekly normal, 2.2x). That is the flood mechanism the
+  overbank test could not see, and it is concrete evidence for keeping the two layers separate and
+  keeping the rain layer's name: it catches rain-driven flooding that gauges miss.
+  No code changed.
+
 - 2026-09-25 (Claude, owner-approved): 2569 estimates now re-base on the latest OAE year (2568)
   with avg YoY 2566–2568, and `estimate_2568_2569.js` recomputes existing `estimated_trend` rows on
   every run (140 rows changed). Note 2568 in the data is OAE's *forecast* column (2568f) from the
