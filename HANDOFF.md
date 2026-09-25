@@ -4,6 +4,13 @@ Last updated: 2026-09-18 by Claude Code
 
 ## Log
 
+- 2026-09-25 (Claude, owner-approved): 2569 estimates now re-base on the latest OAE year (2568)
+  with avg YoY 2566–2568, and `estimate_2568_2569.js` recomputes existing `estimated_trend` rows on
+  every run (140 rows changed). Note 2568 in the data is OAE's *forecast* column (2568f) from the
+  2568 statistics book. OAE's own national 2569/70 forecast (Jun 2569) is −2.52% production; our
+  white+jasmine trend gives +0.5%. OAE provincial-by-variety forecasts could not be downloaded
+  (oae.go.th blocked from the sandbox) — importing them would beat any trend line.
+
 - 2026-09-25 (Claude, later): Found that 2569 price colouring/ranking/YoY/profit read `entry.price`
   (a trend-estimated CSV value) while tooltips showed the live range; fixed the overlay and the
   clear-prices stage, re-ran it (30 `price` cells). Official 2568 was labelled "estimated"; straw

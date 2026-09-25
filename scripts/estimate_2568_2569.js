@@ -106,81 +106,76 @@ function estimate(base, rate, steps) {
 }
 
 // ─────────────── APPLY ESTIMATES ───────────────
+// ต่อยอดจาก "ปีล่าสุดที่เป็นข้อมูล OAE" ก่อนปีที่ประมาณ ไม่ใช่ 2567 ตายตัว — เดิม 2569 = 2567 × (1+r)^2
+// แม้ปี 2568 ของ OAE เข้ามาแล้ว (สงขลา: OAE 2568 ลด 17% แต่ 2569 ประมาณออกมาสูงกว่า 2567)
+// แถวที่เป็น estimated_trend อยู่แล้วคำนวณใหม่ทุกรอบ แถว OAE ไม่แตะ
+const TARGET_YEARS = ['2568', '2569'];
+const isOfficial = (row) =>
+  row && row.source !== 'estimated_trend' && (row.production > 0 || row.area > 0 || row.yield > 0);
+
 let estimated = 0;
 let alreadyHasData = 0;
+const baseYearCount = {};
 
 for (const [key, yearMap] of idx.entries()) {
-  const row65 = yearMap['2565'];
-  const row66 = yearMap['2566'];
-  const row67 = yearMap['2567'];
+  const anyRow = Object.values(yearMap)[0];
+  const region = anyRow?.region || 'central';
+  const sf = areaScaleFactor[region] || 1.0;   // กรมการข้าว calibration — ใช้เฉพาะเมื่อประมาณปี 2568
 
-  if (!row67) continue; // ต้องมีข้อมูล 2567 อย่างน้อย
-
-  const region = row67.region || 'central';
-
-  // คำนวณ avg growth rate สำหรับแต่ละ metric
-  const r_prod = avgGrowthRate(row65?.production, row66?.production, row67.production);
-  const r_yield = avgGrowthRate(row65?.yield, row66?.yield, row67.yield);
-  const r_area  = avgGrowthRate(row65?.area, row66?.area, row67.area);
-  const r_area_p = avgGrowthRate(row65?.area_planted, row66?.area_planted, row67.area_planted);
-  const r_yp    = avgGrowthRate(row65?.yield_planted, row66?.yield_planted, row67.yield_planted);
-
-  // scale factor สำหรับ area_planted (กรมการข้าว calibration)
-  const sf = areaScaleFactor[region] || 1.0;
-
-  for (const yrStr of ['2568', '2569']) {
+  for (const yrStr of TARGET_YEARS) {
     const row = yearMap[yrStr];
     if (!row) continue;
+    if (isOfficial(row)) { alreadyHasData++; continue; }
 
-    // ถ้ามีข้อมูล production จริงแล้ว ข้ามไป
-    if (row.production > 0 || row.area > 0 || row.yield > 0) {
-      alreadyHasData++;
-      continue;
+    // ปีฐาน = ปีล่าสุดก่อน yrStr ที่เป็นข้อมูล OAE
+    let baseYr = null;
+    for (let y = parseInt(yrStr) - 1; y >= 2565; y--) {
+      if (isOfficial(yearMap[String(y)])) { baseYr = y; break; }
     }
+    if (baseYr === null) continue;
+    const b0 = yearMap[String(baseYr)], b1 = yearMap[String(baseYr - 1)], b2 = yearMap[String(baseYr - 2)];
+    const steps = parseInt(yrStr) - baseYr;
+    const rate = (f) => avgGrowthRate(isOfficial(b2) ? b2[f] : undefined, isOfficial(b1) ? b1[f] : undefined, b0[f]);
+    const r_prod = rate('production'), r_yield = rate('yield'), r_area = rate('area');
+    const r_area_p = rate('area_planted'), r_yp = rate('yield_planted');
 
-    const steps = parseInt(yrStr) - 2567;  // 1 หรือ 2
-    const base67 = row67;
-
-    // คำนวณค่า trend
-    const est_prod  = estimate(base67.production,   r_prod,  steps);
-    const est_yield = estimate(base67.yield,          r_yield, steps);
-    const est_area  = estimate(base67.area,           r_area,  steps);
-
-    // area_planted ปี 2568 ใช้ scale factor จากกรมการข้าว
+    const est_prod  = estimate(b0.production, r_prod,  steps);
+    const est_yield = estimate(b0.yield,      r_yield, steps);
+    const est_area  = estimate(b0.area,       r_area,  steps);
     let est_area_p, est_yp;
-    if (yrStr === '2568') {
-      est_area_p = Math.round((base67.area_planted || base67.area) * sf);
-      est_yp     = est_area_p > 0
-        ? Math.round((est_prod * 1000) / est_area_p)  // กก./ไร่ จาก estimated production
-        : 0;
+    const calibrate = yrStr === '2568';
+    if (calibrate) {
+      est_area_p = Math.round((b0.area_planted || b0.area) * sf);
+      est_yp     = est_area_p > 0 ? Math.round((est_prod * 1000) / est_area_p) : 0;
     } else {
-      est_area_p = estimate(base67.area_planted, r_area_p, steps);
-      est_yp     = estimate(base67.yield_planted, r_yp, steps);
+      est_area_p = estimate(b0.area_planted, r_area_p, steps);
+      est_yp     = estimate(b0.yield_planted, r_yp, steps);
     }
 
-    // กรณีที่ base ทุกตัวเป็น 0 (จังหวัดไม่มีข้าวประเภทนั้น) ไม่ต้องใส่ estimate
+    // จังหวัดไม่มีข้าวประเภทนั้น — ไม่ใส่ค่าประมาณ
     if (est_prod === 0 && est_area === 0) continue;
 
-    // อัพเดตแถว
     row.production   = est_prod;
     row.yield        = est_yield;
     row.area         = est_area;
     row.area_planted = est_area_p;
     row.yield_planted= est_yp;
 
+    const growthYears = `${baseYr - 2}–${baseYr}`;
     row.source       = 'estimated_trend';
-    row.source_title = yrStr === '2568'
-      ? 'ประมาณการแนวโน้ม (avg YoY 2565–2567) + กรมการข้าว planted area calibration 2568'
-      : 'ประมาณการแนวโน้ม (avg YoY 2565–2567)';
-    row.source_url   = yrStr === '2568'
-      ? 'https://www.ricethailand.go.th'
-      : '';
-    row.source_note  = `Trend estimation: production×(1+${r_prod.toFixed(4)})^${steps}, yield×(1+${r_yield.toFixed(4)})^${steps}, area×(1+${r_area.toFixed(4)})^${steps}${yrStr==='2568'?' + area_planted scaled by กรมการข้าว regional factor ' + sf.toFixed(4):''}`;
-    row.source_date  = yrStr === '2568' ? '2 มีนาคม 2569 (กรมการข้าว)' : '';
+    row.source_title = `ประมาณการแนวโน้มจากปี ${baseYr} (avg YoY ${growthYears})` +
+      (calibrate ? ' + กรมการข้าว planted area calibration 2568' : '');
+    row.source_url   = calibrate ? 'https://www.ricethailand.go.th' : '';
+    row.source_note  = `Trend estimation from ${baseYr}: production×(1+${r_prod.toFixed(4)})^${steps}, ` +
+      `yield×(1+${r_yield.toFixed(4)})^${steps}, area×(1+${r_area.toFixed(4)})^${steps}` +
+      (calibrate ? ' + area_planted scaled by กรมการข้าว regional factor ' + sf.toFixed(4) : '');
+    row.source_date  = calibrate ? '2 มีนาคม 2569 (กรมการข้าว)' : '';
 
+    baseYearCount[`${yrStr}←${baseYr}`] = (baseYearCount[`${yrStr}←${baseYr}`] || 0) + 1;
     estimated++;
   }
 }
+console.log('📐 ปีฐานที่ใช้:', baseYearCount);
 
 console.log(`\n✅ ประมาณการแล้ว: ${estimated} rows`);
 console.log(`ℹ️  rows ที่มีข้อมูลจริงอยู่แล้ว (ข้ามไป): ${alreadyHasData}`);

@@ -3539,6 +3539,23 @@
         const src = entryOf(en, rice, year).source || "";
         return src === "estimated_trend";
       }
+      // อ่านปีฐาน/ช่วงปีของค่าประมาณจาก source_title ของแถวจริง — ข้อความจะไม่ค้างเมื่อรันประมาณการใหม่
+      function estimateBasis(year) {
+        for (const en of allEN) {
+          for (const rice of RICE_TYPES) {
+            const e = entryOf(en, rice, year);
+            const m = e.source === "estimated_trend" && /จากปี (\d{4}) \(avg YoY (\d{4})–(\d{4})\)/.exec(e.source_title || "");
+            if (m) return { base: m[1], from: m[2], to: m[3] };
+          }
+        }
+        return null;
+      }
+      function estBasisText(year) {
+        const b = estimateBasis(year);
+        return b
+          ? { th: `ต่อยอดจากปี ${b.base} ด้วยค่าเฉลี่ย YoY ${b.from}–${b.to}`, en: `projected from ${b.base} using avg YoY ${b.from}–${b.to}` }
+          : { th: "ประมาณการจากแนวโน้ม", en: "trend projection" };
+      }
       function yearEstimated(year) {
         return allEN.some((en) => RICE_TYPES.some((rice) => isEstimated(en, rice, year)));
       }
@@ -4833,11 +4850,11 @@
             `ประมาณการกำไร/ขาดทุนต่อไร่ = (ราคาโรงสี × ผลผลิตเฉลี่ยของจังหวัด) − ต้นทุน สศก. ${cost} ฿/ไร่ (${rice}) ` +
               `· ต้นทุนนี้เป็น "ค่าเฉลี่ยทั้งประเทศ" ไม่ใช่ต้นทุนรายจังหวัด จึงใช้เทียบจังหวัดต่อจังหวัดได้ ` +
               `แต่ไม่ใช่กำไรจริงของแปลงใด · ครอบคลุม ${covered} จังหวัดที่มีข้อมูลราคา` +
-              (yldEst ? ` · ⚠️ ผลผลิตต่อไร่ปี ${S.year} เป็นค่าคาดการณ์จากแนวโน้ม 2565–2567 ยังไม่ใช่ตัวเลขทางการ สศก.` : ""),
+              (yldEst ? ` · ⚠️ ผลผลิตต่อไร่ปี ${S.year} เป็นค่าคาดการณ์ (${estBasisText(S.year).th}) ยังไม่ใช่ตัวเลขของ สศก.` : ""),
             `Est. profit/loss per rai = (mill price × province-average yield) − OAE cost ${cost} ฿/rai (${rice}) ` +
               `· that cost is a NATIONAL average, not per-province, so this compares provinces but is not any farm's actual margin ` +
               `· ${covered} provinces with price data` +
-              (yldEst ? ` · ⚠️ ${S.year} yield is a trend projection (2565–2567), not official OAE data` : ""),
+              (yldEst ? ` · ⚠️ ${S.year} yield is a trend projection (${estBasisText(S.year).en}), not OAE data` : ""),
           );
           return;
         }
@@ -4994,11 +5011,11 @@
           );
           return;
         }
-        // ตัดสินจาก source ของแถวจริง ไม่ใช่เลขปี — ปี 2568 เป็นตัวเลขทางการ OAE แล้ว
+        // ตัดสินจาก source ของแถวจริง ไม่ใช่เลขปี — ปี 2568 เป็นข้อมูล OAE แล้ว (ค่าพยากรณ์ 2568f ของ สศก.)
         const isEstYearNote = !layerMeta[S.layer]?.noTimeseries && S.layer !== "price" && yearEstimated(S.year);
         if (isEstYearNote) {
-          const steps = Number(S.year) - 2567;
-          refs.dataSourceNote.innerHTML = `<strong style="color:#f5c065">📊 ข้อมูลปี ${S.year} เป็นการประมาณการ / Estimated Data</strong><br>ต่อยอดจากตัวเลขปี 2567 ไป ${steps} ปี ด้วยค่าเฉลี่ย YoY Growth Rate ปี 2565–2567 รายจังหวัด (capped ±30%/ปี)${yearEstimated("2568") ? "" : " · ยังไม่ได้ปรับตามตัวเลขทางการปี 2568"}<br><span style="color:var(--muted)">Trend estimate: ${S.year} = 2567 × (1 + avg YoY 2565→2567)^${steps}, capped ±30%/yr${yearEstimated("2568") ? "" : "; not yet re-based on official 2568 data"}. Not official OAE data — replace via Import CSV when official data is released.</span>`;
+          const bt = estBasisText(S.year);
+          refs.dataSourceNote.innerHTML = `<strong style="color:#f5c065">📊 ข้อมูลปี ${S.year} เป็นการประมาณการ / Estimated Data</strong><br>${bt.th} รายจังหวัด (capped ±30%/ปี) · เป็นเส้นแนวโน้ม ไม่รู้เรื่องฝน/น้ำของปีนี้ — สศก. พยากรณ์ข้าวนาปี 2569/70 ทั้งประเทศ (มิ.ย. 69) ว่าผลผลิตลดลง 2.52%<br><span style="color:var(--muted)">Trend estimate: ${bt.en}, capped ±30%/yr. Not OAE data — replace via Import CSV when OAE provincial figures are available.</span>`;
           return;
         }
         if (S.layer === "price") {
@@ -5024,8 +5041,10 @@
           return;
         }
         refs.dataSourceNote.textContent = t(
-          `ข้อมูล OAE ปี ${S.year} (รายงานสถิติการเกษตร 1.4).`,
-          `OAE Data ${S.year} (Agricultural Statistics Report 1.4).`,
+          `ข้อมูล OAE ปี ${S.year} (รายงานสถิติการเกษตร 1.4).` +
+            (S.year === "2568" ? " ปี 2568 เป็นค่าพยากรณ์ของ สศก. ในหนังสือสถิติฉบับปี 2568 (คอลัมน์ 2568f) ยังไม่ใช่ตัวเลขสุดท้าย" : ""),
+          `OAE Data ${S.year} (Agricultural Statistics Report 1.4).` +
+            (S.year === "2568" ? " 2568 is OAE's forecast column (2568f) in the 2568 edition, not a final figure." : ""),
         );
       }
 
@@ -5698,7 +5717,7 @@
         const cardHtml = RICE_TYPES.map((rice) => {
           const entryForRice = entryOf(en, rice, S.year);
           const estNote = isEstimated(en, rice, S.year)
-            ? `<div class="est-note">📊 ${t("ประมาณการแนวโน้ม (avg YoY 2565–2567)", "Trend Estimate (avg YoY 2565–2567)")}</div>`
+            ? `<div class="est-note">📊 ${t(`ประมาณการ: ${estBasisText(S.year).th}`, `Estimate: ${estBasisText(S.year).en}`)}</div>`
             : "";
           return `<div class="rice-card ${rice}">
       <div class="t">${riceMeta[rice].badge} ${t(riceMeta[rice].th, riceMeta[rice].en)}</div>
