@@ -680,6 +680,13 @@ measurements and a schema-level consumer test exist.
 
 ## Deferred Decisions
 
+- Do not build a road-flooding layer from the Department of Highways. Checked on 1 Oct 2026:
+  DOH publishes no documented open API for live road flooding — the government catalogs carry
+  only static datasets such as road length, the live view exists solely inside the Highway
+  Traffic app, and the actual flooded-road reports go out on Facebook. The only route left is
+  an undocumented internal endpoint, which fails the same test that ruled out the
+  bangkokflood.netlify.app aggregator the same day: no contract, silent breakage. Revisit only
+  if DOH publishes a real API.
 - Do not surface per-province water-gauge data age in the UI. Proposed on 21 Sep 2026 after
   finding 309 of 1,107 stations more than 36 h stale; the owner declined. Stale stations carry
   `level: null` and are already excluded from the severity counts, and no province is stale in
