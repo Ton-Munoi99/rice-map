@@ -4,6 +4,14 @@ Last updated: 2026-09-18 by Claude Code
 
 ## Log
 
+- 2026-10-01 (Claude): Closed the last open item from the cloud review of `index.html` (30 findings,
+  29 already merged in PR #31-34). The 2568 rows in `rice-data.csv`/`rice-data.js` come from the
+  statistics book's `2568f` column, which is OAE's own forecast, but all 140 carried the same
+  `source_note` as real data — "Official OAE data Table 1.4" — and the page prints that string in
+  the province tooltip. The web page already disclosed the estimate elsewhere; the data file did
+  not. Fixed at the generator (`source_note_for()` rewrites the phrase only for forecast columns)
+  and backfilled both files, 140 rows each. 2566 and 2567 are untouched and still say Official.
+
 - 2026-10-01 (Claude): The `[warn]` lines PR #33 added to `fetch_trea_fob.py` turned out to be
   hiding a real bug. TREA's page nests a table inside a table, `find_all('td')` is recursive, and
   the outer wrapper row therefore carries every cell of the inner table — its text contains

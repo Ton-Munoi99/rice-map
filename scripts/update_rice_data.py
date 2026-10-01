@@ -42,6 +42,16 @@ PROV_MAP = {
 }
 # PDF year key → app year (2568f forecast shows as 2568, replacing the trend estimate)
 YEAR_MAP = {"2566": "2566", "2567": "2567", "2568f": "2568"}
+# คอลัมน์ที่เป็น "ค่าพยากรณ์" ในหนังสือ ไม่ใช่ตัวเลขสุดท้าย — ป้าย source_note ของแถวนี้
+# ห้ามเขียนว่า Official เพราะหน้าเว็บเอาไปแสดงตรงๆ (เคยเขียนผิดอยู่ 140 แถว)
+FORECAST_PDF_YEARS = {"2568f"}
+
+
+def source_note_for(pdf_year, rice_type):
+    base = SOURCE_NOTE_J if rice_type == "jasmine" else SOURCE_NOTE_W
+    if pdf_year in FORECAST_PDF_YEARS:
+        return base.replace("Official OAE data", f"OAE forecast column {pdf_year}")
+    return base
 
 CSV_FIELDS = [
     "province_th", "province_en", "region", "rice_type", "year",
@@ -108,7 +118,7 @@ def main():
                 row["source"] = SOURCE
                 row["source_title"] = SOURCE_TITLE
                 row["source_url"] = SOURCE_URL
-                row["source_note"] = SOURCE_NOTE_J if rice_type == "jasmine" else SOURCE_NOTE_W
+                row["source_note"] = source_note_for(pdf_year, rice_type)
                 updated += 1
 
     # write both outputs in sync
