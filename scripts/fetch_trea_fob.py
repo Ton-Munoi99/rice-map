@@ -71,6 +71,13 @@ def parse_trea_table(html_str):
     best_jasmine_year = -1   # ติดตามปีพืชผลล่าสุดของ jasmine
 
     for row in soup.find_all('tr'):
+        # หน้า TREA จริงมีตารางซ้อนในตาราง — แถวของตารางชั้นนอกห่อตารางชั้นในไว้ทั้งก้อน
+        # find_all('td') ไล่ลงลูกหลาน แถวนั้นจึงดูดเซลล์ของตารางชั้นในมาหมด (log วันที่ 1 ต.ค. 69
+        # ขึ้น "มี 162 ช่อง") ทำให้ texts[0] เป็นข้อความทั้งตารางซึ่งมีคำว่า "Thai Hom Mali
+        # Rice - Premium" อยู่ด้วย แล้วไปเข้าเงื่อนไข substring ข้างล่างพอดี · จำลองแล้วได้
+        # jasmine_fob = ราคาข้าวขาว (ช่องท้ายสุดของทั้งตาราง) โดยขึ้นแค่ [warn] ไม่ error
+        if row.find('table'):
+            continue
         tds = row.find_all('td')
         if not tds:
             continue
@@ -140,6 +147,10 @@ def _selftest():
     assert parse_trea_table(table(H, J, ["White Rice 5%", 475, 479]))[1]["white_fob"] == 479
     # ไม่มี header
     assert parse_trea_table(table(["x"], J, W)) is None
+    # ตารางซ้อนในตาราง (โครงสร้างจริงของหน้า TREA) — แถวชั้นนอกต้องถูกข้าม
+    # ก่อนแก้: ได้ jasmine_fob = 479 ซึ่งคือราคาข้าวขาว เพราะแถวชั้นนอกดูดเซลล์ทั้งตาราง
+    nested = "<table><tr><td>" + table(H, J, W) + "</td></tr></table>"
+    assert parse_trea_table(nested) == ("23 Sep 2026", {"jasmine_fob": 1190, "white_fob": 479})
     print("selftest ok")
 
 

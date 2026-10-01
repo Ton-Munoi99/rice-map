@@ -4,6 +4,16 @@ Last updated: 2026-09-18 by Claude Code
 
 ## Log
 
+- 2026-10-01 (Claude): The `[warn]` lines PR #33 added to `fetch_trea_fob.py` turned out to be
+  hiding a real bug. TREA's page nests a table inside a table, `find_all('td')` is recursive, and
+  the outer wrapper row therefore carries every cell of the inner table — its text contains
+  "Thai Hom Mali Rice - Premium", so it matched the substring test and took the last non-empty
+  cell of the whole table. Reproduced it: `jasmine_fob` came back 479, the white-rice price,
+  against a correct 1,190, with only a `[warn]` printed and the file written as usual. Production
+  has been right by DOM order alone — the inner rows happen to be processed after the wrapper and
+  overwrite it — not because the parser separates the rows. Fixed by skipping any row that
+  contains a nested table, one line, with a self-test that pins the nested case to 1,190 / 479.
+
 - 2026-09-25 (Claude): Checked the Daily News front page of 26 Sep (DDPM warning four Chao Phraya
   provinces; Chao Phraya dam releasing 1,750 m³/s) against the layers. All four are coloured and the
   gauges match the article station by station: Hua Wiang bridge in Sena reads 117.7% of bank and the
