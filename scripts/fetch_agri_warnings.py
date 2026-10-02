@@ -132,29 +132,20 @@ def province_flood_thresholds(prov_name, wf_provs, month=None):
     )
 
 
-def load_forecast_bias():
-    """ปิด calibration ไว้ก่อน — วัดผลจริงแล้ว (20 ส.ค. 2569, 5 windows) precision แย่ลง
-    25.4%→12.7% และ recall แย่ลง 87.3%→77.8% พร้อมกันทั้งคู่ ไม่ใช่ trade-off ปกติ
-    score_alerts.py ยังคำนวณ bias_mm ต่อเนื่องเผื่อกลับมาเปิดพร้อมข้อมูลมากขึ้น"""
-    return 0.0
-
-
 # ---------------------------------------------------------------------------
 # Warning generation per province
 # ---------------------------------------------------------------------------
 
-def build_warnings(prov_name, fc_7d, gs_7d, dam_pct, fc_bias=0.0,
+def build_warnings(prov_name, fc_7d, gs_7d, dam_pct,
                     flood_thresholds=(FLOOD_HIGH_MM, FLOOD_MED_MM, FLOOD_LOW_MM)):
     """
     Return list of warning dicts for a province.
     fc_7d  : 7-day forecast rain (mm) or None
     gs_7d  : 7-day GSMaP satellite rain (mm) or None
     dam_pct: dam level (% capacity) or None
-    fc_bias: ค่าเฉลี่ย (พยากรณ์ - จริง) สะสม — หักออกจาก fc_7d ก่อนตัดสินระดับ (ไม่กระทบข้อความที่แสดง)
     flood_thresholds: (high, med, low) มม./7วัน เฉพาะจังหวัด (แผน A) ค่าเริ่มต้นคือเกณฑ์คงที่เดิม
     """
     warnings = []
-    fc_7d_adj = max(0.0, fc_7d - fc_bias) if fc_7d is not None else None
     flood_high_mm, flood_med_mm, flood_low_mm = flood_thresholds
 
     # -----------------------------------------------------------------------
@@ -172,7 +163,7 @@ def build_warnings(prov_name, fc_7d, gs_7d, dam_pct, fc_bias=0.0,
             return "flood_low"
         return None
 
-    fc_level  = flood_level(fc_7d_adj)
+    fc_level  = flood_level(fc_7d)
     gs_level  = flood_level(gs_7d)
 
     # Priority order for flood levels
@@ -330,9 +321,6 @@ def main():
     all_provinces = sorted(fc_provs.keys())
     print(f"Processing {len(all_provinces)} provinces...")
 
-    fc_bias = load_forecast_bias()
-    if fc_bias:
-        print(f"Calibrating forecast: -{fc_bias:.1f}mm (measured over-prediction bias from alert-scoreboard.json)")
 
     result_provinces = {}
     summary = {"high": 0, "medium": 0, "low": 0, "drought": 0, "dam_low": 0, "none": 0}
@@ -347,7 +335,7 @@ def main():
         dam_pct = dam_entry.get("dam_level_pct")
 
         high, med, low, normal_weekly = province_flood_thresholds(prov, wf_provs)
-        warnings = build_warnings(prov, fc_7d, gs_7d, dam_pct, fc_bias, (high, med, low))
+        warnings = build_warnings(prov, fc_7d, gs_7d, dam_pct, (high, med, low))
 
         # layer นี้ตอบว่า "ฝนที่กำลังจะตกเสี่ยงไหม" ส่วน flood-status.json ตอบว่า
         # "ตอนนี้น้ำล้นตลิ่งหรือยัง" — แม่น้ำล้นได้จากฝนที่ตกต้นน้ำ ไม่ใช่ฝนในจังหวัด
@@ -405,7 +393,6 @@ def main():
                 "drought_dam_pct": DROUGHT_DAM,
                 "dam_low_pct":    DAM_LOW_PCT,
             },
-            "forecast_bias_correction_mm": round(fc_bias, 1),
         },
         "summary": {
             "high":    summary.get("high", 0),
@@ -445,23 +432,14 @@ def main():
 
 
 def _selftest():
-    """ยึดพฤติกรรมของ bias กับเกณฑ์ที่ส่งเข้าไปตรงๆ ไม่ผูกกับค่าคงที่ fallback
-    (เดิมผูกไว้ พอแก้ค่าคงที่ 4 ก.ย. 69 เทสต์เลยแดง ทั้งที่ตรรกะ bias ไม่ได้เปลี่ยน)"""
+    """ยึดพฤติกรรมกับเกณฑ์ที่ส่งเข้าไปตรงๆ ไม่ผูกกับค่าคงที่ fallback
+    (เดิมผูกไว้ พอแก้ค่าคงที่ 4 ก.ย. 69 เทสต์เลยแดง ทั้งที่ตรรกะไม่ได้เปลี่ยน)"""
     TH = (120, 60, 30)   # high, med, low
-    # 130mm พยากรณ์ - bias 46.8 = 83.2mm → ตกจาก high ลงมา med
-    w = build_warnings("Test", 130, None, None, 46.8, TH)
-    assert w[0]["level"] == "medium", w
-    # สูงเกินเกณฑ์มากจนหัก bias แล้วก็ยังสูง
-    w = build_warnings("Test", 300, None, None, 46.8, TH)
-    assert w[0]["level"] == "high", w
-    # bias ดันให้ต่ำกว่าศูนย์ไม่ได้
-    w = build_warnings("Test", 10, None, None, 46.8, TH)
-    assert w[0]["level"] == "normal", w
-    # bias = 0 ต้องไม่เปลี่ยนพฤติกรรมเดิม
-    w = build_warnings("Test", 130, None, None, 0.0, TH)
-    assert w[0]["level"] == "high", w
+    assert build_warnings("Test", 130, None, None, TH)[0]["level"] == "high"
+    assert build_warnings("Test", 80, None, None, TH)[0]["level"] == "medium"
+    assert build_warnings("Test", 10, None, None, TH)[0]["level"] == "normal"
     # "ปกติ" ต้องรายงานเกณฑ์จริงของจังหวัดนั้น ไม่ใช่ค่าคงที่ fallback
-    w = build_warnings("Test", 10, None, None, 0.0, (300, 200, 100))
+    w = build_warnings("Test", 10, None, None, (300, 200, 100))
     assert w[0]["type"] == "normal" and w[0]["threshold"] == 100, w
     # กันบั๊กเดิมกลับมา: ระดับต่ำสุดต้องยิงเมื่อฝน "มากกว่า" ปกติ ไม่ใช่ต่ำกว่า
     # (0.5x ทำให้ทั้งประเทศติดเตือนทุกวัน — ดูบันทึกเหตุผลด้านบน)

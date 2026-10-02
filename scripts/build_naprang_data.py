@@ -3,7 +3,8 @@
 
 Source: OAE catalog dataoae1104 — "ปริมาณการผลิตข้าวนาปรัง" (same catalog as นาปี).
 The naprang PDFs use the identical 5-column table layout as the นาปี "direct"
-tables, so we reuse parse_napi() from build_oae_rice_data.
+tables. The PDF text helpers below came from the old build_oae_rice_data.py
+(deleted 2 Oct 2026); this file was its only remaining user.
 
 Year mapping: OAE labels naprang by its harvest year ("ปี 2567"); we store it
 under the matching app year key ("2567"). Provinces with no naprang crop
@@ -23,11 +24,13 @@ from __future__ import annotations
 import json
 import re
 import sys
+import unicodedata
 from pathlib import Path
+
+from pypdf import PdfReader
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-from build_oae_rice_data import SKIP_PREFIXES, canon, clean_text, extract_lines
 
 ROOT = Path(__file__).resolve().parent.parent
 INDEX = ROOT / "index.html"
@@ -40,6 +43,75 @@ NAME_ALIASES = {
 
 # Decimal-aware: small provinces report production as "36.00" / "4.65".
 NUM_RE = re.compile(r"\d[\d,]*(?:\.\d+)?")
+
+PRIVATE_USE_REPLACEMENTS = {
+    "\uf70a": "่",
+    "\uf70b": "้",
+    "\uf70c": "๊",
+    "\uf70d": "๋",
+    "\uf70e": "์",
+    "\uf70f": "ํ",
+    "\uf710": "ั",
+    "\uf711": "ี",
+    "\uf712": "ึ",
+    "\uf713": "ื",
+    "\uf714": "ุ",
+    "\uf715": "ู",
+    "\uf716": "ฺ",
+    "\uf717": "็",
+    "\uf718": "ำ",
+}
+
+SPACE_FIXES = {
+    "ล า": "ลำ",
+    "ก า": "กำ",
+    "น า": "นำ",
+    "ท า": "ทำ",
+    "ค า": "คำ",
+    "ร า": "รำ",
+    "อ า": "อำ",
+    "ย า": "ยำ",
+    "ล ํา": "ลำ",
+}
+
+SKIP_PREFIXES = (
+    "รวมทั้งประเทศ",
+    "ภาคเหนือ",
+    "ภาคตะวันออกเฉียงเหนือ",
+    "ภาคกลาง",
+    "ภาคใต้",
+    "ประเทศ/ภาค",
+    "/จังหวัด",
+    "ภาค/จังหวัด",
+    "เนื้อที่เพาะปลูก",
+    "(ไร่)",
+    "( ไร่)",
+    "(ตัน)",
+    "ผลผลิต",
+    "ที่ความชื้น",
+)
+
+
+def clean_text(value: str) -> str:
+    for old, new in PRIVATE_USE_REPLACEMENTS.items():
+        value = value.replace(old, new)
+    value = unicodedata.normalize("NFC", value)
+    value = value.replace("ํา", "ำ")
+    value = re.sub(r"\s+", " ", value).strip()
+    for old, new in SPACE_FIXES.items():
+        value = value.replace(old, new)
+    return value
+
+
+def canon(value: str) -> str:
+    return clean_text(value).replace(" ", "")
+
+
+def extract_lines(path: Path) -> list[str]:
+    if not path.exists():
+        raise FileNotFoundError(f"Missing source PDF: {path}")
+    text = "\n".join(page.extract_text() or "" for page in PdfReader(str(path)).pages)
+    return text.splitlines()
 
 
 def parse_naprang(path: Path, th_to_en: dict[str, str]) -> dict[str, dict[str, int]]:

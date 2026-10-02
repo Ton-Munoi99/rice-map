@@ -61,10 +61,6 @@ python scripts/fetch_fertilizer_prices.py
 >   fallback). `clear_estimated_trend_prices.py` is the final sync stage: it clears
 >   estimated prices and rewrites BOTH csv and js from one row set, so after a full
 >   pipeline run the two files are always identical in content.
-> - `build_oae_rice_data.py` is an **older, superseded** rice-data builder (`main()`
->   output is not in the live data). Do **not** run it to rebuild rice-data — but do
->   **not** delete it: `build_naprang_data.py` imports its parse helpers
->   (`extract_lines`, `clean_text`, `canon`, `SKIP_PREFIXES`) to build `naprang-data.js`.
 
 ## Architecture
 

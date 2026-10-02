@@ -4,6 +4,22 @@ Last updated: 2026-09-18 by Claude Code
 
 ## Log
 
+- 2026-10-02 (Claude): Applied the ponytail-audit cuts. Deleted `rice_mills_distance_analysis.xlsx`
+  (plus its `.gitignore` exception) and `data/mills-geocode-cache.json`, neither referenced anywhere;
+  deleted `build_oae_rice_data.py` after moving the PDF-text helpers `build_naprang_data.py` actually
+  imported into that file (verified source-identical). The previous audit kept the old builder only
+  for that import, which is now gone. Replaced three copies of the rice-data dual write with
+  `riceutils.write_rice_data()`, proven byte-identical on the committed rows. Dropped the unset
+  `RUBBER_ASSET` config and two never-called functions in `index.html`.
+  Also removed the forecast-bias calibration path, off since 20 Aug: `load_forecast_bias()`, the
+  `fc_bias` parameter, the always-zero `forecast_bias_correction_mm` field, and the "what if
+  calibration were on" simulation in `score_alerts.py`, which had been recording "bias in effect
+  81mm" when no bias was in effect. That drops `heavy_calibrated` (last value precision 0.405, recall
+  0.443) from the scoreboard; plain `bias_mm` stays as the measurement. Ran old and new code on the
+  same inputs: identical warnings for all 77 provinces and an identical scoreboard apart from the
+  removed fields. All seven self-tests pass; the page loads and switches layers by click with no
+  console errors.
+
 - 2026-10-01 (Claude): Closed the last open item from the cloud review of `index.html` (30 findings,
   29 already merged in PR #31-34). The 2568 rows in `rice-data.csv`/`rice-data.js` come from the
   statistics book's `2568f` column, which is OAE's own forecast, but all 140 carried the same

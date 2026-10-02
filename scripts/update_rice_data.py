@@ -20,10 +20,11 @@ import json
 import sys
 from pathlib import Path
 
+from riceutils import write_rice_data
+
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 ROOT = Path(__file__).resolve().parents[1]
-RICE_JS = ROOT / "rice-data.js"
 RICE_CSV = ROOT / "rice-data.csv"
 OAE_JSON = ROOT / "data" / "oae_extracted.json"
 
@@ -53,12 +54,6 @@ def source_note_for(pdf_year, rice_type):
         return base.replace("Official OAE data", f"OAE forecast column {pdf_year}")
     return base
 
-CSV_FIELDS = [
-    "province_th", "province_en", "region", "rice_type", "year",
-    "production", "yield", "area", "area_planted", "yield_planted",
-    "price", "price_low", "price_high", "price_low_alt", "price_high_alt",
-    "price_basis", "source", "source_title", "source_url", "source_note", "source_date",
-]
 INT_FIELDS = ("production", "yield", "area", "area_planted", "yield_planted", "price")
 # int when present, "" when absent (matches rice-data.js typing)
 INT_OR_BLANK = ("price_low", "price_high", "price_low_alt", "price_high_alt")
@@ -121,15 +116,7 @@ def main():
                 row["source_note"] = source_note_for(pdf_year, rice_type)
                 updated += 1
 
-    # write both outputs in sync
-    RICE_JS.write_text(
-        "window.RICE_DATA_ROWS=" + json.dumps(rows, ensure_ascii=False, separators=(",", ":")) + ";",
-        encoding="utf-8",
-    )
-    with RICE_CSV.open("w", encoding="utf-8-sig", newline="") as fh:
-        writer = csv.DictWriter(fh, fieldnames=CSV_FIELDS, lineterminator="\n")
-        writer.writeheader()
-        writer.writerows(rows)
+    write_rice_data(rows)
 
     print(f"Updated {updated} napi rows (source={SOURCE}) → rice-data.js + rice-data.csv")
     if unmatched:

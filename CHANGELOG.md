@@ -10,6 +10,26 @@
 
 ## ตุลาคม 2569
 
+### ลบ (Removed)
+
+- **🧹 ตัดโค้ดและไฟล์ที่ไม่มีใครใช้ ตามผล ponytail-audit (2 ต.ค. 69)** — สุทธิ −161/+121 บรรทัด, −3 ไฟล์ ·
+  พฤติกรรมของเว็บและข้อมูลไม่เปลี่ยน
+  - ลบ `rice_mills_distance_analysis.xlsx` (ไม่มีอะไรอ้างถึง) และข้อยกเว้นใน `.gitignore` ที่กันไว้ให้มัน ·
+    ลบ `data/mills-geocode-cache.json` (ไม่มีสคริปต์ไหนอ่านหรือเขียน แก้ล่าสุด 3 ส.ค.)
+  - ลบ `scripts/build_oae_rice_data.py` builder รุ่นเก่าที่ PDF ต้นทางไม่อยู่ใน repo แล้ว · helper ที่
+    `build_naprang_data.py` ใช้ (`clean_text`, `canon`, `extract_lines`, `SKIP_PREFIXES` + ตารางแก้อักขระ)
+    ย้ายไปไว้ในไฟล์นั้นเอง ตรวจแล้วว่าซอร์สเหมือนเดิมทุกตัว
+  - รวมโค้ดเขียน `rice-data.csv` + `rice-data.js` ที่ก๊อปอยู่ 3 สคริปต์เป็น `write_rice_data()` ใน
+    `riceutils.py` · พิสูจน์แล้วว่าเขียนซ้ำจากข้อมูลเดิมได้ไฟล์ตรงทุกไบต์
+  - ลบ `RUBBER_ASSET` config ที่ไม่เคยมีใครตั้งค่า พร้อม branch และ import ที่ไม่ได้ใช้
+  - ลบ `rainValueOf()` และ `toBE()` ใน `index.html` ที่ไม่มีที่ไหนเรียก
+  - **ลบทางของ forecast-bias calibration** ที่ปิดไว้ตั้งแต่ 20 ส.ค. (`load_forecast_bias()` คืน 0.0
+    ตายตัว) — ตัดพารามิเตอร์ `fc_bias`, ฟิลด์ `forecast_bias_correction_mm` (เป็น 0.0 ตลอด) และใน
+    `score_alerts.py` ตัดการจำลอง "ถ้าเปิด calibration" (`heavy_calibrated`, `heavy_cal`,
+    `bias_applied`) ซึ่งเคยบันทึกว่า "bias in effect 81mm" ทั้งที่ไม่มี bias ไหนถูกใช้จริง ·
+    `bias_mm` ที่เป็นค่าวัดความเอนของพยากรณ์ยังอยู่ · รันโค้ดเก่า/ใหม่กับข้อมูลชุดเดียวกัน:
+    ผลเตือนเหมือนกันทั้ง 77 จังหวัด scoreboard เหมือนกันทุกช่องยกเว้นช่องที่ตัด
+
 ### แก้ไข (Fixed)
 
 - **🏷️ ข้อมูลปี 2568 ติดป้ายว่า "Official OAE data" ทั้งที่มาจากคอลัมน์พยากรณ์ 2568f** (140 แถว)

@@ -11,6 +11,7 @@ import ได้ทันทีเมื่อรัน `python scripts/fetch_X.
 """
 import os
 import re
+import csv
 import json
 import math
 import statistics
@@ -148,6 +149,26 @@ _BUENG_KAN_POLY = [[
 
 # repo root = โฟลเดอร์แม่ของ scripts/
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+RICE_CSV_FIELDS = [
+    "province_th", "province_en", "region", "rice_type", "year",
+    "production", "yield", "area", "area_planted", "yield_planted",
+    "price", "price_low", "price_high", "price_low_alt", "price_high_alt",
+    "price_basis", "source", "source_title", "source_url", "source_note", "source_date",
+]
+
+
+def write_rice_data(rows):
+    """เขียน rice-data.csv และ rice-data.js จากแถวชุดเดียวกัน — แอปโหลด csv ก่อน
+    js เป็น fallback สองไฟล์จึงต้องตรงกันเสมอ (เดิมโค้ดนี้ก๊อปอยู่ 3 สคริปต์)"""
+    with open(os.path.join(_ROOT, "rice-data.js"), "w", encoding="utf-8") as fh:
+        fh.write("window.RICE_DATA_ROWS="
+                 + json.dumps(rows, ensure_ascii=False, separators=(",", ":")) + ";")
+    with open(os.path.join(_ROOT, "rice-data.csv"), "w", encoding="utf-8-sig", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=RICE_CSV_FIELDS, lineterminator="\n")
+        w.writeheader()
+        w.writerows(rows)
+
 
 # จังหวัดที่ polygon ใน thailand-data.js เพี้ยน (จุดกระจายผิด) → ใช้พิกัดจริงแทน
 # Satun: geometry corrupt ทำให้ centroid ตกกลางอ่าวไทย (~330km จากจริง)
@@ -406,7 +427,6 @@ FLOOD_EVI_MAX = 0.30   # น้ำท่วมขังต้องเกิด�
 PEAK_MIN      = 0.40   # ต้องมีเดือนที่ต้นข้าวขึ้น canopy เขียวจริง → ตัดน้ำเปิด/บ่อกุ้ง/นาเกลือ
 AMP_MIN       = 0.25   # EVI แกว่งตามฤดูสูง → ตัดพืชยืนต้นเขียวคงที่ทั้งปี (ยาง ปาล์ม ป่า)
 MIN_EVI_MAX   = 0.22   # ต้องเคย "โล่ง/น้ำขัง" อย่างน้อย 1 เดือน (min EVI ต่ำ) → ตัวตัดยาง/ปาล์ม/ป่า
-RUBBER_ASSET = ""       # เช่น "projects/xxx/assets/thailand_rubber_2023" (ปล่อยว่าง = ข้าม)
 
 
 def load_rice_mask():
@@ -491,16 +511,6 @@ def load_exclusion_mask():
         print("✓ Loaded oil-palm exclusion (BIOPAMA/GlobalOilPalm/v1)")
     except Exception as e:
         print(f"  ⚠️ oil-palm layer unavailable: {e}")
-
-    # ── Rubber (optional asset) ──
-    if RUBBER_ASSET:
-        try:
-            rubber = ee.Image(RUBBER_ASSET).gt(0).unmask(0)
-            parts.append(rubber)
-            names.append(f"rubber ({RUBBER_ASSET})")
-            print("✓ Loaded rubber exclusion")
-        except Exception as e:
-            print(f"  ⚠️ rubber layer unavailable: {e}")
 
     if not parts:
         return None, "none"

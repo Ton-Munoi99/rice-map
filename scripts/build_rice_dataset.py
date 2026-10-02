@@ -30,6 +30,8 @@ from pathlib import Path
 
 from pypdf import PdfReader
 
+from riceutils import write_rice_data
+
 
 ROOT = Path(__file__).resolve().parents[1]
 CSV_PATH = ROOT / "rice-data.csv"
@@ -388,42 +390,9 @@ def build_rows() -> list[dict[str, object]]:
     return rows
 
 
-def write_outputs(rows: list[dict[str, object]]) -> None:
-    fieldnames = [
-        "province_th",
-        "province_en",
-        "region",
-        "rice_type",
-        "year",
-        "production",
-        "yield",
-        "area",
-        "area_planted",
-        "yield_planted",
-        "price",
-        "price_low",
-        "price_high",
-        "price_low_alt",
-        "price_high_alt",
-        "price_basis",
-        "source",
-        "source_title",
-        "source_url",
-        "source_note",
-        "source_date",
-    ]
-    with CSV_PATH.open("w", encoding="utf-8-sig", newline="") as fh:
-        writer = csv.DictWriter(fh, fieldnames=fieldnames)
-        writer.writeheader()
-        writer.writerows(rows)
-
-    js_payload = json.dumps(rows, ensure_ascii=False, separators=(",", ":"))
-    JS_PATH.write_text(f"window.RICE_DATA_ROWS={js_payload};\n", encoding="utf-8")
-
-
 def main() -> None:
     rows = build_rows()
-    write_outputs(rows)
+    write_rice_data(rows)
     print(f"Wrote {len(rows)} rows to {CSV_PATH.name} and {JS_PATH.name}")
 
 

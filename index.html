@@ -3863,9 +3863,6 @@
         return window.RICE_EVI_DATA?.provinces?.[en]?.evi ?? null;
       }
 
-      function rainValueOf(en) {
-        return window.RAIN_DATA?.provinces?.[en]?.rain_7d ?? null;
-      }
       function gsmapValueOf(en) {
         return window.GSMAP_DATA?.provinces?.[en]?.rain_7d ?? null;
       }
@@ -8224,8 +8221,6 @@ ${warningsHtml}
       // ── Weather Data Loader ───────────────────────────────────────────────────
       let WEATHER_DATA = null;
       let WEATHER_FORECAST = null;
-
-      const toBE = (y) => y + 543; // ค.ศ. → พ.ศ.
 
       // "2026-05-08" → "8 พฤษภาคม 2569" / "8 May 2026"
       // th-TH ของ Intl ใช้ปฏิทินพุทธอยู่แล้ว จึงได้ พ.ศ. โดยไม่ต้องบวก 543 เอง
