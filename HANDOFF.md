@@ -4,6 +4,15 @@ Last updated: 2026-09-18 by Claude Code
 
 ## Log
 
+- 2026-10-06 (Claude): Closed the item the 2 Oct audit left open. `build_rice_dataset.py` is stage 1
+  of the rice-data chain and rebuilds from zero, so run alone it would have dropped 560 live rows
+  (420 rows of OAE 2568-edition data, 140 trend estimates) with no message. It now refuses unless
+  `--full-chain` is given, naming the count and the four commands to run. Guarding on the data, not
+  on the missing `oae_stats_latest.pdf`, because anyone who drops that PDF in would lose the rows
+  silently. Verified: a bare run exits 1 and leaves the files untouched; `--full-chain` without the
+  PDF fails before writing; the self-test also pins `update_rice_data.SOURCE` into the guard's list.
+  The script has no cron or CI step, so nothing else changes.
+
 - 2026-10-02 (Claude): Applied the ponytail-audit cuts. Deleted `rice_mills_distance_analysis.xlsx`
   (plus its `.gitignore` exception) and `data/mills-geocode-cache.json`, neither referenced anywhere;
   deleted `build_oae_rice_data.py` after moving the PDF-text helpers `build_naprang_data.py` actually

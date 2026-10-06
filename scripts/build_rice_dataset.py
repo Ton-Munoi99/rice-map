@@ -23,6 +23,7 @@ import csv
 import json
 import re
 import subprocess
+import sys
 import tempfile
 import unicodedata
 from collections import defaultdict
@@ -390,11 +391,60 @@ def build_rows() -> list[dict[str, object]]:
     return rows
 
 
-def main() -> None:
+# แถวพวกนี้มาจากขั้นถัดไปของ pipeline (update_rice_data / estimate_2568_2569) สคริปต์นี้
+# สร้างซ้ำไม่ได้ — มันสร้างไฟล์ใหม่จากศูนย์ แล้วปี 2568 กับค่าประมาณ 2569 ว่างเปล่า
+# ถ้ารันเดี่ยวๆ แล้ว commit ข้อมูลที่ขึ้นเว็บจะหายไปเงียบๆ (วัดวันที่ 6 ต.ค. 69: 560 แถว)
+NOT_REPRODUCED_HERE = {"oae_stats_2568_table_1_4", "estimated_trend"}
+
+
+def rows_this_build_would_drop(csv_path: Path = CSV_PATH) -> int:
+    if not csv_path.exists():
+        return 0
+    with csv_path.open("r", encoding="utf-8-sig", newline="") as fh:
+        return sum(1 for r in csv.DictReader(fh) if r.get("source") in NOT_REPRODUCED_HERE)
+
+
+def main(argv: list[str]) -> None:
+    lost = rows_this_build_would_drop()
+    if lost and "--full-chain" not in argv:
+        sys.exit(
+            f"ยกเลิก: สคริปต์นี้เป็นขั้นแรกของ pipeline และจะทำให้ rice-data หาย {lost} แถว "
+            "(ข้อมูลทางการ OAE ฉบับ 2568 + ค่าประมาณปี 2569) ที่ต้องเติมกลับด้วยขั้นถัดไป\n"
+            "ถ้าตั้งใจจะรันครบทั้งสายจริง ให้เติม --full-chain แล้วรันต่อทันที:\n"
+            "  python scripts/build_rice_dataset.py --full-chain\n"
+            "  python scripts/update_rice_data.py\n"
+            "  node   scripts/estimate_2568_2569.js\n"
+            "  python scripts/clear_estimated_trend_prices.py"
+        )
     rows = build_rows()
     write_rice_data(rows)
     print(f"Wrote {len(rows)} rows to {CSV_PATH.name} and {JS_PATH.name}")
+    if lost:
+        print(f"⚠️  ข้อมูล {lost} แถวหายไปแล้ว — รัน update_rice_data.py → estimate_2568_2569.js → "
+              "clear_estimated_trend_prices.py ต่อให้ครบก่อน commit")
+
+
+def _selftest() -> None:
+    with tempfile.TemporaryDirectory() as d:
+        f = Path(d) / "rice-data.csv"
+        assert rows_this_build_would_drop(f) == 0                     # ไม่มีไฟล์เดิม = ไม่มีอะไรให้เสีย
+        lines = [
+            "province_en,year,source",
+            "A,2565,oae_stats_table_1_4",     # สคริปต์นี้สร้างซ้ำได้
+            "A,2568,oae_stats_2568_table_1_4",
+            "A,2569,estimated_trend",
+            "A,2569,",
+        ]
+        f.write_text(chr(10).join(lines), encoding="utf-8")
+        assert rows_this_build_would_drop(f) == 2
+    # สัญญา: ป้ายของขั้นถัดไปที่ update_rice_data.py เขียน ต้องอยู่ในรายการนี้เสมอ
+    from update_rice_data import SOURCE
+    assert SOURCE in NOT_REPRODUCED_HERE, SOURCE
+    print("selftest ok")
 
 
 if __name__ == "__main__":
-    main()
+    if "--selftest" in sys.argv:
+        _selftest()
+    else:
+        main(sys.argv[1:])

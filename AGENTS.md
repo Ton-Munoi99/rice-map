@@ -18,7 +18,9 @@ All scripts live in `scripts/`. Run them from the repo root.
 
 ```bash
 # Rebuild the rice production dataset (rice-data.csv/js) — run the stages in order:
-python scripts/build_rice_dataset.py           # base 2565-2567 (OAE Table 1.4) + prices → csv+js
+python scripts/build_rice_dataset.py --full-chain  # base 2565-2567 (OAE Table 1.4) + prices → csv+js
+                                               # refuses without --full-chain: it rebuilds from zero and
+                                               # drops the 2568 + estimate rows the next stages refill
 python scripts/update_rice_data.py             # apply official 2568 (data/oae_extracted.json) → csv+js
 node   scripts/estimate_2568_2569.js           # fill remaining empty 2569 with trend estimates (js)
 python scripts/clear_estimated_trend_prices.py # strip estimated prices + final csv/js sync
