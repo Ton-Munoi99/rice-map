@@ -716,7 +716,10 @@ measurements and a schema-level consumer test exist.
   on the association's basis: over 19 shared days NABC minus the association midpoint was -2,574
   (Yasothon), +1,042 (Si Sa Ket), +700 (Roi Et), -416 (Khon Kaen), -53 (Buri Ram), and NABC states
   no moisture. One province on that scale would sit on the same colour ramp as the others while off
-  by up to a thousand baht. If revisited, show it as a labelled single-mill quote, not a province range.
+  by up to a thousand baht. The owner declined adding it (7 Oct 2026) — do not propose it again. The
+  ask turned out to be about the sidebar card: it showed the first 3 provinces in file order, all
+  white-rice, so every card read "Jasmine: -"; fixed by showing 3 white + 3 jasmine provinces from
+  the data already on hand.
 - Do not build a road-flooding layer from the Department of Highways. Checked on 1 Oct 2026:
   DOH publishes no documented open API for live road flooding — the government catalogs carry
   only static datasets such as road length, the live view exists solely inside the Highway
