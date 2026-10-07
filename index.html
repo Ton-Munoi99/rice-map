@@ -8079,11 +8079,12 @@ ${warningsHtml}
       </div>`);
         }
 
-        // 3) Provincial prices (PDF) – แสดงตัวอย่าง 3 จังหวัด
+        // 3) Provincial prices (PDF) – ตัวอย่าง 3 จังหวัดที่มีราคาข้าวเจ้า + 3 จังหวัดที่มีราคาหอมมะลิ
+        // ไฟล์เรียงตามหน้า PDF (ภาคกลางมาก่อน อีสานมาทีหลัง) ถ้า slice 3 อันแรกรวมกัน
+        // จะได้แต่จังหวัดข้าวเจ้า การ์ดจึงขึ้น "หอมมะลิ: -" ทุกใบและไม่เห็นราคาหอมมะลิเลย
         const prov = LIVE_PRICES?.provincial_prices?.data || {};
-        const provEntries = Object.entries(prov)
-          .filter(([, v]) => v.white || v.jasmine)
-          .slice(0, 3);
+        const firstWith = (key) => Object.entries(prov).filter(([, v]) => v[key]).slice(0, 3);
+        const provEntries = [...new Map([...firstWith("white"), ...firstWith("jasmine")])];
         if (provEntries.length) {
           const srcDate = Object.values(prov)[0]?.date || "";
           provEntries.forEach(([name, vals]) => {
@@ -8097,9 +8098,10 @@ ${warningsHtml}
           <div class="live-price-val" style="display:none"></div>
         </div>`);
           });
-          if (Object.keys(prov).length > 3) {
+          const more = Object.keys(prov).length - provEntries.length;
+          if (more > 0) {
             rows.push(`<div style="font-size:9px;color:var(--muted);text-align:center;padding:2px 0">
-        + ${Object.keys(prov).length - 3} ${t("จังหวัดอื่น", "more provinces")}</div>`);
+        + ${more} ${t("จังหวัดอื่น", "more provinces")}</div>`);
           }
         }
 
