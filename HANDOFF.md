@@ -705,6 +705,18 @@ measurements and a schema-level consumer test exist.
 
 ## Deferred Decisions
 
+- Isan jasmine mill prices cannot be widened past the 9 provinces already shown. Checked 7 Oct 2026,
+  after the owner asked for 3 more. The Thai Rice Millers Association PDF lists exactly 9 Isan
+  provinces for jasmine (Buri Ram, Nakhon Ratchasima, Roi Et, Khon Kaen, Yasothon, Udon Thani, Ubon,
+  Si Sa Ket, Surin) and the parser drops none. Other sources: the OAE weekly API holds national rows
+  only (all 803 jasmine rows are `TH00`; `province_code` is ignored); DIT's daily PDFs are national;
+  the Maha Sarakham commerce office PDF is a one-off file behind a hashed URL. The one real lead is
+  NABC `daily-prices/product` (`ข้าวเปลือกเจ้าหอมมะลิ 105`), single-mill daily quotes for 6 Isan
+  provinces — only Amnat Charoen (18,333 on 6 Oct) is new. Not wired in because the levels are not
+  on the association's basis: over 19 shared days NABC minus the association midpoint was -2,574
+  (Yasothon), +1,042 (Si Sa Ket), +700 (Roi Et), -416 (Khon Kaen), -53 (Buri Ram), and NABC states
+  no moisture. One province on that scale would sit on the same colour ramp as the others while off
+  by up to a thousand baht. If revisited, show it as a labelled single-mill quote, not a province range.
 - Do not build a road-flooding layer from the Department of Highways. Checked on 1 Oct 2026:
   DOH publishes no documented open API for live road flooding — the government catalogs carry
   only static datasets such as road length, the live view exists solely inside the Highway
