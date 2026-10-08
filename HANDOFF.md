@@ -705,6 +705,11 @@ measurements and a schema-level consumer test exist.
 
 ## Deferred Decisions
 
+- Do not automate the provincial-commerce fertilizer rows. Proposed 8 Oct 2026 (some offices, e.g.
+  Chiang Rai, publish a text PDF "weekly market news" with a fertilizer table); the owner declined.
+  They stay hand-entered in `STATIC_ROWS` of `fetch_fertilizer_prices.py`. To refresh them by hand,
+  search each office's own archive: POST `https://<prov>.moc.go.th/th/content/category/getarticles/id/<cat>`
+  with `pageIndex=1&searchText=ปุ๋ย` (cat 161 = news, 3570 = market news) — far better than web search.
 - Isan jasmine mill prices cannot be widened past the 9 provinces already shown. Checked 7 Oct 2026,
   after the owner asked for 3 more. The Thai Rice Millers Association PDF lists exactly 9 Isan
   provinces for jasmine (Buri Ram, Nakhon Ratchasima, Roi Et, Khon Kaen, Yasothon, Udon Thani, Ubon,
