@@ -18,6 +18,7 @@ MAX_AGE_DAYS = {
     "flood-status.json":     1,   # ทุก 3 ชม. (ต่อท้าย water-level)
     "water-level-history.json": 1,   # เขียนพร้อม flood-status — ถ้าค้างแปลว่าตรวจน้ำขึ้นเร็วตาบอด
     "storm-alerts.json":     2,   # ทุก 6 ชม.
+    "firms-hotspots.json":   3,   # รายวัน (NASA FIRMS)
     "rice-news.json":        2,   # 3 ครั้ง/วัน
     "dam-water.json":        3,   # รายวัน ×2
     "disease-risk.json":     3,   # รายวัน

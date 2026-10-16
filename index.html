@@ -2079,6 +2079,10 @@
                 <span class="th-t">🚨 พื้นที่เสี่ยงน้ำท่วม</span>
                 <span class="en-t">🚨 Flood Risk Areas</span>
               </button>
+              <button class="pill" data-layer="hotspots" onclick="setLayer('hotspots')">
+                <span class="th-t">🔥 จุดความร้อน (ดาวเทียม)</span>
+                <span class="en-t">🔥 Fire Hotspots (satellite)</span>
+              </button>
               <!-- soilMoisture / riceEvi ถอดปุ่มออกจากรายการ (4 ก.ย. 69) แต่ layer ยังอยู่ครบ:
                    ข้อมูล cron, layerMeta, valueFn, palette, tooltip, การ์ดรายละเอียดจังหวัด
                    และ deep link #layer=soilMoisture / #layer=riceEvi ยังใช้ได้เหมือนเดิม
@@ -2777,6 +2781,17 @@
           summary: "ความชื้นในดินเฉลี่ยต่อจังหวัด",
           summaryMode: "avg",
         },
+        hotspots: {
+          noTimeseries: true,   // ไม่มีอนุกรมเวลารายปี — ไม่ต้องมีกราฟ spark / ป้ายปีประมาณการ
+          th: "จุดความร้อน (ดาวเทียม)",
+          en: "Fire Hotspots (satellite)",
+          unit: "จุด / 7 วัน",
+          unitEn: "hotspots / 7 days",
+          unitShort: "จุด",
+          unitShortEn: "pts",
+          summary: "จุดความร้อนรวมทั้งประเทศ",
+          summaryMode: "sum",
+        },
         waterlevel: {
           noTimeseries: true,   // ไม่มีอนุกรมเวลารายปี — ไม่ต้องมีกราฟ spark / ป้ายปีประมาณการ
           th: "ระดับน้ำในแม่น้ำ/คลอง (สถานีจริง)",
@@ -2950,6 +2965,15 @@
           sourceTh: "NASA SMAP (GEE)",
           sourceEn: "NASA SMAP (GEE)",
           palette: { lo: [255, 245, 157], mid: [38, 198, 218], hi: [0, 77, 64], accent: "#00bcd4" },
+        },
+        hotspots: {
+          format: "int",
+          showAllRanked: true, rankTh: "ทุกจังหวัด เรียงตามจุดความร้อน", rankEn: "All Provinces by Hotspots",
+          dataGlobal: "HOTSPOT_DATA", liveDated: true, partialCoverage: true,
+          valueFn: hotspotsValueOf,
+          sourceTh: "NASA FIRMS (VIIRS)",
+          sourceEn: "NASA FIRMS (VIIRS)",
+          palette: { lo: [255, 243, 205], mid: [255, 138, 0], hi: [183, 28, 28], accent: "#ff6d00" },
         },
         naprang: {
           format: "bignum",
@@ -3482,6 +3506,7 @@
         if (layer === "floodExtent") return ["floodExtent"];
         if (layer === "alerts") return ["alerts"];
         if (layer === "soilMoisture") return ["soilMoisture"];
+        if (layer === "hotspots") return ["hotspots"];
         if (layer === "waterlevel") return ["waterlevel"];
         if (layer === "rainstation") return ["rainstation"];
         if (layer === "profit") return PRICE_YEARS;
@@ -3908,6 +3933,10 @@
       }
       function soilMoistureValueOf(en) {
         return window.SOIL_DATA?.provinces?.[en]?.smp ?? null;
+      }
+      // 0 = ดาวเทียมผ่านแล้วไม่เห็นจุดความร้อน (มีความหมาย) · null = ไม่มีไฟล์/ไม่มีจังหวัดนี้
+      function hotspotsValueOf(en) {
+        return window.HOTSPOT_DATA?.provinces?.[en]?.count_7d ?? null;
       }
 
       function blastRisk(d) {
@@ -4769,6 +4798,8 @@
                                       ? `🌊 ${t("น้ำท่วม (วัดจริง)", "Flooding (Gauged)")} · ThaiWater ${window.FLOOD_DATA?._meta?.updated || ""}`
                                     : S.layer === "alerts"
                                       ? `🚨 ${t("พื้นที่เสี่ยงน้ำท่วม", "Flood Risk Areas")} · ${t("อัปเดต", "Updated")} ${window.ALERTS_DATA?._meta?.updated || ""}`
+                                      : S.layer === "hotspots"
+                                      ? `🔥 ${t("จุดความร้อน", "Fire Hotspots")} · NASA FIRMS ${window.HOTSPOT_DATA?._meta?.updated || ""}`
                                       : S.layer === "soilMoisture"
                                         ? `💧 ${t("ความชื้นในดิน SMAP", "Soil Moisture SMAP")} · NASA ${window.SOIL_DATA?._meta?.updated || ""}`
                                         : isEstYear
@@ -4923,6 +4954,14 @@
             // จำนวนจังหวัดกลับมามีความหมาย จึงไม่ต้องบอกผู้ใช้ให้เมินมันอีก
             `🚨 สร้างอัตโนมัติจากข้อมูล: ${(meta?.sources || []).join(" · ")} · อัปเดตทุกวัน · เรียงจากหนักไปเบา · วันนี้เข้าเกณฑ์ ${(sum?.high || 0) + (sum?.medium || 0) + (sum?.low || 0)}/${covered} จังหวัด (เสี่ยงสูง ${sum?.high || 0}) · เกณฑ์เทียบกับฝนปกติของเดือนนี้รายจังหวัด ไม่ใช่ค่าคงที่ทั้งประเทศ`,
             `🚨 Auto-generated from: ${(meta?.sources || []).join(" · ")} · Daily update · ranked worst-first · ${(sum?.high || 0) + (sum?.medium || 0) + (sum?.low || 0)} of ${covered} provinces over threshold today (${sum?.high || 0} high) · Thresholds are per-province multiples of this month's normal rainfall, not one fixed national number`,
+          );
+          return;
+        }
+        if (S.layer === "hotspots") {
+          const meta = window.HOTSPOT_DATA?._meta;
+          refs.dataSourceNote.textContent = t(
+            `NASA FIRMS · VIIRS 375 ม. (Suomi-NPP) · ${meta?.window?.from || "—"} ถึง ${meta?.window?.to || "—"} (UTC) · นับทุกจุดในจังหวัด ไม่แยกนา/ไร่/ป่า · เป็นตัวเลขต่ำสุด`,
+            `NASA FIRMS · VIIRS 375 m (Suomi-NPP) · ${meta?.window?.from || "—"} to ${meta?.window?.to || "—"} (UTC) · every point in the province, crops/cane/forest not separated · lower bound`,
           );
           return;
         }
@@ -5141,7 +5180,9 @@
                                 ? t("แผนที่สถานะน้ำท่วมรายจังหวัด จากสถานีวัดระดับน้ำ", "Flood Status by Province, from River Gauges")
                               : S.layer === "alerts"
                                 ? t("แผนที่พื้นที่เสี่ยงน้ำท่วมรายจังหวัด", "Agricultural Alert Map by Province")
-                                : S.layer === "soilMoisture"
+                                : S.layer === "hotspots"
+                                  ? t("แผนที่จุดความร้อนรายจังหวัด 7 วันล่าสุด", "Fire Hotspots by Province — last 7 days")
+                                  : S.layer === "soilMoisture"
                                   ? t("แผนที่ความชื้นในดินรายจังหวัด (SMAP)", "Soil Moisture by Province — NASA SMAP")
                                   : t(
                                       `แผนที่${riceMeta[S.rice].th}รายจังหวัด`,
@@ -5215,7 +5256,12 @@
                                       `province mean (7 Sep 2026 Mae Hong Son flash flood: forecast 78 mm, below the 115 mm September normal) · ` +
                                       `Read it alongside the "Flood (measured)" layer, which measures water in the rivers themselves`,
                                   )
-                                : S.layer === "soilMoisture"
+                                : S.layer === "hotspots"
+                                  ? t(
+                                      `จำนวนจุดความร้อนที่ดาวเทียม NASA/NOAA VIIRS (375 ม.) จับได้ในแต่ละจังหวัด ${window.HOTSPOT_DATA?._meta?.window?.from || "—"} ถึง ${window.HOTSPOT_DATA?._meta?.window?.to || "—"} · นับทุกจุดในจังหวัด ไม่แยกว่าเป็นนา ไร่อ้อย หรือป่า · เป็นตัวเลขต่ำสุด ไม่ใช่ไฟทั้งหมด (ไฟเล็ก ไฟใต้เมฆ หรือไฟที่ดับก่อนดาวเทียมผ่านจะไม่เห็น) · ไม่ใช่การยืนยันว่ามีการเผาฟาง`,
+                                      `Hotspots detected by the NASA/NOAA VIIRS satellite (375 m) per province, ${window.HOTSPOT_DATA?._meta?.window?.from || "—"} to ${window.HOTSPOT_DATA?._meta?.window?.to || "—"} · every point in the province is counted, crops, cane and forest are not separated · a lower bound, not all fires (small, under-cloud or short-lived fires are missed) · not proof of straw burning`,
+                                    )
+                                  : S.layer === "soilMoisture"
                                   ? t(
                                       `ความชื้นในดินระดับผิว (0–100%) เฉลี่ยต่อจังหวัด จาก NASA SMAP 10km · อัปเดตรายสัปดาห์ · ข้อมูล ${window.SOIL_DATA?._meta?.period_start || "—"} ถึง ${window.SOIL_DATA?._meta?.period_end || "—"}`,
                                       `Surface soil moisture (0–100%) per province from NASA SMAP 10km · Weekly update · Data ${window.SOIL_DATA?._meta?.period_start || "—"} to ${window.SOIL_DATA?._meta?.period_end || "—"}`,
@@ -5316,7 +5362,9 @@
                       ? `${metaLabel}<br>${t(`ThaiWater · อัปเดต ${fmtDateISO(window.FLOOD_DATA?._meta?.updated)}`, `ThaiWater · Updated ${fmtDateISO(window.FLOOD_DATA?._meta?.updated)}`)}`
                     : S.layer === "alerts"
                       ? `${metaLabel}<br>${t(`อัปเดต ${fmtDateISO(window.ALERTS_DATA?._meta?.updated)}`, `Updated ${fmtDateISO(window.ALERTS_DATA?._meta?.updated)}`)}`
-                      : S.layer === "soilMoisture"
+                      : S.layer === "hotspots"
+                        ? `${metaLabel}<br>${t(`NASA FIRMS VIIRS · อัปเดต ${fmtDateISO(window.HOTSPOT_DATA?._meta?.updated)}`, `NASA FIRMS VIIRS · Updated ${fmtDateISO(window.HOTSPOT_DATA?._meta?.updated)}`)}`
+                        : S.layer === "soilMoisture"
                         ? `${metaLabel}<br>${t(`NASA SMAP 10km · อัปเดต ${fmtDateISO(window.SOIL_DATA?._meta?.updated)}`, `NASA SMAP 10km · Updated ${fmtDateISO(window.SOIL_DATA?._meta?.updated)}`)}`
                         : S.layer === "riceEvi"
                           ? `${metaLabel}<br>${t(`ดัชนีความเขียวชอุ่ม EVI · ${eviPeriodLabel()}`, `Rice Paddy EVI · ${eviPeriodLabel()}`)}`
@@ -6147,6 +6195,17 @@
           <div style="font-size:9px;color:var(--muted);margin-top:6px;opacity:.7">${t(`ที่มา: NASA SMAP 10km · อัปเดต ${fmtDateISO(window.SOIL_DATA?._meta?.updated)}`, `Source: NASA SMAP 10km · Updated ${fmtDateISO(window.SOIL_DATA?._meta?.updated)}`)}</div>
         </div>`;
         }
+        // ── Fire Hotspots detail card ─────────────────────────────────────────────
+        let hotspotsHtml = "";
+        const hotProv = window.HOTSPOT_DATA?.provinces?.[en];
+        if (hotProv) {
+          hotspotsHtml = `<div class="rice-card" style="grid-column:1/-1;background:rgba(255,109,0,.07);border:1px solid rgba(255,109,0,.25)">
+          <div class="t">🔥 ${t("จุดความร้อน (ดาวเทียม)", "Fire Hotspots (satellite)")}</div>
+          <div class="metric"><span class="val" style="color:${hotProv.count_7d > 0 ? "#e65100" : "#66bb6a"}">${hotProv.count_7d}</span> <span class="m-label">${t("จุด / 7 วัน", "pts / 7 days")}</span></div>
+          <div style="font-size:10px;color:var(--muted);margin-top:5px;line-height:1.5">${hotProv.last_date ? t(`พบล่าสุด ${fmtDateISO(hotProv.last_date)}`, `Latest seen ${fmtDateISO(hotProv.last_date)}`) : t("ดาวเทียมไม่พบจุดความร้อนใน 7 วัน", "No hotspots seen in 7 days")}</div>
+          <div style="font-size:9px;color:var(--muted);margin-top:6px;opacity:.7">${t(`ที่มา: NASA FIRMS VIIRS 375 ม. · ตัวเลขต่ำสุด ไม่แยกนา/ไร่/ป่า · อัปเดต ${fmtDateISO(window.HOTSPOT_DATA?._meta?.updated)}`, `Source: NASA FIRMS VIIRS 375 m · lower bound, crops/cane/forest not separated · Updated ${fmtDateISO(window.HOTSPOT_DATA?._meta?.updated)}`)}</div>
+        </div>`;
+        }
         // ── Flood Risk Areas detail card ──────────────────────────────────────────
         let alertsHtml = "";
         const alertsProv = window.ALERTS_DATA?.provinces?.[en];
@@ -6239,6 +6298,7 @@
           forecastHtml +
           alertsHtml +
           soilMoistureHtml +
+          hotspotsHtml +
           diseaseHtml;
         // ── โรงไฟฟ้าชีวมวล detail card ────────────────────────────────────────────
         let biomassHtml = "";
@@ -6380,7 +6440,8 @@
             S.layer === "forecast" ||
             S.layer === "floodExtent" ||
             S.layer === "alerts" ||
-            S.layer === "soilMoisture"
+            S.layer === "soilMoisture" ||
+            S.layer === "hotspots"
               ? "env"
               : S.layer === "straw" || S.layer === "profit" || S.layer === "biomass"
                 ? "econ"
@@ -6925,6 +6986,25 @@ ${
 <div class="rank">${rank ? `${t("อันดับ", "Rank")} #${rank} / ${total}` : t("ไม่มีข้อมูล", "No data")}</div>
 `;
         }
+        // ── Hotspots tooltip ─────────────────────────────────────────────────
+        if (S.layer === "hotspots") {
+          const hp = window.HOTSPOT_DATA?.provinces?.[en];
+          const rank = currentRank(en);
+          const total = getVisibleProvinces().filter((n) => hasLayerValue(n)).length;
+          if (!hp)
+            return `<div class="th">${t(NM[en] || en, en)}</div><div class="en">${en}</div><div style="color:var(--muted);font-size:11px;margin-top:6px">${t("ไม่มีข้อมูล", "No data")}</div>`;
+          const hc = hp.count_7d > 0 ? "#e65100" : "#66bb6a";
+          const lastLine = hp.last_date
+            ? t(`พบล่าสุด ${fmtDateISO(hp.last_date)}`, `Latest seen ${fmtDateISO(hp.last_date)}`)
+            : t("ดาวเทียมไม่พบจุดความร้อนใน 7 วัน", "No hotspots seen in 7 days");
+          return `<div class="th">${t(NM[en] || en, en)}</div>
+<div class="en">${en}</div>
+<div class="type">${t("จุดความร้อน 7 วัน", "Hotspots, 7 days")} · NASA FIRMS</div>
+<div class="value" style="color:${hc}">${hp.count_7d}<small style="font-size:14px"> ${t("จุด", "pts")}</small></div>
+<div style="font-size:10px;color:var(--muted);margin-top:4px;line-height:1.5">${lastLine}${hp.frp_mw ? ` · FRP ${hp.frp_mw} MW` : ""}</div>
+<div style="font-size:9px;color:var(--muted);margin-top:4px;opacity:.75">${t("ตัวเลขต่ำสุด ไม่แยกนา/ไร่/ป่า", "Lower bound · crops/cane/forest not separated")}</div>
+<div class="rank">${rank ? `${t("อันดับ", "Rank")} #${rank} / ${total}` : t("ไม่มีข้อมูล", "No data")}</div>`;
+        }
         // ── Soil Moisture tooltip ────────────────────────────────────────────
         if (S.layer === "soilMoisture") {
           const sp = window.SOIL_DATA?.provinces?.[en];
@@ -7200,6 +7280,11 @@ ${warningsHtml}
             .map((x) => `${t(NM[x.en] || x.en, x.en)} ${x.mm.toFixed(0)}`)
             .join(" · ");
           refs.yearButtons.innerHTML = `<button class="pill on" data-year="alerts">🚨 ${t("เสี่ยงสูงสุดวันนี้", "Highest risk today")}: ${names || t("ไม่มี", "none")} <small style="opacity:.7">${t("มม./7วัน", "mm/7d")}</small></button>`;
+          return;
+        }
+        if (S.layer === "hotspots") {
+          const hm = window.HOTSPOT_DATA?._meta;
+          refs.yearButtons.innerHTML = `<button class="pill on" data-year="hotspots">🔥 NASA FIRMS VIIRS · ${hm?.window?.from || ""} → ${hm?.window?.to || ""}</button>`;
           return;
         }
         if (S.layer === "soilMoisture") {
@@ -7876,6 +7961,9 @@ ${warningsHtml}
         fetchLayerData("agri-warnings.json", "ALERTS_DATA", "alerts");
         fetchLayerData("soil-moisture.json", "SOIL_DATA", "soilMoisture", () => {
           if (S.layer === "soilMoisture") rerender();
+        });
+        fetchLayerData("firms-hotspots.json", "HOTSPOT_DATA", "hotspots", () => {
+          if (S.layer === "hotspots") rerender();
         });
         fetchLayerData("water-level.json", "WATERLEVEL_DATA", "waterlevel", () => {
           if (isPointLayer()) rerender();

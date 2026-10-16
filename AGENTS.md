@@ -37,6 +37,7 @@ python scripts/fetch_rain_forecast.py --selftest
 python scripts/fetch_rain_gsmap.py --selftest
 python scripts/fetch_storm_alerts.py --selftest
 python scripts/fetch_trea_fob.py --selftest
+python scripts/fetch_firms_hotspots.py --selftest
 
 # Fetch live data manually (normally run by GitHub Actions)
 python scripts/fetch_dam_water.py
@@ -109,7 +110,7 @@ Mutate `S` then call `rerender()`. Never read DOM state — always read from `S`
 
 **Data flow:** `valueOf(en, rice, year, layer)` → dispatches to per-layer value functions → `rerender()` → SVG fill colors via `getPalette()` + `lerp()`.
 
-**Current layers (20):** `production`, `yield`, `area`, `naprang`, `naprangArea`, `households`, `price`, `mills`, `profit`, `straw`, `biomass`, `dam`, `gsmap`, `forecast`, `floodExtent` (gauge-observed flood status, ThaiWater), `waterlevel`, `rainstation`, `alerts` (flood risk), `soilMoisture`, `riceEvi` — 18 of the 20 have a button. `soilMoisture` and `riceEvi` had their buttons removed on 4 Sep 2026 but are otherwise untouched: cron, `layerMeta`, `valueFn`, palette, tooltip, province-detail cards and `#layer=` deep links all still work. **Do not delete their code as "unused"** — the province detail panel renders both cards for every province regardless of the active layer. Sidebar also has non-layer cards: Weather Watch (`storm-alerts.json`) and Rice News (`rice-news.json`).
+**Current layers (21):** `production`, `yield`, `area`, `naprang`, `naprangArea`, `households`, `price`, `mills`, `profit`, `straw`, `biomass`, `dam`, `gsmap`, `forecast`, `floodExtent` (gauge-observed flood status, ThaiWater), `waterlevel`, `rainstation`, `alerts` (flood risk), `soilMoisture`, `riceEvi`, `hotspots` (NASA FIRMS fire hotspots, no key) — 19 of the 21 have a button. `soilMoisture` and `riceEvi` had their buttons removed on 4 Sep 2026 but are otherwise untouched: cron, `layerMeta`, `valueFn`, palette, tooltip, province-detail cards and `#layer=` deep links all still work. **Do not delete their code as "unused"** — the province detail panel renders both cards for every province regardless of the active layer. Sidebar also has non-layer cards: Weather Watch (`storm-alerts.json`) and Rice News (`rice-news.json`).
 
 **Profit formula:** `(price ฿/ton × yield kg/rai / 1000) − COST_BASE[rice].oaeRaiCost`
 

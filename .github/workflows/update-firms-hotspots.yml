@@ -1,0 +1,30 @@
+name: Update Fire Hotspots (NASA FIRMS)
+
+on:
+  schedule:
+    # 12:30 UTC (19:30 BKK) — หลังดาวเทียมผ่านช่วงบ่ายไทยและข้อมูล NRT ขึ้นแล้ว
+    - cron: '30 12 * * *'
+  workflow_dispatch:
+
+jobs:
+  update-firms-hotspots:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - run: pip install requests
+      # self-test ครอบเกณฑ์ "ไฟล์ขาด/เก่า" — ถ้าพังต้องแดงก่อนดึง ไม่ใช่เขียนทุกจังหวัดเป็น 0
+      - name: Self-test hotspot logic
+        run: python scripts/fetch_firms_hotspots.py --selftest
+      - name: Fetch hotspots
+        run: python scripts/fetch_firms_hotspots.py
+      - name: Commit and push
+        uses: ./.github/actions/commit-data
+        with:
+          paths: data/firms-hotspots.json
+          message: "auto: update fire hotspots (NASA FIRMS)"
+          date-format: ""

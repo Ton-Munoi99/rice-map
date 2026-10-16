@@ -4,6 +4,15 @@ Last updated: 2026-09-18 by Claude Code
 
 ## Log
 
+- 2026-10-16 (Claude): Added the `hotspots` layer (NASA FIRMS VIIRS active fires per province, last 7 days).
+  Owner picked "count every point, no rice-field filter", which also removed the Earth Engine dependency. The
+  source is FIRMS's public regional CSV (SE Asia 7d, ~87k rows, **no MAP_KEY needed** — an earlier note in this
+  thread said a key was required; that applies to the API, not these files). Points are bbox-filtered to Thailand
+  then assigned with `_point_in_geom` against `thailand-data.js`; 83 of 169 in-bbox points fall in neighbouring
+  countries or the sea and are reported separately in `_meta`. The script refuses a short/old file rather than
+  writing zeros. Season context: only 86 hotspots in 28 provinces now; the November–December burning season is
+  what this is for. Every label says lower bound / not proof of straw burning.
+
 - 2026-10-06 (Claude): Closed the item the 2 Oct audit left open. `build_rice_dataset.py` is stage 1
   of the rice-data chain and rebuilds from zero, so run alone it would have dropped 560 live rows
   (420 rows of OAE 2568-edition data, 140 trend estimates) with no message. It now refuses unless
