@@ -2880,7 +2880,7 @@
 
       // ── per-layer rendering config (merged into layerMeta) ───────────────────
       // format: bignum|int|pct1|signedPct1|mm|num3|signedInt|alertLevel|households
-      // valueFn: 8 env layers อ่าน window.X_DATA?.provinces · palette→getPalette · sourceTh/En→legendType
+      // valueFn: 9 env layers อ่าน window.X_DATA?.provinces · palette→getPalette · sourceTh/En→legendType
       // (valueFn refs ใช้ hoisting — ฟังก์ชันประกาศด้านล่างแต่ JS hoist ขึ้นมาให้)
       Object.entries({
         production: { format: "bignum" },
@@ -3989,7 +3989,7 @@
         if (layer === "straw") return strawValueOf(en, year) ?? 0;
         if (layer === "biomass") return biomassPlantsOf(en);
         const m = layerMeta[layer];
-        if (m?.valueFn) return m.valueFn(en) ?? 0; // 8 env layers (config-driven)
+        if (m?.valueFn) return m.valueFn(en) ?? 0; // 9 env layers (config-driven)
         return Number(entryOf(en, rice, year)[layer] || 0);
       }
 
@@ -3998,7 +3998,7 @@
         if (layer === "mills") return millsValueOf(en) > 0;
         if (layer === "profit") return profitValueOf(en, rice, year) !== null;
         const m = layerMeta[layer];
-        if (m?.valueFn) return m.valueFn(en) != null; // 8 env layers (config-driven)
+        if (m?.valueFn) return m.valueFn(en) != null; // 9 env layers (config-driven)
         return valueOf(en, rice, year, layer) > 0;
       }
 
@@ -4960,8 +4960,8 @@
         if (S.layer === "hotspots") {
           const meta = window.HOTSPOT_DATA?._meta;
           refs.dataSourceNote.textContent = t(
-            `NASA FIRMS · VIIRS 375 ม. (Suomi-NPP) · ${meta?.window?.from || "—"} ถึง ${meta?.window?.to || "—"} (UTC) · นับทุกจุดในจังหวัด ไม่แยกนา/ไร่/ป่า · เป็นตัวเลขต่ำสุด`,
-            `NASA FIRMS · VIIRS 375 m (Suomi-NPP) · ${meta?.window?.from || "—"} to ${meta?.window?.to || "—"} (UTC) · every point in the province, crops/cane/forest not separated · lower bound`,
+            `NASA FIRMS · VIIRS 375 ม. (Suomi-NPP) · ${meta?.window?.from || "—"} ถึง ${meta?.window?.to || "—"} (UTC) · นับทุกจุดในจังหวัด ไม่แยกนา/ไร่/ป่า · ตัดจุดความมั่นใจต่ำและจุดที่ติดซ้ำที่เดิม ≥3 วัน (ปล่องโรงงาน/โรงปูน) · เป็นตัวเลขต่ำสุด`,
+            `NASA FIRMS · VIIRS 375 m (Suomi-NPP) · ${meta?.window?.from || "—"} to ${meta?.window?.to || "—"} (UTC) · every point in the province, crops/cane/forest not separated · low-confidence and same-spot-3+-days (industrial stacks) removed · lower bound`,
           );
           return;
         }
@@ -5135,7 +5135,6 @@
         const meta = layerMeta[S.layer];
         const mode = meta.summaryMode;
         const agg = aggregateFor(visible, S.rice, S.year, S.layer, mode);
-        const leader = covered.map((en) => ({ en, v: valueOf(en) })).sort((a, b) => b.v - a.v)[0];
         const prevYear = previousYear(S.year);
         let yoyText =
           (meta.liveDated ? layerUpdatedLabel() : null) ?? t("ยังไม่มีฐานเทียบ", "No prior year");
@@ -6202,8 +6201,8 @@
           hotspotsHtml = `<div class="rice-card" style="grid-column:1/-1;background:rgba(255,109,0,.07);border:1px solid rgba(255,109,0,.25)">
           <div class="t">🔥 ${t("จุดความร้อน (ดาวเทียม)", "Fire Hotspots (satellite)")}</div>
           <div class="metric"><span class="val" style="color:${hotProv.count_7d > 0 ? "#e65100" : "#66bb6a"}">${hotProv.count_7d}</span> <span class="m-label">${t("จุด / 7 วัน", "pts / 7 days")}</span></div>
-          <div style="font-size:10px;color:var(--muted);margin-top:5px;line-height:1.5">${hotProv.last_date ? t(`พบล่าสุด ${fmtDateISO(hotProv.last_date)}`, `Latest seen ${fmtDateISO(hotProv.last_date)}`) : t("ดาวเทียมไม่พบจุดความร้อนใน 7 วัน", "No hotspots seen in 7 days")}</div>
-          <div style="font-size:9px;color:var(--muted);margin-top:6px;opacity:.7">${t(`ที่มา: NASA FIRMS VIIRS 375 ม. · ตัวเลขต่ำสุด ไม่แยกนา/ไร่/ป่า · อัปเดต ${fmtDateISO(window.HOTSPOT_DATA?._meta?.updated)}`, `Source: NASA FIRMS VIIRS 375 m · lower bound, crops/cane/forest not separated · Updated ${fmtDateISO(window.HOTSPOT_DATA?._meta?.updated)}`)}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:5px;line-height:1.5">${hotProv.last_date ? t(`พบล่าสุด ${fmtDateISO(hotProv.last_date)}`, `Latest seen ${fmtDateISO(hotProv.last_date)}`) : t("ดาวเทียมไม่พบจุดความร้อนใน 7 วัน", "No hotspots seen in 7 days")}${hotProv.near_border_unassigned ? t(` · อีก ${hotProv.near_border_unassigned} จุดชิดชายแดน ไม่นับ (แยกฝั่งไม่ได้)`, ` · ${hotProv.near_border_unassigned} more on the border, not counted (side unclear)`) : ""}</div>
+          <div style="font-size:9px;color:var(--muted);margin-top:6px;opacity:.7">${t(`ที่มา: NASA FIRMS VIIRS 375 ม. · ตัวเลขต่ำสุด ไม่แยกนา/ไร่/ป่า · ตัดปล่องโรงงานแล้ว · อัปเดต ${fmtDateISO(window.HOTSPOT_DATA?._meta?.updated)}`, `Source: NASA FIRMS VIIRS 375 m · lower bound, crops/cane/forest not separated · Updated ${fmtDateISO(window.HOTSPOT_DATA?._meta?.updated)}`)}</div>
         </div>`;
         }
         // ── Flood Risk Areas detail card ──────────────────────────────────────────
@@ -6677,6 +6676,11 @@
                             `พื้นที่เสี่ยงน้ำท่วม อัปเดต ${window.ALERTS_DATA?._meta?.updated || ""} — สร้างจากข้อมูลฝน+เขื่อน`,
                             `Agri alerts updated ${window.ALERTS_DATA?._meta?.updated || ""} — from rain+dam data`,
                           )
+                        : S.layer === "hotspots"
+                          ? t(
+                              `จุดความร้อน 7 วัน ${window.HOTSPOT_DATA?._meta?.window?.from || ""} ถึง ${window.HOTSPOT_DATA?._meta?.window?.to || ""} — NASA FIRMS`,
+                              `7-day hotspots ${window.HOTSPOT_DATA?._meta?.window?.from || ""} to ${window.HOTSPOT_DATA?._meta?.window?.to || ""} — NASA FIRMS`,
+                            )
                         : S.layer === "dam"
                           ? t("ไม่มีข้อมูลอนุกรมเวลา", "No time-series data")
                           : S.layer === "mills"
@@ -7001,9 +7005,9 @@ ${
 <div class="en">${en}</div>
 <div class="type">${t("จุดความร้อน 7 วัน", "Hotspots, 7 days")} · NASA FIRMS</div>
 <div class="value" style="color:${hc}">${hp.count_7d}<small style="font-size:14px"> ${t("จุด", "pts")}</small></div>
-<div style="font-size:10px;color:var(--muted);margin-top:4px;line-height:1.5">${lastLine}${hp.frp_mw ? ` · FRP ${hp.frp_mw} MW` : ""}</div>
-<div style="font-size:9px;color:var(--muted);margin-top:4px;opacity:.75">${t("ตัวเลขต่ำสุด ไม่แยกนา/ไร่/ป่า", "Lower bound · crops/cane/forest not separated")}</div>
-<div class="rank">${rank ? `${t("อันดับ", "Rank")} #${rank} / ${total}` : t("ไม่มีข้อมูล", "No data")}</div>`;
+<div style="font-size:10px;color:var(--muted);margin-top:4px;line-height:1.5">${lastLine}${hp.frp_mw ? ` · FRP ${hp.frp_mw} MW` : ""}${hp.near_border_unassigned ? t(` · อีก ${hp.near_border_unassigned} จุดชิดชายแดน ไม่นับ (แยกฝั่งไม่ได้)`, ` · ${hp.near_border_unassigned} more on the border, not counted (side unclear)`) : ""}</div>
+<div style="font-size:9px;color:var(--muted);margin-top:4px;opacity:.75">${t("ตัวเลขต่ำสุด ไม่แยกนา/ไร่/ป่า · ตัดปล่องโรงงานแล้ว", "Lower bound · crops/cane/forest not separated · industrial stacks removed")}</div>
+${hp.count_7d > 0 && rank ? `<div class="rank">${t("อันดับ", "Rank")} #${rank} / ${total}</div>` : ""}`;
         }
         // ── Soil Moisture tooltip ────────────────────────────────────────────
         if (S.layer === "soilMoisture") {

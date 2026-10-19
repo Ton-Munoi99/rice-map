@@ -4,6 +4,15 @@ Last updated: 2026-09-18 by Claude Code
 
 ## Log
 
+- 2026-10-19 (Claude): Fixed the 9 `/code-review` findings on `hotspots`. Script now drops low-confidence
+  points and "persistent" heat sources (same ~1 km cell incl. 3×3 neighbours on ≥3 dates — Saraburi cement
+  kilns were #5), trims the FIRMS 7×24h file (8 UTC dates) to 7 dates anchored on the newest date with
+  Thai-bbox points (newest UTC date is usually partial), and refuses if any window date has zero in-bbox points.
+  Points <0.05° from a Thai polygon edge aren't counted but are reported per nearest province
+  (`near_border_unassigned`). `_meta` keys changed: `excluded`, `unplaced`, `window.days` replace
+  `in_thailand_bbox_outside_provinces`. UI: no rank for 0-count provinces, spark caption, border note.
+  Known cost of the persistence filter: adjacent paddies burned on 3 different days get dropped too.
+
 - 2026-10-16 (Claude): Added the `hotspots` layer (NASA FIRMS VIIRS active fires per province, last 7 days).
   Owner picked "count every point, no rice-field filter", which also removed the Earth Engine dependency. The
   source is FIRMS's public regional CSV (SE Asia 7d, ~87k rows, **no MAP_KEY needed** — an earlier note in this
