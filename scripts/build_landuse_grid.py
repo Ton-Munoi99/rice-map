@@ -17,7 +17,6 @@ build_landuse_grid.py
 
 Run: python scripts/build_landuse_grid.py [--selftest] [รหัสจังหวัด เช่น lri cri — ใช้ทดสอบ]
 """
-import glob
 import os
 import re
 import sys
@@ -75,14 +74,20 @@ def burn(url, grid, year, transform_for):
             r.raise_for_status()
             for chunk in r.iter_content(1 << 20):
                 f.write(chunk)
-        with zipfile.ZipFile(zpath) as z:
-            z.extractall(tmp)
-        os.remove(zpath)
-        shps = [p for p in glob.glob(os.path.join(tmp, "**", "*.shp"), recursive=True)
-                if re.search(r"LU_[A-Z]+_25\d\d\.shp$", os.path.basename(p), re.I)]
+        # บางจังหวัดเป็น zip ซ้อน zip (สมุทรสาคร: Landuse_skn/สมุทรสาคร2567.zip) — แตกจนไม่เหลือ zip
+        while True:
+            zips = [os.path.join(d, f) for d, _, fs in os.walk(tmp) for f in fs if f.lower().endswith(".zip")]
+            if not zips:
+                break
+            for zp in zips:
+                with zipfile.ZipFile(zp) as z:
+                    z.extractall(zp[:-4] + "_x")
+                os.remove(zp)
+        shps = [os.path.join(d, f) for d, _, fs in os.walk(tmp) for f in fs
+                if re.search(r"LU_[A-Z]+_25\d\d\.shp$", f, re.I)]   # Linux แยกตัวพิมพ์ — .SHP ก็ต้องเจอ
         if len(shps) != 1:
             raise ValueError(f"{url}: เจอ shapefile การใช้ที่ดิน {len(shps)} ไฟล์ (ต้อง 1)")
-        y = int(re.search(r"_(25\d\d)\.shp$", shps[0]).group(1))
+        y = int(re.search(r"_(25\d\d)\.shp$", shps[0], re.I).group(1))
         gdf = gpd.read_file(shps[0], columns=["LU_CODE"]).to_crs(4326)
     cls = gdf["LU_CODE"].map(lu_class)
     x0, y0, x1, y1 = gdf.total_bounds
