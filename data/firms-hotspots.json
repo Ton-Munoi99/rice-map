@@ -9,26 +9,27 @@
    "days": 7,
    "tz": "UTC (acq_date ของดาวเทียม)"
   },
-  "provinces_with_hotspots": 30,
-  "total_in_provinces": 127,
+  "provinces_with_hotspots": 32,
+  "total_in_provinces": 128,
   "excluded": {
    "low_confidence": 6,
-   "persistent_heat_source": 31,
-   "persistent_cells": 11
+   "persistent_heat_source": 42,
+   "persistent_cells": 14
   },
   "unplaced": {
-   "near_border_unassigned": 7,
-   "outside_thailand": 88
+   "near_border_unassigned": 8,
+   "outside_thailand": 94
   },
-  "region_rows": 75274,
-  "note_th": "จุดความร้อนที่ดาวเทียมจับได้ — เป็นตัวเลขต่ำสุด ไม่ใช่ไฟทั้งหมด (ไฟเล็ก ไฟใต้เมฆ หรือไฟที่ดับก่อนดาวเทียมผ่านจะไม่เห็น) · นับทุกจุดในจังหวัด ไม่แยกว่าเป็นนา ไร่ หรือป่า · ตัดจุดความมั่นใจต่ำ และจุดที่ติดซ้ำที่เดิม ≥3 วัน (ปล่องโรงงาน/โรงปูน) ออกแล้ว",
-  "note_en": "Satellite-detected hotspots — a lower bound, not all fires (small, under-cloud or short-lived fires are missed). Every point in the province is counted; crops, cane fields and forest are not distinguished. Low-confidence detections and spots firing on 3+ days in the same place (industrial stacks, cement kilns) are removed."
+  "region_rows": 72305,
+  "landuse": null,
+  "note_th": "จุดความร้อนที่ดาวเทียมจับได้ — เป็นตัวเลขต่ำสุด ไม่ใช่ไฟทั้งหมด (ไฟเล็ก ไฟใต้เมฆ หรือไฟที่ดับก่อนดาวเทียมผ่านจะไม่เห็น) · ตัวเลขบนแผนที่นับทุกจุดในจังหวัด รวมทุกพืชและป่า · ตัดจุดความมั่นใจต่ำ และจุดที่ติดซ้ำที่เดิม ≥3 วัน (ปล่องโรงงาน/โรงปูน) ออกแล้ว",
+  "note_en": "Satellite-detected hotspots — a lower bound, not all fires (small, under-cloud or short-lived fires are missed). The map value counts every point in the province, all crops and forest included. Low-confidence detections and spots firing on 3+ days in the same place (industrial stacks, cement kilns) are removed."
  },
  "provinces": {
   "Mae Hong Son": {
-   "count_7d": 0,
-   "last_date": null,
-   "frp_mw": 0.0,
+   "count_7d": 1,
+   "last_date": "2026-10-19",
+   "frp_mw": 0.4,
    "near_border_unassigned": 0
   },
   "Chumphon": {
@@ -182,9 +183,9 @@
    "near_border_unassigned": 0
   },
   "Phetchabun": {
-   "count_7d": 3,
-   "last_date": "2026-10-17",
-   "frp_mw": 8.9,
+   "count_7d": 4,
+   "last_date": "2026-10-19",
+   "frp_mw": 9.4,
    "near_border_unassigned": 0
   },
   "Suphan Buri": {
@@ -260,9 +261,9 @@
    "near_border_unassigned": 0
   },
   "Saraburi": {
-   "count_7d": 7,
-   "last_date": "2026-10-18",
-   "frp_mw": 15.9,
+   "count_7d": 3,
+   "last_date": "2026-10-19",
+   "frp_mw": 4.5,
    "near_border_unassigned": 0
   },
   "Bangkok Metropolis": {
@@ -398,15 +399,15 @@
    "near_border_unassigned": 0
   },
   "Kalasin": {
-   "count_7d": 3,
+   "count_7d": 5,
    "last_date": "2026-10-19",
-   "frp_mw": 8.5,
+   "frp_mw": 10.0,
    "near_border_unassigned": 0
   },
   "Maha Sarakham": {
-   "count_7d": 0,
-   "last_date": null,
-   "frp_mw": 0.0,
+   "count_7d": 1,
+   "last_date": "2026-10-19",
+   "frp_mw": 0.8,
    "near_border_unassigned": 0
   },
   "Nakhon Ratchasima": {
@@ -467,7 +468,7 @@
    "count_7d": 0,
    "last_date": null,
    "frp_mw": 0.0,
-   "near_border_unassigned": 1
+   "near_border_unassigned": 2
   },
   "Narathiwat": {
    "count_7d": 0,
