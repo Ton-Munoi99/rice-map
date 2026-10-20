@@ -4,15 +4,21 @@ Last updated: 2026-09-18 by Claude Code
 
 ## Log
 
+- 2026-10-20 (Claude): Land-use cache key is no longer manual. `build_landuse_grid.py --fingerprint` reads
+  only each LDD zip's central directory (HTTP Range, ~4 s for 77) and hashes every province's map year plus
+  `CLASSES`/`RES`; the workflow keys the cache on that, so a new LDD map or a classification change rebuilds
+  on its own. restore-keys falls back to the previous grid; cache restore/save are split so a failed build
+  never stores an old grid under a new key. LDD down → key `unknown`, old grid is used, no build attempted.
+
 - 2026-10-20 (Claude): `hotspots` now splits each province's count by the crop under the point (rice /
   sugarcane / cassava / corn / other crop / forest / industry / other / unmapped) using LDD's 1:25,000
   present-land-use maps (77 provinces, survey years 2563–2568 — the 2563 ones include Chiang Rai, Phrae,
   Uttaradit, Nakhon Sawan). Map value is still "every point"; the split is extra (`provinces.*.crops`,
   `landuse_year`, `_meta.landuse`). Licence is CC BY-NC-ND, owner accepted it on 2026-10-20 — so the rasterised grid
   (`data/source/landuse_grid.npz`, 0.00125°, uint8 class + year bands) must **never be committed**; it
-  lives in the Actions cache key `ldd-landuse-grid-v1` and `build_landuse_grid.py` rebuilds it (~3 GB
+  lives in the Actions cache and `build_landuse_grid.py` rebuilds it (~3 GB
   download, one province at a time) only on a cache miss, with `continue-on-error` so a failed build
-  just means `_meta.landuse: null`. Bump the key when LDD publishes new maps. Crop = majority of 3×3
+  just means `_meta.landuse: null`. (Superseded same day: the key is now `ldd-landuse-grid-<fingerprint>`, see the entry above.) Crop = majority of 3×3
   cells (~400 m ≈ one VIIRS pixel). Chose LDD over GLAD 2020 after comparing on Lop Buri's 16 points.
   First CI run after this push does the full build — check its log for "✅ … 77" and the grid size.
 

@@ -22,23 +22,37 @@ jobs:
         run: |
           python scripts/fetch_firms_hotspots.py --selftest
           python scripts/build_landuse_grid.py --selftest
-      # ตารางการใช้ที่ดิน กพด. — สัญญาอนุญาต CC BY-NC-ND ห้ามเผยแพร่ฉบับดัดแปลง จึงอยู่ใน cache
-      # ไม่อยู่ใน git · key คงที่: กพด. ออกแผนที่ใหม่เมื่อไหร่ เปลี่ยน -v1 → -v2 ให้สร้างใหม่
+      # ตารางการใช้ที่ดิน กพด. — สัญญาอนุญาต CC BY-NC-ND ห้ามเผยแพร่ฉบับดัดแปลง จึงอยู่ใน cache ไม่อยู่ใน git
+      # key = รุ่นของแผนที่ (ปีของทุกจังหวัดบนเว็บ กพด. + วิธีแปลง) อ่านแค่หัว zip ~4 วินาที
+      # กพด. ออกแผนที่ใหม่ → key เปลี่ยน → สร้างใหม่เอง ไม่ต้องมีใครจำไปแก้ · เว็บ กพด. ล่ม → "unknown"
+      - name: Land-use map version
+        id: luver
+        run: echo "v=$(python scripts/build_landuse_grid.py --fingerprint || echo unknown)" >> "$GITHUB_OUTPUT"
+      # restore-keys: ไม่ตรงรุ่นก็ดึงตารางรุ่นก่อนมาใช้ไปก่อน — แผนที่เก่ายังดีกว่าไม่แยกพืช
       - name: Restore land-use grid
         id: landuse
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: data/source/landuse_grid.npz
-          key: ldd-landuse-grid-v1
-      # cache หาย (ครั้งแรก / ไม่ถูกใช้ 7 วัน) → ดาวน์โหลด ~3 GB จาก กพด. ทีละจังหวัด
-      # ล้มได้โดยไม่ล้มทั้ง job: จุดความร้อนยังอัปเดต แค่ไม่แยกชนิดพืช (_meta.landuse = null)
-      - name: Build land-use grid (cache miss only)
-        if: steps.landuse.outputs.cache-hit != 'true'
+          key: ldd-landuse-grid-${{ steps.luver.outputs.v }}
+          restore-keys: ldd-landuse-grid-
+      # ไม่ตรงรุ่น (ครั้งแรก / แผนที่ใหม่ / cache ไม่ถูกใช้ 7 วัน) → ดาวน์โหลด ~3 GB ทีละจังหวัด ~18 นาที
+      # ล้มได้โดยไม่ล้มทั้ง job: ตารางรุ่นก่อน (ถ้ามี) ยังอยู่ เพราะ builder เขียนไฟล์เฉพาะตอนครบ 77 จังหวัด
+      - name: Build land-use grid (new map version only)
+        id: build
+        if: steps.landuse.outputs.cache-hit != 'true' && steps.luver.outputs.v != 'unknown'
         continue-on-error: true
         timeout-minutes: 90
         run: |
           pip install geopandas rasterio
           python scripts/build_landuse_grid.py
+      # save แยกจาก restore: เก็บเฉพาะตอนสร้างสำเร็จ — ไม่งั้นตารางเก่าจะถูกเก็บใต้ key ใหม่แล้วไม่สร้างใหม่อีกเลย
+      - name: Save land-use grid
+        if: steps.build.outcome == 'success'
+        uses: actions/cache/save@v4
+        with:
+          path: data/source/landuse_grid.npz
+          key: ldd-landuse-grid-${{ steps.luver.outputs.v }}
       - name: Fetch hotspots
         run: python scripts/fetch_firms_hotspots.py
       - name: Commit and push

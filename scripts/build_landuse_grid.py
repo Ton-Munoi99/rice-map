@@ -15,7 +15,7 @@ build_landuse_grid.py
 ดาวน์โหลด ~3 GB ทีละจังหวัด แล้วลบทิ้งทันที (ใช้ดิสก์ทีละไม่กี่ร้อย MB) · รันเฉพาะตอน cache หาย
 ไม่ครบ 77 จังหวัด = exit 1 และไม่เขียนไฟล์ (ตารางมีรูจะทำให้จุดในจังหวัดที่ขาดกลายเป็น "ไม่มีข้อมูล" เงียบๆ)
 
-Run: python scripts/build_landuse_grid.py [--selftest] [รหัสจังหวัด เช่น lri cri — ใช้ทดสอบ]
+Run: python scripts/build_landuse_grid.py [--selftest | --fingerprint] [รหัสจังหวัด เช่น lri cri — ใช้ทดสอบ]
 """
 import os
 import re
@@ -38,6 +38,37 @@ RES = 0.00125
 N_PROVINCES = 77
 # 0 = นอกแผนที่ · ลำดับนี้ถูกเก็บลงไฟล์ด้วย ฝั่งอ่านไม่ต้อง hardcode
 CLASSES = ["unmapped", "rice", "sugarcane", "cassava", "corn", "other_crop", "forest", "industry", "other"]
+
+
+def zip_names(url):
+    """ชื่อไฟล์ใน zip จาก central directory อย่างเดียว (HTTP Range ~ไม่กี่ KB ไม่ต้องโหลดทั้งไฟล์)"""
+    import struct
+    tail = requests.get(url, headers={"Range": "bytes=-65557"}, timeout=60).content
+    e = tail.rfind(b"PK\x05\x06")
+    size, off = struct.unpack("<II", tail[e + 12:e + 20])
+    d = requests.get(url, headers={"Range": f"bytes={off}-{off + size - 1}"}, timeout=60).content
+    names, i = [], 0
+    while d[i:i + 4] == b"PK\x01\x02":
+        flags, = struct.unpack("<H", d[i + 8:i + 10])
+        ln, le, lc = struct.unpack("<HHH", d[i + 28:i + 34])
+        names.append(d[i + 46:i + 46 + ln].decode("utf-8" if flags & 0x800 else "cp874", "replace"))
+        i += 46 + ln + le + lc
+    return names
+
+
+def fingerprint():
+    """รุ่นของแผนที่ = ปีของทุกจังหวัด + วิธีแปลง → ใช้เป็น cache key ใน CI
+       กพด. ออกแผนที่จังหวัดไหนใหม่ (ชื่อไฟล์ zip เดิม แต่ปีข้างในเปลี่ยน) หรือแก้ CLASSES/RES → key เปลี่ยน → สร้างใหม่เอง"""
+    import hashlib
+    from concurrent.futures import ThreadPoolExecutor
+    urls = zip_urls()
+    with ThreadPoolExecutor(8) as ex:
+        years = list(ex.map(lambda u: sorted(set(re.findall(r"25\d\d", " ".join(zip_names(u))))), urls))
+    missing = [u for u, y in zip(urls, years) if not y]
+    if missing:
+        raise SystemExit(f"อ่านปีไม่ได้ {len(missing)} ไฟล์: {missing[:3]}")
+    key = "|".join(f"{u.rsplit('_', 1)[1]}:{','.join(y)}" for u, y in zip(urls, years)) + f"|{CLASSES}|{RES}"
+    return hashlib.sha1(key.encode()).hexdigest()[:12]
 
 
 def lu_class(code):
@@ -149,5 +180,7 @@ def _selftest():
 if __name__ == "__main__":
     if "--selftest" in sys.argv:
         _selftest()
+    elif "--fingerprint" in sys.argv:
+        print(fingerprint())
     else:
         main({a.lower() for a in sys.argv[1:]})
