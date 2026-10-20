@@ -16,10 +16,29 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.11'
-      - run: pip install requests
+      - run: pip install requests numpy
       # self-test ครอบเกณฑ์ "ไฟล์ขาด/เก่า" — ถ้าพังต้องแดงก่อนดึง ไม่ใช่เขียนทุกจังหวัดเป็น 0
       - name: Self-test hotspot logic
-        run: python scripts/fetch_firms_hotspots.py --selftest
+        run: |
+          python scripts/fetch_firms_hotspots.py --selftest
+          python scripts/build_landuse_grid.py --selftest
+      # ตารางการใช้ที่ดิน กพด. — สัญญาอนุญาต CC BY-NC-ND ห้ามเผยแพร่ฉบับดัดแปลง จึงอยู่ใน cache
+      # ไม่อยู่ใน git · key คงที่: กพด. ออกแผนที่ใหม่เมื่อไหร่ เปลี่ยน -v1 → -v2 ให้สร้างใหม่
+      - name: Restore land-use grid
+        id: landuse
+        uses: actions/cache@v4
+        with:
+          path: data/source/landuse_grid.npz
+          key: ldd-landuse-grid-v1
+      # cache หาย (ครั้งแรก / ไม่ถูกใช้ 7 วัน) → ดาวน์โหลด ~3 GB จาก กพด. ทีละจังหวัด
+      # ล้มได้โดยไม่ล้มทั้ง job: จุดความร้อนยังอัปเดต แค่ไม่แยกชนิดพืช (_meta.landuse = null)
+      - name: Build land-use grid (cache miss only)
+        if: steps.landuse.outputs.cache-hit != 'true'
+        continue-on-error: true
+        timeout-minutes: 90
+        run: |
+          pip install geopandas rasterio
+          python scripts/build_landuse_grid.py
       - name: Fetch hotspots
         run: python scripts/fetch_firms_hotspots.py
       - name: Commit and push

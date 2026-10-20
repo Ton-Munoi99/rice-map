@@ -4,6 +4,8 @@ fetch_firms_hotspots.py
 -----------------------
 จุดความร้อน (active fire) จากดาวเทียม NASA/NOAA VIIRS 7 วันล่าสุด → data/firms-hotspots.json
 นับรายจังหวัด ทุกจุดที่ตกในจังหวัด (ไม่กรองพื้นที่นาข้าว — เจ้าของเลือกแบบนี้ 16 ต.ค. 69)
++ แยกจำนวนตามชนิดพืชใต้จุด (นา/อ้อย/มัน/ข้าวโพด/...) จากแผนที่การใช้ที่ดิน กพด. — เจ้าของเลือก 20 ต.ค. 69
+  ตัวเลขบนแผนที่ยังเป็น "ทุกจุด" เหมือนเดิม การแยกพืชเป็นข้อมูลเสริม
 
 แหล่งข้อมูล: NASA FIRMS ไฟล์สาธารณะ ไม่ต้องใช้ MAP_KEY
   https://firms.modaps.eosdis.nasa.gov/data/active_fire/suomi-npp-viirs-c2/csv/
@@ -52,6 +54,36 @@ MAX_STALE_DAYS = 2         # วันล่าสุดในไฟล์ห่
 PERSIST_CELL_DEG = 0.01    # ~1 กม. — ใหญ่กว่าความคลาดตำแหน่ง VIIRS 375 ม. แต่เล็กกว่านาแปลงข้างเคียง
 PERSIST_MIN_DAYS = 3       # ช่องที่ติดซ้ำวันที่ต่างกันเท่านี้ใน 7 วัน = แหล่งความร้อนประจำ ไม่ใช่การเผา
 NEAR_BORDER_DEG = 0.05     # ~5 กม. — จุดนอก polygon ที่ใกล้ขอบไทยขนาดนี้ แยกไม่ออกว่าอยู่ฝั่งไหน
+
+# ตารางการใช้ที่ดิน กพด. จาก build_landuse_grid.py — ไม่อยู่ใน git (สัญญาอนุญาตห้ามเผยแพร่ฉบับดัดแปลง)
+# CI ดึงจาก Actions cache · ไม่มีไฟล์ = ไม่แยกชนิดพืช และ _meta.landuse = null
+LANDUSE = os.path.join(os.path.dirname(OUTPUT), "source", "landuse_grid.npz")
+
+
+def load_landuse(path=LANDUSE):
+    """→ (crop_of(lon, lat) -> (ชนิดพืช, ปี พ.ศ. ของแผนที่), [ปีที่มี]) หรือ None ถ้าไม่มีไฟล์
+       ชนิดพืช = ส่วนใหญ่ใน 3×3 ช่อง (~400 ม.) ≈ 1 pixel VIIRS — จุดกลางอย่างเดียวพลาดง่าย
+       เพราะ pixel 375 ม. คร่อมหลายแปลง"""
+    import numpy as np
+    try:
+        z = np.load(path)
+    except FileNotFoundError:
+        return None
+    grid, year, res = z["grid"], z["year"], float(z["res"])
+    lon0, lat1 = float(z["bbox"][0]), float(z["bbox"][3])
+    names = [str(c) for c in z["classes"]]
+
+    def crop_of(lon, lat):
+        r, c = math.floor((lat1 - lat) / res), math.floor((lon - lon0) / res)
+        if not (0 <= r < grid.shape[0] and 0 <= c < grid.shape[1]):   # index ติดลบ numpy จะวนไปอีกฝั่ง
+            return "unmapped", None
+        win =(slice(max(r - 1, 0), r + 2), slice(max(c - 1, 0), c + 2))
+        g, y = grid[win].ravel(), year[win].ravel()
+        if not (g > 0).any():
+            return "unmapped", None
+        return names[np.bincount(g[g > 0]).argmax()], int(np.bincount(y[y > 0]).argmax()) + 2500
+
+    return crop_of, [int(v) for v in z["years"]]
 
 
 def parse_rows(text):
@@ -143,8 +175,8 @@ def edge_dist(lon, lat, rings):
     return best
 
 
-def assign(rows, shapes):
-    """จุด → จังหวัด · จุดที่ไม่ตก polygon ไหน แยกเป็น 2 กอง:
+def assign(rows, shapes, crop_of=None):
+    """จุด → จังหวัด (+ ชนิดพืชใต้จุดถ้ามี crop_of) · จุดที่ไม่ตก polygon ไหน แยกเป็น 2 กอง:
        near_border  ห่างขอบไทย < ~5 กม. (polygon แบบย่ออาจตัดจุดฝั่งไทยออก หรืออาจเป็นฝั่งเพื่อนบ้าน
                     แยกไม่ได้) — บันทึกไว้ที่จังหวัดที่ใกล้สุด แต่ไม่นับรวม count_7d
        outside      ไกลกว่านั้น = ประเทศเพื่อนบ้าน/ทะเล"""
@@ -175,8 +207,16 @@ def assign(rows, shapes):
         p["frp_mw"] += r["_frp"]
         if p["last_date"] is None or r["acq_date"] > p["last_date"]:
             p["last_date"] = r["acq_date"]
+        if crop_of:
+            crop, yr = crop_of(lon, lat)
+            p.setdefault("crops", {})[crop] = p.get("crops", {}).get(crop, 0) + 1
+            if yr:
+                p.setdefault("_years", []).append(yr)
     for p in prov.values():
         p["frp_mw"] = round(p["frp_mw"], 1)
+        if "_years" in p:   # ปีของแผนที่ที่จุดส่วนใหญ่ตก — จังหวัดชายขอบอาจตกแผนที่ของจังหวัดข้างเคียง
+            ys = p.pop("_years")
+            p["landuse_year"] = max(set(ys), key=ys.count)
     return prov, {"near_border_unassigned": near, "outside_thailand": outside}
 
 
@@ -187,7 +227,8 @@ def main():
     rows = parse_rows(r.text)
     window = check_region(rows, today_utc)   # ล้ม = exit 1 ก่อนเขียน ข้อมูลเดิมอยู่ครบ
     kept, dropped = select(rows, window)
-    prov, placed = assign(kept, province_shapes())
+    lu = load_landuse()
+    prov, placed = assign(kept, province_shapes(), lu[0] if lu else None)
 
     # พูดในข้อมูลแล้ว assert: ป้ายเขียนว่า 7 วัน
     days_spanned = (datetime.strptime(window[-1], "%Y-%m-%d") - datetime.strptime(window[0], "%Y-%m-%d")).days + 1
@@ -205,12 +246,18 @@ def main():
             "excluded": dropped,
             "unplaced": placed,
             "region_rows": len(rows),
+            # null = ไม่ได้แยกชนิดพืชรอบนี้ (ตารางใน cache หาย/สร้างไม่สำเร็จ) — UI ต้องซ่อนส่วนแยกพืช
+            "landuse": {
+                "source": "กรมพัฒนาที่ดิน · แผนที่สภาพการใช้ที่ดิน 1:25,000 (CC BY-NC-ND)",
+                "years": lu[1],
+                "method": "ชนิดพืชส่วนใหญ่ในรัศมี ~200 ม. รอบจุด (≈ 1 pixel VIIRS) · พืชอาจเปลี่ยนจากปีที่สำรวจ",
+            } if lu else None,
             "note_th": "จุดความร้อนที่ดาวเทียมจับได้ — เป็นตัวเลขต่ำสุด ไม่ใช่ไฟทั้งหมด (ไฟเล็ก ไฟใต้เมฆ "
-                       "หรือไฟที่ดับก่อนดาวเทียมผ่านจะไม่เห็น) · นับทุกจุดในจังหวัด ไม่แยกว่าเป็นนา ไร่ หรือป่า · "
+                       "หรือไฟที่ดับก่อนดาวเทียมผ่านจะไม่เห็น) · ตัวเลขบนแผนที่นับทุกจุดในจังหวัด รวมทุกพืชและป่า · "
                        "ตัดจุดความมั่นใจต่ำ และจุดที่ติดซ้ำที่เดิม ≥3 วัน (ปล่องโรงงาน/โรงปูน) ออกแล้ว",
             "note_en": "Satellite-detected hotspots — a lower bound, not all fires (small, under-cloud or "
-                       "short-lived fires are missed). Every point in the province is counted; crops, "
-                       "cane fields and forest are not distinguished. Low-confidence detections and "
+                       "short-lived fires are missed). The map value counts every point in the province, "
+                       "all crops and forest included. Low-confidence detections and "
                        "spots firing on 3+ days in the same place (industrial stacks, cement kilns) are removed.",
         },
         "provinces": prov,
@@ -223,7 +270,8 @@ def main():
           f"({days_spanned} วัน) · ตัดความมั่นใจต่ำ {dropped['low_confidence']} · ตัดแหล่งความร้อนประจำ "
           f"{dropped['persistent_heat_source']} ({dropped['persistent_cells']} ช่อง) · ใกล้ชายแดนไม่นับ "
           f"{placed['near_border_unassigned']} · นอกไทย {placed['outside_thailand']} · สูงสุด "
-          + ", ".join(f"{n} {p['count_7d']}" for n, p in top))
+          + ", ".join(f"{n} {p['count_7d']} {p.get('crops', '')}" for n, p in top)
+          + ("" if lu else " · ⚠️ ไม่มีตารางการใช้ที่ดิน — ไม่แยกชนิดพืช"))
 
 
 def _selftest():
@@ -240,6 +288,28 @@ def _selftest():
     assert prov["A"]["count_7d"] == 2 and prov["A"]["frp_mw"] == 5.5, prov
     assert prov["A"]["last_date"] == "2026-10-02" and prov["A"]["near_border_unassigned"] == 1, prov
     assert placed == {"near_border_unassigned": 1, "outside_thailand": 1}, placed
+    assert "crops" not in prov["A"]                          # ไม่มีตาราง = ไม่มีส่วนแยกพืช
+
+    # แยกชนิดพืช: ตาราง 0.1° ตกแต่งเอง · ชนิดพืช = ส่วนใหญ่ใน 3×3 ไม่ใช่ช่องกลางช่องเดียว
+    import tempfile
+    import numpy as np
+    g = np.zeros((10, 10), np.uint8)
+    g[:, :] = 1                                   # rice ทั้งกรอบ
+    g[2:5, 2:5] = 3                               # ก้อนมัน 3×3
+    g[3, 3] = 1                                   # ช่องกลางเป็นนา แต่ล้อมด้วยมัน 8 ช่อง → ต้องได้มัน
+    yr = np.full((10, 10), 66, np.uint8)
+    with tempfile.TemporaryDirectory() as tmp:
+        path = os.path.join(tmp, "lu.npz")
+        np.savez_compressed(path, grid=g, year=yr, bbox=np.array((100.0, 14.0, 101.0, 15.0)), res=0.1,
+                            classes=np.array(["unmapped", "rice", "sugarcane", "cassava"]), years=np.array([2566]))
+        crop_of, years = load_landuse(path)
+        assert years == [2566]
+        assert crop_of(100.35, 14.65) == ("cassava", 2566), crop_of(100.35, 14.65)   # แถว 3 คอลัมน์ 3
+        assert crop_of(100.85, 14.15) == ("rice", 2566)
+        assert crop_of(99.0, 14.5) == ("unmapped", None)                             # นอกตาราง
+        prov, _ = assign([mk(100.35, 14.65, "2026-10-01"), mk(100.85, 14.15, "2026-10-02")], shapes, crop_of)
+        assert prov["A"]["crops"] == {"cassava": 1, "rice": 1} and prov["A"]["landuse_year"] == 2566, prov
+    assert load_landuse(os.path.join(tempfile.gettempdir(), "no-such-landuse.npz")) is None
 
     # ตัดความมั่นใจต่ำ + แหล่งความร้อนประจำ (ติดที่เดิม 3 วัน) แต่ไม่ตัดไฟที่ติด 2 วัน
     window = [f"2026-10-{d:02d}" for d in range(10, 17)]

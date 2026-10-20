@@ -38,6 +38,7 @@ python scripts/fetch_rain_gsmap.py --selftest
 python scripts/fetch_storm_alerts.py --selftest
 python scripts/fetch_trea_fob.py --selftest
 python scripts/fetch_firms_hotspots.py --selftest
+python scripts/build_landuse_grid.py --selftest
 
 # Fetch live data manually (normally run by GitHub Actions)
 python scripts/fetch_dam_water.py

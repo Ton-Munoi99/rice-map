@@ -4,6 +4,18 @@ Last updated: 2026-09-18 by Claude Code
 
 ## Log
 
+- 2026-10-20 (Claude): `hotspots` now splits each province's count by the crop under the point (rice /
+  sugarcane / cassava / corn / other crop / forest / industry / other / unmapped) using LDD's 1:25,000
+  present-land-use maps (77 provinces, survey years 2563–2568 — the 2563 ones include Chiang Rai, Phrae,
+  Uttaradit, Nakhon Sawan). Map value is still "every point"; the split is extra (`provinces.*.crops`,
+  `landuse_year`, `_meta.landuse`). Licence is CC BY-NC-ND, owner accepted it on 2026-10-20 — so the rasterised grid
+  (`data/source/landuse_grid.npz`, 0.00125°, uint8 class + year bands) must **never be committed**; it
+  lives in the Actions cache key `ldd-landuse-grid-v1` and `build_landuse_grid.py` rebuilds it (~3 GB
+  download, one province at a time) only on a cache miss, with `continue-on-error` so a failed build
+  just means `_meta.landuse: null`. Bump the key when LDD publishes new maps. Crop = majority of 3×3
+  cells (~400 m ≈ one VIIRS pixel). Chose LDD over GLAD 2020 after comparing on Lop Buri's 16 points.
+  First CI run after this push does the full build — check its log for "✅ … 77" and the grid size.
+
 - 2026-10-19 (Claude): Fixed the 9 `/code-review` findings on `hotspots`. Script now drops low-confidence
   points and "persistent" heat sources (same ~1 km cell incl. 3×3 neighbours on ≥3 dates — Saraburi cement
   kilns were #5), trims the FIRMS 7×24h file (8 UTC dates) to 7 dates anchored on the newest date with
