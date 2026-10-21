@@ -291,39 +291,6 @@
         overflow: hidden;
       }
 
-      .stat-chip {
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        padding: 14px 16px;
-        border-radius: 18px;
-        border: 1px solid var(--line);
-        background: linear-gradient(145deg, rgba(17, 31, 39, 0.88), rgba(13, 23, 29, 0.74));
-      }
-
-      .stat-chip .k {
-        font-family: "IBM Plex Mono", monospace;
-        font-size: 10px;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        color: var(--muted);
-      }
-
-      .stat-chip .v {
-        font-family: "IBM Plex Mono", monospace;
-        font-size: 22px;
-        font-weight: 600;
-        letter-spacing: -0.02em;
-        margin-top: 12px;
-      }
-
-      .stat-chip .s {
-        font-size: 12px;
-        line-height: 1.45;
-        color: var(--text-soft);
-        margin-top: 8px;
-      }
-
       .map-wrap {
         position: relative;
         flex: 1;
@@ -2581,55 +2548,6 @@
         // เคยทำให้ พ.ย. ขึ้นว่า "กำลังโต" ทั้งที่ถึงรอบเก็บเกี่ยวแล้ว)
         return RiceSeason.of(regionOf(en));
       }
-
-      // ── Rice EVI tier thresholds (mirrors STAGE_MAP above) ───────────────────
-      // labelTh/labelEn are static strings; call t(tier.labelTh, tier.labelEn) at render time
-      // tier = ระดับ "ความเขียว" (EVI magnitude) ซึ่งเป็นสิ่งที่สีบนแผนที่แทน
-      // ป้ายบอก "ความหนาแน่นของทรงพุ่ม" ไม่ใช่ระยะข้าว — ข้าวไวแสง (หอมมะลิ/เหนียว
-      // ซึ่งครองพื้นที่อีสาน) ทรงพุ่มปิดตั้งแต่ ก.ค. แต่ออกรวงราว 20 ต.ค. ตามช่วงแสง
-      const RICE_EVI_TIERS = [
-        {
-          labelTh: "🌾 เขียวจัดมาก (≥0.55)",
-          labelEn: "🌾 Very dense canopy (≥0.55)",
-          min: 0.55,
-          color: "#2e7d32",
-          descTh: "ทรงพุ่มเขียวสูงสุด · ระยะข้าวจริงขึ้นกับพันธุ์ — ข้าวไวแสง (หอมมะลิ/เหนียว) ทรงพุ่มปิดตั้งแต่ ก.ค. แต่ออกรวง ต.ค.",
-          descEn: "Peak canopy greenness · actual crop stage depends on variety — photoperiod-sensitive rice closes canopy months before heading",
-        },
-        {
-          labelTh: "🌾 เขียวหนา (0.40–0.55)",
-          labelEn: "🌾 Dense canopy (0.40–0.55)",
-          min: 0.4,
-          color: "#4caf50",
-          descTh: "ทรงพุ่มหนาแน่น — ขาขึ้น = ยังขยายตัว / ขาลง = เริ่มโรย",
-          descEn: "Dense canopy — rising = still expanding / falling = declining",
-        },
-        {
-          labelTh: "🌿 เขียวปานกลาง (0.25–0.40)",
-          labelEn: "🌿 Moderate canopy (0.25–0.40)",
-          min: 0.25,
-          color: "#8bc34a",
-          descTh: "ขาขึ้น = ทรงพุ่มกำลังขยาย / ขาลง = ทรงพุ่มเริ่มโรย",
-          descEn: "Rising = canopy expanding / falling = canopy declining",
-        },
-        {
-          labelTh: "🌱 เขียวน้อย (0.15–0.25)",
-          labelEn: "🌱 Sparse canopy (0.15–0.25)",
-          min: 0.15,
-          color: "#ff9800",
-          descTh: "ขาขึ้น = เริ่มมีพืชปกคลุม / ขาลง = ทรงพุ่มโล่งลง (เก็บเกี่ยวแล้วหรือยังไม่ปลูก)",
-          descEn: "Rising = cover appearing / falling = cover cleared",
-        },
-        {
-          labelTh: "🟫 แทบไม่มีพืชปกคลุม (<0.15)",
-          labelEn: "🟫 Little/no canopy (<0.15)",
-          min: 0.0,
-          color: "#8d6e63",
-          descTh: "ดินเปล่า เตรียมแปลง หรือมีน้ำขัง",
-          descEn: "Bare soil, land prep, or standing water",
-        },
-      ];
-
 
       const layerMeta = {
         production: {
@@ -5395,11 +5313,28 @@
         }
 
         const max = allSorted[0]?.v || 1;
-        // drought/profit: ใช้ absolute value เพราะมีค่าติดลบ
+        // profit: ใช้ absolute value เพราะมีค่าติดลบ
         const maxAbs =
           S.layer === "profit" ? Math.max(...items.map((i) => Math.abs(i.v)), 1) : max || 1;
         const palette = getPalette();
-
+        // รายการนี้วาดให้ทุก layer — ตอนตัด NDVI (1da884c, 19 ส.ค. 69) ลบทั้งโซ่ if/else ไปด้วย
+        // เหลือแค่หัวข้อ "Top 10" กับรายการว่างอยู่ 2 เดือน ไม่มีใครเห็นเพราะตรวจแค่หัวข้อ
+        refs.topList.innerHTML = items
+          .map((item, idx) => {
+            const pct = Math.max(6, (Math.abs(item.v) / maxAbs) * 100);
+            const t01 =
+              S.layer === "profit"
+                ? Math.max(0, Math.min(1, 0.5 + 0.5 * (item.v / maxAbs)))
+                : Math.max(0.16, item.v / (max || 1));
+            const tone = lerp(palette.lo, palette.hi, t01);
+            return `<div class="rank-row" onclick="selectProvince('${item.en.replace(/'/g, "\\'")}')">
+        <div class="rank-index">#${idx + 1}</div>
+        <div class="rank-name">${t(NM[item.en] || item.en, item.en)}<br><small style="font-size:9px;opacity:.65">${item.en}</small></div>
+        <div class="rank-track"><div class="rank-fill" style="width:${pct.toFixed(1)}%;background:${rgb(tone)}"></div></div>
+        <div class="rank-value">${fmtCompact(item.v)}</div>
+      </div>`;
+          })
+          .join("");
       }
 
       function currentRank(en) {
@@ -5457,20 +5392,43 @@
         });
       })();
 
+      // กราฟแท่งฝนรายวันในการ์ดจังหวัด (ฝน 7 วัน · ดาวเทียม · พยากรณ์) · สี = [>50, >15, >0 มม.]
+      function rainBars(vals, dates, [hi, mid, lo]) {
+        if (!vals.length) return "";
+        const cW = 220, cH = 44, lblH = 16, gap = vals.length > 1 ? 3 : 0;
+        const max = Math.max(...vals, 1);
+        const barW = Math.max(4, Math.floor((cW - gap * (vals.length - 1)) / vals.length));
+        const bars = vals
+          .map((v, i) => {
+            const x = i * (barW + gap);
+            const bH = Math.max(v > 0 ? 2 : 0, Math.round((v / max) * cH));
+            const y = cH - bH;
+            const fill = v > 50 ? hi : v > 15 ? mid : v > 0 ? lo : "rgba(255,255,255,.1)";
+            const day = dates[i] ? dates[i].slice(8) : String(i + 1);
+            return (
+              `<rect x="${x}" y="${y}" width="${barW}" height="${bH}" rx="1" fill="${fill}"/>` +
+              (v >= 1
+                ? `<text x="${x + barW / 2}" y="${y - 2}" text-anchor="middle" font-size="8" fill="${lo}">${Math.round(v)}</text>`
+                : "") +
+              `<text x="${x + barW / 2}" y="${cH + lblH - 2}" text-anchor="middle" font-size="8" fill="rgba(255,255,255,.5)">${day}</text>`
+            );
+          })
+          .join("");
+        return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${cW} ${cH + lblH}" style="width:100%;max-width:${cW}px;display:block;margin:6px auto 0;overflow:visible">${bars}</svg>`;
+      }
+
       function selectProvince(en) {
         S.sel = en;
         syncHash();
         hideTooltip();
         refs.detailCard.classList.add("show");
         refs.detailPlaceholder.style.display = "none";
-        // lazy-load district data when NDVI or riceEvi layer is active
-        if (S.layer === "riceEvi") {
-          if (!window.NDVI_DISTRICT) {
-            loadDistrictData().then(() => {
-              // re-render once data arrives (only if still same province selected)
-              if (S.sel === en) selectProvince(en);
-            });
-          }
+        // lazy-load ข้อมูลรายอำเภอเมื่ออยู่ layer riceEvi · วาดใหม่เฉพาะตอนข้อมูลมาถึงจริง —
+        // เดิมเช็ก NDVI_DISTRICT ที่ไม่มีใครตั้งแล้ว (ตั้งแต่ตัด NDVI) จึงเรียกตัวเองวนไม่รู้จบ หน้าค้าง
+        if (S.layer === "riceEvi" && !window.RICE_EVI_DISTRICT) {
+          loadDistrictData().then(() => {
+            if (window.RICE_EVI_DISTRICT && S.sel === en) selectProvince(en);
+          });
         }
         refs.detailName.textContent = t(NM[en] || en, en);
         refs.detailEn.textContent = en;
@@ -5498,8 +5456,6 @@
     </div>`
             : "";
 
-        let fertHtml = "";
-
         // ── Weather detail card ──────────────────────────────────────────────
         let weatherHtml = "";
         if (WEATHER_DATA?.provinces?.[en]) {
@@ -5507,7 +5463,11 @@
           const seasonLabel = WEATHER_DATA._meta?.season_label?.split("·")[0]?.trim() || "นาปี 2568";
           const avgRain = seasonNormalToDate(en);   // ค่าปกติของช่วงเดียวกัน ไม่ใช่ทั้งฤดู
           const baseYrs = WEATHER_FORECAST?._meta?.base_years || "—";
-          const anomaly = weatherValueOf(en, "drought"); // reuse existing calculation
+          // % เบี่ยงเบนจากค่าปกติ 5 ปี เทียบ "ช่วงเวลาเดียวกัน" ไม่ใช่ทั้งฤดู
+          const anomaly =
+            avgRain != null && wp.season_rainfall_mm
+              ? Math.round(((wp.season_rainfall_mm - avgRain) / avgRain) * 1000) / 10
+              : null;
           const anomColor =
             anomaly == null
               ? "var(--muted)"
@@ -5611,7 +5571,6 @@
           </div>`;
         }
 
-        // ── NDVI detail card ──────────────────────────────────────────────────
         // ── Rice EVI detail card ─────────────────────────────────────────────
         let riceEviHtml = "";
         const riceEviProv = window.RICE_EVI_DATA?.provinces?.[en];
@@ -5637,7 +5596,6 @@
           const stage = riceEviProv.stage;
           const riceRai = riceEviProv.rice_rai || 0;
           const confidence = riceEviProv.confidence ?? null;
-          const phenoWindow = window.RICE_EVI_DATA?._meta?.phenology_window || "";
           const stg = STAGE_MAP[stage] || STAGE_MAP.growing;
           // ── confidence color: เขียว ≥90%, เหลือง 70-90%, แดง <70%
           const confColor =
@@ -5771,7 +5729,6 @@
         // ─────────────────────────────────────────────────────────────────────
 
         const cardHtml = RICE_TYPES.map((rice) => {
-          const entryForRice = entryOf(en, rice, S.year);
           const estNote = isEstimated(en, rice, S.year)
             ? `<div class="est-note">📊 ${t(`ประมาณการ: ${estBasisText(S.year).th}`, `Estimate: ${estBasisText(S.year).en}`)}</div>`
             : "";
@@ -6007,15 +5964,7 @@
           const rainDates = window.RAIN_DATA?._meta?.dates || [];
           const updated = window.RAIN_DATA?._meta?.updated || "";
           const rainCol =
-            rain7d > 100
-              ? "#006064"
-              : rain7d > 50
-                ? "#0097a7"
-                : rain7d > 15
-                  ? "#0097a7"
-                  : rain7d > 0
-                    ? "#4dd0e1"
-                    : "var(--muted)";
+            rain7d > 100 ? "#006064" : rain7d > 15 ? "#0097a7" : rain7d > 0 ? "#4dd0e1" : "var(--muted)";
           const rainLabel =
             rain7d > 100
               ? t("ฝนหนักมาก 🌧", "Heavy Rain 🌧")
@@ -6026,34 +5975,7 @@
                   : rain7d > 0
                     ? t("ฝนเล็กน้อย 🌤", "Light Rain 🌤")
                     : t("แห้ง ☀️", "Dry ☀️");
-          // ── Mini bar chart SVG ────────────────────────────────────────────
-          const maxRainVal = Math.max(...rainVals, 1);
-          const cW = 220,
-            cH = 44,
-            lblH = 16;
-          const nBars = rainVals.length;
-          const barGap = nBars > 1 ? 3 : 0;
-          const barW = Math.max(4, Math.floor((cW - barGap * (nBars - 1)) / nBars));
-          const svgBars = rainVals
-            .map((v, i) => {
-              const x = i * (barW + barGap);
-              const bH = Math.max(v > 0 ? 2 : 0, Math.round((v / maxRainVal) * cH));
-              const y = cH - bH;
-              const bc = v > 50 ? "#006064" : v > 15 ? "#0097a7" : v > 0 ? "#4dd0e1" : "rgba(255,255,255,.1)";
-              const day = rainDates[i] ? rainDates[i].slice(8) : String(i + 1);
-              return (
-                `<rect x="${x}" y="${y}" width="${barW}" height="${bH}" rx="1" fill="${bc}"/>` +
-                (v >= 1
-                  ? `<text x="${x + barW / 2}" y="${y - 2}" text-anchor="middle" fill="rgba(255,255,255,.7)" font-size="7" font-family="IBM Plex Mono">${Math.round(v)}</text>`
-                  : "") +
-                `<text x="${x + barW / 2}" y="${cH + lblH - 2}" text-anchor="middle" fill="rgba(255,255,255,.38)" font-size="7" font-family="IBM Plex Mono">${day}</text>`
-              );
-            })
-            .join("");
-          const svgChart =
-            nBars > 0
-              ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${cW} ${cH + lblH}" style="width:100%;display:block;margin-top:6px;overflow:visible">${svgBars}</svg>`
-              : "";
+          const svgChart = rainBars(rainVals, rainDates, ["#006064", "#0097a7", "#4dd0e1"]);
           rainHtml = `
           <div class="rice-card" style="grid-column:1/-1;background:rgba(0,188,212,.07);border:1px solid rgba(0,188,212,.25)">
             <div class="t">🌧 ${t("ฝนสะสม 7 วันล่าสุด · Open-Meteo", "7-Day Rainfall · Open-Meteo")}</div>
@@ -6074,33 +5996,7 @@
           const rainVals = gsmapProv.values || [];
           const rainDates = window.GSMAP_DATA?._meta?.dates || [];
           const periodEnd = window.GSMAP_DATA?._meta?.period_end || window.GSMAP_DATA?._meta?.updated || "—";
-          const maxRainVal = Math.max(...rainVals, 1);
-          const cW = 220,
-            cH = 44,
-            lblH = 16;
-          const nBars = rainVals.length;
-          const barGap = nBars > 1 ? 3 : 0;
-          const barW = Math.max(4, Math.floor((cW - barGap * (nBars - 1)) / nBars));
-          const svgBars = rainVals
-            .map((v, i) => {
-              const x = i * (barW + barGap);
-              const bH = Math.max(v > 0 ? 2 : 0, Math.round((v / maxRainVal) * cH));
-              const y = cH - bH;
-              const bc = v > 50 ? "#0d47a1" : v > 15 ? "#1e88e5" : v > 0 ? "#90caf9" : "rgba(255,255,255,.1)";
-              const day = rainDates[i] ? rainDates[i].slice(8) : String(i + 1);
-              return (
-                `<rect x="${x}" y="${y}" width="${barW}" height="${bH}" rx="1" fill="${bc}"/>` +
-                (v >= 1
-                  ? `<text x="${x + barW / 2}" y="${y - 2}" text-anchor="middle" font-size="8" fill="#90caf9">${Math.round(v)}</text>`
-                  : "") +
-                `<text x="${x + barW / 2}" y="${cH + lblH - 2}" text-anchor="middle" font-size="8" fill="rgba(255,255,255,.5)">${day}</text>`
-              );
-            })
-            .join("");
-          const svgChart =
-            nBars > 0
-              ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${cW} ${cH + lblH}" style="width:100%;max-width:${cW}px;display:block;margin:6px auto 0;overflow:visible">${svgBars}</svg>`
-              : "";
+          const svgChart = rainBars(rainVals, rainDates, ["#0d47a1", "#1e88e5", "#90caf9"]);
           gsmapHtml = `<div class="rice-card" style="grid-column:1/-1;background:rgba(30,136,229,.07);border:1px solid rgba(30,136,229,.25)">
           <div class="t">🛰 ${t("ปริมาณฝนรวม 7 วันล่าสุด (ดาวเทียม)", "7-Day Total Rainfall (Satellite)")}</div>
           <div class="metric"><span class="val" style="color:#1e88e5">${rain7d.toFixed(1)}</span><span class="unit"> มม. (7 วัน)</span></div>
@@ -6116,33 +6012,7 @@
           const rainVals = forecastProv.values || [];
           const rainDates = window.FORECAST_DATA?._meta?.dates || [];
           const updated = window.FORECAST_DATA?._meta?.updated || "—";
-          const maxRainVal = Math.max(...rainVals, 1);
-          const cW = 220,
-            cH = 44,
-            lblH = 16;
-          const nBars = rainVals.length;
-          const barGap = nBars > 1 ? 3 : 0;
-          const barW = Math.max(4, Math.floor((cW - barGap * (nBars - 1)) / nBars));
-          const svgBars = rainVals
-            .map((v, i) => {
-              const x = i * (barW + barGap);
-              const bH = Math.max(v > 0 ? 2 : 0, Math.round((v / maxRainVal) * cH));
-              const y = cH - bH;
-              const bc = v > 50 ? "#e65100" : v > 15 ? "#f57c00" : v > 0 ? "#ffcc80" : "rgba(255,255,255,.1)";
-              const day = rainDates[i] ? rainDates[i].slice(8) : String(i + 1);
-              return (
-                `<rect x="${x}" y="${y}" width="${barW}" height="${bH}" rx="1" fill="${bc}"/>` +
-                (v >= 1
-                  ? `<text x="${x + barW / 2}" y="${y - 2}" text-anchor="middle" font-size="8" fill="#ffcc80">${Math.round(v)}</text>`
-                  : "") +
-                `<text x="${x + barW / 2}" y="${cH + lblH - 2}" text-anchor="middle" font-size="8" fill="rgba(255,255,255,.5)">${day}</text>`
-              );
-            })
-            .join("");
-          const svgChart =
-            nBars > 0
-              ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${cW} ${cH + lblH}" style="width:100%;max-width:${cW}px;display:block;margin:6px auto 0;overflow:visible">${svgBars}</svg>`
-              : "";
+          const svgChart = rainBars(rainVals, rainDates, ["#e65100", "#f57c00", "#ffcc80"]);
           forecastHtml = `<div class="rice-card" style="grid-column:1/-1;background:rgba(255,152,0,.07);border:1px solid rgba(255,152,0,.25)">
           <div class="t">🌦 ${t("พยากรณ์ฝน 7 วันข้างหน้า", "7-Day Rain Forecast")}</div>
           <div class="metric"><span class="val" style="color:#ff9800">${rain7d.toFixed(1)}</span><span class="unit"> มม. (พยากรณ์ 7 วัน)</span></div>
@@ -6422,7 +6292,7 @@
               )}</div>
             </div>`;
 
-        const econContent = mekongHtml + profitHtml + strawHtml + strawMarketHtml + biomassHtml + fertRatioHtml + millsHtml + landSuitHtml + fertHtml;
+        const econContent = mekongHtml + profitHtml + strawHtml + strawMarketHtml + biomassHtml + fertRatioHtml + millsHtml + landSuitHtml;
         const peopleContent = householdsHtml;
         const riceContent = cardHtml + naprangHtml;
         const simContent = buildSimPane(en);
@@ -6766,13 +6636,21 @@
         );
       }
 
+      // หัว tooltip (ชื่อจังหวัด) · ข้อความไม่มีข้อมูล · อันดับ — ใช้ร่วมทุก layer
+      const tipHead = (en) => `<div class="th">${t(NM[en] || en, en)}</div><div class="en">${en}</div>`;
+      const tipNoData = (en, th, enMsg) =>
+        `${tipHead(en)}<div style="color:var(--muted);font-size:11px;margin-top:6px">${t(th, enMsg)}</div>`;
+      function tipRank(en) {
+        const rank = currentRank(en);
+        const total = getVisibleProvinces().filter((n) => hasLayerValue(n)).length;
+        return rank ? `${t("อันดับ", "Rank")} #${rank} / ${total}` : t("ไม่มีข้อมูล", "No data");
+      }
+
       function tooltipContent(en) {
         if (S.layer === "dam") {
           const prov = window.DAM_DATA?.provinces?.[en];
           if (!prov)
-            return `<div class="th">${t(NM[en] || en, en)}</div><div class="en">${en}</div><div style="color:var(--muted);font-size:11px;margin-top:6px">${t("ไม่มีข้อมูลเขื่อน", "No dam data")}</div>`;
-          const rank = currentRank(en);
-          const visible = getVisibleProvinces().filter((name) => hasLayerValue(name)).length;
+            return tipNoData(en, "ไม่มีข้อมูลเขื่อน", "No dam data");
           const damsHtml = prov.dams
             .map((d) => {
               const lvl = damOutflowLevel(d);
@@ -6785,11 +6663,10 @@
             })
             .join("");
           return `
-    <div class="th">${t(NM[en] || en, en)}</div>
-    <div class="en">${en}</div>
+    ${tipHead(en)}
     <div class="metric-name">${t("ระดับน้ำในเขื่อน", "Dam Water Level")}</div>
     <div class="value">${prov.dam_level_pct != null ? prov.dam_level_pct.toFixed(1) : "—"}% <small style="font-size:12px;color:var(--muted)">${t("ความจุ", "capacity")}</small></div>
-    <div class="rank">${rank ? `${t("อันดับ", "Rank")} #${rank} / ${visible}` : t("ไม่มีข้อมูล", "No data")} · ${prov.n_dams} ${t("เขื่อน", "dams")}</div>
+    <div class="rank">${tipRank(en)} · ${prov.n_dams} ${t("เขื่อน", "dams")}</div>
     <div style="font-size:10px;color:var(--muted);margin-top:4px">${prov.total_volume_mm3.toFixed(0)} / ${prov.total_storage_mm3.toFixed(0)} ${t("ล้าน ม.³", "million m³")}</div>
     ${damsHtml}
   `;
@@ -6797,10 +6674,8 @@
         if (S.layer === "mills") {
           const thName = NM[en];
           const prov = RICE_MILLS_DATA?.provinces?.[thName];
-          const rank = currentRank(en);
-          const total = getVisibleProvinces().filter((name) => hasLayerValue(name)).length;
           if (!prov)
-            return `<div class="th">${t(NM[en] || en, en)}</div><div class="en">${en}</div><div style="color:var(--muted);font-size:11px;margin-top:6px">${t("ไม่มีโรงสีข้าวจดทะเบียน", "No registered mills")}</div>`;
+            return tipNoData(en, "ไม่มีโรงสีข้าวจดทะเบียน", "No registered mills");
           const millListHtml = prov.mills.length
             ? renderMillList(prov.mills)
             : `<div style="font-size:9px;color:var(--muted);margin-top:3px">${t("ไม่มีข้อมูลรายชื่อ (ข้อมูลรวมจากพาณิชย์จังหวัด)", "Aggregate count only — no individual records")}</div>`;
@@ -6808,21 +6683,18 @@
             ? `<div style="font-size:8px;color:var(--muted);margin-top:3px;opacity:.7">${prov.source_note}</div>`
             : "";
           return `
-    <div class="th">${t(NM[en] || en, en)}</div>
-    <div class="en">${en}</div>
+    ${tipHead(en)}
     <div class="type">${t("โรงสีข้าว · DIT 2569", "Rice Mills · DIT 2026")}</div>
     <div class="metric-name">${t("จำนวนโรงสีข้าว", "Number of Rice Mills")}</div>
     <div class="value">${prov.count} <small style="font-size:12px;color:var(--muted)">${t("แห่ง", "mills")}</small></div>
-    <div class="rank">${rank ? `${t("อันดับ", "Rank")} #${rank} / ${total}` : t("ไม่มีข้อมูล", "No data")} &nbsp;·&nbsp; ${t(`ใหญ่ ${prov.large}  กลาง ${prov.medium}  เล็ก ${prov.small}`, `L:${prov.large} M:${prov.medium} S:${prov.small}`)}</div>
+    <div class="rank">${tipRank(en)} &nbsp;·&nbsp; ${t(`ใหญ่ ${prov.large}  กลาง ${prov.medium}  เล็ก ${prov.small}`, `L:${prov.large} M:${prov.medium} S:${prov.small}`)}</div>
     ${millListHtml}${sourceNote}
   `;
         }
         if (S.layer === "biomass") {
           const prov = window.BIOMASS_DATA?.provinces?.[en];
-          const rank = currentRank(en);
-          const total = getVisibleProvinces().filter((name) => hasLayerValue(name)).length;
           if (!prov?.count)
-            return `<div class="th">${t(NM[en] || en, en)}</div><div class="en">${en}</div><div style="color:var(--muted);font-size:11px;margin-top:6px">${t("ไม่มีโรงไฟฟ้าชีวมวล", "No biomass power plants")}</div>`;
+            return tipNoData(en, "ไม่มีโรงไฟฟ้าชีวมวล", "No biomass power plants");
           const plants = prov.plants || [];
           const riceCount = plants.filter((p) => p.rice_straw || p.rice_husks).length;
           const totalMw = plants.reduce((s, p) => s + (p.mw || 0), 0);
@@ -6833,21 +6705,18 @@
             })
             .join("");
           return `
-    <div class="th">${t(NM[en] || en, en)}</div>
-    <div class="en">${en}</div>
+    ${tipHead(en)}
     <div class="type">${t("โรงไฟฟ้าชีวมวล · ทะเบียน DEDE ธ.ค. 2568", "Biomass Power Plants · DEDE registry Dec 2025")}</div>
     <div class="metric-name">${t("จำนวนโรงไฟฟ้า", "Number of Plants")}</div>
     <div class="value">${prov.count} <small style="font-size:12px;color:var(--muted)">${t("แห่ง", "plants")}</small></div>
-    <div class="rank">${rank ? `${t("อันดับ", "Rank")} #${rank} / ${total}` : t("ไม่มีข้อมูล", "No data")} &nbsp;·&nbsp; ${t(`กำลังผลิตรวม ${totalMw.toFixed(1)} MW · ใช้เชื้อเพลิงจากข้าว ${riceCount} แห่ง`, `Total ${totalMw.toFixed(1)} MW · ${riceCount} rice-fuelled`)}</div>
+    <div class="rank">${tipRank(en)} &nbsp;·&nbsp; ${t(`กำลังผลิตรวม ${totalMw.toFixed(1)} MW · ใช้เชื้อเพลิงจากข้าว ${riceCount} แห่ง`, `Total ${totalMw.toFixed(1)} MW · ${riceCount} rice-fuelled`)}</div>
     ${plantListHtml}
   `;
         }
         if (S.layer === "profit") {
           const pval = profitValueOf(en, S.rice, S.year);
-          const rank = currentRank(en);
-          const total = getVisibleProvinces().filter((n) => hasLayerValue(n)).length;
           if (pval === null)
-            return `<div class="th">${t(NM[en] || en, en)}</div><div class="en">${en}</div><div style="color:var(--muted);font-size:11px;margin-top:6px">${t("ไม่มีข้อมูลราคา — คำนวณกำไรไม่ได้", "No price data — cannot estimate profit")}</div>`;
+            return tipNoData(en, "ไม่มีข้อมูลราคา — คำนวณกำไรไม่ได้", "No price data — cannot estimate profit");
           const col = pval >= 0 ? "#27ae60" : "#c0392b";
           const entry = entryOf(en, S.rice, S.year);
           const price = Number(entry.price || 0);
@@ -6855,12 +6724,11 @@
           const cost = COST_BASE[S.rice]?.oaeRaiCost ?? 6100;
           const revenue = Math.round((price * yld) / 1000);
           return `
-    <div class="th">${t(NM[en] || en, en)}</div>
-    <div class="en">${en}</div>
+    ${tipHead(en)}
     <div class="type">${t("กำไร/ขาดทุนประมาณการ", "Est. Profit/Loss")} · ${S.year}${isEstimated(en) ? ` · <span style="color:#f5c065">${t("ผลผลิตเป็นค่าคาดการณ์", "projected yield")}</span>` : ""}</div>
     <div class="metric-name">${t("กำไร/ขาดทุนต่อไร่", "Profit/Loss per Rai")}</div>
     <div class="value" style="color:${col}">${pval >= 0 ? "+" : ""}${fmtNumber(pval)} <small style="font-size:12px;color:var(--muted)">฿/ไร่</small></div>
-    <div class="rank">${rank ? `${t("อันดับ", "Rank")} #${rank} / ${total}` : t("ไม่มีข้อมูล", "No data")}</div>
+    <div class="rank">${tipRank(en)}</div>
     <div style="font-size:9px;color:var(--muted);margin-top:4px">
       ${t("รายได้", "Revenue")}: ${fmtNumber(price)} × ${fmtNumber(yld)} ÷ 1000 = <strong>${fmtNumber(revenue)} ฿/ไร่</strong>
       <span style="opacity:.75">(${t("ผลผลิตเฉลี่ยทั้งจังหวัด", "province-average yield")})</span><br>
@@ -6872,10 +6740,8 @@
         // ── Rain tooltip ──────────────────────────────────────────────────────
         if (S.layer === "gsmap") {
           const rp = window.GSMAP_DATA?.provinces?.[en];
-          const rank = currentRank(en);
-          const total = getVisibleProvinces().filter((n) => hasLayerValue(n)).length;
           if (!rp)
-            return `<div class="th">${t(NM[en] || en, en)}</div><div style="padding:4px 8px;color:var(--muted)">${t("กำลังโหลดข้อมูลฝน…", "Loading rainfall data…")}</div>`;
+            return tipNoData(en, "กำลังโหลดข้อมูลฝน…", "Loading rainfall data…");
           const rain = rp.rain_7d ?? 0;
           const rainCol =
             rain > 100
@@ -6898,22 +6764,19 @@
                     ? t("ฝนเล็กน้อย 🌤", "Light Rain 🌤")
                     : t("แห้ง / ไม่มีฝน ☀️", "Dry / No Rain ☀️");
           return `
-<div class="th">${t(NM[en] || en, en)}</div>
-<div class="en">${en}</div>
+${tipHead(en)}
 <div class="type">${t("ปริมาณฝนรวม 7 วันล่าสุด (ดาวเทียม)", "7-Day Total Rainfall (Satellite)")}</div>
 <div class="metric-name">${t("ปริมาณฝนรวม (เฉลี่ยทั้งจังหวัด)", "Total Rainfall (province average)")}</div>
 <div class="value" style="color:${rainCol}">${fmtNumber(Math.round(rain))} <small style="font-size:12px;color:var(--muted)">มม.</small></div>
 <div style="font-size:11px;font-weight:700;color:${rainCol};margin:2px 0">${rainLabel}</div>
-<div class="rank">${rank ? `${t("อันดับ", "Rank")} #${rank} / ${total}` : t("ไม่มีข้อมูล", "No data")}</div>
+<div class="rank">${tipRank(en)}</div>
 `;
         }
         // ── Forecast tooltip ──────────────────────────────────────────────────
         if (S.layer === "forecast") {
           const rp = window.FORECAST_DATA?.provinces?.[en];
-          const rank = currentRank(en);
-          const total = getVisibleProvinces().filter((n) => hasLayerValue(n)).length;
           if (!rp)
-            return `<div class="th">${t(NM[en] || en, en)}</div><div class="en">${en}</div><div style="color:var(--muted);font-size:11px;margin-top:6px">${t("กำลังโหลดข้อมูลพยากรณ์…", "Loading forecast data…")}</div>`;
+            return tipNoData(en, "กำลังโหลดข้อมูลพยากรณ์…", "Loading forecast data…");
           const rain = rp.rain_7d ?? 0;
           const rainCol =
             rain > 100
@@ -6936,22 +6799,19 @@
                     ? t("คาดว่าฝนเล็กน้อย 🌤", "Expected Light Rain 🌤")
                     : t("คาดว่าแห้ง / ไม่มีฝน ☀️", "Expected Dry / No Rain ☀️");
           return `
-<div class="th">${t(NM[en] || en, en)}</div>
-<div class="en">${en}</div>
+${tipHead(en)}
 <div class="type">${t("พยากรณ์ฝน 7 วันข้างหน้า · Open-Meteo", "7-Day Rain Forecast · Open-Meteo")}</div>
 <div class="metric-name">${t("ปริมาณฝนพยากรณ์", "Forecast Rainfall")}</div>
 <div class="value" style="color:${rainCol}">${fmtNumber(Math.round(rain))} <small style="font-size:12px;color:var(--muted)">มม.</small></div>
 <div style="font-size:11px;font-weight:700;color:${rainCol};margin:2px 0">${rainLabel}</div>
-<div class="rank">${rank ? `${t("อันดับ", "Rank")} #${rank} / ${total}` : t("ไม่มีข้อมูล", "No data")}</div>
+<div class="rank">${tipRank(en)}</div>
 `;
         }
         // ── Observed flood tooltip (ThaiWater gauges + news) ─────────────────
         if (S.layer === "floodExtent") {
           const fp = window.FLOOD_DATA?.provinces?.[en];
-          const rank = currentRank(en);
-          const total = getVisibleProvinces().filter((n) => hasLayerValue(n)).length;
           if (!fp)
-            return `<div class="th">${t(NM[en] || en, en)}</div><div class="en">${en}</div>
+            return `${tipHead(en)}
 <div style="color:var(--muted);font-size:11px;margin-top:6px">${t("ไม่มีสถานีวัดน้ำที่เข้าเกณฑ์", "No river gauge meets the threshold")}</div>
 <div style="color:var(--muted);font-size:9px;margin-top:3px;opacity:.8">${t("ไม่ใช่การยืนยันว่าไม่ท่วม — น้ำท่วมขังนอกลำน้ำไม่มีสถานีวัด", "Not a confirmation of no flooding — ponding away from rivers has no gauge")}</div>`;
           const flooding = fp.severity >= 2;
@@ -6984,8 +6844,7 @@ ${
             )
             .join("");
           return `
-<div class="th">${t(NM[en] || en, en)}</div>
-<div class="en">${en}</div>
+${tipHead(en)}
 <div class="type">${t("สถานะน้ำท่วม · สถานีวัดน้ำ สสน.", "Flood status · ThaiWater gauges")}</div>
 <div class="metric-name">${t("สถานะ", "Status")}</div>
 <div class="value" style="color:${flooding ? "#b71c1c" : "#e65100"}">${flooding ? "🔴" : "🟠"} ${esc(t(fp.severity_th || "เฝ้าระวัง", fp.severity_en || "Watch"))}</div>
@@ -7000,34 +6859,31 @@ ${
 </div>`
     : ""
 }
-<div class="rank">${rank ? `${t("อันดับ", "Rank")} #${rank} / ${total}` : t("ไม่มีข้อมูล", "No data")}</div>
+<div class="rank">${tipRank(en)}</div>
 `;
         }
         // ── Hotspots tooltip ─────────────────────────────────────────────────
         if (S.layer === "hotspots") {
           const hp = window.HOTSPOT_DATA?.provinces?.[en];
-          const rank = currentRank(en);
-          const total = getVisibleProvinces().filter((n) => hasLayerValue(n)).length;
           if (!hp)
-            return `<div class="th">${t(NM[en] || en, en)}</div><div class="en">${en}</div><div style="color:var(--muted);font-size:11px;margin-top:6px">${t("ไม่มีข้อมูล", "No data")}</div>`;
+            return tipNoData(en, "ไม่มีข้อมูล", "No data");
           const hc = hp.count_7d > 0 ? "#e65100" : "#66bb6a";
           const lastLine = hp.last_date
             ? t(`พบล่าสุด ${fmtDateISO(hp.last_date)}`, `Latest seen ${fmtDateISO(hp.last_date)}`)
             : t("ดาวเทียมไม่พบจุดความร้อนใน 7 วัน", "No hotspots seen in 7 days");
-          return `<div class="th">${t(NM[en] || en, en)}</div>
-<div class="en">${en}</div>
+          return `${tipHead(en)}
 <div class="type">${t("จุดความร้อน 7 วัน", "Hotspots, 7 days")} · NASA FIRMS</div>
 <div class="value" style="color:${hc}">${hp.count_7d}<small style="font-size:14px"> ${t("จุด", "pts")}</small></div>
 <div style="font-size:10px;color:var(--muted);margin-top:4px;line-height:1.5">${lastLine}${hp.frp_mw ? ` · FRP ${hp.frp_mw} MW` : ""}${hp.near_border_unassigned ? t(` · อีก ${hp.near_border_unassigned} จุดชิดชายแดน ไม่นับ (แยกฝั่งไม่ได้)`, ` · ${hp.near_border_unassigned} more on the border, not counted (side unclear)`) : ""}</div>
 ${hotspotCropsLine(hp)}
 <div style="font-size:9px;color:var(--muted);margin-top:4px;opacity:.75">${t("ตัวเลขต่ำสุด รวมทุกพืชและป่า · ตัดปล่องโรงงานแล้ว", "Lower bound · all crops and forest · industrial stacks removed")}</div>
-${hp.count_7d > 0 && rank ? `<div class="rank">${t("อันดับ", "Rank")} #${rank} / ${total}</div>` : ""}`;
+${hp.count_7d > 0 ? `<div class="rank">${tipRank(en)}</div>` : ""}`;
         }
         // ── Soil Moisture tooltip ────────────────────────────────────────────
         if (S.layer === "soilMoisture") {
           const sp = window.SOIL_DATA?.provinces?.[en];
           if (!sp)
-            return `<div class="th">${t(NM[en] || en, en)}</div><div class="en">${en}</div><div style="color:var(--muted);font-size:11px;margin-top:6px">ไม่มีข้อมูล</div>`;
+            return `${tipHead(en)}<div style="color:var(--muted);font-size:11px;margin-top:6px">ไม่มีข้อมูล</div>`;
           const pct = sp.smp?.toFixed(1) ?? "—";
           const sm = sp.smp ?? 0;
           let smIcon, smLabel, smCrops_th, smCrops_en, smColor;
@@ -7062,8 +6918,7 @@ ${hp.count_7d > 0 && rank ? `<div class="rank">${t("อันดับ", "Rank")
             smCrops_th = "ไม่ควรปลูก — ต้องการชลประทานก่อน";
             smCrops_en = "Avoid planting — irrigation required first";
           }
-          return `<div class="th">${t(NM[en] || en, en)}</div>
-<div class="en">${en}</div>
+          return `${tipHead(en)}
 <div class="type">${t("ความชื้นในดิน", "Soil Moisture")} · NASA SMAP</div>
 <div class="value" style="color:${smColor}">${pct}<small style="font-size:14px">%</small></div>
 <div style="font-size:11px;font-weight:700;color:${smColor};margin:2px 0">${smIcon} ${smLabel}</div>
@@ -7072,10 +6927,8 @@ ${hp.count_7d > 0 && rank ? `<div class="rank">${t("อันดับ", "Rank")
         // ── Alerts tooltip ──────────────────────────────────────────────────
         if (S.layer === "alerts") {
           const ap = window.ALERTS_DATA?.provinces?.[en];
-          const rank = currentRank(en);
-          const total = getVisibleProvinces().filter((n) => hasLayerValue(n)).length;
           if (!ap)
-            return `<div class="th">${t(NM[en] || en, en)}</div><div class="en">${en}</div><div style="color:var(--muted);font-size:11px;margin-top:6px">${t("ไม่มีข้อมูล", "No data")}</div>`;
+            return tipNoData(en, "ไม่มีข้อมูล", "No data");
           const levelColor =
             ap.level === "high"
               ? "#c62828"
@@ -7103,23 +6956,20 @@ ${hp.count_7d > 0 && rank ? `<div class="rank">${t("อันดับ", "Rank")
             )
             .join("");
           return `
-<div class="th">${t(NM[en] || en, en)}</div>
-<div class="en">${en}</div>
+${tipHead(en)}
 <div class="type">${t("พื้นที่เสี่ยงน้ำท่วม", "Flood Risk Areas")}</div>
 <div style="font-size:11px;font-weight:700;color:${levelColor};margin:2px 0">${levelLabel}</div>
-<div class="rank">${rank ? `${t("อันดับ", "Rank")} #${rank} / ${total}` : t("ไม่มีข้อมูล", "No data")}</div>
+<div class="rank">${tipRank(en)}</div>
 ${warningsHtml}
 `;
         }
         // ── Rice EVI tooltip: แสดงระยะข้าว + ปฏิทินฤดูกาล ──────────────────
         if (S.layer === "riceEvi") {
           const rp = window.RICE_EVI_DATA?.provinces?.[en];
-          const rank = currentRank(en);
-          const total = getVisibleProvinces().filter((n) => hasLayerValue(n)).length;
           if (!rp || rp.evi == null)
-            return `<div class="th">${t(NM[en] || en, en)}</div><div class="en">${en}</div><div style="color:var(--muted);font-size:11px;margin-top:6px">${t("ไม่มีข้อมูลสภาพนาข้าว", "No rice paddy data")}</div>`;
+            return tipNoData(en, "ไม่มีข้อมูลสภาพนาข้าว", "No rice paddy data");
           if (!riceEviReliable(en))
-            return `<div class="th">${t(NM[en] || en, en)}</div><div class="en">${en}</div>
+            return `${tipHead(en)}
               <div style="color:#bcaaa4;font-size:11px;font-weight:700;margin-top:6px">⚠️ ${t("ไม่ใช่พื้นที่นาข้าวสำคัญ", "Not a significant rice area")}</div>
               <div style="color:var(--muted);font-size:9px;margin-top:3px;line-height:1.5">${t(`ข้าวจริง (OAE) เพียง ${fmtNumber(oaeMaxRiceRai(en))} ไร่ · EVI น่าจะเป็นพืชอื่น`, `Only ${fmtNumber(oaeMaxRiceRai(en))} rai of rice (OAE) · EVI likely non-rice`)}</div>`;
           const stg = STAGE_MAP[rp.stage] || STAGE_MAP.growing;
@@ -7128,8 +6978,7 @@ ${warningsHtml}
           const confColor =
             confPct == null ? "var(--muted)" : confPct >= 90 ? "#66bb6a" : confPct >= 70 ? "#ffa726" : "#ef5350";
           return `
-    <div class="th">${t(NM[en] || en, en)}</div>
-    <div class="en">${en}</div>
+    ${tipHead(en)}
     <div class="type">${t("สภาพนาข้าว", "Rice Paddy Status")} · ${eviPeriodLabel()}</div>
     <div class="value" style="color:${stg.color}">${rp.evi.toFixed(3)} EVI ${stg.icon}</div>
     <div style="font-size:11px;font-weight:700;color:${stg.color};margin:2px 0">${t(stg.th, stg.en)}</div>
@@ -7137,7 +6986,7 @@ ${warningsHtml}
       const tv = eviTrend(rp);
       return tv ? `<div style="font-size:9px;color:${tv.color};margin:1px 0">${tv.icon} ${t(tv.th, tv.en)}</div>` : "";
     })()}
-    <div class="rank">${rank ? `${t("อันดับ", "Rank")} #${rank} / ${total}` : t("ไม่มีข้อมูล", "No data")}</div>
+    <div class="rank">${tipRank(en)}</div>
     ${confPct != null ? `<div style="font-size:10px;margin-top:3px"><span style="color:${confColor}">📊 ${t("ครอบคลุมนา", "Coverage")} ${confPct}%</span> · ${fmtNumber(rp.rice_rai || 0)} ${t("ไร่", "rai")}</div>` : ""}
     <div style="font-size:9px;color:var(--muted);margin-top:5px;line-height:1.5;border-top:1px solid rgba(255,255,255,.1);padding-top:4px">
       <div style="margin-bottom:2px">📅 ${t("ตามปฏิทิน ตอนนี้", "Calendar, now")}: <strong style="color:#ffd54f">${t(ctx.situation.th, ctx.situation.en)}</strong> · ${t(ctx.cropType.th, ctx.cropType.en)}</div>
@@ -7145,9 +6994,8 @@ ${warningsHtml}
     </div>
   `;
         }
-        // ── NDVI tooltip ──
+        // ── tooltip ของ layer ข้อมูลข้าวรายปี (ผลผลิต/ราคา/พื้นที่/ครัวเรือน/ฟาง ฯลฯ) ──
         const value = valueOf(en);
-        const rank = currentRank(en);
         const prevYear = previousYear(S.year);
         let yoyHTML = "";
         if (prevYear) {
@@ -7182,8 +7030,7 @@ ${warningsHtml}
             strawSurplusLine = `<div style="font-size:10px;color:#d4a017;margin-top:4px">🔥 ${t("ฟางเหลือใช้ (พลังงาน/เสี่ยงเผา)", "Surplus Straw (energy/burn risk)")}: <strong>${fmtNumber(sp)}</strong> ${t("ตัน", "tons")} <span style="opacity:.6">(× SAF 0.583)</span></div>`;
         }
         return `
-    <div class="th">${t(NM[en] || en, en)}</div>
-    <div class="en">${en}</div>
+    ${tipHead(en)}
     <div class="type">${
       S.layer === "households"
         ? t("ครัวเรือนเกษตรกร (OAE 2566)", "Farmer Households (OAE 2566)")
@@ -7193,7 +7040,7 @@ ${warningsHtml}
     }</div>
     <div class="metric-name">${t(layerMeta[S.layer].th, layerMeta[S.layer].en)}</div>
     <div class="value">${valueHTML}</div>
-    <div class="rank">${rank ? `${t("อันดับ", "Rank")} #${rank} / ${getVisibleProvinces().filter((name) => hasLayerValue(name)).length || getVisibleProvinces().length}` : t("ไม่มีข้อมูล", "No data")}</div>
+    <div class="rank">${tipRank(en)}</div>
     ${strawSurplusLine}
     ${yoyHTML}
     ${estBadge}
@@ -7545,58 +7392,6 @@ ${warningsHtml}
         return rows.filter((r) => r.some((v) => String(v).trim() !== ""));
       }
 
-      function csvUp(event) {
-        const file = event.target.files?.[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          const rows = parseCSV(String(ev.target?.result || ""));
-          if (rows.length < 2) {
-            toast("ไม่พบข้อมูลในไฟล์ CSV");
-            return;
-          }
-          const headers = rows[0].map((h) => String(h).trim());
-          let applied = 0;
-          for (let i = 1; i < rows.length; i += 1) {
-            const record = {};
-            headers.forEach((header, idx) => (record[header] = String(rows[i][idx] ?? "").trim()));
-            if (record.production || record.yield || record.price || record.area) {
-              if (applyRecord(record)) applied += 1;
-              continue;
-            }
-            const en = (record.province_en || record.province || record.en || "").trim();
-            const rawRice = (record.rice_type || S.rice).trim().toLowerCase();
-            const rice = rawRice === "napi" ? "white" : rawRice;
-            const year = (record.year || S.year).trim();
-            const layer = (record.layer || S.layer).trim().toLowerCase();
-            const num = Number(record.value);
-            if (
-              DATA[en]?.[rice]?.[year] &&
-              ["production", "yield", "area", "price"].includes(layer) &&
-              String(record.value ?? "").trim() !== "" &&
-              Number.isFinite(num)
-            ) {
-              DATA[en][rice][year][layer] = num;
-              DATA[en][rice][year].source = "import_csv";
-              applied += 1;
-            }
-          }
-          if (applied) {
-            DATA_META = {
-              mode: "import",
-              label: "Imported CSV Merge",
-              detail: `ผสานข้อมูลจากไฟล์ ${file.name} แล้ว ${fmtNumber(applied)} แถว/ค่า`,
-            };
-            rerender();
-            toast(`อัปเดตข้อมูล ${applied} ค่าเรียบร้อย`);
-          } else {
-            toast("รูปแบบ CSV ยังไม่ตรงกับคอลัมน์ที่รองรับ");
-          }
-          event.target.value = "";
-        };
-        reader.readAsText(file);
-      }
-
       function csvDl() {
         const visible = getVisibleProvinces();
         const rows = [
@@ -7743,7 +7538,7 @@ ${warningsHtml}
           H - pad - ((lat - latMin) / latSpan) * (H - 2 * pad),
         ];
 
-        // ดึงค่า NDVI/EVI ต่ออำเภอ
+        // ดึงค่า EVI ต่ออำเภอ
         const vals = {};
         if (layer === "riceEvi" && window.RICE_EVI_DISTRICT?.provinces?.[en]) {
           for (const [d, v] of Object.entries(window.RICE_EVI_DISTRICT.provinces[en])) {
@@ -7972,7 +7767,7 @@ ${warningsHtml}
         fetchStormAlerts();
         fetchRiceNews();
         fetchLayerData("rice-evi.json", "RICE_EVI_DATA", "riceEvi");
-        fetchLayerData("rain-daily.json", "RAIN_DATA", "rain");
+        fetchLayerData("rain-daily.json", "RAIN_DATA", null);   // การ์ดฝนรายจังหวัดเท่านั้น ไม่มี layer
         fetchLayerData("rain-gsmap.json", "GSMAP_DATA", "gsmap");
         fetchLayerData("rain-forecast.json", "FORECAST_DATA", "forecast");
         fetchLayerData("flood-status.json", "FLOOD_DATA", "floodExtent");
@@ -8022,7 +7817,6 @@ ${warningsHtml}
       window.zoomIn = zoomIn;
       window.zoomOut = zoomOut;
       window.resetCamera = resetCamera;
-      window.csvUp = csvUp;
       window.csvDl = csvDl;
       window.toggleDistrictPanel = toggleDistrictPanel;
 
@@ -8397,19 +8191,6 @@ ${warningsHtml}
         }
         return total > 0 ? total : null;
       }
-
-      function weatherValueOf(en, layer) {
-        const p = WEATHER_DATA?.provinces?.[en];
-        if (!p) return null;
-        if (layer === "drought") {
-          // % เบี่ยงเบนจากค่าปกติ 5 ปี เทียบ "ช่วงเวลาเดียวกัน" ไม่ใช่ทั้งฤดู
-          const avg = seasonNormalToDate(en);
-          if (avg == null || !p.season_rainfall_mm) return null;
-          return Math.round(((p.season_rainfall_mm - avg) / avg) * 100 * 10) / 10;
-        }
-        return null;
-      }
-      // ─────────────────────────────────────────────────────────────────────────
 
       init();
     </script>
