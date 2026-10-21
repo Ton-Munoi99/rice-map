@@ -12,7 +12,7 @@ Output: data/rice-news.json
   { _meta: {source, updated, query, count}, items: [{title, source, date, url}] }
 Headlines only (facts) + source attribution + link — no article text scraped.
 """
-import sys, io, os, re, json, html, urllib.parse, urllib.request
+import sys, os, re, json, html, urllib.parse, urllib.request
 import xml.etree.ElementTree as ET
 from datetime import date, timezone
 from riceutils import bkk_today

@@ -21,13 +21,12 @@ Format:
 import sys
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-import calendar
 import ee
 import json
 import os
 from riceutils import bkk_today, init_gee, GAUL_NAME_MAP as PROV_MAP
-from riceutils import PHENOLOGY_MONTHS, FLOOD_EVI_MAX, PEAK_MIN, AMP_MIN, MIN_EVI_MAX, load_rice_mask, load_exclusion_mask, get_history_months, build_rice_phenology_mask, latest_q1_periods, q1_evi_image
-from rice_stage import TREND_EPS, classify_evi
+from riceutils import PHENOLOGY_MONTHS, FLOOD_EVI_MAX, PEAK_MIN, AMP_MIN, MIN_EVI_MAX, load_rice_mask, load_exclusion_mask, build_rice_phenology_mask, latest_q1_periods, q1_evi_image
+from rice_stage import classify_evi
 
 
 # classify_evi ย้ายไป rice_stage.py (ใช้ร่วมกับสคริปต์ระดับจังหวัด)

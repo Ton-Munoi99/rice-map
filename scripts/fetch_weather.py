@@ -11,9 +11,9 @@ Variables fetched per province:
 
 Output: data/weather-province.json
 """
-import json, os, re, sys, time, requests
+import json, os, sys, time
 from datetime import date
-from riceutils import bkk_today, load_centroids
+from riceutils import bkk_today, load_centroids, open_meteo
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -56,28 +56,15 @@ def _aggregate(daily, lat, lon):
 
 # ── Fetch a batch of provinces in one API call ──────────────────────────────
 def fetch_batch(batch_names, centroids):
-    lats = ",".join(str(centroids[n]["lat"]) for n in batch_names)
-    lons = ",".join(str(centroids[n]["lon"]) for n in batch_names)
-    params = {
-        "latitude": lats, "longitude": lons,
-        "start_date": start_date, "end_date": end_date,
-        "daily": "precipitation_sum,temperature_2m_mean,et0_fao_evapotranspiration",
-        "timezone": "Asia/Bangkok",
-    }
-    for attempt in range(3):
-        try:
-            r = requests.get(API_URL, params=params, timeout=60)
-            r.raise_for_status()
-            results = r.json()
-            if isinstance(results, dict):  # single-location → list
-                results = [results]
-            return {n: _aggregate(res["daily"], centroids[n]["lat"], centroids[n]["lon"])
-                    for n, res in zip(batch_names, results)}
-        except Exception as e:
-            if attempt == 2:
-                print(f"  batch ERROR after 3 attempts – {e}", file=sys.stderr)
-                return {}
-            time.sleep(2)
+    try:
+        results = open_meteo(API_URL, [centroids[n] for n in batch_names],
+                             start_date=start_date, end_date=end_date,
+                             daily="precipitation_sum,temperature_2m_mean,et0_fao_evapotranspiration")
+        return {n: _aggregate(res["daily"], centroids[n]["lat"], centroids[n]["lon"])
+                for n, res in zip(batch_names, results)}
+    except Exception as e:
+        print(f"  batch ERROR – {e}", file=sys.stderr)
+        return {}
 
 
 # ── Main ─────────────────────────────────────────────────────────────────────

@@ -20,7 +20,6 @@ Output: data/mekong-level.json
 
 Run: python scripts/fetch_mekong_level.py
 """
-import csv
 import json
 import math
 import os
@@ -37,8 +36,6 @@ TIMEOUT = 60
 
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUTPUT = os.path.join(_ROOT, "data", "mekong-level.json")
-GEO_PATH = os.path.join(_ROOT, "data", "districts-geo.json")
-CSV_PATH = os.path.join(_ROOT, "rice-data.csv")
 
 # ยอมให้สถานีอยู่นอกกรอบจังหวัดได้เท่านี้ — สถานีวัดโขงตั้งริมน้ำซึ่งเป็นเส้นเขตแดน
 # จึงมักหลุดกรอบไปเล็กน้อย แต่ถ้าหลุดมากแปลว่าแมปผิดจังหวัด

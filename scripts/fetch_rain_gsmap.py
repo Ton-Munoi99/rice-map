@@ -192,8 +192,8 @@ def main():
             null_provinces.append(mapped)
 
     if missing or len(provinces_out) < EXPECTED_PROVINCES:
-        # เดิมค่าที่หายกลายเป็น 0 มม. — ทำให้ขึ้นเตือนแล้งผิด และกดค่า bias ของ scoreboard
-        # ที่ปรับเกณฑ์เตือนน้ำท่วม จึงเก็บไฟล์เดิมไว้แทนการเขียนข้อมูลไม่ครบทับ
+        # เดิมค่าที่หายกลายเป็น 0 มม. — ทำให้ขึ้นเตือนแล้งผิด
+        # จึงเก็บไฟล์เดิมไว้แทนการเขียนข้อมูลไม่ครบทับ
         print(f"::warning::GSMaP ไม่มีค่าบางวันใน {len(missing)} จังหวัด ({', '.join(missing[:10])}) "
               f"ได้ครบ {len(provinces_out)}/{EXPECTED_PROVINCES} — ไม่เขียนทับ rain-gsmap.json เดิม")
         return

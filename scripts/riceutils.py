@@ -37,6 +37,52 @@ def bkk_now():
     return (datetime.now(timezone.utc) + timedelta(hours=7)).strftime("%Y-%m-%d %H:%M")
 
 
+_HTTP = None
+
+
+def http():
+    """requests.Session ที่ถอยยาวเมื่อเจอ 429/5xx/timeout (รอ 0, 30, 60, 120, 240 วิ) แล้วค่อย raise
+
+    ใช้ร่วมกันทุกสคริปต์ที่ดึง Open-Meteo / ThaiWater — เดิมแต่ละไฟล์เขียน retry เอง 8 ชุด
+    ถอยคนละแบบจนเพี้ยนกัน · โควตาฟรีของ Open-Meteo ไม่รีเซ็ตในไม่กี่วินาที: 11 ก.ย. 69
+    retry ห่าง 2 วิ ได้ฝนแค่ 3 ใน 5 ปี · 17 ก.ย. โดน 503 แล้ว retry ห่าง 5 วิ หมด 3 ครั้งทันที
+    """
+    global _HTTP
+    if _HTTP is None:
+        import requests   # lazy เหมือน ee — workflow ที่ไม่ได้ยิง HTTP ไม่ต้องติดตั้ง requests
+        from requests.adapters import HTTPAdapter
+        from urllib3.util.retry import Retry
+        _HTTP = requests.Session()
+        _HTTP.mount("https://", HTTPAdapter(max_retries=Retry(
+            total=5, backoff_factor=15, backoff_max=300, status_forcelist=(429, 500, 502, 503, 504))))
+    return _HTTP
+
+
+def open_meteo(url, points, **params):
+    """Open-Meteo หลายจุดใน request เดียว — points = [{'lat','lon'}, ...] → list ผลตามลำดับ
+    ล้มหลังถอยครบ = raise · ฝั่งเรียกเลือกเองว่าจะข้าม batch เก็บค่าเดิม หรือหยุด"""
+    r = http().get(url, timeout=60, params={
+        "latitude": ",".join(str(p["lat"]) for p in points),
+        "longitude": ",".join(str(p["lon"]) for p in points),
+        "timezone": "Asia/Bangkok", **params})
+    r.raise_for_status()
+    data = r.json()
+    return data if isinstance(data, list) else [data]   # จุดเดียว API คืน dict
+
+
+def num2(v):
+    """ตัวเลขจาก ThaiWater (มาเป็น string/None) → float 2 ตำแหน่ง หรือ None"""
+    try:
+        return round(float(v), 2)
+    except (TypeError, ValueError):
+        return None
+
+
+def loc(d, lang):
+    """ช่องภาษาของ ThaiWater {th, en} → ข้อความ · ไม่มี = ''"""
+    return (d or {}).get(lang, "") if isinstance(d, dict) else ""
+
+
 def percentile(values, p):
     """Linear-interpolation percentile (นิยามเดียวกับ numpy default)
 

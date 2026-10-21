@@ -19,12 +19,11 @@ Method:  Hybrid Union Mask + Phenology flooding confirmation
 import sys
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-import calendar
 import ee
 import json
 import os
 from riceutils import bkk_today, init_gee, GAUL_NAME_MAP as NAME_MAP
-from riceutils import PHENOLOGY_MONTHS, FLOOD_EVI_MAX, PEAK_MIN, AMP_MIN, MIN_EVI_MAX, load_rice_mask, load_exclusion_mask, get_history_months, build_rice_phenology_mask, latest_q1_periods, q1_evi_image
+from riceutils import PHENOLOGY_MONTHS, FLOOD_EVI_MAX, PEAK_MIN, AMP_MIN, MIN_EVI_MAX, load_rice_mask, load_exclusion_mask, build_rice_phenology_mask, latest_q1_periods, q1_evi_image
 from rice_stage import TREND_EPS, classify_evi
 
 

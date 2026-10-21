@@ -9,9 +9,9 @@ Useful for comparing with the current/upcoming season.
 
 Output: data/weather-forecast.json
 """
-import json, os, re, sys, time, requests
+import json, os, sys, time
 from datetime import date
-from riceutils import bkk_today, load_centroids, load_sample_points, percentile
+from riceutils import bkk_today, load_centroids, load_sample_points, open_meteo, percentile
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -60,61 +60,33 @@ def daily_rain(daily):
             for t, v in zip(daily["time"], daily["precipitation_sum"])]
 
 
+def _season(year):
+    return {"start_date": f"{year}-{SEASON_MONTH_START:02d}-01",
+            "end_date":   f"{year}-{SEASON_MONTH_END:02d}-30"}
+
+
 def fetch_rain_points_batch(batch_pts, year):
     """ฝนรายวันของจุดตัวอย่าง (ขอแค่ precipitation ตัวเดียว — request เบากว่ามาก)
     batch_pts: [(province, {'lat','lon'}), ...] → {index: [(เดือน, มม.) รายวัน]}"""
-    params = {
-        "latitude":  ",".join(str(pt["lat"]) for _, pt in batch_pts),
-        "longitude": ",".join(str(pt["lon"]) for _, pt in batch_pts),
-        "start_date": f"{year}-{SEASON_MONTH_START:02d}-01",
-        "end_date":   f"{year}-{SEASON_MONTH_END:02d}-30",
-        "daily": "precipitation_sum",
-        "timezone": "Asia/Bangkok",
-    }
-    for wait in (0, 30, 90, 180, 300):
-        if wait:
-            time.sleep(wait)
-        try:
-            r = requests.get(API_URL, params=params, timeout=60)
-            r.raise_for_status()
-            results = r.json()
-            if isinstance(results, dict):
-                results = [results]
-            return {i: daily_rain(res["daily"]) for i, res in enumerate(results)}
-        except Exception as e:
-            err = e
-    print(f"  rain-points batch {year} ERROR - {err}", file=sys.stderr)
-    return {}
+    try:
+        results = open_meteo(API_URL, [pt for _, pt in batch_pts], daily="precipitation_sum", **_season(year))
+        return {i: daily_rain(res["daily"]) for i, res in enumerate(results)}
+    except Exception as e:
+        print(f"  rain-points batch {year} ERROR - {e}", file=sys.stderr)
+        return {}
 
 
 # ── Fetch one season for a batch of provinces in one API call ───────────────
 def fetch_season_batch(batch_names, centroids, year):
-    lats = ",".join(str(centroids[n]["lat"]) for n in batch_names)
-    lons = ",".join(str(centroids[n]["lon"]) for n in batch_names)
-    params = {
-        "latitude":  lats, "longitude": lons,
-        "start_date": f"{year}-{SEASON_MONTH_START:02d}-01",
-        "end_date":   f"{year}-{SEASON_MONTH_END:02d}-30",
-        "daily":  "precipitation_sum,temperature_2m_mean,et0_fao_evapotranspiration",
-        "timezone": "Asia/Bangkok",
-    }
-    # 40 จุด × 183 วัน × 3 ตัวแปร เป็น request ที่ "หนัก" สำหรับ Open-Meteo ฟรี
-    # จึงเจอ 429 เป็นปกติ และโควตาไม่รีเซ็ตใน 2 วินาที — ต้องถอยยาวจริง ไม่ใช่ retry ถี่ๆ
-    # (11 ก.ย. 69 retry 3 ครั้ง/2 วิ ได้ข้อมูลแค่ 3 ใน 5 ปี ทุกครั้งที่รัน)
-    for wait in (0, 30, 90, 180, 300):
-        if wait:
-            time.sleep(wait)
-        try:
-            r = requests.get(API_URL, params=params, timeout=60)
-            r.raise_for_status()
-            results = r.json()
-            if isinstance(results, dict):
-                results = [results]
-            return {n: _season_totals(res["daily"]) for n, res in zip(batch_names, results)}
-        except Exception as e:
-            err = e
-    print(f"  batch {year} ERROR – {err}", file=sys.stderr)
-    return {}
+    # 40 จุด × 183 วัน × 3 ตัวแปร เป็น request ที่ "หนัก" สำหรับ Open-Meteo ฟรี จึงเจอ 429
+    # เป็นปกติ — open_meteo() ถอยยาวให้แล้ว (11 ก.ย. 69 retry ถี่ได้ข้อมูลแค่ 3 ใน 5 ปี)
+    try:
+        results = open_meteo(API_URL, [centroids[n] for n in batch_names], **_season(year),
+                             daily="precipitation_sum,temperature_2m_mean,et0_fao_evapotranspiration")
+        return {n: _season_totals(res["daily"]) for n, res in zip(batch_names, results)}
+    except Exception as e:
+        print(f"  batch {year} ERROR – {e}", file=sys.stderr)
+        return {}
 
 
 WEEKS_PER_MONTH = 365.25 / 12 / 7   # 4.345

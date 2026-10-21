@@ -13,9 +13,8 @@ Disease risk thresholds (published scientific literature):
 
 Output: data/disease-risk.json
 """
-import json, os, re, sys, time
-import requests
-from riceutils import bkk_today, load_centroids
+import json, os, sys, time
+from riceutils import bkk_today, load_centroids, open_meteo
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -23,50 +22,7 @@ DAYS       = 7           # 6 past days + today = 7 total
 OUTPUT     = "data/disease-risk.json"
 API_URL    = "https://api.open-meteo.com/v1/forecast"
 BATCH_SIZE = 40          # provinces per request (2 requests for 77 provinces)
-MAX_RETRY  = 3
-TIMEOUT    = 60          # seconds per batch request
-
-
-
-
-# ── Fetch one batch of provinces in a single API call ───────────────────────
-def fetch_batch(batch_names, centroids):
-    lats = ",".join(str(centroids[n]["lat"]) for n in batch_names)
-    lons = ",".join(str(centroids[n]["lon"]) for n in batch_names)
-
-    params = {
-        "latitude":      lats,
-        "longitude":     lons,
-        "daily":         "temperature_2m_min,temperature_2m_max,relative_humidity_2m_mean,wind_speed_10m_max,precipitation_hours",
-        "past_days":     6,   # 6 past days
-        "forecast_days": 1,   # + today = 7 total
-        "timezone":      "Asia/Bangkok",
-    }
-
-    for attempt in range(MAX_RETRY):
-        try:
-            r = requests.get(API_URL, params=params, timeout=TIMEOUT)
-            if r.status_code == 429:
-                wait = 60 * (attempt + 1)
-                print(f"  429 rate-limit → wait {wait}s ...", flush=True)
-                time.sleep(wait)
-                continue
-            r.raise_for_status()
-            data = r.json()
-            # Single location → dict; multiple → list
-            if isinstance(data, dict):
-                data = [data]
-            return data
-        except requests.exceptions.Timeout:
-            wait = 15 * (attempt + 1)
-            print(f"  timeout (attempt {attempt+1}/{MAX_RETRY}) → retry in {wait}s ...", flush=True)
-            time.sleep(wait)
-        except Exception:
-            if attempt < MAX_RETRY - 1:
-                time.sleep(5)
-            else:
-                raise
-    raise RuntimeError(f"batch failed after {MAX_RETRY} attempts")
+DAILY      = "temperature_2m_min,temperature_2m_max,relative_humidity_2m_mean,wind_speed_10m_max,precipitation_hours"
 
 
 # ── Compute risk day-counts for one province ─────────────────────────────────
@@ -143,7 +99,8 @@ def main():
         print(f"\nBatch {batch_num}/{total_batches}: {batch[0]} … {batch[-1]} ({len(batch)} provinces)")
 
         try:
-            data = fetch_batch(batch, centroids)
+            data = open_meteo(API_URL, [centroids[n] for n in batch], daily=DAILY,
+                              past_days=DAYS - 1, forecast_days=1)   # 6 วันที่ผ่านมา + วันนี้
             for j, name in enumerate(batch):
                 daily = data[j]["daily"]
                 times = daily.get("time", [])

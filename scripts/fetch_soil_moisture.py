@@ -17,7 +17,7 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 import ee
 import json
 import os
-from datetime import date, datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 from riceutils import bkk_today, init_gee, build_provinces, GAUL_NAME_MAP as NAME_MAP
 
 COLLECTION = "NASA/SMAP/SPL4SMGP/008"

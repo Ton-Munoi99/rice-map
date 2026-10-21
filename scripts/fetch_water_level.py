@@ -10,21 +10,17 @@ situation_level: 5=ล้นตลิ่ง 4=มาก 3=ปกติ 2=น้�
 
 Output: data/water-level.json
 """
-import csv, json, math, os, sys, requests
+import json, os, sys
 from datetime import datetime, timezone
 from collections import Counter
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from riceutils import km_outside, load_province_bbox
+from riceutils import http, km_outside, load_province_bbox, loc, num2
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 API_URL = "https://api-v3.thaiwater.net/api/v1/thaiwater30/public/waterlevel_load"
 OUTPUT  = "data/water-level.json"
-
-_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-GEO_PATH = os.path.join(_ROOT, "data", "districts-geo.json")
-CSV_PATH = os.path.join(_ROOT, "rice-data.csv")
 
 # ต้นทางติดชื่อจังหวัดผิดกับบางสถานี — เจอที่ห่างจากจังหวัดที่อ้างถึง 385 กม.
 # ("บ้านมีชัย" ระบุหนองคาย แต่พิกัดอยู่กลางประเทศ) ถ้าปล่อยไว้ หมุดจะไปโผล่ผิดจังหวัด
@@ -32,50 +28,27 @@ CSV_PATH = os.path.join(_ROOT, "rice-data.csv")
 MAX_KM_OUTSIDE = 50
 
 
-def _num(v):
-    """แปลงเป็น float แบบปลอดภัย — คืน None ถ้าแปลงไม่ได้"""
-    try:
-        return round(float(v), 2)
-    except (TypeError, ValueError):
-        return None
-
-
-def _loc(d, lang):
-    """ดึงค่าภาษาจาก localized dict {th,en} — คืน '' ถ้าไม่มี"""
-    return (d or {}).get(lang, "") if isinstance(d, dict) else ""
-
-def fetch_rows():
-    """ดึงรายการสถานีจาก ThaiWater API (retry 3 ครั้ง)"""
-    for attempt in range(3):
-        try:
-            r = requests.get(API_URL, timeout=60)
-            r.raise_for_status()
-            return r.json()["waterlevel_data"]["data"]
-        except Exception as e:
-            if attempt == 2:
-                raise
-            print(f"  attempt {attempt+1} failed ({e}) — retrying...", file=sys.stderr)
-
-
 def main():
     print(f"Fetching ThaiWater stations from {API_URL} ...")
-    rows = fetch_rows()
+    r = http().get(API_URL, timeout=60)
+    r.raise_for_status()
+    rows = r.json()["waterlevel_data"]["data"]
     print(f"  total rows: {len(rows)}")
 
     bbox_by_prov, th2en, _ = load_province_bbox()
     stations, dropped = [], []
     for r in rows:
         st = r.get("station") or {}
-        lat = _num(st.get("tele_station_lat"))
-        lon = _num(st.get("tele_station_long"))
+        lat = num2(st.get("tele_station_lat"))
+        lon = num2(st.get("tele_station_long"))
         if lat is None or lon is None:
             continue   # ข้ามสถานีที่ไม่มีพิกัด
         name = st.get("tele_station_name") or {}
         geo  = r.get("geocode") or {}
 
         # พิกัดต้องอยู่ในจังหวัดที่ต้นทางระบุจริง ไม่งั้นหมุดไปโผล่ผิดที่
-        prov_th = _loc(geo.get("province_name"), "th")
-        prov_en = _loc(geo.get("province_name"), "en") or th2en.get(prov_th, "")
+        prov_th = loc(geo.get("province_name"), "th")
+        prov_en = loc(geo.get("province_name"), "en") or th2en.get(prov_th, "")
         bbox = bbox_by_prov.get(prov_en)
         if bbox:
             off = km_outside(lat, lon, bbox)
@@ -90,8 +63,8 @@ def main():
         # ริมโขงที่รายงาน "ล้นตลิ่ง 215 เมตร" ค่าพวกนี้เชื่อไม่ได้ ตัดทิ้งไปเลยดีกว่าปล่อยให้
         # หน้าเว็บขึ้นว่า "ไม่มีข้อมูล · ล้นตลิ่ง" พร้อมกัน
         trusted_bank = level is not None
-        msl = _num(r.get("waterlevel_msl"))
-        msl_prev = _num(r.get("waterlevel_msl_previous"))
+        msl = num2(r.get("waterlevel_msl"))
+        msl_prev = num2(r.get("waterlevel_msl_previous"))
 
         stations.append({
             "id":          r.get("id"),
@@ -101,19 +74,19 @@ def main():
             "lon":         lon,
             "river":       r.get("river_name") or "",
             "level":       level,
-            "pct":         _num(r.get("storage_percent")),
+            "pct":         num2(r.get("storage_percent")),
             # ระดับน้ำทะเลปานกลาง + ค่าก่อนหน้า — ใช้ดู "กำลังขึ้น/ลง" ได้แม้ไม่มี level
             # (สถานีแม่น้ำโขงมีแค่ค่านี้ ซึ่งเป็นตัวเดียวที่บอกแนวโน้มน้ำโขงหนุนได้)
             "msl":         msl,
             "msl_prev":    msl_prev,
-            "diff":        _num(r.get("diff_wl_bank")) if trusted_bank else None,
+            "diff":        num2(r.get("diff_wl_bank")) if trusted_bank else None,
             "diff_text":   (r.get("diff_wl_bank_text") or "") if trusted_bank else "",
             "dt":          r.get("waterlevel_datetime") or "",
-            "agency":      _loc((r.get("agency") or {}).get("agency_shortname"), "th"),
+            "agency":      loc((r.get("agency") or {}).get("agency_shortname"), "th"),
             "province_th": prov_th,
-            "province_en": _loc(geo.get("province_name"), "en"),
-            "amphoe_th":   _loc(geo.get("amphoe_name"), "th"),
-            "amphoe_en":   _loc(geo.get("amphoe_name"), "en"),
+            "province_en": loc(geo.get("province_name"), "en"),
+            "amphoe_th":   loc(geo.get("amphoe_name"), "th"),
+            "amphoe_en":   loc(geo.get("amphoe_name"), "en"),
         })
 
     counts = Counter(s["level"] for s in stations if s["level"] is not None)

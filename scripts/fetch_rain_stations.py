@@ -13,25 +13,15 @@ rain_level (เกณฑ์ TMD กรมอุตุนิยมวิทยา
 
 Output: data/rain-stations.json
 """
-import json, sys, requests
+import json, sys
 from datetime import datetime, timezone
 from collections import Counter
+from riceutils import http, loc, num2
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 API_URL = "https://api-v3.thaiwater.net/api/v1/thaiwater30/public/rain_24h"
 OUTPUT  = "data/rain-stations.json"
-
-
-def _num(v):
-    try:
-        return round(float(v), 2)
-    except (TypeError, ValueError):
-        return None
-
-
-def _loc(d, lang):
-    return (d or {}).get(lang, "") if isinstance(d, dict) else ""
 
 
 def rain_level(mm):
@@ -59,45 +49,35 @@ def previous_total():
         return 0
 
 
-def fetch_rows():
-    for attempt in range(3):
-        try:
-            r = requests.get(API_URL, timeout=60)
-            r.raise_for_status()
-            return r.json()["data"]
-        except Exception as e:
-            if attempt == 2:
-                raise
-            print(f"  attempt {attempt+1} failed ({e}) — retrying...", file=sys.stderr)
-
-
 def main():
     print(f"Fetching ThaiWater rain_24h from {API_URL} ...")
-    rows = fetch_rows()
+    r = http().get(API_URL, timeout=60)
+    r.raise_for_status()
+    rows = r.json()["data"]
     print(f"  total rows: {len(rows)}")
 
     stations = []
     for r in rows:
         st = r.get("station") or {}
-        lat = _num(st.get("tele_station_lat"))
-        lon = _num(st.get("tele_station_long"))
+        lat = num2(st.get("tele_station_lat"))
+        lon = num2(st.get("tele_station_long"))
         if lat is None or lon is None:
             continue
-        rain_mm = _num(r.get("rain_24h"))
+        rain_mm = num2(r.get("rain_24h"))
         geo = r.get("geocode") or {}
         name = st.get("tele_station_name") or {}
         stations.append({
             "id":          r.get("id"),
-            "name_th":     _loc(name, "th"),
-            "name_en":     _loc(name, "en"),
+            "name_th":     loc(name, "th"),
+            "name_en":     loc(name, "en"),
             "lat":         lat,
             "lon":         lon,
             "rain_24h":    rain_mm,
             "rain_level":  rain_level(rain_mm),
-            "province_th": _loc(geo.get("province_name"), "th"),
-            "province_en": _loc(geo.get("province_name"), "en"),
-            "amphoe_th":   _loc(geo.get("amphoe_name"), "th"),
-            "agency":      _loc((r.get("agency") or {}).get("agency_shortname"), "th"),
+            "province_th": loc(geo.get("province_name"), "th"),
+            "province_en": loc(geo.get("province_name"), "en"),
+            "amphoe_th":   loc(geo.get("amphoe_name"), "th"),
+            "agency":      loc((r.get("agency") or {}).get("agency_shortname"), "th"),
             "dt":          r.get("rainfall_datetime") or "",
         })
 

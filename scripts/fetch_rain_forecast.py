@@ -15,9 +15,8 @@ Output: data/rain-forecast.json
 Shape ไม่เปลี่ยนจากเดิม: provinces[name] = {rain_7d, values[7]} — downstream
 (index.html, fetch_agri_warnings.py) ใช้ต่อได้โดยไม่ต้องแก้
 """
-import json, os, re, statistics, sys, time
-import requests
-from riceutils import bkk_today, load_sample_points, percentile
+import json, os, sys, time
+from riceutils import bkk_today, load_sample_points, open_meteo, percentile
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -25,52 +24,7 @@ DAYS       = 7           # next N days forecast
 OUTPUT     = "data/rain-forecast.json"
 API_URL    = "https://api.open-meteo.com/v1/forecast"
 BATCH_SIZE = 40          # sample points per request
-MAX_RETRY  = 3
-TIMEOUT    = 60          # seconds per batch request
 PCTL       = 90          # percentile ข้ามจุดตัวอย่างรายวัน (100 = max)
-
-
-# ── Fetch one batch of sample points in a single API call ───────────────────
-def fetch_batch(batch_pts):
-    """batch_pts: list of (province, {'lat','lon'}) → list of Open-Meteo results"""
-    lats = ",".join(str(pt["lat"]) for _, pt in batch_pts)
-    lons = ",".join(str(pt["lon"]) for _, pt in batch_pts)
-
-    params = {
-        "latitude":      lats,
-        "longitude":     lons,
-        "daily":         "precipitation_sum",  # rain + showers + snow (total precip)
-        "forecast_days": DAYS,                 # next 7 days (today + 6 ahead)
-        "timezone":      "Asia/Bangkok",
-    }
-    # NOTE: No past_days — we want pure forward forecast only.
-    # forecast_days=7 returns today (day 0) through day 6.
-
-    for attempt in range(MAX_RETRY):
-        try:
-            r = requests.get(API_URL, params=params, timeout=TIMEOUT)
-            # 5xx ถอยยาวเหมือน 429 — 17 ก.ย. 69 batch โดน 503 แล้ว retry ห่าง 5 วิ หมด 3 ครั้งทันที
-            if r.status_code == 429 or r.status_code >= 500:
-                wait = 60 * (attempt + 1)
-                print(f"  {r.status_code} → wait {wait}s ...", flush=True)
-                time.sleep(wait)
-                continue
-            r.raise_for_status()
-            data = r.json()
-            # Single location → dict; multiple → list
-            if isinstance(data, dict):
-                data = [data]
-            return data
-        except requests.exceptions.Timeout:
-            wait = 15 * (attempt + 1)
-            print(f"  timeout (attempt {attempt+1}/{MAX_RETRY}) → retry in {wait}s ...", flush=True)
-            time.sleep(wait)
-        except Exception:
-            if attempt < MAX_RETRY - 1:
-                time.sleep(5)
-            else:
-                raise
-    raise RuntimeError(f"batch failed after {MAX_RETRY} attempts")
 
 
 def incomplete_provinces(series, sample_pts):
@@ -112,7 +66,9 @@ def main():
         for batch_num, batch in pending:
             print(f"Batch {batch_num}/{total_batches}: {batch[0][0]} … {batch[-1][0]} ({len(batch)} pts)")
             try:
-                data = fetch_batch(batch)
+                # precipitation_sum = ฝน+ฝนซู่+หิมะ · ไม่ขอ past_days — พยากรณ์ล้วน วันนี้ถึง +6
+                data = open_meteo(API_URL, [pt for _, pt in batch],
+                                  daily="precipitation_sum", forecast_days=DAYS)
                 if len(data) != len(batch):
                     raise RuntimeError(f"got {len(data)} results for {len(batch)} points")
                 rows = []
