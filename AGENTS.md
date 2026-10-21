@@ -85,7 +85,7 @@ Mutate `S` then call `rerender()`. Never read DOM state — always read from `S`
 | `DATA` | `{[province_en]: {white: {[year]: {production, yield, area, price, ...}}, jasmine: {...}}}` |
 | `DATA_META` | Dataset load status |
 | `VIEW` | SVG camera state (zoom/pan) |
-| `layerMeta` | Per-layer display config (`th`, `en`, `unit`, `summaryMode`) |
+| `layerMeta` | Per-layer display config (`th`, `en`, `unit`, `summaryMode`) + merged render config (format, palette, valueFn, and every per-layer caption) |
 | `COST_BASE` | OAE production cost benchmarks — white: 6,100 ฿/rai, jasmine: 5,150 ฿/rai |
 | `FERT_MOC` | MOC fertilizer price survey (8 formulas, min/max ฿/bag) |
 | `FERT_DOA_RATES` | กรมการข้าว recommended rates (kg/rai) — 46-0-0: **10**, 16-20-0: **25**, 15-15-15: **25** |
@@ -98,16 +98,21 @@ Mutate `S` then call `rerender()`. Never read DOM state — always read from `S`
 3. Add color palette case in `getPalette()`
 4. Add format case in `fmtCompact()` if needed
 5. Add layer button in HTML `#layerButtons`
-6. Add badge/title/description/data-source-note cases in render functions — **every layer needs
-   its own branch in the `refs.headlineDesc` ternary chain**. A missing branch silently falls
-   through to the default OAE rice caption; `biomass` shipped that way and credited OAE for a
-   DEDE power-plant registry
+6. Add the layer's text to its entry in the per-layer config (`Object.entries({...})` merged into
+   `layerMeta`, next to `palette`): `badge()` map-corner badge · `titleTh/En` map title · `desc()`
+   caption · `sub(metaLabel, riceLabel, yearLabel)` line under the ranking title · `rankTh/En` ·
+   `tab` ("env"/"econ") · `spark()` chart caption · `yearPill()` replaces the year buttons.
+   A missing field falls back to the default **OAE rice-data** text — `biomass` shipped that way
+   and credited OAE for a DEDE registry. The data-source note is still one `if` block per layer in
+   `updateDataSourceUI()`
 7. Add detail card case in `selectProvince()`
 8. If the layer has no yearly series, add it to `yearsForLayer()`, which returns the layer name
-   itself as a pseudo-year — `S.year` then becomes e.g. `"biomass"`. Any text that interpolates
-   `S.year` must not run for that layer (the default caption did, and printed "ปี biomass")
+   itself as a pseudo-year — `S.year` then becomes e.g. `"biomass"`. Such a layer must set
+   `badge`, `desc` and `yearPill`, or the defaults print `S.year` ("OAE ข้อมูลปี biomass" was live
+   until 21 Oct 2026)
 9. Verify by clicking every layer button and comparing captions: identical captions on layers with
-   different data sources mean one of them never wrote its own
+   different data sources mean one of them never wrote its own. For a refactor of these texts,
+   snapshot every layer × rice × year before and after and diff (see HANDOFF 2026-10-21)
 
 **Data flow:** `valueOf(en, rice, year, layer)` → dispatches to per-layer value functions → `rerender()` → SVG fill colors via `getPalette()` + `lerp()`.
 

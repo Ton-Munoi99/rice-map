@@ -13,21 +13,9 @@ handing the repository back to another coding agent.
 
 ## Checking your work
 
-There is no test runner. Pipeline logic is guarded by assert-based self-tests; run the one for
-any script you touch (CI also runs each before its script's cron fetch, so a broken change fails
-the workflow instead of overwriting data):
-
-```bash
-python scripts/fetch_agri_warnings.py --selftest
-python scripts/fetch_flood_status.py --selftest
-python scripts/fetch_weather_forecast.py --selftest
-python scripts/fetch_rain_forecast.py --selftest
-python scripts/fetch_rain_gsmap.py --selftest
-python scripts/fetch_storm_alerts.py --selftest
-python scripts/fetch_trea_fob.py --selftest
-python scripts/fetch_firms_hotspots.py --selftest
-python scripts/build_landuse_grid.py --selftest
-```
+There is no test runner. Pipeline logic is guarded by assert-based self-tests (`--selftest`, the
+list is in `AGENTS.md`); run the one for any script you touch. CI also runs each before its
+script's cron fetch, so a broken change fails the workflow instead of overwriting data.
 
 `python scripts/check_data_freshness.py` reports stale `data/*.json` by commit age. It cannot see
 a file that is committed on schedule with wrong contents — see the "say it in the data, then

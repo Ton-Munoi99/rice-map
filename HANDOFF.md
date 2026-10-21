@@ -1,8 +1,27 @@
 # Rice Map Handoff
 
-Last updated: 2026-09-18 by Claude Code
+Last updated: 2026-10-21 by Claude Code
 
 ## Log
+
+- 2026-10-21 (Claude): Ran /ponytail-audit, then the owner said "handle all". Done in 3 commits:
+  `c9953f0` scripts — `riceutils.http()` (requests Session + urllib3 Retry on 429/5xx/timeout,
+  waits 0/30/60/120/240 s) and `open_meteo(url, points, **params)` replace 6 hand-rolled Open-Meteo
+  retry loops (4 different policies) and 2 ThaiWater ones; `num2`/`loc` moved to riceutils; deleted
+  `score_alerts.py` + `alert-scoreboard.json`; 16 unused imports. Every changed fetcher was run live
+  and its output schema compared with the committed file. `a568eac` UI — **two real bugs found while
+  checking "dead" code**: (1) `1da884c` (19 Aug, NDVI cleanup) deleted the whole if/else that
+  rendered the province ranking list, so the right panel showed a "Top 10" title over an empty list
+  on every layer for 2 months — restored; (2) `selectProvince` on riceEvi waited for
+  `window.NDVI_DISTRICT`, which nothing sets since `c55c1d8`, so `loadDistrictData().then(selectProvince)`
+  recursed forever and froze the page on `#layer=riceEvi&sel=…` — fixed. Lesson: a CSS class or
+  table with no reader may be orphaned by a bad deletion, not dead; check `git log -S` first.
+  Plus `rainBars()`, tooltip helpers, and dead code. Third commit — per-layer captions (badge, title,
+  desc, ranking sub-line, default tab, spark caption, year pill) moved into each layer's config entry;
+  131 `S.layer ===` branches → 52. Verified by snapshotting 58 states (21 layers × rice × 2 years:
+  every caption, tooltip, ranking list and detail card) before/after and diffing in the browser —
+  only the intended fixes differ: biomass badge read "OAE ข้อมูลปี biomass", and the rain/water
+  station layers never set their ranking title/sub-line so they kept the previous layer's text.
 
 - 2026-10-20 (Claude): Land-use cache key is no longer manual. `build_landuse_grid.py --fingerprint` reads
   only each LDD zip's central directory (HTTP Range, ~4 s for 77) and hashes every province's map year plus
@@ -727,7 +746,8 @@ Keep them separate unless CI maintenance becomes a measured problem.
 
 ### Rice CSV and JS: keep both
 
-`rice-data.csv` is the runtime primary source and supports CSV import/export.
+`rice-data.csv` is the runtime primary source and supports CSV export (the import button was
+removed 20 Apr 2026; its dead handler `csvUp` was deleted 21 Oct 2026).
 `rice-data.js` is the static fallback and is consumed by trend and EVI validation
 scripts. Both are generated together. The duplication is deliberate resilience, not
 an unresolved source-of-truth problem.
@@ -787,9 +807,10 @@ measurements and a schema-level consumer test exist.
   compared against is a single-centroid climatology. That asymmetry biases toward
   over-warning. Left alone deliberately on 11 Sep 2026 so the month-baseline change could be
   measured on its own; worth revisiting as a separate, separately-measured change.
-- `alert-scoreboard.json` scores the rain *forecast* against observed rain at a fixed mm
-  threshold. It does not score the alert levels, so do not read its precision as a verdict on
-  the warning thresholds — the name suggests otherwise.
+- `score_alerts.py` / `alert-scoreboard.json` were deleted on 21 Oct 2026: the sidebar card went on
+  21 Jul, the forecast-bias calibration it fed went on 2 Oct, and nothing read the file. It scored the
+  rain *forecast* at a fixed mm cut-off, never the alert levels. Recover it from git (commit
+  `c9953f0`'s parent) if forecast accuracy needs measuring again.
 
 ## Handoff Protocol
 
