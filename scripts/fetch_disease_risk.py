@@ -104,18 +104,14 @@ def main():
             for j, name in enumerate(batch):
                 daily = data[j]["daily"]
                 times = daily.get("time", [])
-                if times:
-                    if period_start is None:
-                        period_start = times[0]
-                    period_end = times[-1]
-
                 if not times:
-                    provinces_out[name] = {
-                        "days_blast": 0, "days_bph": 0,
-                        "days_sheath": 0, "days_strong_wind": 0,
-                    }
-                    print(f"  ⚠ {name}: no data (zeros)")
+                    # ไม่มีข้อมูล ≠ ไม่เสี่ยง — ห้ามเขียน 0 เพราะการ์ดจะขึ้น "เสี่ยงต่ำ" ทั้งที่ไม่รู้
+                    errors.append(name)
+                    print(f"  ⚠ {name}: no data — ไม่ใส่ในไฟล์", file=sys.stderr)
                     continue
+                if period_start is None:
+                    period_start = times[0]
+                period_end = times[-1]
 
                 risk = compute_risk(daily)
                 provinces_out[name] = risk
@@ -125,21 +121,17 @@ def main():
                 )
 
         except Exception as e:
+            # เดิมเติม 0 ให้ทั้ง batch — การ์ดของจังหวัดพวกนั้นขึ้น "เสี่ยงต่ำ" ทุกโรคทั้งที่ดึงไม่ได้
+            # ตอนนี้ไม่ใส่ในไฟล์ (การ์ดไม่แสดง) และบอกไว้ใน _meta.missing
             print(f"  ✗ batch {batch_num} failed: {e}", file=sys.stderr)
-            errors.extend(batch)
-            # Fill zeros for failed batch
-            for name in batch:
-                if name not in provinces_out:
-                    provinces_out[name] = {
-                        "days_blast": 0, "days_bph": 0,
-                        "days_sheath": 0, "days_strong_wind": 0,
-                    }
+            errors.extend(n for n in batch if n not in provinces_out)
 
         if i + BATCH_SIZE < len(names):
             time.sleep(1)   # 1s pause between batches
 
-    if not provinces_out:
-        print("ERROR: No data fetched!", file=sys.stderr)
+    ok, err = len(provinces_out), len(errors)
+    if not ok or err > ok:   # หายเกินครึ่ง = ต้นทางมีปัญหา เก็บไฟล์เดิมไว้ดีกว่าเขียนครึ่งเดียวทับ
+        print(f"ERROR: ได้ {ok} จังหวัด หาย {err} — ไม่เขียนทับ {OUTPUT}", file=sys.stderr)
         sys.exit(1)
 
     result = {
@@ -149,6 +141,7 @@ def main():
             "period_end":   period_end or today,
             "days":         DAYS,
             "source":       "Open-Meteo Forecast API — api.open-meteo.com",
+            "missing":      sorted(errors),   # จังหวัดที่ดึงไม่ได้รอบนี้ — ไม่มีในไฟล์ ไม่ใช่ "ไม่เสี่ยง"
             "thresholds": {
                 "blast_temp_min_c":   22,
                 "blast_rh_pct":       80,
@@ -166,13 +159,9 @@ def main():
     with open(OUTPUT, "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=2)
 
-    ok  = len(provinces_out)
-    err = len(errors)
     print(f"\n✅ Saved {ok} provinces → {OUTPUT}")
     if errors:
-        print(f"⚠️  Failed ({err}): {', '.join(errors)}", file=sys.stderr)
-        if err > ok:
-            sys.exit(1)
+        print(f"⚠️  Missing ({err}): {', '.join(errors)}", file=sys.stderr)
 
 
 if __name__ == "__main__":

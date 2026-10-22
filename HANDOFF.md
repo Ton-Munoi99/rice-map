@@ -1,8 +1,18 @@
 # Rice Map Handoff
 
-Last updated: 2026-10-21 by Claude Code
+Last updated: 2026-10-22 by Claude Code
 
 ## Log
+
+- 2026-10-22 (Claude): Pushed the 21 Oct cleanup (`e0570d3`); push-verified.sh stopped on a
+  modify/delete conflict (cron had just rewritten `alert-scoreboard.json`, our commit deletes it — the
+  script's auto-resolve only handles content conflicts), resolved by hand with `git rm`. Not worth a
+  script change: nothing writes that file once the new update-rain.yml is live. Then: (1)
+  `fetch_disease_risk.py` no longer zero-fills provinces it could not fetch (0 reads as "no risk" on
+  the card); they are omitted and listed in `_meta.missing`, and more than half missing exits 1
+  without writing — verified by injecting a failed batch / total outage / an empty province.
+  (2) ranking-list bar moved to a full-width second row (CSS only); as a 4th grid column it got
+  0–40 px in the ~230–280 px right panel.
 
 - 2026-10-21 (Claude): Ran /ponytail-audit, then the owner said "handle all". Done in 3 commits:
   `c9953f0` scripts — `riceutils.http()` (requests Session + urllib3 Retry on 429/5xx/timeout,
