@@ -1,26 +1,26 @@
 {
  "_meta": {
-  "updated": "2026-10-22",
+  "updated": "2026-10-23",
   "source": "NASA FIRMS · VIIRS 375 m (Suomi-NPP) · NRT",
   "source_url": "https://firms.modaps.eosdis.nasa.gov/",
   "window": {
-   "from": "2026-10-15",
-   "to": "2026-10-21",
+   "from": "2026-10-16",
+   "to": "2026-10-22",
    "days": 7,
    "tz": "UTC (acq_date ของดาวเทียม)"
   },
-  "provinces_with_hotspots": 33,
-  "total_in_provinces": 142,
+  "provinces_with_hotspots": 37,
+  "total_in_provinces": 190,
   "excluded": {
    "low_confidence": 7,
-   "persistent_heat_source": 35,
-   "persistent_cells": 10
+   "persistent_heat_source": 32,
+   "persistent_cells": 9
   },
   "unplaced": {
-   "near_border_unassigned": 8,
-   "outside_thailand": 105
+   "near_border_unassigned": 9,
+   "outside_thailand": 115
   },
-  "region_rows": 77298,
+  "region_rows": 79674,
   "landuse": {
    "source": "กรมพัฒนาที่ดิน · แผนที่สภาพการใช้ที่ดิน 1:25,000 (CC BY-NC-ND)",
    "years": [
@@ -38,12 +38,13 @@
  },
  "provinces": {
   "Mae Hong Son": {
-   "count_7d": 1,
-   "last_date": "2026-10-19",
-   "frp_mw": 0.4,
+   "count_7d": 2,
+   "last_date": "2026-10-22",
+   "frp_mw": 5.0,
    "near_border_unassigned": 0,
    "crops": {
-    "other_crop": 1
+    "other_crop": 1,
+    "forest": 1
    },
    "landuse_year": 2564
   },
@@ -78,10 +79,14 @@
    "near_border_unassigned": 0
   },
   "Surat Thani": {
-   "count_7d": 0,
-   "last_date": null,
-   "frp_mw": 0.0,
-   "near_border_unassigned": 0
+   "count_7d": 2,
+   "last_date": "2026-10-22",
+   "frp_mw": 5.9,
+   "near_border_unassigned": 0,
+   "crops": {
+    "other_crop": 2
+   },
+   "landuse_year": 2564
   },
   "Krabi": {
    "count_7d": 0,
@@ -120,39 +125,40 @@
    "near_border_unassigned": 0
   },
   "Chiang Rai": {
-   "count_7d": 14,
-   "last_date": "2026-10-21",
-   "frp_mw": 172.7,
-   "near_border_unassigned": 6,
+   "count_7d": 25,
+   "last_date": "2026-10-22",
+   "frp_mw": 206.7,
+   "near_border_unassigned": 7,
    "crops": {
-    "rice": 5,
+    "rice": 12,
     "forest": 4,
-    "other_crop": 1,
-    "corn": 2,
-    "other": 2
+    "other_crop": 3,
+    "corn": 3,
+    "other": 3
    },
    "landuse_year": 2563
   },
   "Chiang Mai": {
-   "count_7d": 10,
-   "last_date": "2026-10-21",
-   "frp_mw": 29.5,
+   "count_7d": 14,
+   "last_date": "2026-10-22",
+   "frp_mw": 43.9,
    "near_border_unassigned": 0,
    "crops": {
     "other": 2,
     "rice": 6,
-    "other_crop": 1,
-    "forest": 1
+    "other_crop": 2,
+    "forest": 3,
+    "corn": 1
    },
    "landuse_year": 2567
   },
   "Lampang": {
-   "count_7d": 5,
-   "last_date": "2026-10-21",
-   "frp_mw": 13.2,
+   "count_7d": 7,
+   "last_date": "2026-10-22",
+   "frp_mw": 21.1,
    "near_border_unassigned": 0,
    "crops": {
-    "rice": 2,
+    "rice": 4,
     "corn": 1,
     "other_crop": 2
    },
@@ -166,8 +172,8 @@
   },
   "Nan": {
    "count_7d": 8,
-   "last_date": "2026-10-18",
-   "frp_mw": 42.9,
+   "last_date": "2026-10-22",
+   "frp_mw": 47.9,
    "near_border_unassigned": 0,
    "crops": {
     "other_crop": 4,
@@ -188,47 +194,52 @@
    "landuse_year": 2567
   },
   "Phrae": {
-   "count_7d": 10,
-   "last_date": "2026-10-21",
-   "frp_mw": 43.6,
+   "count_7d": 12,
+   "last_date": "2026-10-22",
+   "frp_mw": 54.2,
    "near_border_unassigned": 0,
    "crops": {
     "corn": 1,
     "rice": 8,
-    "forest": 1
+    "forest": 1,
+    "other_crop": 1,
+    "other": 1
    },
    "landuse_year": 2563
   },
   "Phitsanulok": {
-   "count_7d": 2,
-   "last_date": "2026-10-18",
-   "frp_mw": 7.1,
+   "count_7d": 3,
+   "last_date": "2026-10-22",
+   "frp_mw": 15.8,
    "near_border_unassigned": 0,
    "crops": {
-    "rice": 2
+    "rice": 2,
+    "forest": 1
    },
    "landuse_year": 2564
   },
   "Sukhothai": {
-   "count_7d": 7,
+   "count_7d": 10,
    "last_date": "2026-10-21",
-   "frp_mw": 23.4,
+   "frp_mw": 44.8,
    "near_border_unassigned": 0,
    "crops": {
+    "forest": 3,
     "rice": 7
    },
    "landuse_year": 2564
   },
   "Uttaradit": {
-   "count_7d": 10,
-   "last_date": "2026-10-19",
-   "frp_mw": 42.4,
+   "count_7d": 15,
+   "last_date": "2026-10-22",
+   "frp_mw": 75.2,
    "near_border_unassigned": 0,
    "crops": {
     "corn": 1,
-    "rice": 6,
-    "cassava": 2,
-    "sugarcane": 1
+    "rice": 9,
+    "cassava": 3,
+    "sugarcane": 1,
+    "other": 1
    },
    "landuse_year": 2563
   },
@@ -239,24 +250,24 @@
    "near_border_unassigned": 0
   },
   "Kamphaeng Phet": {
-   "count_7d": 4,
-   "last_date": "2026-10-19",
-   "frp_mw": 11.4,
+   "count_7d": 7,
+   "last_date": "2026-10-22",
+   "frp_mw": 20.5,
    "near_border_unassigned": 0,
    "crops": {
-    "industry": 2,
-    "rice": 1,
-    "sugarcane": 1
+    "industry": 3,
+    "rice": 2,
+    "sugarcane": 2
    },
    "landuse_year": 2567
   },
   "Phichit": {
-   "count_7d": 6,
-   "last_date": "2026-10-19",
-   "frp_mw": 21.9,
+   "count_7d": 8,
+   "last_date": "2026-10-22",
+   "frp_mw": 27.2,
    "near_border_unassigned": 0,
    "crops": {
-    "rice": 6
+    "rice": 8
    },
    "landuse_year": 2563
   },
@@ -311,15 +322,15 @@
    "near_border_unassigned": 0
   },
   "Lop Buri": {
-   "count_7d": 16,
-   "last_date": "2026-10-19",
-   "frp_mw": 64.4,
+   "count_7d": 20,
+   "last_date": "2026-10-22",
+   "frp_mw": 85.4,
    "near_border_unassigned": 0,
    "crops": {
     "corn": 4,
-    "cassava": 10,
+    "cassava": 12,
     "rice": 1,
-    "sugarcane": 1
+    "sugarcane": 3
    },
    "landuse_year": 2566
   },
@@ -336,15 +347,16 @@
    "near_border_unassigned": 0
   },
   "Nakhon Sawan": {
-   "count_7d": 5,
-   "last_date": "2026-10-19",
-   "frp_mw": 16.0,
+   "count_7d": 6,
+   "last_date": "2026-10-22",
+   "frp_mw": 18.7,
    "near_border_unassigned": 0,
    "crops": {
     "rice": 1,
     "sugarcane": 2,
     "corn": 1,
-    "industry": 1
+    "industry": 1,
+    "other_crop": 1
    },
    "landuse_year": 2563
   },
@@ -412,10 +424,14 @@
    "near_border_unassigned": 0
   },
   "Ratchaburi": {
-   "count_7d": 0,
-   "last_date": null,
-   "frp_mw": 0.0,
-   "near_border_unassigned": 0
+   "count_7d": 1,
+   "last_date": "2026-10-21",
+   "frp_mw": 0.3,
+   "near_border_unassigned": 0,
+   "crops": {
+    "forest": 1
+   },
+   "landuse_year": 2568
   },
   "Samut Prakan": {
    "count_7d": 0,
@@ -476,12 +492,13 @@
    "near_border_unassigned": 0
   },
   "Chachoengsao": {
-   "count_7d": 1,
-   "last_date": "2026-10-17",
-   "frp_mw": 3.5,
+   "count_7d": 4,
+   "last_date": "2026-10-22",
+   "frp_mw": 10.3,
    "near_border_unassigned": 0,
    "crops": {
-    "other_crop": 1
+    "other_crop": 1,
+    "rice": 3
    },
    "landuse_year": 2567
   },
@@ -579,10 +596,14 @@
    "landuse_year": 2565
   },
   "Surin": {
-   "count_7d": 0,
-   "last_date": null,
-   "frp_mw": 0.0,
-   "near_border_unassigned": 0
+   "count_7d": 1,
+   "last_date": "2026-10-22",
+   "frp_mw": 8.8,
+   "near_border_unassigned": 0,
+   "crops": {
+    "rice": 1
+   },
+   "landuse_year": 2565
   },
   "Loei": {
    "count_7d": 2,
@@ -596,10 +617,14 @@
    "landuse_year": 2565
   },
   "Nong Khai": {
-   "count_7d": 0,
-   "last_date": null,
-   "frp_mw": 0.0,
-   "near_border_unassigned": 0
+   "count_7d": 1,
+   "last_date": "2026-10-22",
+   "frp_mw": 4.3,
+   "near_border_unassigned": 0,
+   "crops": {
+    "rice": 1
+   },
+   "landuse_year": 2566
   },
   "Sakon Nakhon": {
    "count_7d": 1,
@@ -629,20 +654,20 @@
    "near_border_unassigned": 0
   },
   "Nakhon Phanom": {
-   "count_7d": 1,
-   "last_date": "2026-10-15",
-   "frp_mw": 0.4,
-   "near_border_unassigned": 0,
-   "crops": {
-    "other_crop": 1
-   },
-   "landuse_year": 2565
-  },
-  "Mukdahan": {
    "count_7d": 0,
    "last_date": null,
    "frp_mw": 0.0,
-   "near_border_unassigned": 2
+   "near_border_unassigned": 0
+  },
+  "Mukdahan": {
+   "count_7d": 1,
+   "last_date": "2026-10-22",
+   "frp_mw": 3.4,
+   "near_border_unassigned": 2,
+   "crops": {
+    "sugarcane": 1
+   },
+   "landuse_year": 2566
   },
   "Narathiwat": {
    "count_7d": 0,
@@ -657,12 +682,12 @@
    "near_border_unassigned": 0
   },
   "Bueng Kan": {
-   "count_7d": 2,
-   "last_date": "2026-10-19",
-   "frp_mw": 7.0,
+   "count_7d": 3,
+   "last_date": "2026-10-22",
+   "frp_mw": 9.1,
    "near_border_unassigned": 0,
    "crops": {
-    "other_crop": 1,
+    "other_crop": 2,
     "other": 1
    },
    "landuse_year": 2566
