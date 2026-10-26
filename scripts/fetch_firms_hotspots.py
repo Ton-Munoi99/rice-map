@@ -220,9 +220,17 @@ def assign(rows, shapes, crop_of=None):
 
 def main():
     today_utc = datetime.now(timezone.utc).date()
-    # http() ลองใหม่เมื่อต่อไม่ติด/5xx — 25 ต.ค. 69 runner ต่อ NASA ไม่ได้ครั้งเดียว ("Network is unreachable") workflow แดงทั้งรอบ
-    r = http().get(URL, timeout=120, headers={"User-Agent": "RiceMap/1.0 (+https://github.com/Ton-Munoi99/rice-map)"})
-    r.raise_for_status()
+    # 25–26 ต.ค. 69 runner ของ GitHub ต่อ firms. ไม่ได้ ("Network is unreachable" หลังรอ 2 นาที) ขณะที่จากเครื่องอื่นปกติ
+    # → ลอง mirror firms2. (ไฟล์เดียวกัน คนละเครื่อง) · connect timeout 10 วิ ไม่งั้นแต่ละครั้งรอ 2 นาที
+    for url in (URL, URL.replace("//firms.", "//firms2.", 1)):
+        try:
+            r = http().get(url, timeout=(10, 120), headers={"User-Agent": "RiceMap/1.0 (+https://github.com/Ton-Munoi99/rice-map)"})
+            r.raise_for_status()
+            break
+        except Exception as e:
+            print(f"::warning::ดึง {url.split('/')[2]} ไม่ได้: {e}", file=sys.stderr)
+    else:
+        sys.exit("ดึงไฟล์ FIRMS ไม่ได้ทั้งสอง host — ไม่เขียนทับข้อมูลเดิม")
     rows = parse_rows(r.text)
     window = check_region(rows, today_utc)   # ล้ม = exit 1 ก่อนเขียน ข้อมูลเดิมอยู่ครบ
     kept, dropped = select(rows, window)
