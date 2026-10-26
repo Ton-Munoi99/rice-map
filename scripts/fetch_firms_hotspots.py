@@ -31,9 +31,7 @@ import sys
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 
-import requests
-
-from riceutils import _load_geo, _point_in_geom, bkk_today
+from riceutils import _load_geo, _point_in_geom, bkk_today, http
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -222,7 +220,8 @@ def assign(rows, shapes, crop_of=None):
 
 def main():
     today_utc = datetime.now(timezone.utc).date()
-    r = requests.get(URL, timeout=120, headers={"User-Agent": "RiceMap/1.0 (+https://github.com/Ton-Munoi99/rice-map)"})
+    # http() ลองใหม่เมื่อต่อไม่ติด/5xx — 25 ต.ค. 69 runner ต่อ NASA ไม่ได้ครั้งเดียว ("Network is unreachable") workflow แดงทั้งรอบ
+    r = http().get(URL, timeout=120, headers={"User-Agent": "RiceMap/1.0 (+https://github.com/Ton-Munoi99/rice-map)"})
     r.raise_for_status()
     rows = parse_rows(r.text)
     window = check_region(rows, today_utc)   # ล้ม = exit 1 ก่อนเขียน ข้อมูลเดิมอยู่ครบ
