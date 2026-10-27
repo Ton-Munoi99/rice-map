@@ -749,7 +749,7 @@ loader-backed layers.
 
 ### GitHub Actions: keep separate
 
-The 17 workflows share one commit step via ./.github/actions/commit-data, and differ in schedules, Python versions,
+The 18 data workflows share one commit step via ./.github/actions/commit-data, and differ in schedules, Python versions,
 dependencies, GEE secrets, scripts, generated files, and commit behavior. A reusable
 workflow would centralize failure risk and still need most values as parameters.
 Keep them separate unless CI maintenance becomes a measured problem.

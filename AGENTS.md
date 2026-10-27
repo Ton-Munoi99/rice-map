@@ -144,7 +144,7 @@ Auto-updated by GitHub Actions crons (29 files in `data/`; 25 are cron-written, 
 
 ### GitHub Actions
 
-18 workflows in `.github/workflows/` (17 write data + `check-data-freshness.yml`, which only reads). The 17 data workflows commit directly to `main` through the shared
+19 workflows in `.github/workflows/` (18 write data + `check-data-freshness.yml`, which only reads). The 18 data workflows commit directly to `main` through the shared
 `./.github/actions/commit-data` composite action, which stages the listed paths, skips the
 commit when nothing changed, and retries `git pull --rebase` + push up to 3× so concurrent
 cron runs do not collide. Add new data workflows by calling that action rather than

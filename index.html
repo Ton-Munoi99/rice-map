@@ -2845,6 +2845,7 @@
         },
         households: {
           format: "households",
+          titleTh: "แผนที่ครัวเรือนเกษตรกรรายจังหวัด", titleEn: "Farm Households by Province",
           badge: () => `👨‍🌾 ${t("ครัวเรือนเกษตรกร", "Farm Households")} OAE 2566`,
           desc: () =>
             t(
@@ -3133,6 +3134,7 @@
           format: "bignum",
           sourceTh: "OAE × พพ. (RPR 1.169)",
           sourceEn: "OAE × DEDE (RPR)",
+          titleTh: "แผนที่ฟางข้าวรายจังหวัด (ข้าวทุกชนิด)", titleEn: "Rice Straw by Province (all rice)",
           palette: { lo: [92, 64, 28], mid: [200, 160, 70], hi: [245, 212, 120], accent: "#d4a017" },
           desc: () =>
             t(
@@ -3146,6 +3148,7 @@
           format: "int",
           sourceTh: "ทะเบียน พพ. (DEDE) ธ.ค. 2568",
           sourceEn: "DEDE registry, Dec 2025",
+          titleTh: "แผนที่โรงไฟฟ้าชีวมวลรายจังหวัด", titleEn: "Biomass Power Plants by Province",
           palette: { lo: [254, 243, 199], mid: [251, 146, 60], hi: [180, 83, 9], accent: "#f59e0b" },
           badge: () => `⚡ ${t("โรงไฟฟ้าชีวมวล", "Biomass Power Plants")} · DEDE ${biomassAsOf()}`,
           desc: () =>
@@ -4968,7 +4971,7 @@
           !layerMeta[S.layer]?.noTimeseries &&
           S.layer !== "price" &&
           S.layer !== "households" &&
-          S.year >= "2568";
+          yearEstimated(S.year); // ตัดสินจากแหล่งของแถวจริงเหมือนหมายเหตุและปุ่มปี — เดิมใช้ "ปี ≥ 2568" ป้ายเลยบอกประมาณการทั้งที่ 2568 เป็นข้อมูล สศก. แล้ว
         refs.latestBadge.textContent =
           lm.badge?.() ??
           (isEstYear ? `📊 ${t("ประมาณการ", "Estimate")} ${S.year}` : `OAE ${t("ข้อมูลปี", "Crop Year")} ${S.year}`);
