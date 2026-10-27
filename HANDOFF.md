@@ -4,6 +4,11 @@ Last updated: 2026-10-22 by Claude Code
 
 ## Log
 
+- 2026-10-27 (Claude): stale-check found the corner badge using `S.year >= "2568"` (said "ประมาณการ 2568"
+  on OAE data) and biomass/households/straw falling back to the rice map title — fixed (`2ee4e85`). Then added
+  the hotspots "all points ↔ rice fields only" toggle (`S.hotspotRice`, not in the URL hash; `hotspotsValueOf`
+  returns `crops.rice` when on, only if `_meta.landuse` exists) and moved actions/cache to v6 (Node 24).
+
 - 2026-10-22 (Claude): Pushed the 21 Oct cleanup (`e0570d3`); push-verified.sh stopped on a
   modify/delete conflict (cron had just rewritten `alert-scoreboard.json`, our commit deletes it — the
   script's auto-resolve only handles content conflicts), resolved by hand with `git rm`. Not worth a

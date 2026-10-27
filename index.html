@@ -3098,7 +3098,8 @@
           sourceTh: "NASA FIRMS (VIIRS)",
           sourceEn: "NASA FIRMS (VIIRS)",
           palette: { lo: [255, 243, 205], mid: [255, 138, 0], hi: [183, 28, 28], accent: "#ff6d00" },
-          badge: () => `🔥 ${t("จุดความร้อน", "Fire Hotspots")} · NASA FIRMS ${window.HOTSPOT_DATA?._meta?.updated || ""}`,
+          badge: () =>
+            `🔥 ${hotspotRiceOnly() ? t("จุดความร้อนในนาข้าว", "Hotspots in rice fields") : t("จุดความร้อน", "Fire Hotspots")} · NASA FIRMS ${window.HOTSPOT_DATA?._meta?.updated || ""}`,
           titleTh: "แผนที่จุดความร้อนรายจังหวัด 7 วันล่าสุด", titleEn: "Fire Hotspots by Province — last 7 days",
           desc: () =>
             t(
@@ -3106,7 +3107,7 @@
               `Hotspots detected by the NASA/NOAA VIIRS satellite (375 m) per province, ${window.HOTSPOT_DATA?._meta?.window?.from || "—"} to ${window.HOTSPOT_DATA?._meta?.window?.to || "—"} · every point in the province is counted, all crops and forest — the crop under each point (rice/cane/cassava/corn, from the LDD land-use map, which may have changed since its survey year) is in the province details · a lower bound, not all fires (small, under-cloud or short-lived fires are missed) · not proof of straw burning`,
             ),
           sub: (m) =>
-            `${m}<br>${t(`NASA FIRMS VIIRS · อัปเดต ${fmtDateISO(window.HOTSPOT_DATA?._meta?.updated)}`, `NASA FIRMS VIIRS · Updated ${fmtDateISO(window.HOTSPOT_DATA?._meta?.updated)}`)}`,
+            `${m}${hotspotRiceOnly() ? t(" · เฉพาะในนาข้าว", " · rice fields only") : ""}<br>${t(`NASA FIRMS VIIRS · อัปเดต ${fmtDateISO(window.HOTSPOT_DATA?._meta?.updated)}`, `NASA FIRMS VIIRS · Updated ${fmtDateISO(window.HOTSPOT_DATA?._meta?.updated)}`)}`,
           tab: "env",
           spark: () =>
             t(
@@ -3115,7 +3116,14 @@
             ),
           yearPill: () => {
             const hm = window.HOTSPOT_DATA?._meta;
-            return `<button class="pill on" data-year="hotspots">🔥 NASA FIRMS VIIRS · ${hm?.window?.from || ""} → ${hm?.window?.to || ""}</button>`;
+            const period = `<button class="pill on" data-year="hotspots">🔥 NASA FIRMS VIIRS · ${hm?.window?.from || ""} → ${hm?.window?.to || ""}</button>`;
+            if (!hm?.landuse) return period;   // รอบนี้แยกพืชไม่ได้ → ไม่มีปุ่มสลับ
+            const rice = hotspotRiceOnly();
+            return (
+              period +
+              `<button class="pill${rice ? "" : " on"}" onclick="toggleHotspotRice(false)">${t("ทุกจุด", "All points")}</button>` +
+              `<button class="pill${rice ? " on" : ""}" onclick="toggleHotspotRice(true)">🌾 ${t("เฉพาะในนาข้าว", "Rice fields only")}</button>`
+            );
           },
         },
         naprang: {
@@ -3468,6 +3476,7 @@
         sel: null,
         wlShowAll: false,
         rsShowAll: false,
+        hotspotRice: false,   // layer จุดความร้อน: นับเฉพาะจุดที่ตกในนาข้าว (ปุ่มแทนปี)
         yearPicked: false,
       };
       let DATA = {};
@@ -4119,8 +4128,17 @@
       }
       // 0 = ดาวเทียมผ่านแล้วไม่เห็นจุดความร้อน (มีความหมาย) · null = ไม่มีไฟล์/ไม่มีจังหวัดนี้
       function hotspotsValueOf(en) {
-        return window.HOTSPOT_DATA?.provinces?.[en]?.count_7d ?? null;
+        const p = window.HOTSPOT_DATA?.provinces?.[en];
+        if (!p) return null;
+        return hotspotRiceOnly() ? p.crops?.rice ?? 0 : p.count_7d;
       }
+      // โหมดเฉพาะนาข้าวใช้ได้เฉพาะรอบที่แยกชนิดพืชได้ (_meta.landuse) — ไม่งั้นกลับไปนับทุกจุด
+      const hotspotRiceOnly = () => S.hotspotRice && !!window.HOTSPOT_DATA?._meta?.landuse;
+      function toggleHotspotRice(on) {
+        S.hotspotRice = on;
+        rerender();
+      }
+      window.toggleHotspotRice = toggleHotspotRice;
       // ชนิดพืชใต้จุด (แผนที่การใช้ที่ดิน กพด.) — ไม่มี crops = รอบนั้นไม่ได้แยก (_meta.landuse null) ซ่อนทั้งบรรทัด
       const HOTSPOT_CROPS = [
         ["rice", "นาข้าว", "rice"], ["sugarcane", "อ้อย", "cane"], ["cassava", "มันสำปะหลัง", "cassava"],
@@ -6901,17 +6919,18 @@ ${
           const hp = window.HOTSPOT_DATA?.provinces?.[en];
           if (!hp)
             return tipNoData(en, "ไม่มีข้อมูล", "No data");
-          const hc = hp.count_7d > 0 ? "#e65100" : "#66bb6a";
+          const shown = hotspotsValueOf(en);
+          const hc = shown > 0 ? "#e65100" : "#66bb6a";
           const lastLine = hp.last_date
             ? t(`พบล่าสุด ${fmtDateISO(hp.last_date)}`, `Latest seen ${fmtDateISO(hp.last_date)}`)
             : t("ดาวเทียมไม่พบจุดความร้อนใน 7 วัน", "No hotspots seen in 7 days");
           return `${tipHead(en)}
-<div class="type">${t("จุดความร้อน 7 วัน", "Hotspots, 7 days")} · NASA FIRMS</div>
-<div class="value" style="color:${hc}">${hp.count_7d}<small style="font-size:14px"> ${t("จุด", "pts")}</small></div>
+<div class="type">${hotspotRiceOnly() ? t(`จุดความร้อนในนาข้าว 7 วัน (จากทั้งหมด ${hp.count_7d})`, `Hotspots in rice fields, 7 days (of ${hp.count_7d})`) : t("จุดความร้อน 7 วัน", "Hotspots, 7 days")} · NASA FIRMS</div>
+<div class="value" style="color:${hc}">${shown}<small style="font-size:14px"> ${t("จุด", "pts")}</small></div>
 <div style="font-size:10px;color:var(--muted);margin-top:4px;line-height:1.5">${lastLine}${hp.frp_mw ? ` · FRP ${hp.frp_mw} MW` : ""}${hp.near_border_unassigned ? t(` · อีก ${hp.near_border_unassigned} จุดชิดชายแดน ไม่นับ (แยกฝั่งไม่ได้)`, ` · ${hp.near_border_unassigned} more on the border, not counted (side unclear)`) : ""}</div>
 ${hotspotCropsLine(hp)}
 <div style="font-size:9px;color:var(--muted);margin-top:4px;opacity:.75">${t("ตัวเลขต่ำสุด รวมทุกพืชและป่า · ตัดปล่องโรงงานแล้ว", "Lower bound · all crops and forest · industrial stacks removed")}</div>
-${hp.count_7d > 0 ? `<div class="rank">${tipRank(en)}</div>` : ""}`;
+${shown > 0 ? `<div class="rank">${tipRank(en)}</div>` : ""}`;
         }
         // ── Soil Moisture tooltip ────────────────────────────────────────────
         if (S.layer === "soilMoisture") {

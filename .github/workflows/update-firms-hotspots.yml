@@ -31,7 +31,7 @@ jobs:
       # restore-keys: ไม่ตรงรุ่นก็ดึงตารางรุ่นก่อนมาใช้ไปก่อน — แผนที่เก่ายังดีกว่าไม่แยกพืช
       - name: Restore land-use grid
         id: landuse
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: data/source/landuse_grid.npz
           key: ldd-landuse-grid-${{ steps.luver.outputs.v }}
@@ -49,7 +49,7 @@ jobs:
       # save แยกจาก restore: เก็บเฉพาะตอนสร้างสำเร็จ — ไม่งั้นตารางเก่าจะถูกเก็บใต้ key ใหม่แล้วไม่สร้างใหม่อีกเลย
       - name: Save land-use grid
         if: steps.build.outcome == 'success'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: data/source/landuse_grid.npz
           key: ldd-landuse-grid-${{ steps.luver.outputs.v }}
