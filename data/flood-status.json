@@ -4,13 +4,13 @@
     "updated": "2026-10-30",
     "source": "ThaiWater (สสน./HII) — ระดับน้ำรายสถานี",
     "source_url": "https://www.thaiwater.net/",
-    "water_level_updated_at": "2026-10-30T00:44:38.572312+00:00",
+    "water_level_updated_at": "2026-10-30T09:50:33.181762+00:00",
     "news_source": "Google News RSS",
-    "news_count": 26,
+    "news_count": 25,
     "news_error": null,
-    "provinces_flooded": 9,
+    "provinces_flooded": 10,
     "provinces_flagged": 21,
-    "stations_total": 803,
+    "stations_total": 807,
     "thresholds": {
       "flood": "มีสถานีระดับ 5 (ล้นตลิ่ง) ≥1 จุด",
       "near": "สถานีระดับ 4 (น้ำมาก) ≥3 จุด และ ≥30% ของสถานีในจังหวัด",
@@ -19,10 +19,10 @@
       "surge_needs_history": "กฎน้ำขึ้นเร็วทั้งสองข้อใช้ได้เมื่อสถานีนั้นมีประวัติครบ 8 ค่าแล้ว (สถานีใหม่จึงยังไม่ถูกตัดสิน)",
       "surge_msl": "หรือสถานีที่ไม่มีค่าอ้างอิงตลิ่ง มีระดับน้ำสูงกว่ายอดเดิมของตัวเองใน ~40 ชม. ≥1.0 ม."
     },
-    "provinces_surge": 2,
-    "provinces_brim": 2,
+    "provinces_surge": 0,
+    "provinces_brim": 0,
     "provinces_surge_msl": 0,
-    "stations_rated": 788,
+    "stations_rated": 792,
     "note_th": "**สีมาจากสถานีวัดระดับน้ำจริงของ สสน. เท่านั้น ข่าวเป็นบทสรุปประกอบ ไม่มีผลกับสี** (พาดหัวข่าวหลอกได้ เช่นข่าวเรื่องแล้งที่มีคำว่าน้ำท่วมอยู่ในเนื้อหา) · จังหวัดที่ไม่ขึ้นสี = ไม่มีสถานีเข้าเกณฑ์ **ไม่ใช่ยืนยันว่าไม่ท่วม** — น้ำท่วมขังนอกลำน้ำหรือพื้นที่ที่ไม่มีสถานีวัด ระบบนี้มองไม่เห็น",
     "note_en": "Colour comes only from measured ThaiWater river-gauge levels; news is context and never drives the colour. Unflagged provinces mean no gauge met the threshold — not a confirmation that nowhere is flooded."
   },
@@ -32,9 +32,9 @@
       "severity": 2,
       "severity_th": "ท่วม",
       "severity_en": "Flooding",
-      "reason_th": "มีสถานีล้นตลิ่ง 4 จุด",
-      "stations_overbank": 4,
-      "stations_high": 1,
+      "reason_th": "มีสถานีล้นตลิ่ง 5 จุด",
+      "stations_overbank": 5,
+      "stations_high": 0,
       "stations_total": 7,
       "stations": [
         {
@@ -43,43 +43,57 @@
           "river": "แม่น้ำท่าจีน",
           "level": 5,
           "pct": 110.21,
-          "dt": "2026-10-30 06:00"
+          "dt": "2026-10-30 15:00"
         },
         {
           "name": "ที่ว่าการอ.นครชัยศรี",
           "amphoe": "นครชัยศรี",
           "river": "แม่น้ำท่าจีน",
           "level": 5,
-          "pct": 106.51,
-          "dt": "2026-10-30 06:00"
+          "pct": 108.49,
+          "dt": "2026-10-30 15:00"
         },
         {
           "name": "บางเลน",
           "amphoe": "บางเลน",
           "river": "แม่น้ำท่าจีน",
           "level": 5,
-          "pct": 106.02,
-          "dt": "2026-10-30 07:30"
+          "pct": 106.21,
+          "dt": "2026-10-30 16:30"
+        },
+        {
+          "name": "ร.ร.บ้านสามพราน",
+          "amphoe": "สามพราน",
+          "river": "แม่น้ำท่าจีน",
+          "level": 5,
+          "pct": 103.51,
+          "dt": "2026-10-30 15:00"
         },
         {
           "name": "สะพานนครชัยศรี",
           "amphoe": "นครชัยศรี",
           "river": "แม่น้ำท่าจีน",
           "level": 5,
-          "pct": 100.1,
-          "dt": "2026-10-30 07:30"
-        },
-        {
-          "name": "ร.ร.บ้านสามพราน",
-          "amphoe": "สามพราน",
-          "river": "แม่น้ำท่าจีน",
-          "level": 4,
-          "pct": 95.61,
-          "dt": "2026-10-30 06:00"
+          "pct": 102.92,
+          "dt": "2026-10-30 16:30"
         }
       ],
-      "surge": null,
+      "surge": {
+        "name": "ร.ร.บ้านสามพราน",
+        "amphoe": "สามพราน",
+        "kind": "brim",
+        "was": 95.6,
+        "now": 103.51,
+        "rise": 7.9,
+        "dt": "2026-10-30 15:00"
+      },
       "news": [
+        {
+          "title": "นครปฐม คณะสงฆ์วัดไร่ขิงพระอารามหลวง พร้อมผู้นำชุมชนสามพรานลุยน้ำท่วม ส่งความห่วงใย ใส่ใจมอบเครื่องยังชีพส่งถึงญาติโยม",
+          "source": "ทอล์คนิวส์ ออนไลน์",
+          "url": "https://news.google.com/rss/articles/CBMiVEFVX3lxTE5XN0I5dWZCVnkxMVBwNTRmaE5Dems2MTBqUzJURUdIME10Z0VwaFZ6LVZ1YjRSSEJ6S3NlNTRMVHFoRDNCSUpucl92bGh3ODlOTTd1QQ?oc=5",
+          "date": "Fri, 30 Oct 2026"
+        },
         {
           "title": "สรจ.นครปฐม ลงพื้นที่ให้กำลังใจและมอบสิ่งของช่วยเหลืออาสาสมัครแรงงานที่ประสบอุทกภัยน้ำท่วม ในพื้นที่อำเภอสามพราน จังหวัดนครปฐม",
           "source": "กระทรวงแรงงาน",
@@ -88,9 +102,9 @@
         },
         {
           "title": "SME D Bank เยี่ยมให้กำลังใจลูกค้าประสบภัยน้ำท่วม พื้นที่นครปฐม พร้อมเดินเคียงข้างพาข้ามทุกอุปสรรค",
-          "source": "efinanceThai",
-          "url": "https://news.google.com/rss/articles/CBMihwFBVV95cUxQZVc4WVBhOE5heVBEc0dEYnVYUEFTVUtsYVlQSjR5cWNJSlVKM2ZMSU1zUnJFTVdGeU1ZaTBzOXVRYnFrZ29aUlJfUWJrb3VNZUZMME9vc2hCTzRtdS12RDU5NnRrUk9YTE5obV8tQkNna2RGTGEzOEt6TGM1UXhzOF9Ud3F4RDQ?oc=5",
-          "date": "Tue, 27 Oct 2026"
+          "source": "siamturakij.com",
+          "url": "https://news.google.com/rss/articles/CBMivwJBVV95cUxNSEVjelRCSU9NZWZ4SG9ob0FBZ0JOc3FKZHRSMjJ6R1ZfdUltel8wd1JaTjlRSVY4UFZmeUgwc3F3SEItbnR3N0JScjZ4STNOQ2ZYb1lWSmVTemtEN0RXcnNPSEZXTmJ5R1FpWlZBXzluV3VsMU9FRXl0NUx0dWYxTEVLQTZleUc4R2w4NXpFZWZZczhRZlVyZThYNWcwSjVudERULXBZTFQ3LTZTS3ZIQ1ZENUhZa0VUbEVManRLTjUzZm9Pdnk4SUhPRVpRdl8wSEJpc0pzR3F4TUVPcGtYb1N1a3pJQVF6VzNNZVhVWkdhVmk1bWRtOEhtcFBsaHdXOXI2SVBPZ2R3NDJtVnVCRFRtc2M1dXVBYl92Rng4VmVFMzYwY00tVDVBZUh2THUzb1ZDR0luRUtuU3dISW1J?oc=5",
+          "date": "Thu, 29 Oct 2026"
         }
       ]
     },
@@ -109,106 +123,51 @@
           "amphoe": "สองพี่น้อง",
           "river": "แม่น้ำท่าจีน",
           "level": 5,
-          "pct": 124.95,
-          "dt": "2026-10-30 07:30"
+          "pct": 123.67,
+          "dt": "2026-10-30 16:30"
         },
         {
           "name": "สองพี่น้อง",
           "amphoe": "สองพี่น้อง",
           "river": "คลองสองพี่น้อง",
           "level": 5,
-          "pct": 121.63,
-          "dt": "2026-10-30 07:30"
+          "pct": 121.83,
+          "dt": "2026-10-30 16:30"
         },
         {
           "name": "บ้านบางการ้อง",
           "amphoe": "สองพี่น้อง",
           "river": "แม่น้ำท่าจีน",
           "level": 5,
-          "pct": 113.3,
-          "dt": "2026-10-30 06:00"
+          "pct": 113.15,
+          "dt": "2026-10-30 15:00"
         },
         {
           "name": "ทุ่งโพธิ์พระยา",
           "amphoe": "บางปลาม้า",
           "river": "คลองดอนต้นคาง",
           "level": 4,
-          "pct": 88.4,
-          "dt": "2026-10-30 07:30"
+          "pct": 87.2,
+          "dt": "2026-10-30 16:30"
         },
         {
           "name": "เมืองสุพรรณบุรี",
           "amphoe": "เมืองสุพรรณบุรี",
           "river": "แม่น้ำสุพรรณ",
           "level": 4,
-          "pct": 83.58,
-          "dt": "2026-10-30 07:30"
+          "pct": 85.09,
+          "dt": "2026-10-30 16:30"
         }
       ],
       "surge": null,
-      "news": []
-    },
-    "Samut Prakan": {
-      "province_th": "สมุทรปราการ",
-      "severity": 2,
-      "severity_th": "ท่วม",
-      "severity_en": "Flooding",
-      "reason_th": "มีสถานีล้นตลิ่ง 3 จุด",
-      "stations_overbank": 3,
-      "stations_high": 2,
-      "stations_total": 5,
-      "stations": [
+      "news": [
         {
-          "name": "ปตร.วัดบางกระเจ้านอก",
-          "amphoe": "พระประแดง",
-          "river": "คลองบางกะเจ้า",
-          "level": 5,
-          "pct": 117.98,
-          "dt": "2026-10-30 07:30"
-        },
-        {
-          "name": "ปตร. คลองลัดบางยอ 1",
-          "amphoe": "พระประแดง",
-          "river": "แม่น้ำเจ้าพระยา",
-          "level": 5,
-          "pct": 106.9,
-          "dt": "2026-10-30 07:30"
-        },
-        {
-          "name": "ปตร. คลองลัดบางยอ 2",
-          "amphoe": "พระประแดง",
-          "river": "แม่น้ำเจ้าพระยา",
-          "level": 5,
-          "pct": 105.72,
-          "dt": "2026-10-27 19:40"
-        },
-        {
-          "name": "ป้อมพระจุลจอมเกล้า",
-          "amphoe": "พระสมุทรเจดีย์",
-          "river": "คลองสรรพสามิต",
-          "level": 4,
-          "pct": 88.51,
-          "dt": "2026-10-30 07:30"
-        },
-        {
-          "name": "คลองจระเข้ใหญ่ บางเสาธง (วัดศรีวารีน้อย)",
-          "amphoe": "บางเสาธง",
-          "river": "คลองหัวตะเข้",
-          "level": 4,
-          "pct": 82.24,
-          "dt": "2026-10-30 07:30"
+          "title": "30 ตุลาคม 2569 เวลา 08.54 น. ผู้ใช้เฟซบุ๊ก Ticha Khlaisuban โพสต์คลิปวีดิโอ ระบุเกิด #พายุงวงช้าง ในพื้นที่ อ.สองพี่น้อง จ.สุพรรณบุรี ปัจจุบัน สถานการณ์น้ำท่วมใน อำเภอสองพี่น้อง จังหวัดสุพรรณบุรี ยังคงมีน้ำท่วมขังและลดลงอย่างช้า ๆ เนื่องจากระดับน้ำในคลองสองพี่น้องและแม่น้ำท่าจี",
+          "source": "Facebook",
+          "url": "https://news.google.com/rss/articles/CBMivgVBVV95cUxQSHN6T3E1ckpaaWNmaVJ2Wk9jUHdmdW90VmM0Zy1JUC1jaGMzRXBFRnprU0hNcHo4cnNiQm9MWXZGU29QWEtPdExhbWw2WHBrUmdNSnZQbXFXVEYzRTlBaUNsOGdOLUdNLXE1QThXWGlOZWd0ZS05dE1pLUhzM2FJUVpFSV8wNjdWbUgxOU55OGFLc0kzRVBydHNuYlhpMFlKTUZJVEhJN1ptcDlCeURQcjV4U2NjdzFaYVVMU2pBM1pUc2k2Z1VOOF9nYVRaYm55NzN3c19pYnhBSG1BRlBLLUlIX3kxZEozVkhzYWpVT2w3cl82REoxYXVzNTBRc2txTEZlX1Jra0NhREhfdnI0TTBqX052Tl9ZMFJ1enJpQWZwY0hCODlfVlBaRHJZRjQtbi12Ui1MRXN2NlFIUEFYVkNTOE9EZ3lCUkJRSWRwUFk0NHlCdjlkYTk0NnNpemlSM1ZMdVA4VTlsWVNfM3dOMU5mVXlaUFBQTDl2NEJudzc3by1HcGdTNjBrai02RXhQTWEzai1WUXRhUUNWOVUwTktqMzZ5MWVmX05manM1NFBvNlpJOVhlTFIxT2JlV3ZCZ1RXQkp5TG5Jc0pyaU1zVnJadGczUk91V2NxcHlNeVVlTFhhWWtuLXVoU3pKUHhVd1pOLWZEdGI3aTNlNWlpeU1FbEtpeUNzcEZVendpbkxhMUJCUllDTXZPYWp6czRodkVBdmpvXzZ3ekpqalB4czRTN2FCdEpYeG1JVUJiZUZ5cUEwNzA5ODM0T09jaGJ5ZGNtS3gzQWtOTWU3TjgwOVgtNXRIOXdFaF9Zd1dIRHI3UG92R19QYXpWR295cU1tMVhSMV9wQlhxZkdVTHJiblJ6ZWxUSzByU3c4X0pWTEFYYXl3S2xpTkFLd3FYYVZCOWxhcGhKSkRTeHBrb0E?oc=5",
+          "date": "Fri, 30 Oct 2026"
         }
-      ],
-      "surge": {
-        "name": "ปตร. คลองลัดบางยอ 1",
-        "amphoe": "พระประแดง",
-        "kind": "brim",
-        "was": 20.9,
-        "now": 106.9,
-        "rise": 86.0,
-        "dt": "2026-10-30 07:30"
-      },
-      "news": []
+      ]
     },
     "Phra Nakhon Si Ayutthaya": {
       "province_th": "พระนครศรีอยุธยา",
@@ -225,8 +184,8 @@
           "amphoe": "เสนา",
           "river": "",
           "level": 5,
-          "pct": 108.79,
-          "dt": "2026-10-30 06:00"
+          "pct": 108.25,
+          "dt": "2026-10-30 15:00"
         },
         {
           "name": "วัดขนอนใต้",
@@ -234,31 +193,31 @@
           "river": "คลองโพธิ์",
           "level": 5,
           "pct": 105.17,
-          "dt": "2026-10-30 07:30"
+          "dt": "2026-10-30 16:30"
+        },
+        {
+          "name": "บางปะอิน",
+          "amphoe": "บางปะอิน",
+          "river": "แม่น้ำเจ้าพระยา",
+          "level": 4,
+          "pct": 94.16,
+          "dt": "2026-10-30 16:30"
         },
         {
           "name": "บ้านบางหลวงโดด",
           "amphoe": "บางบาล",
           "river": "แม่น้ำน้อย",
           "level": 4,
-          "pct": 94.73,
-          "dt": "2026-10-30 06:00"
+          "pct": 93.85,
+          "dt": "2026-10-30 15:00"
         },
         {
           "name": "คลองบางหลวง",
           "amphoe": "บางบาล",
           "river": "แม่น้ำน้อย",
           "level": 4,
-          "pct": 92.85,
-          "dt": "2026-10-30 07:30"
-        },
-        {
-          "name": "คลองช่องสะเดา",
-          "amphoe": "อุทัย",
-          "river": "คลองช่องสะเดา",
-          "level": 4,
-          "pct": 90.82,
-          "dt": "2026-10-30 07:30"
+          "pct": 92.19,
+          "dt": "2026-10-30 16:30"
         }
       ],
       "surge": null,
@@ -268,67 +227,185 @@
           "source": "www.ch7.com",
           "url": "https://news.google.com/rss/articles/CBMiRkFVX3lxTE1vczVKRl85T2hNczRMWndsYXdST1M2cG5zMnpkWkkwc21mOG94YTdNTjZIbFVITUVNUXYteUZMb29PZnVMNVE?oc=5",
           "date": "Wed, 28 Oct 2026"
-        },
-        {
-          "title": "รื้อทั้งหลัง บ้านไม้เก่าพังลงแม่น้ำป่าสัก จ.พระนครศรีอยุธยา",
-          "source": "ช่อง 7",
-          "url": "https://news.google.com/rss/articles/CBMiS0FVX3lxTE5Tb3JTZGZFWko3YmMyY3MtVW8zaVFRbWRCVW16WjY3dXlxS3M3bWs0S0h1bDlZemlTYWpBd2RrX3hKLUhEQ3ZJRzFWbw?oc=5",
-          "date": "Wed, 28 Oct 2026"
         }
       ]
+    },
+    "Surat Thani": {
+      "province_th": "สุราษฎร์ธานี",
+      "severity": 2,
+      "severity_th": "ท่วม",
+      "severity_en": "Flooding",
+      "reason_th": "มีสถานีล้นตลิ่ง 2 จุด",
+      "stations_overbank": 2,
+      "stations_high": 10,
+      "stations_total": 35,
+      "stations": [
+        {
+          "name": "วัดโชติการาม อ.เมืองสุราษฎร์ธานี",
+          "amphoe": "เมืองสุราษฎร์ธานี",
+          "river": "",
+          "level": 5,
+          "pct": 103.29,
+          "dt": "2026-10-30 16:00"
+        },
+        {
+          "name": "สะพานบ้างอ้อ อ.พุนพิน",
+          "amphoe": "พุนพิน",
+          "river": "",
+          "level": 5,
+          "pct": 100.5,
+          "dt": "2026-10-30 16:00"
+        },
+        {
+          "name": "ชุมชนลีเล็ด",
+          "amphoe": "พุนพิน",
+          "river": "คลองลีเล็ด",
+          "level": 4,
+          "pct": 90.73,
+          "dt": "2026-10-30 16:30"
+        },
+        {
+          "name": "พุนพิน 3",
+          "amphoe": "พุนพิน",
+          "river": "แม่น้ำตาปี",
+          "level": 4,
+          "pct": 88.51,
+          "dt": "2026-10-30 16:30"
+        },
+        {
+          "name": "พระแสง",
+          "amphoe": "พระแสง",
+          "river": "คลองอิปัน",
+          "level": 4,
+          "pct": 86.46,
+          "dt": "2026-10-30 16:30"
+        }
+      ],
+      "surge": {
+        "name": "วัดโชติการาม อ.เมืองสุราษฎร์ธานี",
+        "amphoe": "เมืองสุราษฎร์ธานี",
+        "kind": "brim",
+        "was": 85.1,
+        "now": 103.29,
+        "rise": 18.2,
+        "dt": "2026-10-30 16:00"
+      },
+      "news": []
     },
     "Kanchanaburi": {
       "province_th": "กาญจนบุรี",
       "severity": 2,
       "severity_th": "ท่วม",
       "severity_en": "Flooding",
-      "reason_th": "มีสถานีล้นตลิ่ง 2 จุด",
-      "stations_overbank": 2,
-      "stations_high": 6,
+      "reason_th": "มีสถานีล้นตลิ่ง 1 จุด",
+      "stations_overbank": 1,
+      "stations_high": 8,
       "stations_total": 27,
       "stations": [
-        {
-          "name": "บ้านหนองบัว",
-          "amphoe": "เมืองกาญจนบุรี",
-          "river": "แม่น้ำแควใหญ่",
-          "level": 5,
-          "pct": 111.73,
-          "dt": "2026-10-30 06:00"
-        },
         {
           "name": "บ้านหนองบัว (K.35A)",
           "amphoe": "เมืองกาญจนบุรี",
           "river": "แม่น้ำแควใหญ่",
           "level": 5,
-          "pct": 111.45,
-          "dt": "2026-10-30 07:00"
+          "pct": 103.49,
+          "dt": "2026-10-30 16:00"
         },
         {
-          "name": "เมืองกาญจนบุรี",
+          "name": "บ้านหนองบัว",
           "amphoe": "เมืองกาญจนบุรี",
           "river": "แม่น้ำแควใหญ่",
           "level": 4,
-          "pct": 95.62,
-          "dt": "2026-10-30 07:30"
+          "pct": 100.0,
+          "dt": "2026-10-30 15:00"
         },
         {
           "name": "วัดไชยชุมพลชนะสงคราม (วัดใต้)",
           "amphoe": "เมืองกาญจนบุรี",
           "river": "แม่น้ำแม่กลอง",
           "level": 4,
-          "pct": 93.59,
-          "dt": "2026-10-30 07:00"
+          "pct": 93.09,
+          "dt": "2026-10-30 16:00"
+        },
+        {
+          "name": "เมืองกาญจนบุรี",
+          "amphoe": "เมืองกาญจนบุรี",
+          "river": "แม่น้ำแควใหญ่",
+          "level": 4,
+          "pct": 89.16,
+          "dt": "2026-10-30 16:30"
         },
         {
           "name": "โรงเรียนบ้านทุ่งนานางหรอก",
           "amphoe": "เมืองกาญจนบุรี",
           "river": "ลำตะเพิน",
           "level": 4,
-          "pct": 81.76,
-          "dt": "2026-10-30 07:00"
+          "pct": 81.93,
+          "dt": "2026-10-30 16:00"
         }
       ],
       "surge": null,
+      "news": []
+    },
+    "Samut Prakan": {
+      "province_th": "สมุทรปราการ",
+      "severity": 2,
+      "severity_th": "ท่วม",
+      "severity_en": "Flooding",
+      "reason_th": "มีสถานีล้นตลิ่ง 1 จุด",
+      "stations_overbank": 1,
+      "stations_high": 4,
+      "stations_total": 5,
+      "stations": [
+        {
+          "name": "ปตร. คลองลัดบางยอ 2",
+          "amphoe": "พระประแดง",
+          "river": "แม่น้ำเจ้าพระยา",
+          "level": 5,
+          "pct": 105.72,
+          "dt": "2026-10-30 16:20"
+        },
+        {
+          "name": "ปตร.วัดบางกระเจ้านอก",
+          "amphoe": "พระประแดง",
+          "river": "คลองบางกะเจ้า",
+          "level": 4,
+          "pct": 99.25,
+          "dt": "2026-10-30 16:30"
+        },
+        {
+          "name": "ปตร. คลองลัดบางยอ 1",
+          "amphoe": "พระประแดง",
+          "river": "แม่น้ำเจ้าพระยา",
+          "level": 4,
+          "pct": 86.65,
+          "dt": "2026-10-30 16:30"
+        },
+        {
+          "name": "คลองจระเข้ใหญ่ บางเสาธง (วัดศรีวารีน้อย)",
+          "amphoe": "บางเสาธง",
+          "river": "คลองหัวตะเข้",
+          "level": 4,
+          "pct": 81.97,
+          "dt": "2026-10-30 16:30"
+        },
+        {
+          "name": "ป้อมพระจุลจอมเกล้า",
+          "amphoe": "พระสมุทรเจดีย์",
+          "river": "คลองสรรพสามิต",
+          "level": 4,
+          "pct": 74.19,
+          "dt": "2026-10-30 16:30"
+        }
+      ],
+      "surge": {
+        "name": "ปตร.วัดบางกระเจ้านอก",
+        "amphoe": "พระประแดง",
+        "kind": "brim",
+        "was": 38.6,
+        "now": 99.25,
+        "rise": 60.6,
+        "dt": "2026-10-30 16:30"
+      },
       "news": []
     },
     "Chumphon": {
@@ -338,7 +415,7 @@
       "severity_en": "Flooding",
       "reason_th": "มีสถานีล้นตลิ่ง 1 จุด",
       "stations_overbank": 1,
-      "stations_high": 5,
+      "stations_high": 4,
       "stations_total": 15,
       "stations": [
         {
@@ -346,40 +423,40 @@
           "amphoe": "ท่าแซะ",
           "river": "คลองท่าแซะ",
           "level": 5,
-          "pct": 102.92,
-          "dt": "2026-10-30 06:00"
+          "pct": 100.66,
+          "dt": "2026-10-30 15:00"
         },
         {
           "name": "บ้านวังครก",
           "amphoe": "ท่าแซะ",
           "river": "คลองท่าตะเภา",
           "level": 4,
-          "pct": 94.5,
-          "dt": "2026-10-30 06:00"
-        },
-        {
-          "name": "สะพานเทศบาล 2",
-          "amphoe": "เมืองชุมพร",
-          "river": "คลองท่าตะเภา",
-          "level": 4,
-          "pct": 82.71,
-          "dt": "2026-10-30 06:00"
+          "pct": 94.32,
+          "dt": "2026-10-30 15:00"
         },
         {
           "name": "สวี 1",
           "amphoe": "สวี",
           "river": "คลองสวี",
           "level": 4,
-          "pct": 78.57,
-          "dt": "2026-10-30 07:30"
+          "pct": 89.91,
+          "dt": "2026-10-30 16:30"
+        },
+        {
+          "name": "สะพานเทศบาล 2",
+          "amphoe": "เมืองชุมพร",
+          "river": "คลองท่าตะเภา",
+          "level": 4,
+          "pct": 84.38,
+          "dt": "2026-10-30 15:00"
         },
         {
           "name": "สะพานบ้านตรังพัฒนา",
           "amphoe": "พะโต๊ะ",
           "river": "คลองหลังสวน",
           "level": 4,
-          "pct": 77.09,
-          "dt": "2026-10-30 07:30"
+          "pct": 76.73,
+          "dt": "2026-10-30 16:30"
         }
       ],
       "surge": {
@@ -387,28 +464,89 @@
         "amphoe": "ท่าแซะ",
         "kind": "brim",
         "was": 24.9,
-        "now": 102.92,
-        "rise": 78.0,
-        "dt": "2026-10-30 06:00"
+        "now": 100.66,
+        "rise": 75.8,
+        "dt": "2026-10-30 15:00"
       },
       "news": [
         {
-          "title": "ผู้ว่าฯ ชุมพร ลงพื้นที่นำทีมเร่งแก้ไขปัญหาและบรรเทาความเดือดร้อนแก่ผู้ประสบอุทกภัยอย่างใกล้ชิด",
-          "source": "สวพ.FM91",
-          "url": "https://news.google.com/rss/articles/CBMiTkFVX3lxTFAzcGFLNWJ4WFVqQU1URzBxX1c3Uy1MQmZlenFhRmY0Z19yUTdJT1Z0cUwtdFJ0UXJfNDM0cjhXTlh2bkxXQUp3MllRaVdsdw?oc=5",
-          "date": "Thu, 29 Oct 2026"
+          "title": "เช็กพื้นที่เสี่ยงน้ำท่วม 'ประจวบฯ-ชุมพร' เฝ้าระวังฝนตกสะสม 48 ชั่วโมง",
+          "source": "thansettakij",
+          "url": "https://news.google.com/rss/articles/CBMiXEFVX3lxTFBlMmdkWkZEMElXR3JRRU1pXzJxbFNsLVJYWW9lTGl1SE9mWjNTVlNwS3JCSmhadnBRVE1MRFV3eDdHdEtyNUE4Xy13NmNXX1FXV0U4OW5idmxZWHhk?oc=5",
+          "date": "Fri, 30 Oct 2026"
         },
         {
-          "title": "ชุมพรอ่วม! น้ำท่วม 5 อำเภอ หลังสวนงดแข่งเรือยาวขึ้นโขนชิงธง",
-          "source": "Thaipost.net",
-          "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE9pQWNUdktZbWtzajZBZzkxZzg2T0k5OEE3azRERGF5eWROeTBuS0g4VmtUNl85Vk96cGx0QWFiSFM2X3A0ckRiMXpsaVVmR0hpdW1ManB4NlU5R00?oc=5",
-          "date": "Thu, 29 Oct 2026"
+          "title": "ปภ. รายงานสถานการณ์น้ำท่วมภาคใต้ 3 จังหวัด ชุมพร-สตูล-ภูเก็ต",
+          "source": "เดลินิวส์",
+          "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE4zRlNfN2FvV2NSVF9GLS1kSENzZmZEUFZPX0NkYkRYNUpQUUxwWjlraUV4S0JEU3JNQ0tUY19UX2pJd0p3UGViOHlJaXhxd1NPVXFz?oc=5",
+          "date": "Fri, 30 Oct 2026"
         },
         {
-          "title": "ป.5 พัน.25 เร่งช่วยเหลือประชาชนประสบอุทกภัย อ.หลังสวน จ.ชุมพร",
-          "source": "NBT CONNEXT",
-          "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTE82LVg5R3hOSlJyY0xIMnQ3eDZrQVYxaWRoZFdkaGlIQlV1VjI2TUNHVExiY09kSldZSkVEelpvV2V0enh3VkJJMlpDYkdCX3R2bGFrc3lfU0RuYnFuSE9NWTRvQWRpOUVsNFpVZFE3OA?oc=5",
-          "date": "Thu, 29 Oct 2026"
+          "title": "ด่วน! น้ำท่วมถนนเส้นตลาดปะทิว–ท่าอากาศยานชุมพร รถผ่านลำบาก | The Bangkok Insight",
+          "source": "LINE TODAY",
+          "url": "https://news.google.com/rss/articles/CBMifkFVX3lxTE8yMHhpUWRBNktSV1A1dE9EMlRmemI0b0tnLUpmUGZ1RVlKOWo4MmxrN09vX08xTHdJVG1MNTRLNDJQV2NkaXd5amprbnd1bU5TOEZzUW12R09DNHliMWFCVngwWE9ZODhsaFJja1NpOHJqSW1tZzV4QVNNVGx3dw?oc=5",
+          "date": "Fri, 30 Oct 2026"
+        }
+      ]
+    },
+    "Nakhon Si Thammarat": {
+      "province_th": "นครศรีธรรมราช",
+      "severity": 2,
+      "severity_th": "ท่วม",
+      "severity_en": "Flooding",
+      "reason_th": "มีสถานีล้นตลิ่ง 1 จุด",
+      "stations_overbank": 1,
+      "stations_high": 3,
+      "stations_total": 22,
+      "stations": [
+        {
+          "name": "สะพานนางพระยา-บางหลวง ชุมชนปากนคร",
+          "amphoe": "เมืองนครศรีธรรมราช",
+          "river": "",
+          "level": 5,
+          "pct": 102.69,
+          "dt": "2026-10-30 16:30"
+        },
+        {
+          "name": "บ้านหาดทรายแก้ว ",
+          "amphoe": "ฉวาง",
+          "river": "แม่น้ำตาปี",
+          "level": 4,
+          "pct": 90.18,
+          "dt": "2026-10-30 15:00"
+        },
+        {
+          "name": "เชียรใหญ่",
+          "amphoe": "เชียรใหญ่",
+          "river": "คลองชะอวด",
+          "level": 4,
+          "pct": 77.8,
+          "dt": "2026-10-30 16:30"
+        },
+        {
+          "name": "ฝายคลองท่าเลา",
+          "amphoe": "ทุ่งสง",
+          "river": "คลองท่าเลา",
+          "level": 4,
+          "pct": 71.32,
+          "dt": "2026-10-30 16:30"
+        }
+      ],
+      "surge": {
+        "name": "สะพานนางพระยา-บางหลวง ชุมชนปากนคร",
+        "amphoe": "เมืองนครศรีธรรมราช",
+        "kind": "brim",
+        "was": 83.1,
+        "now": 102.69,
+        "rise": 19.6,
+        "dt": "2026-10-30 16:30"
+      },
+      "news": [
+        {
+          "title": "ปภ.ส่ง Cell Broadcast เตือนน้ำท่วมกระบี่ นครศรีธรรมราช ภูเก็ต ยกของขึ้นที่สูง",
+          "source": "thansettakij",
+          "url": "https://news.google.com/rss/articles/CBMiXEFVX3lxTFB1VGZKdUFBTHBKOUQ0UENnZWxtaktwQ29KdG9memEzbUlOMGcwOFVkaTJvbWp0UUtjZnBuUE1wRnBKdUE1R0hTTFZxWmRwU1phOFZGS1kxbGRFRUVD?oc=5",
+          "date": "Wed, 28 Oct 2026"
         }
       ]
     },
@@ -427,35 +565,27 @@
           "amphoe": "บางน้ำเปรี้ยว",
           "river": "แม่น้ำบางปะกง",
           "level": 5,
-          "pct": 101.49,
-          "dt": "2026-10-30 07:30"
+          "pct": 103.26,
+          "dt": "2026-10-30 16:30"
         },
         {
           "name": "บางปะกง",
           "amphoe": "บางปะกง",
           "river": "แม่น้ำบางปะกง",
           "level": 4,
-          "pct": 95.8,
-          "dt": "2026-10-30 07:30"
+          "pct": 92.27,
+          "dt": "2026-10-30 16:30"
         },
         {
           "name": "ปากคลองพระองค์เจ้าฯ (บางน้ำเปรี้ยว)",
           "amphoe": "บางน้ำเปรี้ยว",
           "river": "คลองพระองค์เจ้าไชยานุชิต",
           "level": 4,
-          "pct": 77.88,
-          "dt": "2026-10-30 07:30"
+          "pct": 77.04,
+          "dt": "2026-10-30 16:30"
         }
       ],
-      "surge": {
-        "name": "บางปะกง",
-        "amphoe": "บางปะกง",
-        "kind": "brim",
-        "was": 77.8,
-        "now": 95.8,
-        "rise": 18.0,
-        "dt": "2026-10-30 07:30"
-      },
+      "surge": null,
       "news": [
         {
           "title": "ชาวบ้านทนทุกข์ น้ำท่วมขังเป็นเดือน จ.ฉะเชิงเทรา",
@@ -477,71 +607,6 @@
         }
       ]
     },
-    "Satun": {
-      "province_th": "สตูล",
-      "severity": 2,
-      "severity_th": "ท่วม",
-      "severity_en": "Flooding",
-      "reason_th": "มีสถานีล้นตลิ่ง 1 จุด",
-      "stations_overbank": 1,
-      "stations_high": 2,
-      "stations_total": 8,
-      "stations": [
-        {
-          "name": "เมืองสตูล",
-          "amphoe": "เมืองสตูล",
-          "river": "คลองน้ำพระ",
-          "level": 5,
-          "pct": 101.49,
-          "dt": "2026-10-30 07:30"
-        },
-        {
-          "name": "บ้านฉลุงเหนือ",
-          "amphoe": "เมืองสตูล",
-          "river": "คลองน้ำพระ",
-          "level": 4,
-          "pct": 78.44,
-          "dt": "2026-10-30 06:00"
-        },
-        {
-          "name": "ละงู",
-          "amphoe": "ละงู",
-          "river": "คลองละงู",
-          "level": 4,
-          "pct": 76.18,
-          "dt": "2026-10-30 07:30"
-        }
-      ],
-      "surge": {
-        "name": "เมืองสตูล",
-        "amphoe": "เมืองสตูล",
-        "kind": "brim",
-        "was": 81.6,
-        "now": 101.49,
-        "rise": 19.9,
-        "dt": "2026-10-30 07:30"
-      },
-      "news": [
-        {
-          "title": "NEWSCLIP: น้ำท่วมเกาะหลีเป๊ะ วันที่ 2 ผู้ว่าฯ สตูล มอบนายอำเภอเมืองลงพื้นที่เปิดศูนย์พักพิงช่วยชาวเล และเร่งสูบน้ำระบายลงทะเล วันนี้ (27 ต.ค. 69) ครูแสงตะวัน หาญทะเล รายงานจากเกาะหลีเป๊ะ จ.สตูล สถานการณ์น้ำท่วมภายในชุมชนชาวเลเกาะหลีเป๊ะ ยังท่วมเป็นวันที่ 2 ในขณะที่ฝนยังต",
-          "source": "Facebook",
-          "url": "https://news.google.com/rss/articles/CBMikgdBVV95cUxOYlIzQ1ZLcENqakdycENFOThpTldocDFEdmVtT01wUEphbGEzNjl2LWpZRjVhWWFfOTF2NkgzeGlBb25sTmdOblVVM2JGUXdFZEJEdThJZW40V3BMSTdlU3NUVFdfMWU3NTZ5WnpWVWNpTmh1UlphYTFZQy1MbDNNVGcwSk1uWlRsUDl2SlRaRVp3cVoxUXQ1QzIzZzc1c1Ixa3B5M3hqbnhXY3ZmYmNlb1RITlNiVUlVNDFuRnlxT3RMU1ROTE15eGdLaDlENmFQSGNlaVBEczJ0RVprU3l6aWRiZllVZ080bjRPM2k1bmpKZUthZWV4czFnNzBCNlFJcG1TTnFBQjFwTDBIRXhMR25KdlozalpQU1NjMVRxaVFVX3MzY2hYeE9GcDNqRmczX0toMnZ6UUFkcWdnZ0hMdnQwZmlYc2xCUURZVXdWTUthbjcwTm9hTzNscGlIZzVwOUV5OVV2WTlwTTZodXM0bzdETkl3eDZIVnJQY2lHTV9vSkt3VHc0WTd2MUZOd3ZmWU5YWXZ4WnZ5bjRQclFjQ0FkREFCMjRQalZ6WkJHNUw5OTFRaURjZHd4UEFfSkl0MGNiY2l3eFFvNHhscW55NGdLY2NEbF9pYjBPcHRqdWg1RUpiNnRSaTUzMDlPa0Z4SjhONjNRaWNNQU55NDRJcEFXU21Ba25OOTNGdTVRR0E0TmNpelpQdVpmaUtoUVdDeVl6QUd2SWdhaGxTbEg4UmFQc1F3ckNYbUp1YnlTeGx0R2tTUkcxOGxiTUdJdnh6YUViN3Rva3RSRUY2OE1PVnZOR1Qtd3BHb3RIS0JDN19lYW1DZE5lUlc0QmIyd2I5eXNyOGYzZzZBU2Fza2ROQUljcnM0Y0w5am1QYk9KTGg0TzFqWXRlWXdMdWg0UG1jX2poM1VTaGFKNXF1Yk5LTkNrcXE5cDVVVnlreFI5TWh6ek9qazdpMENtdHdmZHZ1MW83TGVnZFlJbFA0cWstRWtLLWVXWHQwd0cwZGtQc1NLT3NGdllWNEluUjItR3RNajRRWmJEVi1RRkxFd2stczI1bHF1T190SFNzMUo5WnpFYVE4UUh2VHR0ejN6Njd2R0FOdm1Lb0VJbno0anRPQ1dwTWVlaWIxYUtuSEVaRTllZmdOZ1MyT3hzbUg3WF90MWlCODVzRGtWYW52enZ6Q3JnSmpXeUZINVlGdjVKRlplZw?oc=5",
-          "date": "Tue, 27 Oct 2026"
-        },
-        {
-          "title": "สตูลเร่งสูบน้ำท่วมเกาะหลีเป๊ะ 2 ชุมชนชาวเล ระดม 4 เครื่องสูบสู้ฝน หวั่นท่วมซ้ำ",
-          "source": "77 ข่าวเด็ด",
-          "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTFAwbGowZFQ1NDBjQkI2OXFlRm5QMzI2dzlveXZuNGNmRkh1S2VnU2c1LTJldFhDbE5ZM0lCdE41bXR4R1NhbTAzS0Ezc3Fna3p0dE5mRXRTX2FfdmcwNzh4ZzFXaEhuZ2pQc1NlMVFR?oc=5",
-          "date": "Wed, 28 Oct 2026"
-        },
-        {
-          "title": "จังหวัดสตูล ได้รับผลกระทบจากฝนตกหนักในช่วงที่ผ่านมา ส่งผลมีพื้นที่ประสบอุทกภัยรวม 5 อำเภอ 14 ตำบล 58 หมู่บ้าน ขณะที่ทางจังหวัดได้ประกาศเขตการให้ความช่วยเหลือผู้ประสบภัยพิบัติกรณีฉุกเฉินแล้ว 3 อำเภอ",
-          "source": "NBT CONNEXT",
-          "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTFBFajNVcll0TVV5TVhpUjR2cmctU2E2ZWdHa09kaHhubkFvSnZhMHJ5Q21rZ1NoVC1vMWVCLXZHMDVPYk1kQzktMV9abU4yMlBScDNFSUgyc1RtZ0E2eUFNX3BFQWxkbUhkSFFZcVdhSQ?oc=5",
-          "date": "Wed, 28 Oct 2026"
-        }
-      ]
-    },
     "Nakhon Nayok": {
       "province_th": "นครนายก",
       "severity": 2,
@@ -557,36 +622,24 @@
           "amphoe": "องครักษ์",
           "river": "แม่น้ำนครนายก",
           "level": 5,
-          "pct": 104.57,
-          "dt": "2026-10-30 07:30"
+          "pct": 104.05,
+          "dt": "2026-10-30 16:30"
         },
         {
           "name": "สะพานหน้าจวนผู้ว่าฯ",
           "amphoe": "เมืองนครนายก",
           "river": "แม่น้ำนครนายก",
           "level": 4,
-          "pct": 76.7,
-          "dt": "2026-10-30 06:00"
+          "pct": 80.04,
+          "dt": "2026-10-30 15:00"
         }
       ],
       "surge": null,
       "news": [
         {
-          "title": "ผู้ว่าฯ นครนายกขนลุกซู่! ชาญชัยแนะช่องทางกฎหมาย พร้อมเป็นแกนนำผู้ประสบภัยน้ำท่วม ทวงความยุติธรรม! คุณชาญชัย อิสระเสนารักษ์ ออกมาเสนอแนวทางดำเนินคดีกับหน่วยงานรัฐและผู้เกี่ยวข้อง กรณีน้ำท่วมจังหวัดนครนายกที่สร้างความเสียหายแก่ประชาชน พร้อมแสดงความพร้อมช่วยผลั",
-          "source": "Facebook",
-          "url": "https://news.google.com/rss/articles/CBMi_wdBVV95cUxQQW1oajA2MzRyMURUb3VnNElkTC0wU1BtZDNpSGdlSDZqbkNIVTdvNlA2aFhSOUwya0cxWXgwVHVDdHkxOFY5dG5Wa3lncnpROElQOVZxT3BaQlBibG1kSnA3OS1QTXZsQ0d4dnNac2dWVnIweTJJYktnVC0yNVpTMlRjYWtneUhtVW01TFYyaVU0NG5RQ3dUeHJsS2xNbW1MSnNlTW8yWU03M2syWm1RYXNKRm5RNnRvMVZIdWZoOU1RcG5UNV84eDBJTXV3LWhaWXZxY0pja3pPVlRKa2M0TVZBRG4wY1Nrdk81TExBTlFxcjNIYmZxN0pMSGk5cERicmt6UGM3TkZhYkVLTkFNb2VQdDdHQWRyVkJJU0ItT0R4Zy1WTnVLcUlVeXZzNHN4eTNBcVVHQ1dJMFFiV0ljaGVxdHlKNFV3UlhXUDNsVy1jUTM3X0RFS2ZiVnVia3M4UWlMSnFDQWhzaVpIUm9mZFlYLWZFZFpfMHFZdjBfSkstOFBZd1Z1Y0ctaDVMSzF1ekg5Y2ppejFfVFNLbnYyM1Q2bGpROGNUMkdNTWwxRTVMdFUyd09pZ1Z3R3oxd1ZiaUk3MkoySWZpZENSQjNvOWtZdGhMb0JUVERjaHdYUmRSR09senFzbjZYOGpscm9US1B4aTN0WUhkMm1kZkFpZGJfZDZ4OXM1Q1hiWkRmekY3X1BuMDR2X2tiNFQ1d0FCbUh5c1dRRHlGRkRiQnZFYXBaZXJiLW5MMEdHSTJWRzN0VWdwOG95NEN3dTZ0ZjE0Zkp2RXJ2eE9vbU0tR2xmSjh5NHF6VUZEaUFPMlAxdUpyLW93RG5KWEp1RFdqdnNUNDd1Q0NFQTNHd01wYlJnb2JtMXRkalBIQUlFUXF4OUdCbERTMDRSZmZvZUhhVnZQaE01VDNlLVNIUGRDVHRXVnJZX0wyMWJXbEQ2b1BkM2Fyck1MbndjTEhvYjRzMkFDQldKMV9aUkQ5eUJsczMybW11VzlRYVpPS29sMEdNRktqcWxIbTlrMkJFNllsTXhKczJUbHhPOEJ1dnBUd051WWx4cUk4WXg2UDUyRUxZbVNMTzNuRjU1cnE1VXNCT2RRSWsyZGhnUUZIcXpNYVBSYVBLc3dUYWEzdUV6dC1sX3dEam1JSk5zNV9sSERTMzc0RnZPQUZmYTNnbk04c3F5azZ1cEE2Z0FnY0ZleDhOQlpRVFFlaF9BNnlTTDRjdUUxS1d3c0dxb3doZEFRTkUtQktoNk9GT0R5UUJpeHdYZnJjYnZoTV85ZWVJTk1xNHdCd1dsdktPTlpub2xiVnRfSWxvQ1BLNnlES1lDTDFnbFN4Wkd4bzRmZk5fZ0VmN28?oc=5",
-          "date": "Tue, 27 Oct 2026"
-        },
-        {
           "title": "วปอ.59 แท็กทีมมูลนิธิเนชั่น-GPSC: ลุยแจกถุงยังชีพ 600 ถุง สู้ภัยน้ำท่วม นครนายก-ปราจีนบุรี",
           "source": "เนชั่นทีวี สถานีข่าว 24 ชั่วโมง",
           "url": "https://news.google.com/rss/articles/CBMiYkFVX3lxTE55WkJoZW0xeXlxS3RYd01fVXJ2ZzhkRHB6bzN0Z2ZpaUdPXzcwQ0dQOFRvOXBaNkxRTVpEcmJZRDYzcG54N3lJYVJBa2syWml4R1hjSDQ0NjBsb2RObHE5ajJB?oc=5",
-          "date": "Wed, 28 Oct 2026"
-        },
-        {
-          "title": "เนชั่นปันน้ำใจ! 'วปอ.59' แท็กทีม 'มูลนิธิเนชั่น-GPSC' ลุยแจกถุงยังชีพ 600 ถุง พร้อมมอบ 6 แสนบาท สู้ภัยน้ำท่วม 'นครนายก-ปราจีนบุรี'",
-          "source": "Head Topics",
-          "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE1vbi1HRFFaZGloRWsxWHpRcGR2WGlNV2FOTVFtMXlqTjBMelNybWtyMWVkNDg4RE5zQ0Q0RjdIbU5PSUVLN1h4Ym9WZzRsRVNZWG5SVi1ENlplTmg4eTZsZFJxTk5wSjRISkFLRWJn?oc=5",
           "date": "Wed, 28 Oct 2026"
         }
       ]
@@ -602,54 +655,54 @@
       "stations_total": 9,
       "stations": [
         {
-          "name": "สะพานกรุงเทพ",
-          "amphoe": "ธนบุรี",
-          "river": "แม่น้ำเจ้าพระยา",
-          "level": 4,
-          "pct": 95.12,
-          "dt": "2026-10-30 07:30"
-        },
-        {
-          "name": "อุทยานเฉลิมพระเกียรติพระบาทสมเด็จพระบรมชนกาธิเบศร มหาภูมิพลอดุลยเดชมหาราช บรมนาถบพิตร",
-          "amphoe": "ดุสิต",
-          "river": "",
-          "level": 4,
-          "pct": 92.67,
-          "dt": "2026-10-30 07:30"
-        },
-        {
           "name": "กรมชลประทานสามเสน",
           "amphoe": "ดุสิต",
           "river": "แม่น้ำเจ้าพระยา",
           "level": 4,
-          "pct": 89.57,
-          "dt": "2026-10-30 06:00"
-        },
-        {
-          "name": "คลองลำปลาทิว ลาดกระบัง",
-          "amphoe": "ลาดกระบัง",
-          "river": "คลองลำปลาทิว",
-          "level": 4,
-          "pct": 86.11,
-          "dt": "2026-10-30 07:30"
+          "pct": 95.59,
+          "dt": "2026-10-30 15:00"
         },
         {
           "name": "คลองมหาสวัสดิ บางกรวย-สวนผัก",
           "amphoe": "ตลิ่งชัน",
           "river": "คลองมหาสวัสดิ์",
           "level": 4,
-          "pct": 85.92,
-          "dt": "2026-10-30 07:10"
+          "pct": 94.29,
+          "dt": "2026-10-30 16:30"
+        },
+        {
+          "name": "สะพานกรุงเทพ",
+          "amphoe": "ธนบุรี",
+          "river": "แม่น้ำเจ้าพระยา",
+          "level": 4,
+          "pct": 93.11,
+          "dt": "2026-10-30 16:30"
+        },
+        {
+          "name": "อุทยานเฉลิมพระเกียรติพระบาทสมเด็จพระบรมชนกาธิเบศร มหาภูมิพลอดุลยเดชมหาราช บรมนาถบพิตร",
+          "amphoe": "ดุสิต",
+          "river": "",
+          "level": 4,
+          "pct": 92.4,
+          "dt": "2026-10-30 16:30"
+        },
+        {
+          "name": "คลองลำปลาทิว ลาดกระบัง",
+          "amphoe": "ลาดกระบัง",
+          "river": "คลองลำปลาทิว",
+          "level": 4,
+          "pct": 85.88,
+          "dt": "2026-10-30 16:30"
         }
       ],
       "surge": {
-        "name": "สะพานกรุงเทพ",
-        "amphoe": "ธนบุรี",
+        "name": "กรมชลประทานสามเสน",
+        "amphoe": "ดุสิต",
         "kind": "brim",
-        "was": 85.5,
-        "now": 95.12,
-        "rise": 9.6,
-        "dt": "2026-10-30 07:30"
+        "was": 89.6,
+        "now": 95.59,
+        "rise": 6.0,
+        "dt": "2026-10-30 15:00"
       },
       "news": [
         {
@@ -675,32 +728,32 @@
           "amphoe": "ธาตุพนม",
           "river": "ลำน้ำกำ",
           "level": 4,
-          "pct": 94.59,
-          "dt": "2026-10-30 07:30"
+          "pct": 94.49,
+          "dt": "2026-10-30 16:30"
         },
         {
           "name": "ปตร.ธรณิศนฤมิต-เหนือน้ำ",
           "amphoe": "ธาตุพนม",
           "river": "ลำน้ำกำ",
           "level": 4,
-          "pct": 86.49,
-          "dt": "2026-10-30 07:30"
+          "pct": 86.33,
+          "dt": "2026-10-30 16:30"
         },
         {
           "name": "ปตร. ห้วยแคน-เหนือน้ำ",
           "amphoe": "ธาตุพนม",
           "river": "ห้วยแคน",
           "level": 4,
-          "pct": 81.58,
-          "dt": "2026-10-30 07:30"
+          "pct": 81.41,
+          "dt": "2026-10-30 16:30"
         },
         {
           "name": "ปตร.บ้านนาบัว-เหนือน้ำ",
           "amphoe": "เรณูนคร",
           "river": "ลำน้ำกำ",
           "level": 4,
-          "pct": 79.41,
-          "dt": "2026-10-30 07:30"
+          "pct": 77.53,
+          "dt": "2026-10-30 16:30"
         },
         {
           "name": "ปตร.บ้านนาคู่-เหนือน้ำ",
@@ -708,7 +761,7 @@
           "river": "ลำน้ำกำ",
           "level": 4,
           "pct": 76.94,
-          "dt": "2026-10-30 07:30"
+          "dt": "2026-10-30 16:30"
         }
       ],
       "surge": null,
@@ -726,50 +779,50 @@
       "severity": 1,
       "severity_th": "ใกล้ล้นตลิ่ง",
       "severity_en": "Near Overbank",
-      "reason_th": "สถานีน้ำมาก 6 จุด จาก 11 สถานี (55%)",
+      "reason_th": "สถานีน้ำมาก 6 จุด จาก 12 สถานี (50%)",
       "stations_overbank": 0,
       "stations_high": 6,
-      "stations_total": 11,
+      "stations_total": 12,
       "stations": [
         {
           "name": "สะพานตาบัว บ้านยาเด๊ะ",
           "amphoe": "สุคิริน",
           "river": "คลองอัยดาลอ",
           "level": 4,
-          "pct": 90.41,
-          "dt": "2026-10-30 07:30"
+          "pct": 90.22,
+          "dt": "2026-10-30 16:30"
         },
         {
           "name": "สะพานกะลูบี บ้านสายปารี",
           "amphoe": "สุคิริน",
           "river": "แม่น้ำสายบุรี",
           "level": 4,
-          "pct": 87.98,
-          "dt": "2026-10-30 07:30"
+          "pct": 87.11,
+          "dt": "2026-10-30 16:30"
         },
         {
           "name": "สะพานไอร์ปาโจ",
           "amphoe": "สุคิริน",
           "river": "คลองไอร์ปาโจ",
           "level": 4,
-          "pct": 84.13,
-          "dt": "2026-10-30 07:30"
+          "pct": 83.75,
+          "dt": "2026-10-30 16:30"
         },
         {
           "name": "บ้านบองอ ",
           "amphoe": "ระแงะ",
           "river": "คลองบองอ",
           "level": 4,
-          "pct": 83.69,
-          "dt": "2026-10-30 06:00"
+          "pct": 83.17,
+          "dt": "2026-10-30 15:00"
         },
         {
           "name": "บ้านบูเก๊ะตา",
           "amphoe": "แว้ง",
           "river": "แม่น้ำโก-ลก",
           "level": 4,
-          "pct": 79.53,
-          "dt": "2026-10-30 06:00"
+          "pct": 79.23,
+          "dt": "2026-10-30 15:00"
         }
       ],
       "surge": null,
@@ -799,15 +852,15 @@
           "river": "คลองบ้านแร่",
           "level": 4,
           "pct": 86.62,
-          "dt": "2026-10-30 06:00"
+          "dt": "2026-10-30 15:00"
         },
         {
           "name": "สะพานท่าสำเภา",
           "amphoe": "เมืองพัทลุง",
           "river": "คลองปากประ",
           "level": 4,
-          "pct": 85.6,
-          "dt": "2026-10-30 07:30"
+          "pct": 84.94,
+          "dt": "2026-10-30 16:30"
         },
         {
           "name": "สะพานข้ามคลองบางม่วง",
@@ -815,15 +868,15 @@
           "river": "ทะเลหลวง",
           "level": 4,
           "pct": 82.56,
-          "dt": "2026-10-30 07:30"
+          "dt": "2026-10-30 16:30"
         },
         {
-          "name": "สะพานข้ามคลองลำปำ",
+          "name": "บ้านคลองลำ",
           "amphoe": "เมืองพัทลุง",
-          "river": "คลองลำปำ",
+          "river": "คลองลำ",
           "level": 4,
-          "pct": 75.39,
-          "dt": "2026-10-30 07:30"
+          "pct": 75.07,
+          "dt": "2026-10-30 15:00"
         }
       ],
       "surge": null,
@@ -844,40 +897,40 @@
           "amphoe": "วังวิเศษ",
           "river": "คลองยวนปลา",
           "level": 4,
-          "pct": 89.33,
-          "dt": "2026-10-30 07:30"
-        },
-        {
-          "name": "รัษฎา",
-          "amphoe": "รัษฎา",
-          "river": "แม่น้ำตรัง",
-          "level": 4,
-          "pct": 83.73,
-          "dt": "2026-10-30 07:30"
+          "pct": 86.07,
+          "dt": "2026-10-30 16:30"
         },
         {
           "name": "บ้านไสหาร",
           "amphoe": "ห้วยยอด",
           "river": "แม่น้ำตรัง",
           "level": 4,
-          "pct": 82.35,
-          "dt": "2026-10-30 06:00"
+          "pct": 82.17,
+          "dt": "2026-10-30 15:00"
         },
         {
-          "name": "คลองนางน้อย",
-          "amphoe": "เมืองตรัง",
-          "river": "คลองนางน้อย",
+          "name": "รัษฎา",
+          "amphoe": "รัษฎา",
+          "river": "แม่น้ำตรัง",
           "level": 4,
-          "pct": 76.21,
-          "dt": "2026-10-30 07:30"
+          "pct": 80.19,
+          "dt": "2026-10-30 16:30"
         },
         {
           "name": "ท่าสะบ้า",
           "amphoe": "วังวิเศษ",
           "river": "แม่น้ำตรัง",
           "level": 4,
-          "pct": 76.12,
-          "dt": "2026-10-30 07:30"
+          "pct": 75.22,
+          "dt": "2026-10-30 16:30"
+        },
+        {
+          "name": "คลองนางน้อย",
+          "amphoe": "เมืองตรัง",
+          "river": "คลองนางน้อย",
+          "level": 4,
+          "pct": 73.73,
+          "dt": "2026-10-30 16:30"
         }
       ],
       "surge": null,
@@ -893,6 +946,12 @@
           "source": "สยามรัฐ",
           "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE9jc21yaDloaEt2TTJmV3NnRGVaTzNnVUljUjlicHR3Nm5DR3JuZnd4NElSeEJwX0s0TFlZZWo0VkRWSDlJVi1pSkVPSXJUdEU?oc=5",
           "date": "Wed, 28 Oct 2026"
+        },
+        {
+          "title": "ฝนฟ้าอากาศเช้านี้ 29 ต.ค.69 | เตือนประชาชนปลายน้ำ ระวังน้ำท่วมฉับพลัน จ.ตรัง | CH7ON ช่อง 7HD",
+          "source": "ch7.com",
+          "url": "https://news.google.com/rss/articles/CBMiR0FVX3lxTE42THZGR01VbXpmc2pnSkRNb0tiUVhKMUNXWi1RNERNM1JtWXQ0d3BsZTZEWHF6MGYzcWdiNUFKZTEyTTgwcEww?oc=5",
+          "date": "Thu, 29 Oct 2026"
         }
       ]
     },
@@ -911,35 +970,43 @@
           "amphoe": "เมืองตราด",
           "river": "แม่น้ำเขาสมิง",
           "level": 4,
-          "pct": 91.26,
-          "dt": "2026-10-30 07:30"
+          "pct": 97.98,
+          "dt": "2026-10-30 16:30"
         },
         {
           "name": "วังกระแจะ",
           "amphoe": "เมืองตราด",
           "river": "แม่น้ำตราด",
           "level": 4,
-          "pct": 91.1,
-          "dt": "2026-10-30 07:30"
+          "pct": 96.44,
+          "dt": "2026-10-30 16:30"
         },
         {
           "name": "คลองประณีต บ.ตลุง",
           "amphoe": "เขาสมิง",
           "river": "คลองประณีต",
           "level": 4,
-          "pct": 76.72,
-          "dt": "2026-10-30 07:30"
+          "pct": 76.95,
+          "dt": "2026-10-30 16:30"
         },
         {
           "name": "บ้านเขาสมิง",
           "amphoe": "เขาสมิง",
           "river": "แม่น้ำเขาสมิง",
           "level": 4,
-          "pct": 74.38,
-          "dt": "2026-10-30 06:00"
+          "pct": 76.53,
+          "dt": "2026-10-30 15:00"
         }
       ],
-      "surge": null,
+      "surge": {
+        "name": "วังกระแจะ",
+        "amphoe": "เมืองตราด",
+        "kind": "brim",
+        "was": 71.1,
+        "now": 96.44,
+        "rise": 25.3,
+        "dt": "2026-10-30 16:30"
+      },
       "news": [
         {
           "title": "โพสต์ทั้งหมด | หนีไป! บางนาตราด น้ำท่วมขัง กม.11-12 กม.7-8 กับ เจาะ จุด แจม : 23 กรกฎาคม 2569",
@@ -964,16 +1031,16 @@
           "amphoe": "เมืองลพบุรี",
           "river": "แม่น้ำลพบุรี",
           "level": 4,
-          "pct": 90.52,
-          "dt": "2026-10-30 07:30"
+          "pct": 90.99,
+          "dt": "2026-10-30 16:30"
         },
         {
           "name": "ทรบ. ปากคลองห้าวา (ทุ่งท่าวุ้ง)",
           "amphoe": "เมืองลพบุรี",
           "river": "คลองบางคะลาย",
           "level": 4,
-          "pct": 84.12,
-          "dt": "2026-10-30 07:30"
+          "pct": 83.88,
+          "dt": "2026-10-30 16:30"
         },
         {
           "name": "สถานีสูบน้ำปากคลองสระตาแวว (ทุ่งซ้ายคลองชัยนาท)",
@@ -981,19 +1048,26 @@
           "river": "คลองโพนทอง",
           "level": 4,
           "pct": 77.79,
-          "dt": "2026-10-30 07:30"
+          "dt": "2026-10-30 16:30"
         },
         {
           "name": "สถานีสูบน้ำปากคลองสายห้วยแก้ว (ทุ่งซ้ายคลองชัยนาท)",
           "amphoe": "บ้านหมี่",
           "river": "คลองท่าตะโก",
           "level": 4,
-          "pct": 73.64,
-          "dt": "2026-10-30 07:30"
+          "pct": 74.87,
+          "dt": "2026-10-30 16:30"
         }
       ],
       "surge": null,
-      "news": []
+      "news": [
+        {
+          "title": "บริหารจัดการน้ำป่าสัก คลองชัยนาท-ป่าสัก ระพีพัฒน์ เป็นฝีมือสำนักงานชลประทานที่10 ลพบุรี นะจะบอกให้ Rocket Launch Today (SHHT4oVj9t)",
+          "source": "Unisba Media",
+          "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE9zQU0ybUs0cjdfMjBaRUlwMC1BTkNCTHdDY0RTMUl6S2VsbjRJVlMzLUpHLVpRdGd3ejhBWDA5UTMwRnY1T1ROY0M5OEdubndGQ2ZnWGFsWkRkTjdEdXN2Z2NwSlhMZzN6aTVoeUV3?oc=5",
+          "date": "Thu, 29 Oct 2026"
+        }
+      ]
     },
     "Pathum Thani": {
       "province_th": "ปทุมธานี",
@@ -1010,36 +1084,95 @@
           "amphoe": "ลำลูกกา",
           "river": "คลองหกวา",
           "level": 4,
-          "pct": 86.42,
-          "dt": "2026-10-30 07:30"
-        },
-        {
-          "name": "คลองระพีพัฒน์แยกตก",
-          "amphoe": "คลองหลวง",
-          "river": "คลองระพีพัฒน์แยกตก",
-          "level": 4,
-          "pct": 80.95,
-          "dt": "2026-10-30 07:30"
+          "pct": 86.04,
+          "dt": "2026-10-30 16:30"
         },
         {
           "name": "คลองเปรมประชากร หลักหก",
           "amphoe": "เมืองปทุมธานี",
           "river": "คลองเปรมประชากร",
           "level": 4,
-          "pct": 78.38,
-          "dt": "2026-10-30 07:30"
+          "pct": 77.7,
+          "dt": "2026-10-30 16:30"
+        },
+        {
+          "name": "คลองระพีพัฒน์แยกตก",
+          "amphoe": "คลองหลวง",
+          "river": "คลองระพีพัฒน์แยกตก",
+          "level": 4,
+          "pct": 77.14,
+          "dt": "2026-10-30 16:30"
         },
         {
           "name": "คลองระพีพัฒน์แยกใต้ หนองเสือ",
           "amphoe": "หนองเสือ",
           "river": "คลองลาดผักขวง",
           "level": 4,
-          "pct": 72.89,
-          "dt": "2026-10-30 07:30"
+          "pct": 72.2,
+          "dt": "2026-10-30 16:30"
         }
       ],
       "surge": null,
       "news": []
+    },
+    "Chanthaburi": {
+      "province_th": "จันทบุรี",
+      "severity": 1,
+      "severity_th": "ใกล้ล้นตลิ่ง",
+      "severity_en": "Near Overbank",
+      "reason_th": "สถานีน้ำมาก 4 จุด จาก 11 สถานี (36%)",
+      "stations_overbank": 0,
+      "stations_high": 4,
+      "stations_total": 11,
+      "stations": [
+        {
+          "name": "สะพานวัดจันทนาราม",
+          "amphoe": "เมืองจันทบุรี",
+          "river": "คลองจันทบุรี",
+          "level": 4,
+          "pct": 72.1,
+          "dt": "2026-10-30 15:00"
+        },
+        {
+          "name": "นายายอาม",
+          "amphoe": "นายายอาม",
+          "river": "คลองวังโตนด",
+          "level": 4,
+          "pct": 71.62,
+          "dt": "2026-10-30 16:30"
+        },
+        {
+          "name": "ตำบลท่าหลวง",
+          "amphoe": "แหลมสิงห์",
+          "river": "คลองบ้านปากคลองใหญ่",
+          "level": 4,
+          "pct": 70.31,
+          "dt": "2026-10-30 15:00"
+        },
+        {
+          "name": "เมืองจันทบุรี",
+          "amphoe": "เมืองจันทบุรี",
+          "river": "คลองจันทบุรี",
+          "level": 4,
+          "pct": 70.12,
+          "dt": "2026-10-30 16:30"
+        }
+      ],
+      "surge": null,
+      "news": [
+        {
+          "title": "วิริยะประกันภัยฯ ร่วมบรรเทาทุกข์ผู้ประสบภัยน้ำท่วมจันทบุรี-ปราจีนบุรี",
+          "source": "autoinfo.co.th",
+          "url": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE1iTEh3ZF9Pcl84NXNRZ1lWaEN2ODZlZVN4cDAwTWt1TzJpUGUtVjRJY1FfMUNxNTVLUHJPUmNfbUZwdUNXUEJfRGR1M1JyWHJWcmc?oc=5",
+          "date": "Wed, 28 Oct 2026"
+        },
+        {
+          "title": "เนินรูปตัวUจันทบุรี หลังฝนตกน้ำท่วมทางขาด ทหาร-ชาวบ้านเข้าซ่อมทาง เจอทุ่นบึ้มเก่า 3",
+          "source": "www.topnews.co.th",
+          "url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE9yRnNsRFIwbjRJdEhvQzZueEx6WXk3RHk0OGlGWC1WdzVETE02aUJ4M2lkU2lNNkdzX1hwM2xkM3hLcjduZGp5Z25BcDZOajZZZjJVblJB?oc=5",
+          "date": "Wed, 28 Oct 2026"
+        }
+      ]
     },
     "Nonthaburi": {
       "province_th": "นนทบุรี",
@@ -1056,27 +1189,35 @@
           "amphoe": "ปากเกร็ด",
           "river": "แม่น้ำเจ้าพระยา",
           "level": 4,
-          "pct": 92.41,
-          "dt": "2026-10-30 07:30"
+          "pct": 95.89,
+          "dt": "2026-10-30 16:30"
         },
         {
           "name": "คลองอ้อมนนท์ บางใหญ่ (ถนนบางกรวย-ไทรน้อย)",
           "amphoe": "บางใหญ่",
           "river": "คลองแม่น้ำอ้อม",
           "level": 4,
-          "pct": 83.48,
-          "dt": "2026-10-30 07:30"
+          "pct": 90.9,
+          "dt": "2026-10-30 16:30"
         },
         {
           "name": "คลองพระพิมล (ไทรน้อย)",
           "amphoe": "ไทรน้อย",
           "river": "คลองพระพิมล",
           "level": 4,
-          "pct": 71.89,
-          "dt": "2026-10-30 07:30"
+          "pct": 72.45,
+          "dt": "2026-10-30 16:30"
         }
       ],
-      "surge": null,
+      "surge": {
+        "name": "สะพานนวลฉวี",
+        "amphoe": "ปากเกร็ด",
+        "kind": "brim",
+        "was": 91.7,
+        "now": 95.89,
+        "rise": 4.2,
+        "dt": "2026-10-30 16:30"
+      },
       "news": []
     },
     "Samut Sakhon": {
@@ -1090,28 +1231,28 @@
       "stations_total": 3,
       "stations": [
         {
-          "name": "เมืองสมุทรสาคร",
-          "amphoe": "เมืองสมุทรสาคร",
-          "river": "แม่น้ำท่าจีน",
-          "level": 4,
-          "pct": 91.98,
-          "dt": "2026-10-30 07:30"
-        },
-        {
           "name": "บ้านแพ้ว",
           "amphoe": "บ้านแพ้ว",
           "river": "คลองดำเนินสะดวก",
           "level": 4,
-          "pct": 89.06,
-          "dt": "2026-10-30 07:30"
+          "pct": 90.11,
+          "dt": "2026-10-30 16:30"
+        },
+        {
+          "name": "เมืองสมุทรสาคร",
+          "amphoe": "เมืองสมุทรสาคร",
+          "river": "แม่น้ำท่าจีน",
+          "level": 4,
+          "pct": 87.15,
+          "dt": "2026-10-30 16:30"
         },
         {
           "name": "คลองมหาชัย วัดพันท้ายนรสิงห์",
           "amphoe": "เมืองสมุทรสาคร",
           "river": "คลองสนามชัย",
           "level": 4,
-          "pct": 83.32,
-          "dt": "2026-10-30 07:30"
+          "pct": 84.65,
+          "dt": "2026-10-30 16:30"
         }
       ],
       "surge": null,
@@ -1123,99 +1264,18 @@
           "date": "Thu, 29 Oct 2026"
         },
         {
+          "title": "สส.สมุทรสาครลงพื้นที่เร่งแก้วัชพืชอุดตันคลองท่าแร้ง หวังเปิดทางน้ำช่วยลดน้ำท่วม",
+          "source": "สยามรัฐ",
+          "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE15eU5XX1BNbWVFdEFodGJ6MFNZdGt3RnROakdSUWtwMWttZEQzTUxpTDIxUnhnajhVeEJpMTR3aTY3dnB2VUJZTm9VOUJsSHc?oc=5",
+          "date": "Fri, 30 Oct 2026"
+        },
+        {
           "title": "สถานการณ์น้ำท่วมขังบนถนนพระราม 2 จังหวัดสมุทรสาคร พบว่า ฝั่งขาออกกรุงเทพฯ ไม่มีน้ำท่วมขัง ส่วนฝั่งขาเข้ากรุงเทพฯ มีน้ำท่วมขังบางจุด ดังนี้ - กม.38+900 บริเวณหน้าบริษัทดูโฮม มีน้ำท่วมขัง 3 ช่องทางจราจร ระยะทางประมาณ 400 เมตร ระดับน้ำสูงประมาณ 30 เซนติเมตร - กม.39+70",
           "source": "Facebook",
           "url": "https://news.google.com/rss/articles/CBMi8gdBVV95cUxOa1g0WVVvZTBydUxJcTFraFdPQlhvaGpicHRuNWVEMjFkb2RGWGVDdDJycjV3V2todUFtVEduODdoWFZUVDBNX01TbFMtdFQxSnE5UE5hTTg0bklGbnBSdTFfeldYRTRXc1dPN2UxSDNEMnVFSmc0OWRVQmdLVnBqV1RRZ1JMV0U3Y2ZGeFRRWloyQVZvbURNSGl0VzR4RThWaVZVNGEyc0VEcGV5ZXp3N202QUtnaUVJd3VJT2plVTVoVmxvTHBTMWUwN3FZQU5EaGlBUkxQQWRhVWlaWVJvSVdpRGpoT1RZWnNtUDBxQW43UEVQUEthNVkzcG1lME12RTlVa0hrbjB1LThxRjBkY2RQQ0Rmci05UEtmV21sYkdSLWpqOVQ4NHAzQVFvdEFXbjNUWi0wVEtEZ1ZQOC1NMEd1SUxZb3dCcVhITDNQenhueFNnS2phV2pDa2xET003UVlYcVBiX2pSOHdnUkUzWlBwVzNlRHc2bk83elhLU3BVRWVpX0ZSM21OejF1aDRjOFJXemdjMnNUQ1JzWWd0NUpaM2xDYTVWb0lraDVFUGtVMk5MUWJJSWc4YUp2cEV4aE9ZMjZ4bDdQYmMwZG9jclBTRjkyTHhCTURDN3FscFowM0l2Rk9fLUlZR0VHSzlQYmIxY2Q3eFNLTlBTTmJsdVlrS0d5MHpJNnJGQXZJcEQ1U1NTbXBJbzlVTEVDSG1ZemtfVEIxdjRKdGJGdnVYU3ZEaXUxUWduUHdHbXRJN1lObEp2RlhGMEc5cGVnekV6TUZQQTdyMUp0c1FZNHRXbVFlWmwyeGZvZmd3ME41UzlvcG5oMWNfMVRIWHhQVVpsa2tPWVZMMkowdXVjNWNpYnphckFRWkxuMTVuTjBjV3FBWi1tRHFsRDJ0dHFQZk5VSndjcGZGeWhzWDk2TzJnMzctVHN5ZUZPbkE3c3gzdWRmdUhic3A0MVJpRk9pMkpiSWpkMDhqNVdLUlZPRHlRMWEwN1FZbXRIMlRzbUZJN1VWUjBEc3dWZmp1YVNxWG5SQVNxVDNKWjVlV3BjenBMX3ppRTc2LVVqd1JnT1pkZDFIRGpVLTBkVnNfWFdkckcycDNFUnIzS2p5ZkJJR0N4UEloRnU3WUVJQklCZzJsUWFvaHdSSVpoaU5ITHIyWjN4YW8zTy1LUlF4cV9QUE1lZlRPdzQ3UFN4YmphblRVbkpnbUNyY0lkb1NpNElsZG5JNTE1bkVkczZIeDcycFhzbGNsNmdjcjZqNEpjODl5Ynh0MlZMS2dWOTh1WUJDcWxGNFVjYTNtLWxRRkYyRW0yNm8zbjB2clBwTk04OXFQNmpSUQ?oc=5",
           "date": "Wed, 28 Oct 2026"
-        },
-        {
-          "title": "28 ต.ค. 69 เวลา 17.30 น. น้ำท่วมขังพระราม 2 ขาเข้า กทม. จ.สมุทรสาคร รถผ่านได้ช่องขวา ตำรวจทางหลวงจังหวัดสมุทรสาคร แจ้งเตือน ถนนพระราม 2 ทล.35 ขาเข้า กทม. บริเวณ กม.38 ต.ชัยมงคล อ.เมืองสมุทรสาคร มีน้ำท่วมขัง ส่งผลให้การจราจรเคลื่อนตัวช้า ท้ายแถวยาวประมาณ 1 กม. ร",
-          "source": "Facebook",
-          "url": "https://news.google.com/rss/articles/CBMi0gZBVV95cUxORndMQkJUcWwwTERIWkYxUU43ZVdBa1JaOEJBZG85TlZqYnAtQmt6emZNdTJ4NXB2WGo5ZTYxTVZwcXJSN3FYOS1iTTM3V1lqSXVMSzdtRUs4YVJUWGlDSUZqVnFZRHppeWZGa1dlaC10NXFmX2oxUkZlcHhGazRxRVJDTXhYU09FclkxUFRKSDNvcmllWDBNNk94bS01dWJtZ1NkcHd6djkwLUI3V3ozZFVpYWx1S0p4RXhwdEdiV19ENDJScGNkM1QxZ0dnaVEybEQ0MGlQSDF4QnZFcnRjR0lZZnZSUkQxVkRaMTZicUE1UXRpRWZVak9WdWNPMVM5M1VpV3RtVV93VDZjZXZQMGlQSTJKVkMwQmxGYS04Z3EyOHJvRXU4OHpjNmRxcTNmN244WDRySklIQXAzdExQQnV1UWgtWXg3V1dTb3N1MjA1R243WTNZWV9IS2VPRVlRcWFIWWJNbkU4ZnhZdURMZEZWaFFmUEJUbmdaUnJjT0pOYnNDalZYLTRncWpBRnFiZEVGaTYxaU01aUFqR0REOVJLSlduYWQteVFQWjhVSjN4U2xYVkhmTkhCcTA0dmt1OXdJQlpSdzJPTGVaNXo4LXJva0toREhZalBaWG41QXRKNEhIbHJEeXhzX2N1a3Y3N3NFM2JoSnZaQTlmclNaUmxqWk1OMkpNaDdXODBiUFZkMk4yd0F3Tm11aEpzcFFOZzczY3prT2Y5bkt2VVBfU1VMOXQ0czlhR01oRXZxYm9iTlUyTk1HTk44RjR2MmRTdWpJSjYyZlFYY2ZmTkxUVWtDNkZGU29RbDZaczQyODlQUkFmUHlFRzRvcHBzQktKOU41NWF5S2ctTU5TVG9COFRaWU5hZ0lHcWxxYm0ybW5wREFTdnZfV09wMkZLQ3cwWGJHR3JRUnZScWtoVTB5ZTVvUFdURTRjWXd3TFlGM28zOHZqaHhQWS1HaC1ZRWtsNzFzb2c5bTFkWUVtU21JQnJYVll4QjVjRXZzRGJqQXF1QjZTWnlEZmxpMWhzUk1vRllEcF83UTBTcXFiR1FkMTZVZnZZY0k2ZHByZjl1VE9pYWRRWEN1LVdUZHoyLXFmTnB3c1BvT2dPcGx6cWlmOW5B?oc=5",
-          "date": "Wed, 28 Oct 2026"
         }
       ]
-    },
-    "Samut Songkhram": {
-      "province_th": "สมุทรสงคราม",
-      "severity": 1,
-      "severity_th": "ใกล้ล้นตลิ่ง",
-      "severity_en": "Near Overbank",
-      "reason_th": "น้ำเกือบถึงตลิ่งที่ พระรามสอง — 97% ของตลิ่ง และยังขึ้นต่อ (+17.3 จุดใน ~40 ชม.)",
-      "stations_overbank": 0,
-      "stations_high": 2,
-      "stations_total": 2,
-      "stations": [
-        {
-          "name": "พระรามสอง",
-          "amphoe": "เมืองสมุทรสงคราม",
-          "river": "แม่น้ำแม่กลอง",
-          "level": 4,
-          "pct": 96.64,
-          "dt": "2026-10-30 07:30"
-        },
-        {
-          "name": " สะพานข้ามคลองโคน",
-          "amphoe": "เมืองสมุทรสงคราม",
-          "river": "",
-          "level": 4,
-          "pct": 83.91,
-          "dt": "2026-10-30 07:30"
-        }
-      ],
-      "surge": {
-        "name": "พระรามสอง",
-        "amphoe": "เมืองสมุทรสงคราม",
-        "kind": "brim",
-        "was": 79.3,
-        "now": 96.64,
-        "rise": 17.3,
-        "dt": "2026-10-30 07:30"
-      },
-      "news": [
-        {
-          "title": "สำนักงานประชาสัมพันธ์จังหวัดสมุทรสงคราม สถานการณ์น้ำทะเลหนุนสูง เข้าท่วมเส้นทางสัญจร บริเวณสี่แยกไฟแดงเทศบาลเมืองสมุทรสงคราม - ถนนศรีจำปา เมื่อเช้าวันนี้ (28 ตุลาคม 2569) เวลา 09.25 น. https://www.fm91bkk.com/newsarticle/81143 #น้ำท่วม #น้ำทะเลหนุนสูง #สี่แยกเ",
-          "source": "Facebook",
-          "url": "https://news.google.com/rss/articles/CBMinghBVV95cUxPMlhqdTBjZUZKTV8taU5VSjdfVjhsaXdPRDlYYkVLMHpLZTJibXdWTlYwcDNmT0JycnZnNld4VjdhcDRBeFZaREtPWEdhWDcwM3FVVTJxS1R4TEVEWmdfdkFZd081dmo3Z1lQZ0J1d1puYm5iWXJ3RE56SEtQaElMdE5mU0Z4UHlvUGUyZmkxb1BpTk5XRWVfVmtEQ2l0UHpaMDdTV19iYk1QbEtsSW40eng5M2dpbHp3cGhBVllXTXNpX2k4aWZmQS1KeXBjQjRiem1keFdHY3RuaVRneDZ1UXoxX0c5N2Z2TUc4S1p2clRzWTYtWWxja0xLZkJQR0s2M1JrelBCR0RleUxXZ1JKUTl1OThEejUzekFHbk9yeDFIdVZFcXl3dVdLRkxjaHFZM3dfWFRSNEZuUy1IX3p3VGZDbTJoclF6bnhZYThMLW9leDFxOEJPYWJld1BOOFU1ZUgwOWxFZkxuQktYTC1iblVKSm84OTQ4SVZMZkY2M3ktTTE0cmU2b2Q1QnRjR0Zjb3hYMkp3Umd6SUwyTDJFeE9nWDJTdGlLTWszNmFsTC1vTjRsa3BLR1FoMXdGaU5kSmk1RXZOUnhZbF94RjNBa3pwZG1zMTNoSXRva24wdTBUQzhPajk4Z1hfa1J1UF82OEg4b1J0TEN6UDdDTng1blVwdW1QX3l5YjNLLWxOX2lLRy1CX0p6N0pFTFROZVRxRkhIWktmbG9SNzVlcV9CNENzbExPRlhTbmoyNDlmY1czZE9fNWg5aW5XTllmWEU2bHZYZDlqVjF2dEZNZVY0NW1YbVZkWWl3WUJzQnRBRWVJMG9lU0Znb005QU83eUNXcC1ZbDZjWGh2YVZJTkJETEJOQnAwUzdsN29oc2tuVDZDb2RsM3N6aEdzTHpVM2RDZzdaMEUxVFUyRlhSa2o1RU1tSTNSTGw1YTZfY2RqbVZ5ajNta0VtNm1SUkNkdlE3WVBLYjdHRFNkTGk1U25nSUsyaVZrcnhYdXZjTDNsTjBYS3AzaXpFRDY1OHN6N09pdmpCVXMtS1c2U2NUNklzWjlaTzZmREhQaGFrV0w5N3FZbE03cTlHR1dvdmtfaXFFSEdKa2wxTVVhM0VKTXo4LW1RcDFKWlpYb2RydXkxTVpjVTluRG1MbGVDOURzLVpXa3RfbUE5WmE0ekwyM2gxaWNzNnlHQlJHT2MyLWxJZTFTVmxVczFXYjd3VUJWUGRTM3JMOVA5NUw2OGdzMkE1UUYxS0FtejZlMkxCbm80SzlET0tGcF9LcW1yTk5wSXZMbTd6c2tvaDZWSS1tbV9tOHVXejVlZWFPTzFWTGhETnp0X2VMRFJuUV9pdGUxTVNMRlJkaS1EUTVndkVOUGZLTHg0OEFWWEJQamRpXzlR?oc=5",
-          "date": "Wed, 28 Oct 2026"
-        },
-        {
-          "title": "สมุทรสงครามอ่วม! น้ำทะเลหนุนท่วมตลาดแม่กลอง–อัมพวา ต่อเนื่องวันที่ 2 ด้านตลาดน้ำท่ารอดน้ำท่วม",
-          "source": "ผู้จัดการออนไลน์",
-          "url": "https://news.google.com/rss/articles/CBMiXEFVX3lxTE9UeUtMY0pVMmNsOG83akkwZHlRWGh6UTlwQ1FEM3MxaG01eldqcUMyd0tiUHVvMDRyRGxXOXdSS3VFeXhEQW4tUndFSjB0Zk1STlliQXRmNGwzVVVr?oc=5",
-          "date": "Thu, 29 Oct 2026"
-        }
-      ]
-    },
-    "Phetchaburi": {
-      "province_th": "เพชรบุรี",
-      "severity": 1,
-      "severity_th": "ใกล้ล้นตลิ่ง",
-      "severity_en": "Near Overbank",
-      "reason_th": "น้ำเกือบถึงตลิ่งที่ บางตะบูนและบางตะบูนออก — 97% ของตลิ่ง และยังขึ้นต่อ (+36.3 จุดใน ~40 ชม.)",
-      "stations_overbank": 0,
-      "stations_high": 1,
-      "stations_total": 11,
-      "stations": [
-        {
-          "name": "บางตะบูนและบางตะบูนออก",
-          "amphoe": "บ้านแหลม",
-          "river": "คลองบางตะบูน",
-          "level": 4,
-          "pct": 96.86,
-          "dt": "2026-10-30 07:30"
-        }
-      ],
-      "surge": {
-        "name": "บางตะบูนและบางตะบูนออก",
-        "amphoe": "บ้านแหลม",
-        "kind": "brim",
-        "was": 60.6,
-        "now": 96.86,
-        "rise": 36.3,
-        "dt": "2026-10-30 07:30"
-      },
-      "news": []
     }
   }
 }
