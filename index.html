@@ -3746,7 +3746,6 @@
         renderLivePriceWidget();
         updateNationalFert();
       }
-      window.toggleLang = toggleLang;
 
       function entryOf(en, rice = S.rice, year = S.year) {
         return DATA[en]?.[rice]?.[year] || {};
@@ -4920,7 +4919,6 @@
         renderStations();
         updateLegend();
       }
-      window.toggleWlAll = toggleWlAll;
 
       function showRainTooltip(event, st) {
         const lvl = st.rain_level || 0;
@@ -4945,7 +4943,6 @@
         renderStations();
         updateLegend();
       }
-      window.toggleRsAll = toggleRsAll;
 
       function renderMapLabels() {
         const layer = refs.mapSvg.querySelector("#labelLayer");
@@ -6617,9 +6614,6 @@
           `<div class="sim-cost-row"><span><b>${t("รวม", "Total")}</b></span><span><b>${fmtNumber(totalCost)} ฿/${t("ไร่", "rai")}</b></span></div>`;
       }
 
-      window.recalcSim = recalcSim;
-      window.applySimPreset = applySimPreset;
-      window.toggleSimCostBreakdown = toggleSimCostBreakdown;
       // ── End Simulator ─────────────────────────────────────────────────────
 
       function drawSpark(en) {
@@ -7786,16 +7780,6 @@ ${warningsHtml}
           rerender();
         });
       }
-
-      window.setRice = setRice;
-      window.setLayer = setLayer;
-      window.setYear = setYear;
-      window.setReg = setReg;
-      window.zoomIn = zoomIn;
-      window.zoomOut = zoomOut;
-      window.resetCamera = resetCamera;
-      window.csvDl = csvDl;
-      window.toggleDistrictPanel = toggleDistrictPanel;
 
       /* ── Rice Mills Loader ── */
       let RICE_MILLS_DATA = null;
