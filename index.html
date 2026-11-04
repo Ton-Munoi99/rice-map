@@ -7601,6 +7601,7 @@ ${warningsHtml}
         if (isOpen) {
           panel.classList.remove("open");
           btn.classList.remove("open");
+          btn.setAttribute("aria-expanded", "false");
           return;
         }
         // เปิดครั้งแรก: render content
@@ -7610,6 +7611,7 @@ ${warningsHtml}
         }
         panel.classList.add("open");
         btn.classList.add("open");
+        btn.setAttribute("aria-expanded", "true");
       }
 
       // ── Build district toggle button HTML (ใช้ใน selectProvince) ─────────────
