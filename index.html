@@ -4129,8 +4129,7 @@
       // 0 = ดาวเทียมผ่านแล้วไม่เห็นจุดความร้อน (มีความหมาย) · null = ไม่มีไฟล์/ไม่มีจังหวัดนี้
       function hotspotsValueOf(en) {
         const p = window.HOTSPOT_DATA?.provinces?.[en];
-        if (!p) return null;
-        return hotspotRiceOnly() ? p.crops?.rice ?? 0 : p.count_7d;
+        return p ? (hotspotRiceOnly() ? p.crops?.rice ?? 0 : p.count_7d) : null;
       }
       // โหมดเฉพาะนาข้าวใช้ได้เฉพาะรอบที่แยกชนิดพืชได้ (_meta.landuse) — ไม่งั้นกลับไปนับทุกจุด
       const hotspotRiceOnly = () => S.hotspotRice && !!window.HOTSPOT_DATA?._meta?.landuse;
@@ -4138,7 +4137,6 @@
         S.hotspotRice = on;
         rerender();
       }
-      window.toggleHotspotRice = toggleHotspotRice;
       // ชนิดพืชใต้จุด (แผนที่การใช้ที่ดิน กพด.) — ไม่มี crops = รอบนั้นไม่ได้แยก (_meta.landuse null) ซ่อนทั้งบรรทัด
       const HOTSPOT_CROPS = [
         ["rice", "นาข้าว", "rice"], ["sugarcane", "อ้อย", "cane"], ["cassava", "มันสำปะหลัง", "cassava"],
