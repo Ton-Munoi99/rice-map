@@ -10,6 +10,8 @@ fetch_firms_hotspots.py
 แหล่งข้อมูล: NASA FIRMS ไฟล์สาธารณะ ไม่ต้องใช้ MAP_KEY
   https://firms.modaps.eosdis.nasa.gov/data/active_fire/suomi-npp-viirs-c2/csv/
   SUOMI_VIIRS_C2_SouthEast_Asia_7d.csv  (VIIRS 375 ม. · Suomi-NPP ดวงเดียว · NRT)
+  สำรอง: noaa-20-viirs-c2/csv/J1_VIIRS_C2_SouthEast_Asia_7d.csv (เซนเซอร์ VIIRS 375 ม. ตัวเดียวกัน คอลัมน์เหมือนกัน)
+  ใช้เมื่อไฟล์ Suomi-NPP ดึงไม่ได้หรือไม่ผ่าน check_region · ดวงที่ใช้จริงอยู่ใน _meta.satellite
 
 ตัดออกก่อนนับ (แก้จาก /code-review 19 ต.ค. 69):
   · ความมั่นใจต่ำ (confidence = low) — เช่นแสงสะท้อน/พื้นผิวร้อน ไม่ใช่ไฟ
@@ -35,8 +37,11 @@ from riceutils import _load_geo, _point_in_geom, bkk_today, http
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-URL = ("https://firms.modaps.eosdis.nasa.gov/data/active_fire/suomi-npp-viirs-c2/csv/"
-       "SUOMI_VIIRS_C2_SouthEast_Asia_7d.csv")
+# (รหัส, ชื่อบนป้าย, url) เรียงตามลำดับที่ลอง — 2 พ.ย. 69 ไฟล์ Suomi-NPP หยุดอัปเดต (ไม่มีรอบผ่านไทยหลัง 1 พ.ย.)
+# ขณะที่ NOAA-20 ยังเดินปกติ → เจ้าของเลือกให้ Suomi-NPP เป็นหลัก ล้มค่อยใช้ NOAA-20 (5 พ.ย. 69)
+_BASE = "https://firms.modaps.eosdis.nasa.gov/data/active_fire/"
+SOURCES = [("SNPP", "Suomi-NPP", _BASE + "suomi-npp-viirs-c2/csv/SUOMI_VIIRS_C2_SouthEast_Asia_7d.csv"),
+           ("NOAA-20", "NOAA-20", _BASE + "noaa-20-viirs-c2/csv/J1_VIIRS_C2_SouthEast_Asia_7d.csv")]
 OUTPUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                       "data", "firms-hotspots.json")
 REQUIRED_COLS = {"latitude", "longitude", "acq_date", "acq_time", "frp", "confidence"}
@@ -218,21 +223,41 @@ def assign(rows, shapes, crop_of=None):
     return prov, {"near_border_unassigned": near, "outside_thailand": outside}
 
 
+def download(url):
+    """CSV text · 25–26 ต.ค. 69 runner ของ GitHub ต่อ firms. ไม่ได้ ("Network is unreachable" หลังรอ 2 นาที)
+       ขณะที่จากเครื่องอื่นปกติ → ลอง mirror firms2. (ไฟล์เดียวกัน คนละเครื่อง) · connect timeout 10 วิ"""
+    for u in (url, url.replace("//firms.", "//firms2.", 1)):
+        try:
+            r = http().get(u, timeout=(10, 120), headers={"User-Agent": "RiceMap/1.0 (+https://github.com/Ton-Munoi99/rice-map)"})
+            r.raise_for_status()
+            return r.text
+        except Exception as e:
+            print(f"::warning::ดึง {u.split('/')[2]} ไม่ได้: {e}", file=sys.stderr)
+    raise ValueError("ดึงไม่ได้ทั้งสอง host")
+
+
+def first_good(candidates, today_utc):
+    """candidates = [(รหัส, ชื่อ, ฟังก์ชันคืน rows)] → (รหัส, ชื่อ, rows, window) ของดวงแรกที่ดึงได้และผ่าน
+       check_region · ไม่มีดวงไหนผ่าน = None (ผู้เรียก exit ก่อนเขียน ข้อมูลเดิมอยู่ครบ)"""
+    for i, (code, name, load) in enumerate(candidates):
+        try:
+            rows = load()
+            window = check_region(rows, today_utc)
+        except Exception as e:
+            print(f"::warning::{name}: {e}", file=sys.stderr)
+            continue
+        if i:
+            print(f"::warning::ใช้ไฟล์สำรอง {name} แทนดวงหลัก", file=sys.stderr)
+        return code, name, rows, window
+    return None
+
+
 def main():
     today_utc = datetime.now(timezone.utc).date()
-    # 25–26 ต.ค. 69 runner ของ GitHub ต่อ firms. ไม่ได้ ("Network is unreachable" หลังรอ 2 นาที) ขณะที่จากเครื่องอื่นปกติ
-    # → ลอง mirror firms2. (ไฟล์เดียวกัน คนละเครื่อง) · connect timeout 10 วิ ไม่งั้นแต่ละครั้งรอ 2 นาที
-    for url in (URL, URL.replace("//firms.", "//firms2.", 1)):
-        try:
-            r = http().get(url, timeout=(10, 120), headers={"User-Agent": "RiceMap/1.0 (+https://github.com/Ton-Munoi99/rice-map)"})
-            r.raise_for_status()
-            break
-        except Exception as e:
-            print(f"::warning::ดึง {url.split('/')[2]} ไม่ได้: {e}", file=sys.stderr)
-    else:
-        sys.exit("ดึงไฟล์ FIRMS ไม่ได้ทั้งสอง host — ไม่เขียนทับข้อมูลเดิม")
-    rows = parse_rows(r.text)
-    window = check_region(rows, today_utc)   # ล้ม = exit 1 ก่อนเขียน ข้อมูลเดิมอยู่ครบ
+    got = first_good([(c, n, lambda u=u: parse_rows(download(u))) for c, n, u in SOURCES], today_utc)
+    if got is None:
+        sys.exit("ไฟล์ FIRMS ใช้ไม่ได้ทุกดวง — ไม่เขียนทับข้อมูลเดิม")
+    sat, sat_name, rows, window = got
     kept, dropped = select(rows, window)
     lu = load_landuse()
     prov, placed = assign(kept, province_shapes(), lu[0] if lu else None)
@@ -245,7 +270,8 @@ def main():
     result = {
         "_meta": {
             "updated": bkk_today(),
-            "source": "NASA FIRMS · VIIRS 375 m (Suomi-NPP) · NRT",
+            "source": f"NASA FIRMS · VIIRS 375 m ({sat_name}) · NRT",
+            "satellite": sat,
             "source_url": "https://firms.modaps.eosdis.nasa.gov/",
             "window": {"from": window[0], "to": window[-1], "days": days_spanned, "tz": "UTC (acq_date ของดาวเทียม)"},
             "provinces_with_hotspots": sum(1 for p in prov.values() if p["count_7d"]),
@@ -273,7 +299,7 @@ def main():
     with open(OUTPUT, "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=1)
     top = sorted(prov.items(), key=lambda kv: -kv[1]["count_7d"])[:5]
-    print(f"✅ {total} จุดใน {result['_meta']['provinces_with_hotspots']} จังหวัด · {window[0]}..{window[-1]} "
+    print(f"✅ {sat_name} · {total} จุดใน {result['_meta']['provinces_with_hotspots']} จังหวัด · {window[0]}..{window[-1]} "
           f"({days_spanned} วัน) · ตัดความมั่นใจต่ำ {dropped['low_confidence']} · ตัดแหล่งความร้อนประจำ "
           f"{dropped['persistent_heat_source']} ({dropped['persistent_cells']} ช่อง) · ใกล้ชายแดนไม่นับ "
           f"{placed['near_border_unassigned']} · นอกไทย {placed['outside_thailand']} · สูงสุด "
@@ -348,6 +374,14 @@ def _selftest():
         except ValueError:
             continue
         raise AssertionError(f"ควรปฏิเสธ: {why}")
+    # ดวงหลักเก่า/ดึงไม่ได้ → ใช้ดวงสำรอง · ดวงหลักดี → ไม่แตะดวงสำรอง · ล้มทุกดวง → None
+    stale = [mk(100, 14, f"2026-10-{d:02d}") for d in range(1, 8) for _ in range(3000)]
+    def boom():
+        raise ValueError("ดึงไม่ได้")
+    assert first_good([("A", "A", lambda: stale), ("B", "B", lambda: full)], today)[0] == "B"
+    assert first_good([("A", "A", boom), ("B", "B", lambda: full)], today)[0] == "B"
+    assert first_good([("A", "A", lambda: full), ("B", "B", boom)], today)[0] == "A"
+    assert first_good([("A", "A", boom), ("B", "B", lambda: stale)], today) is None
     try:
         parse_rows("lat,lon\n1,2\n")
     except ValueError:

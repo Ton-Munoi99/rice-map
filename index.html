@@ -5133,8 +5133,8 @@
         if (S.layer === "hotspots") {
           const meta = window.HOTSPOT_DATA?._meta;
           refs.dataSourceNote.textContent = t(
-            `NASA FIRMS · VIIRS 375 ม. (Suomi-NPP) · ${meta?.window?.from || "—"} ถึง ${meta?.window?.to || "—"} (UTC) · นับทุกจุดในจังหวัด รวมทุกพืชและป่า · ตัดจุดความมั่นใจต่ำและจุดที่ติดซ้ำที่เดิม ≥3 วัน (ปล่องโรงงาน/โรงปูน) · เป็นตัวเลขต่ำสุด`,
-            `NASA FIRMS · VIIRS 375 m (Suomi-NPP) · ${meta?.window?.from || "—"} to ${meta?.window?.to || "—"} (UTC) · every point in the province, all crops and forest · low-confidence and same-spot-3+-days (industrial stacks) removed · lower bound`,
+            `${meta?.source || "NASA FIRMS · VIIRS 375 m"} · ${meta?.window?.from || "—"} ถึง ${meta?.window?.to || "—"} (UTC) · นับทุกจุดในจังหวัด รวมทุกพืชและป่า · ตัดจุดความมั่นใจต่ำและจุดที่ติดซ้ำที่เดิม ≥3 วัน (ปล่องโรงงาน/โรงปูน) · เป็นตัวเลขต่ำสุด`,
+            `${meta?.source || "NASA FIRMS · VIIRS 375 m"} · ${meta?.window?.from || "—"} to ${meta?.window?.to || "—"} (UTC) · every point in the province, all crops and forest · low-confidence and same-spot-3+-days (industrial stacks) removed · lower bound`,
           );
           return;
         }
