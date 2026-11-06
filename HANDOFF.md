@@ -4,6 +4,16 @@ Last updated: 2026-10-22 by Claude Code
 
 ## Log
 
+- 2026-11-06 (Claude): NASA's Suomi-NPP 7-day file froze at 2026-11-02 05 UTC (still frozen on 6 Nov), so
+  the hotspots cron failed 3–4 Nov. `fetch_firms_hotspots.py` now tries `SOURCES` in order (SNPP, then
+  NOAA-20, same VIIRS 375 m CSV) via `first_good()`; the used one is in `_meta.satellite`/`_meta.source`
+  and the map note reads `_meta.source` (`2110234`). Cron since then is green on NOAA-20. It switches back
+  by itself when SNPP resumes — no action needed, but expect a small count shift (different overpass time).
+  Persistence filter re-checked on NOAA-20 (28 Oct–3 Nov): ≥4 days would only add back 7 Saraburi points,
+  54 % at night (kilns) → keep `PERSIST_MIN_DAYS = 3`; re-check mid/late December at peak burning.
+  Also: dropped the 16 redundant `window.X = X` exports in index.html (top-level functions are already
+  global; every button click-tested) and the district toggle now updates `aria-expanded`.
+
 - 2026-10-27 (Claude): stale-check found the corner badge using `S.year >= "2568"` (said "ประมาณการ 2568"
   on OAE data) and biomass/households/straw falling back to the rice map title — fixed (`2ee4e85`). Then added
   the hotspots "all points ↔ rice fields only" toggle (`S.hotspotRice`, not in the URL hash; `hotspotsValueOf`
