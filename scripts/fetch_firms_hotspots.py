@@ -9,7 +9,7 @@ fetch_firms_hotspots.py
 
 แหล่งข้อมูล: NASA FIRMS ไฟล์สาธารณะ ไม่ต้องใช้ MAP_KEY
   https://firms.modaps.eosdis.nasa.gov/data/active_fire/suomi-npp-viirs-c2/csv/
-  SUOMI_VIIRS_C2_SouthEast_Asia_7d.csv  (VIIRS 375 ม. · Suomi-NPP ดวงเดียว · NRT)
+  SUOMI_VIIRS_C2_SouthEast_Asia_7d.csv  (VIIRS 375 ม. · Suomi-NPP เป็นหลัก · NRT)
   สำรอง: noaa-20-viirs-c2/csv/J1_VIIRS_C2_SouthEast_Asia_7d.csv (เซนเซอร์ VIIRS 375 ม. ตัวเดียวกัน คอลัมน์เหมือนกัน)
   ใช้เมื่อไฟล์ Suomi-NPP ดึงไม่ได้หรือไม่ผ่าน check_region · ดวงที่ใช้จริงอยู่ใน _meta.satellite
 
