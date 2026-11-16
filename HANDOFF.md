@@ -4,6 +4,16 @@ Last updated: 2026-10-22 by Claude Code
 
 ## Log
 
+- 2026-11-16 (Claude): OAE weekly prices (`fetch_oae_prices.py`) failed daily 2–16 Nov: Cloudflare in front
+  of `agriapi.nabc.go.th` now blocks Firecrawl and Jina as well as the GitHub runner; only a Thai IP gets
+  through. The owner chose to fetch from their own PC: `scripts/local-oae-refresh.sh` runs daily from the
+  Windows Task Scheduler job "RiceMap OAE refresh" in a private clone (`%LOCALAPPDATA%ice-map-oae`, log
+  next to it as `rice-map-oae.log`) and pushes with `push-verified.sh` — the owner gave standing approval for
+  this one data push. The GitHub workflow is now a weekly watchdog: green while `_meta.updated_at` is within
+  10 days, red once the PC stops refreshing. The freshness monitor cannot see this file's OAE half (miller
+  crons commit `prices-live.json` daily) — the watchdog covers it. Dam cron moved to 03/06/09 UTC on 12 Nov
+  after GitHub's 6–10 h delays pushed runs past Bangkok midnight; 14–15 Nov all three runs committed.
+
 - 2026-11-06 (Claude): NASA's Suomi-NPP 7-day file froze at 2026-11-02 05 UTC (still frozen on 6 Nov), so
   the hotspots cron failed 3–4 Nov. `fetch_firms_hotspots.py` now tries `SOURCES` in order (SNPP, then
   NOAA-20, same VIIRS 375 m CSV) via `first_good()`; the used one is in `_meta.satellite`/`_meta.source`

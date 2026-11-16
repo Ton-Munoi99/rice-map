@@ -174,10 +174,35 @@ def main():
     print(f"Wrote {OUTPUT_FILE}")
 
     if failed:
+        # ตั้งแต่ พ.ย. 69 Cloudflare บล็อกทั้ง runner และ Firecrawl → ข้อมูลมาจาก
+        # scripts/local-oae-refresh.sh บนเครื่องเจ้าของ (IP ไทย) แทน · CI จึงเป็นแค่ตัวเฝ้า:
+        # เขียวถ้าเครื่องเจ้าของยังอัปเดตให้ แดงเมื่อหยุดเกิน LOCAL_GRACE_DAYS
+        if recently_refreshed((existing.get("_meta") or {}).get("updated_at"), datetime.now(timezone.utc)):
+            print(f"::warning::ดึงไม่ได้ ({len(failed)}/{len(PRODUCTS)}) แต่ข้อมูลยังสดจากเครื่องเจ้าของ — ไม่ถือว่าล้ม")
+            return
         # ออกด้วย error ให้ workflow แดง — ความเงียบคือสาเหตุที่ของเดิมพังอยู่ 3 เดือน
         print(f"[FAIL] ดึงไม่สำเร็จ {len(failed)}/{len(PRODUCTS)} รายการ: {failed}", file=sys.stderr)
         sys.exit(1)
 
 
+LOCAL_GRACE_DAYS = 10
+
+
+def recently_refreshed(updated_at, now):
+    try:
+        return now - datetime.fromisoformat(updated_at) <= timedelta(days=LOCAL_GRACE_DAYS)
+    except (TypeError, ValueError):
+        return False
+
+
+def _selftest():
+    now = datetime(2026, 11, 16, tzinfo=timezone.utc)
+    assert recently_refreshed("2026-11-10T03:00:00+00:00", now)
+    assert not recently_refreshed("2026-11-01T02:43:35+00:00", now)
+    assert not recently_refreshed(None, now)
+    assert not recently_refreshed("garbage", now)
+    print("selftest ok")
+
+
 if __name__ == "__main__":
-    main()
+    _selftest() if "--selftest" in sys.argv else main()

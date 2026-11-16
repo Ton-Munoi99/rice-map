@@ -46,6 +46,9 @@
   - โฟลเดอร์ PDF ราคา (รูปแบบ `PricericeDDMMYYYY.pdf`): <http://www.thairicemillers.org/images/introc_1429264173/>
   - ตัวอย่างไฟล์: <http://www.thairicemillers.org/images/introc_1429264173/Pricerice17042569.pdf>
 - **ราคา OAE (ระดับชาติ, รายสัปดาห์):** <https://agriapi.nabc.go.th/api/weekly-prices/product> — ราคาที่เกษตรกรขายได้ ข้าวเปลือกเจ้า/หอมมะลิ ความชื้น 15% ย้อนถึง พ.ศ. 2554 · เปิดสาธารณะ ไม่ต้องมี key
+  · Cloudflare บล็อก IP ดาต้าเซ็นเตอร์ (runner ของ GitHub, Firecrawl, Jina — พ.ย. 69) จึงดึงจากเครื่องเจ้าของ
+  (IP ไทย) ด้วย `scripts/local-oae-refresh.sh` ผ่าน Windows Task Scheduler วันละครั้ง · workflow บน GitHub เหลือเป็นตัวเฝ้า
+  รายสัปดาห์ (แดงเมื่อ `_meta.updated_at` เก่าเกิน 10 วัน)
   - หน้า dataset ต้นทาง: <https://catalog.oae.go.th/dataset/weekly-prices-paddy>
   - *เดิมใช้ CKAN `datastore_search` resource `c72f9a58-…` ซึ่งตอบ 403 ตั้งแต่ 20 พ.ค. 2569 — ตัว catalog ชี้มาที่ API ใหม่นี้แทน*
 - **สคริปต์:** `scripts/fetch_miller_prices.py`, `scripts/fetch_oae_prices.py`

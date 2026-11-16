@@ -2,8 +2,11 @@ name: 🌾 Auto-Update OAE National Rice Prices
 
 on:
   schedule:
-    # ทุกวัน 07:00 น. เวลาไทย (UTC+7 = 00:00 UTC)
-    - cron: '0 0 * * *'
+    # พ.ย. 69: Cloudflare บล็อกทั้ง runner และ Firecrawl — ข้อมูลจริงมาจาก
+    # scripts/local-oae-refresh.sh บนเครื่องเจ้าของ (IP ไทย) วันละครั้ง
+    # รอบนี้เหลือเป็นตัวเฝ้า: เขียวถ้าข้อมูลยังสด แดงเมื่อเครื่องเจ้าของหยุดอัปเดตเกิน 10 วัน
+    # จันทร์ 07:00 น. เวลาไทย (00:00 UTC)
+    - cron: '0 0 * * 1'
   workflow_dispatch:  # รันด้วยมือได้ผ่าน GitHub UI
 
 permissions:
@@ -25,6 +28,9 @@ jobs:
 
       - name: 📦 Install dependencies
         run: pip install requests
+
+      - name: Selftest
+        run: python scripts/fetch_oae_prices.py --selftest
 
       - name: 🔄 Fetch OAE prices
         # Cloudflare หน้า API ตอบ 403 ให้ IP ของ runner — สคริปต์จะสลับไปใช้
