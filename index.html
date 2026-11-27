@@ -4261,6 +4261,11 @@
         ];
       }
 
+      // ระดับเตือน 0 = ปกติ ไม่ต้องมีสี — เดิมได้สีครีมต้นสเกลซึ่งสว่างที่สุดบนแผนที่ แย่งสายตาจากจังหวัดที่เสี่ยงจริง
+      function isNeutral(en) {
+        return S.layer === "alerts" && valueOf(en) === 0;
+      }
+
       function scaleT(v, min, max) {
         if (max <= min) return 0.5;
         // drought: center palette at 0mm (balanced) — red=แล้ง yellow=สมดุล blue=ชุ่มชื้น
@@ -4268,7 +4273,9 @@
           const absMax = Math.max(Math.abs(min), Math.abs(max));
           return absMax > 0 ? Math.max(0, Math.min(1, 0.5 + 0.5 * (v / absMax))) : 0.5;
         }
-        const ratio = (v - min) / (max - min);
+        // clamp: กรอบขยาย (กทม./ใต้) คิด min จากค่า > 0 เท่านั้น ค่า 0 จึงได้ ratio ติดลบ
+        // → Math.pow(ลบ, 0.62) = NaN → จังหวัดกลายเป็นสีดำ (เจอ 27 พ.ย. 69 ใน layer เสี่ยงน้ำท่วม)
+        const ratio = Math.max(0, Math.min(1, (v - min) / (max - min)));
         if (S.layer === "yield") return Math.pow(ratio, 0.88);
         return Math.pow(ratio, 0.62);
       }
@@ -4748,7 +4755,9 @@
         const features = featureNames.map((name) => VIEW.featureMap.get(name)).filter(Boolean);
         const ctx = computeFitContext(features, width, height, 12);
         const visible = getVisibleProvinces();
-        const vals = featureNames.map((en) => valueOf(en)).filter((v) => v > 0);
+        // สเกลเดียวกับแผนที่หลัก (applyMapColors) — เดิมคิดเฉพาะจังหวัดในกรอบ ค่าเดียวกันจึงได้คนละสี
+        // (ระดับเตือน 2 เป็นส้มบนแผนที่ แต่เป็นครีมในกรอบ กทม.)
+        const vals = visible.filter((en) => hasLayerValue(en)).map((en) => valueOf(en));
         const min = vals.length ? Math.min(...vals) : 0;
         const max = vals.length ? Math.max(...vals) : 1;
         const palette = getPalette();
@@ -4765,7 +4774,8 @@
           const tone =
             t < 0.55 ? lerp(palette.lo, palette.mid, t / 0.55) : lerp(palette.mid, palette.hi, (t - 0.55) / 0.45);
           const cls = `inset-province${S.sel === en ? " sel" : ""}${inside && hasData ? "" : " faded"}`;
-          return `<path class="${cls}" data-en="${en}" fill="${inside && hasData ? rgb(tone) : "rgba(255,255,255,.04)"}" d="${featurePathWithContext(ctx, feature)}"></path>`;
+          const fill = !(inside && hasData) ? "rgba(255,255,255,.04)" : isNeutral(en) ? "rgba(255,255,255,.08)" : rgb(tone);
+          return `<path class="${cls}" data-en="${en}" fill="${fill}" d="${featurePathWithContext(ctx, feature)}"></path>`;
         })
         .join("")}
     </g>
@@ -4822,7 +4832,7 @@
             path.setAttribute("fill", "rgba(255,255,255,.05)");
             return;
           }
-          if (!hasData) {
+          if (!hasData || isNeutral(en)) {
             path.setAttribute("fill", "rgba(255,255,255,.08)");
             return;
           }
@@ -4977,7 +4987,8 @@
         const palette = getPalette();
         refs.legendBar.style.background = `linear-gradient(90deg,${rgb(palette.lo)} 0%,${rgb(palette.mid)} 52%,${rgb(palette.hi)} 100%)`;
         const legUnit = embedsUnit(S.layer, true) ? "" : " " + usLabel();
-        refs.legendLow.textContent = `${fmtCompact(min)}${legUnit}`;
+        // ระดับ "ปกติ" ไม่มีสีแล้ว (isNeutral) ปลายซ้ายของแถบจึงเริ่มที่ "เฝ้าระวัง"
+        refs.legendLow.textContent = `${fmtCompact(S.layer === "alerts" ? Math.max(min, 1) : min)}${legUnit}`;
         refs.legendHigh.textContent = `${fmtCompact(max)}${legUnit}`;
         const lm = layerMeta[S.layer];
         refs.legendType.textContent = lm.sourceTh
