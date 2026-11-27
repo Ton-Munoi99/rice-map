@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>จังหวัดฉัน · แผนที่ข้าวไทย</title>
     <meta name="description" content="สรุปสถานการณ์ข้าวรายจังหวัดแบบอ่านง่าย — ฝน 7 วัน เตือนน้ำท่วม/แล้ง ควรทำอะไร ราคาข้าว โรงสีใกล้ตัว" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#0a1218" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -349,5 +352,9 @@
         render(initial);
       })();
     </script>
-  </body>
+      <script>
+      // PWA: ติดตั้งลงหน้าจอโฮม + เปิดได้ตอนเน็ตหลุด (ดู sw.js)
+      if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+    </script>
+</body>
 </html>
