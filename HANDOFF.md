@@ -7,7 +7,8 @@ Last updated: 2026-10-22 by Claude Code
 - 2026-11-16 (Claude): OAE weekly prices (`fetch_oae_prices.py`) failed daily 2–16 Nov: Cloudflare in front
   of `agriapi.nabc.go.th` now blocks Firecrawl and Jina as well as the GitHub runner; only a Thai IP gets
   through. The owner chose to fetch from their own PC: `scripts/local-oae-refresh.sh` runs daily from the
-  Windows Task Scheduler job "RiceMap OAE refresh" in a private clone (`%LOCALAPPDATA%ice-map-oae`, log
+  Windows Task Scheduler job "RiceMap OAE refresh" in a private clone (`%LOCALAPPDATA%
+ice-map-oae`, log
   next to it as `rice-map-oae.log`) and pushes with `push-verified.sh` — the owner gave standing approval for
   this one data push. The GitHub workflow is now a weekly watchdog: green while `_meta.updated_at` is within
   10 days, red once the PC stops refreshing. The freshness monitor cannot see this file's OAE half (miller
@@ -838,10 +839,11 @@ measurements and a schema-level consumer test exist.
   To flag all six northern provinces DDPM warned on 7 Sep 2026 you need a 1.1x multiplier,
   which flags 72 of 77. The layer's own description now says this and points at the
   measured-gauge layer. Closing that gap needs sub-province rainfall, not a different number.
-- `rain_7d` in `rain-forecast.json` is the p90 of up to 6 grid points, while the normal it is
-  compared against is a single-centroid climatology. That asymmetry biases toward
-  over-warning. Left alone deliberately on 11 Sep 2026 so the month-baseline change could be
-  measured on its own; worth revisiting as a separate, separately-measured change.
+- Resolved, do not re-propose: the p90-forecast vs centroid-normal asymmetry. Since 11 Sep 2026
+  (`ccc7cc37`) `rain_normal_weekly_mm` is itself the p90 of the same sample points
+  (`NORMAL_PCTL` must equal `PCTL` in `fetch_rain_forecast.py`), and the centroid normal lives
+  separately in `rain_normal_weekly_centroid_mm` for `weather-province.json`. Checked again on
+  27 Nov 2026: all 77 records carry `p90-daily-sample-points+centroid-v3`.
 - `score_alerts.py` / `alert-scoreboard.json` were deleted on 21 Oct 2026: the sidebar card went on
   21 Jul, the forecast-bias calibration it fed went on 2 Oct, and nothing read the file. It scored the
   rain *forecast* at a fixed mm cut-off, never the alert levels. Recover it from git (commit
