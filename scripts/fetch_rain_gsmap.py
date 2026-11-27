@@ -73,7 +73,16 @@ def province_values(props):
     return values
 
 
+MAX_SOURCE_LAG_DAYS = 2   # ปกติภาพล่าช้า ~4 ชม. — เกิน 2 วันคือต้นทางหยุด
+
+
+def source_stalled(latest_day, today):
+    return (today - latest_day).days > MAX_SOURCE_LAG_DAYS
+
+
 def _selftest():
+    assert source_stalled(date(2026, 11, 18), date(2026, 11, 27))
+    assert not source_stalled(date(2026, 11, 26), date(2026, 11, 27))
     end = date(2026, 9, 23)
     assert window_dates(end) == [f"2026-09-{d}" for d in range(16, 23)]
     # ครบทุกวัน → ใช้หน้าต่างเดิม
@@ -116,7 +125,13 @@ def main():
             for d in ds
         ]).getInfo()
 
-    dates, counts = pick_complete_window(latest_image_day(gsmap), count_images)
+    latest = latest_image_day(gsmap)
+    if source_stalled(latest, date.fromisoformat(bkk_today())):
+        # ต้นทางหยุดส่งภาพ (18 พ.ย. 69 หยุดไป 9+ วัน) — เดิมยังคิดหน้าต่างเก่าซ้ำแล้วประทับ updated ใหม่ทุกวัน
+        # ไฟล์จึงดูสดทั้งที่ข้อมูลค้าง · ไม่เขียนทับ ให้ freshness monitor (อายุ commit 3 วัน) จับได้
+        print(f"::warning::GSMaP ภาพล่าสุด {latest} ค้างเกิน {MAX_SOURCE_LAG_DAYS} วัน — ไม่เขียนทับ rain-gsmap.json")
+        return
+    dates, counts = pick_complete_window(latest, count_images)
     if dates is None:
         # คงไฟล์เดิมไว้ และไม่ exit 1 — ขั้นถัดไปของ workflow (พยากรณ์/คำเตือน) ยังต้องรันต่อ
         print("::warning::GSMaP ยังมีภาพไม่ครบทุกวันในหน้าต่าง — ไม่เขียนทับ rain-gsmap.json เดิม")

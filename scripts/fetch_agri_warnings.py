@@ -310,6 +310,12 @@ def main():
 
     fc_provs  = get_provinces(forecast_data)
     gs_provs  = get_provinces(gsmap_data)
+    if gsmap_stale((gsmap_data or {}).get("_meta"), bkk_today()):
+        # ฝนที่ตกไปแล้วเมื่อสัปดาห์ก่อนไม่ได้บอกความเสี่ยงตอนนี้ — 27 พ.ย. 69 ชุมพรขึ้น "เสี่ยงปานกลาง"
+        # จากฝน 11–17 พ.ย. เพราะต้นทาง GSMaP หยุดที่ 18 พ.ย. แต่ไฟล์ยังถูกเขียนซ้ำทุกวัน
+        print(f"::warning::rain-gsmap.json ข้อมูลถึง {gsmap_data['_meta'].get('period_end')} เก่าเกิน "
+              f"{GSMAP_MAX_AGE_DAYS} วัน — ไม่ใช้ประกอบคำเตือน")
+        gs_provs = {}
     dam_provs = get_provinces(dam_data)
     wf_provs  = get_provinces(weather_fc)
     # จังหวัดที่สถานีวัดน้ำบอกว่าท่วม/ใกล้ล้นตลิ่งอยู่ "ตอนนี้" (จาก layer น้ำท่วมวัดจริง)
@@ -431,10 +437,25 @@ def main():
             shown += 1
 
 
+GSMAP_MAX_AGE_DAYS = 3
+
+
+def gsmap_stale(meta, today_iso):
+    """period_end เป็นวันถัดจากวันสุดท้ายของหน้าต่าง (exclusive) · ไม่มีค่า = ถือว่าใช้ไม่ได้"""
+    from datetime import date
+    try:
+        return (date.fromisoformat(today_iso) - date.fromisoformat(meta["period_end"])).days > GSMAP_MAX_AGE_DAYS
+    except (TypeError, KeyError, ValueError):
+        return True
+
+
 def _selftest():
     """ยึดพฤติกรรมกับเกณฑ์ที่ส่งเข้าไปตรงๆ ไม่ผูกกับค่าคงที่ fallback
     (เดิมผูกไว้ พอแก้ค่าคงที่ 4 ก.ย. 69 เทสต์เลยแดง ทั้งที่ตรรกะไม่ได้เปลี่ยน)"""
     TH = (120, 60, 30)   # high, med, low
+    assert gsmap_stale({"period_end": "2026-11-18"}, "2026-11-27")
+    assert not gsmap_stale({"period_end": "2026-11-25"}, "2026-11-27")
+    assert gsmap_stale({}, "2026-11-27") and gsmap_stale(None, "2026-11-27")
     assert build_warnings("Test", 130, None, None, TH)[0]["level"] == "high"
     assert build_warnings("Test", 80, None, None, TH)[0]["level"] == "medium"
     assert build_warnings("Test", 10, None, None, TH)[0]["level"] == "normal"

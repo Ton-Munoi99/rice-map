@@ -4261,9 +4261,9 @@
         ];
       }
 
-      // ระดับเตือน 0 = ปกติ ไม่ต้องมีสี — เดิมได้สีครีมต้นสเกลซึ่งสว่างที่สุดบนแผนที่ แย่งสายตาจากจังหวัดที่เสี่ยงจริง
+      // ค่า 0 (เตือนภัย: ปกติ · จุดความร้อน: ไม่พบ) ไม่ต้องมีสี — เดิมได้สีครีมต้นสเกลซึ่งสว่างที่สุดบนแผนที่ แย่งสายตาจากจังหวัดที่เสี่ยงจริง
       function isNeutral(en) {
-        return S.layer === "alerts" && valueOf(en) === 0;
+        return (S.layer === "alerts" || S.layer === "hotspots") && valueOf(en) === 0;
       }
 
       function scaleT(v, min, max) {
@@ -4987,8 +4987,8 @@
         const palette = getPalette();
         refs.legendBar.style.background = `linear-gradient(90deg,${rgb(palette.lo)} 0%,${rgb(palette.mid)} 52%,${rgb(palette.hi)} 100%)`;
         const legUnit = embedsUnit(S.layer, true) ? "" : " " + usLabel();
-        // ระดับ "ปกติ" ไม่มีสีแล้ว (isNeutral) ปลายซ้ายของแถบจึงเริ่มที่ "เฝ้าระวัง"
-        refs.legendLow.textContent = `${fmtCompact(S.layer === "alerts" ? Math.max(min, 1) : min)}${legUnit}`;
+        // ค่า 0 ไม่มีสีแล้ว (isNeutral) ปลายซ้ายของแถบจึงเริ่มที่ 1 ("เฝ้าระวัง" / 1 จุด)
+        refs.legendLow.textContent = `${fmtCompact(S.layer === "alerts" || S.layer === "hotspots" ? Math.max(min, 1) : min)}${legUnit}`;
         refs.legendHigh.textContent = `${fmtCompact(max)}${legUnit}`;
         const lm = layerMeta[S.layer];
         refs.legendType.textContent = lm.sourceTh
