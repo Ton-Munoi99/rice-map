@@ -4,6 +4,32 @@ Last updated: 2026-10-22 by Claude Code
 
 ## Log
 
+- 2026-11-27 (Claude): Bug check plus small features. All of it is pushed (`c051b37`..`58b35ce`).
+  (1) `local-oae-refresh.sh` no longer uses `push-verified.sh`. That script resolves `data/*.json`
+  conflicts as "ours", and `prices-live.json` also carries the miller cron's prices, so a conflict would
+  have overwritten fresh miller prices with old ones. It now does a plain push, and on rejection starts
+  over from the latest `origin/main` and re-fetches OAE (up to 5 tries). The 16 Nov entry below is
+  out of date on this point. The first run with the new script is the 28 Nov 12:00 task: check
+  `rice-map-oae.log` for "✅ push แล้ว".
+  (2) OAE now keeps 56 weeks of `history` (`HISTORY_WEEKS`; 49 did not always reach the same week last
+  year). The farm-gate card draws a sparkline and a YoY ▲▼% from it.
+  (3) Share button on the province card (`shareView`: Web Share, then clipboard, then a message; no
+  `prompt()`, which the embedded browser lacks). `#sel=` now also accepts the Thai province name.
+  (4) PWA: `manifest.webmanifest`, `sw.js` (network-first, cache `rice-map-v1`; bump it when SHELL
+  changes) and `icons/`, also linked from `farmer.html`. Not yet tested on a real phone.
+  (5) Map colours: on alerts and hotspots, value 0 ("normal" / no hotspots) is now uncoloured
+  (`isNeutral`). `scaleT` clamps to 0..1, which fixes black NaN insets, and the insets use the main
+  map's min/max.
+  (6) GSMaP (`JAXA/GPM_L3/GSMaP/v8/operational`) stopped publishing at 2026-11-18 05 UTC, yet
+  `rain-gsmap.json` was rewritten every run with the same old week, so the freshness monitor saw it
+  as fresh. Now `fetch_rain_gsmap.py` skips the write when the source is more than 2 days behind
+  (`source_stalled`), so the monitor turns red after 3 days. `fetch_agri_warnings.py` drops GSMaP
+  older than 3 days (`gsmap_stale`), which removes stale-rain warnings for Chumphon, Phuket and
+  Ayutthaya. Both resume by themselves when JAXA does.
+  Checked, no change needed: the Suphan Buri flood is real (Song Phi Nong stations at 102–106 % of
+  bank, falling), and Bangkok is "watch" because of tide season. The red near Bangkok on the map is
+  Nakhon Pathom and Samut Prakan.
+
 - 2026-11-16 (Claude): OAE weekly prices (`fetch_oae_prices.py`) failed daily 2–16 Nov: Cloudflare in front
   of `agriapi.nabc.go.th` now blocks Firecrawl and Jina as well as the GitHub runner; only a Thai IP gets
   through. The owner chose to fetch from their own PC: `scripts/local-oae-refresh.sh` runs daily from the
