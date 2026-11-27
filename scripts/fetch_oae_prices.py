@@ -64,8 +64,12 @@ PRODUCTS = {
 }
 
 
+# บางเดือนมี 5 สัปดาห์ — 56 แถวพอให้ถึงสัปดาห์เดียวกันของปีก่อน (ใช้วาดกราฟและเทียบปีต่อปี)
+HISTORY_WEEKS = 56
+
+
 def _url(product_name):
-    q = urllib.parse.urlencode({"product_name": product_name, "limit": 1, "offset": 0})
+    q = urllib.parse.urlencode({"product_name": product_name, "limit": HISTORY_WEEKS, "offset": 0})
     return f"{API}?{q}"
 
 
@@ -92,7 +96,7 @@ def _via_firecrawl(url):
 
 
 def fetch_latest(product_name):
-    """แถวล่าสุดของสินค้านั้น — API เรียงใหม่ไปเก่า จึงขอแค่แถวเดียว"""
+    """แถวล่าสุด + ย้อนหลัง HISTORY_WEEKS สัปดาห์ (API เรียงใหม่ไปเก่า)"""
     url = _url(product_name)
     try:
         r = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
@@ -110,7 +114,8 @@ def fetch_latest(product_name):
     rows = [x for x in (body.get("data") or []) if x.get("province_code") == "TH00"]
     if not rows:
         raise RuntimeError("ไม่พบแถวระดับประเทศ (TH00)")
-    newest = max(rows, key=lambda x: (x["year_th"], int(x["month"]), x["week"]))
+    rows.sort(key=lambda x: (x["year_th"], int(x["month"]), x["week"]))
+    newest = rows[-1]
 
     # กันกรณีต้นทางหยุดอัปเดตแล้วเรายังดึง "สำเร็จ" อยู่ทุกวัน
     bkk = datetime.now(timezone.utc) + timedelta(hours=7)
@@ -124,7 +129,7 @@ def fetch_latest(product_name):
         "month": int(newest["month"]),
         "week": newest["week"],
         "value_thb_per_ton": round(float(newest["value"])),
-    }, via
+    }, to_history(rows), via
 
 
 def main():
@@ -139,11 +144,13 @@ def main():
 
     for key, cfg in PRODUCTS.items():
         try:
-            latest, via = fetch_latest(cfg["product_name"])
+            latest, history, via = fetch_latest(cfg["product_name"])
             oae[key] = {
                 "label_th": cfg["label_th"],
                 "label_en": cfg["label_en"],
                 "latest": latest,
+                # [ปี พ.ศ., เดือน, สัปดาห์, บาท/ตัน] เก่า→ใหม่
+                "history": history,
             }
             print(f"  {key:8} [{via}] ล่าสุด {latest['year']}-{latest['month']:02d} "
                   f"สัปดาห์ {latest['week']} = {latest['value_thb_per_ton']:,} บาท/ตัน")
@@ -188,6 +195,10 @@ def main():
 LOCAL_GRACE_DAYS = 10
 
 
+def to_history(rows):
+    return [[x["year_th"], int(x["month"]), x["week"], round(float(x["value"]))] for x in rows]
+
+
 def recently_refreshed(updated_at, now):
     try:
         return now - datetime.fromisoformat(updated_at) <= timedelta(days=LOCAL_GRACE_DAYS)
@@ -201,6 +212,9 @@ def _selftest():
     assert not recently_refreshed("2026-11-01T02:43:35+00:00", now)
     assert not recently_refreshed(None, now)
     assert not recently_refreshed("garbage", now)
+    h = to_history([{"year_th": 2568, "month": "11", "week": 3, "value": "8000.4"},
+                    {"year_th": 2569, "month": "11", "week": 3, "value": "9580.6"}])
+    assert h == [[2568, 11, 3, 8000], [2569, 11, 3, 9581]]
     print("selftest ok")
 
 

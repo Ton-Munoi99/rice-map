@@ -7928,15 +7928,31 @@ ${warningsHtml}
           const pyear = v.year > 2500 ? v.year : v.year + 543;
           // สศก. ให้รายสัปดาห์แล้ว — บอกสัปดาห์ด้วย ไม่งั้นดูเหมือนค่าเฉลี่ยทั้งเดือน
           const period = v.week ? `${mLabel} ${pyear} ${t("สัปดาห์", "wk")} ${v.week}` : `${mLabel} ${pyear}`;
-          const priceLine = (label, o) =>
+          // กราฟเส้นย้อนหลังราว 1 ปี + เทียบสัปดาห์เดียวกันปีก่อน (ไม่มีแถวนั้น = ไม่แสดง ไม่เดา)
+          const spark = (h, color) => {
+            if (!(h?.length > 1)) return "";
+            const vals = h.map((r) => r[3]);
+            const lo = Math.min(...vals), span = Math.max(...vals) - lo || 1;
+            const pts = vals.map((x, i) => `${((i / (vals.length - 1)) * 120).toFixed(1)},${(20 - ((x - lo) / span) * 18).toFixed(1)}`).join(" ");
+            return `<svg width="120" height="22" viewBox="0 0 120 22" style="display:block;margin:1px 0 3px" role="img" aria-label="${t("ราคารายสัปดาห์ย้อนหลัง", "Weekly price history")}"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.5"/></svg>`;
+          };
+          const yoy = (o) => {
+            const l = o.latest;
+            const prev = o.history?.find((r) => r[0] === l.year - 1 && r[1] === l.month && r[2] === l.week);
+            if (!prev) return "";
+            const pct = ((l.value_thb_per_ton - prev[3]) / prev[3]) * 100;
+            const c = pct >= 0 ? "#86efac" : "#fca5a5";
+            return ` <span style="color:${c}">${pct >= 0 ? "▲" : "▼"}${Math.abs(pct).toFixed(1)}% ${t("จากปีก่อน", "YoY")}</span>`;
+          };
+          const priceLine = (label, o, color) =>
             o?.latest?.value_thb_per_ton
-              ? `<span style="font-size:9px;color:var(--muted)">${label} 15%: ${Number(o.latest.value_thb_per_ton).toLocaleString()} ฿/${t("ตัน", "ton")}</span><br>`
+              ? `<span style="font-size:9px;color:var(--muted)">${label} 15%: ${Number(o.latest.value_thb_per_ton).toLocaleString()} ฿/${t("ตัน", "ton")}${yoy(o)}</span><br>${spark(o.history, color)}`
               : "";
           rows.push(`
       <div class="live-price-row">
         <div class="live-price-label"><strong style="color:#86efac">🌾 ${t("ราคาที่ไร่นาเฉลี่ย", "Farm-gate Price")}</strong><br>
           <span style="font-size:9px;color:var(--muted)">OAE · ${t("ระดับประเทศ", "National")} · ${period}</span><br>
-          ${priceLine(t("ข้าวเจ้า", "White"), oae.white)}${priceLine(t("หอมมะลิ", "Jasmine"), oae.jasmine)}
+          ${priceLine(t("ข้าวเจ้า", "White"), oae.white, "#86efac")}${priceLine(t("หอมมะลิ", "Jasmine"), oae.jasmine, "#fbbf24")}
         </div>
         <div class="live-price-val" style="display:none"></div>
       </div>`);
